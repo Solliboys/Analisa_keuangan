@@ -662,7 +662,7 @@
                         <li><a href="#alur-kerja" class="footer-link">Standar Regulasi OJK</a></li>
                         <li><a href="#kontak" class="footer-link">Bantuan &amp; Panduan</a></li>
                         <li><a href="#kontak" class="footer-link">Hubungi Kami</a></li>
-                        <li><a href="<?= base_url('login') ?>" class="footer-link">Login</a></li>
+                        <li><a href="<?= base_url('login') ?>" class="footer-link" style="color: #60A5FA; font-weight: 600;">Login &rarr;</a></li>
                     </ul>
                 </div>
 
@@ -702,6 +702,7 @@
                     <a href="#kebijakan">Kebijakan Privasi</a>
                     <a href="#syarat">Syarat &amp; Ketentuan</a>
                     <a href="#keamanan">Keamanan</a>
+                    <a href="<?= base_url('login') ?>" style="color: #60A5FA; font-weight: 600;">Masuk / Login</a>
                 </div>
             </div>
         </div>

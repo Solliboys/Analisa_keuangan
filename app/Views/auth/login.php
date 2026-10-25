@@ -72,6 +72,10 @@
         <div class="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center relative">
             
             <div class="mb-8">
+                <a href="<?= base_url('/') ?>" class="inline-flex items-center text-xs font-semibold text-slate-400 hover:text-indigo-600 transition-colors mb-3">
+                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Kembali ke Beranda
+                </a>
                 <!-- Judul OTW Kredit -->
                 <h2 class="text-3xl mb-1.5 tracking-tight">
                     <span class="font-extrabold text-slate-800">OTW</span> 
