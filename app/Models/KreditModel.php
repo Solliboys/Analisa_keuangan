@@ -45,6 +45,10 @@ class KreditModel extends Model
         'nomor_induk_berusaha_nib',
         'sumber_pembayaran',
         'ringkasan_slik',
+        'status_slik',
+        'hasil_slik',
+        'slik_verified_at',
+        'slik_verified_by',
         'status_pengajuan',
     ];
 

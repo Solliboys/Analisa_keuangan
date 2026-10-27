@@ -33,11 +33,13 @@ class Auth extends BaseController
             // Cek password (plain atau hash)
             if ($password === $user['password'] || password_verify($password, $user['password'])) {
                 if ($user['status'] == 1) {
-                    // Set Session Pengguna Aktif
                     $sessionData = [
                         'user_id'      => $user['id'],
                         'username'     => $user['username'],
                         'nama_lengkap' => $user['nama_lengkap'],
+                        'email'        => $user['email'] ?? '',
+                        'nomor_hp'     => $user['nomor_hp'] ?? '',
+                        'foto'         => $user['foto'] ?? '',
                         'jabatan'      => $user['jabatan'],
                         'logged_in'    => true,
                     ];
@@ -49,14 +51,10 @@ class Auth extends BaseController
                     ]);
 
                     return redirect()->to('/dashboard');
-                } elseif ($user['status'] == 0) {
-                    // Pastikan sesi login tidak dibuat / dibersihkan
-                    session()->remove(['user_id', 'username', 'nama_lengkap', 'jabatan', 'logged_in']);
-                    session()->setFlashdata('error', '⚠️ Akun Anda (@' . esc($user['username']) . ') sedang MENUNGGU VERIFIKASI & PERSETUJUAN dari Super Administrator. Anda belum dapat masuk.');
-                    return redirect()->to('/auth');
                 } else {
+                    // Status 0: Tidak Aktif / Dinonaktifkan
                     session()->remove(['user_id', 'username', 'nama_lengkap', 'jabatan', 'logged_in']);
-                    session()->setFlashdata('error', '⛔ Akun Anda dinonaktifkan oleh administrator.');
+                    session()->setFlashdata('error', '⛔ Akun Anda (@' . esc($user['username']) . ') berstatus TIDAK AKTIF atau dinonaktifkan oleh administrator.');
                     return redirect()->to('/auth');
                 }
             } else {

@@ -1,211 +1,444 @@
+<?php
+// Ambil data konfigurasi sistem dari database jika belum diset
+if (!isset($pengaturan_sistem)) {
+    try {
+        $pengaturan_sistem = \Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+    } catch (\Throwable $e) {
+        $pengaturan_sistem = [];
+    }
+}
+
+$brandName    = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Kredit';
+$brandSlogan  = !empty($pengaturan_sistem['slogan_aplikasi']) ? $pengaturan_sistem['slogan_aplikasi'] : 'Sistem Analisa Kredit AI & CAM';
+$brandLembaga = !empty($pengaturan_sistem['nama_lembaga']) ? $pengaturan_sistem['nama_lembaga'] : 'Lembaga Pembiayaan';
+$brandLogo    = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
+$brandEmail   = !empty($pengaturan_sistem['email_lembaga']) ? $pengaturan_sistem['email_lembaga'] : 'info@otwkredit.id';
+$brandTelepon = !empty($pengaturan_sistem['telepon_lembaga']) ? $pengaturan_sistem['telepon_lembaga'] : '(021) 5088-2900';
+
+// Salam waktu dinamis
+$jam = (int) date('H');
+if ($jam >= 4 && $jam < 11) {
+    $salam = 'Pagi';
+    $salamIcon = '🌅';
+} elseif ($jam >= 11 && $jam < 15) {
+    $salam = 'Siang';
+    $salamIcon = '☀️';
+} elseif ($jam >= 15 && $jam < 18) {
+    $salam = 'Sore';
+    $salamIcon = '🌇';
+} else {
+    $salam = 'Malam';
+    $salamIcon = '🌙';
+}
+?>
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTW Kredit - Login</title>
+    <title><?= esc($brandName) ?> — Masuk ke Sistem</title>
+    <meta name="description" content="Masuk ke portal <?= esc($brandName) ?> - <?= esc($brandSlogan) ?>">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" type="image/png" href="<?= !empty($brandLogo) ? base_url($brandLogo) : base_url('favicon.ico') ?>">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* Latar belakang putih/abu-abu terang */
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        /* Gaya Pita Lembut (Soft Ribbon) */
-        .ribbon {
-            fill: none;
-            stroke-linecap: round;
-            filter: drop-shadow(0 4px 6px rgba(147, 197, 253, 0.3)); /* Shadow yang lebih halus */
+        /* Ambient Wave Animations */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(1deg); }
         }
-
-        /* Animasi Mengambang */
-        @keyframes float-1 {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-3%) scale(1.02); }
+        @keyframes pulseSoft {
+            0%, 100% { opacity: 0.35; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
         }
-        @keyframes float-2 {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(3%) scale(1.03); }
+        .anim-float {
+            animation: floatSlow 12s ease-in-out infinite;
         }
-        
-        .layer-1 { animation: float-1 8s ease-in-out infinite; }
-        .layer-2 { animation: float-2 10s ease-in-out infinite reverse; }
+        .anim-pulse {
+            animation: pulseSoft 8s ease-in-out infinite;
+        }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-slate-50">
+<body class="min-h-screen bg-slate-100 flex items-center justify-center p-4 sm:p-6 md:p-10 relative overflow-x-hidden selection:bg-blue-500 selection:text-white">
 
-    <!-- Latar Belakang Pita Lembut (Biru Putih Samar) -->
-    <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        
-        <!-- Kumpulan Pita 1 -->
-        <svg class="layer-1 absolute -top-[10%] -left-[10%] w-[120%] h-[120%] opacity-40" preserveAspectRatio="none" viewBox="0 0 1440 800">
-            <!-- Pita Besar Biru Sangat Muda -->
-            <path class="ribbon" stroke="#dbeafe" stroke-width="50" d="M-100,800 C400,800 600,200 1540,100"></path>
-            <!-- Pita Sedang Biru Langit -->
-            <path class="ribbon" stroke="#bfdbfe" stroke-width="15" d="M-100,780 C420,780 580,220 1540,80"></path>
-            <!-- Pita Kecil Biru Agak Tua -->
-            <path class="ribbon" stroke="#93c5fd" stroke-width="4" d="M-100,770 C430,770 570,230 1540,70"></path>
+    <!-- Ambient Gradient Background Elements -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <!-- Lingkaran Cahaya Lembut Atas -->
+        <div class="anim-pulse absolute -top-40 -left-40 w-96 h-96 bg-blue-300/30 rounded-full blur-3xl"></div>
+        <!-- Lingkaran Cahaya Kanan Bawah -->
+        <div class="anim-pulse absolute -bottom-40 -right-40 w-[30rem] h-[30rem] bg-indigo-300/30 rounded-full blur-3xl" style="animation-delay: -3s;"></div>
+        <!-- Garis Pola Geometris Halus -->
+        <svg class="anim-float absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#94a3b8" stroke-width="0.8" stroke-dasharray="2 4" />
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid-pattern)" />
         </svg>
-
-        <!-- Kumpulan Pita 2 -->
-        <svg class="layer-2 absolute -top-[10%] -left-[10%] w-[120%] h-[120%] opacity-30" preserveAspectRatio="none" viewBox="0 0 1440 800">
-            <path class="ribbon" stroke="#bfdbfe" stroke-width="80" d="M-100,900 C300,500 800,400 1540,600"></path>
-            <path class="ribbon" stroke="#93c5fd" stroke-width="25" d="M-100,890 C310,490 790,390 1540,590"></path>
-            <path class="ribbon" stroke="#60a5fa" stroke-width="3" d="M-100,885 C315,485 785,385 1540,585"></path>
-        </svg>
-
     </div>
 
-    <!-- Card Utama (Glassmorphism / Menyatu dengan background) -->
-    <div class="bg-white/70 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row w-full max-w-2xl min-h-[450px] relative z-10 border border-white/60">
+    <!-- MAIN CONTAINER CARD -->
+    <div class="relative z-10 w-full max-w-4xl bg-white rounded-3xl shadow-2xl shadow-slate-200/70 border border-slate-200/80 overflow-hidden flex flex-col md:flex-row transition-all duration-300">
         
-        <!-- KIRI: Gambar Ilustrasi -->
-        <div class="w-full md:w-1/2 bg-blue-50 relative hidden md:block">
-            <!-- Asumsi nama gambar ilustrasinya adalah login_illustration.png -->
-            <img src="<?= base_url('login_illustration.png') ?>" alt="Ilustrasi Digital Banking" class="absolute inset-0 w-full h-full object-cover">
-        </div>
-
-        <!-- KANAN: Form Login -->
-        <div class="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center relative">
+        <!-- KOLOM KIRI: Visual Branding & Value Proposition (Desktop Only - Tema Biru) -->
+        <div class="hidden md:flex md:w-5/12 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 lg:p-10 text-white flex-col justify-between relative overflow-hidden shadow-inner">
+            <!-- Ambient Glow Lembut Dalam Panel Kiri -->
+            <div class="absolute -top-16 -left-16 w-56 h-56 bg-white/15 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -bottom-16 -right-16 w-56 h-56 bg-cyan-300/25 rounded-full blur-2xl pointer-events-none"></div>
             
-            <div class="mb-8">
-                <a href="<?= base_url('/') ?>" class="inline-flex items-center text-xs font-semibold text-slate-400 hover:text-indigo-600 transition-colors mb-3">
-                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Kembali ke Beranda
-                </a>
-                <!-- Judul OTW Kredit -->
-                <h2 class="text-3xl mb-1.5 tracking-tight">
-                    <span class="font-extrabold text-slate-800">OTW</span> 
-                    <span class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#100a8f] to-indigo-700">Kredit</span>
-                </h2>
-                
-                <!-- Salam Waktu Dinamis -->
-                <?php 
-                    $jam = date('H');
-                    if ($jam >= 5 && $jam < 12) $salam = 'Pagi';
-                    elseif ($jam >= 12 && $jam < 15) $salam = 'Siang';
-                    elseif ($jam >= 15 && $jam < 18) $salam = 'Sore';
-                    else $salam = 'Malam';
-                ?>
-                <p class="text-slate-500 text-sm font-medium">Selamat <?= $salam ?>. Silakan login terlebih dahulu</p>
+            <!-- Bagian Atas Panel Kiri -->
+            <div class="relative z-10">
+                <div class="mb-4">
+                    <?php if (!empty($brandLogo)) : ?>
+                        <div class="p-2.5 bg-white rounded-2xl border border-white/30 inline-block mb-3 shadow-lg shadow-blue-900/20">
+                            <img src="<?= base_url($brandLogo) ?>" alt="Logo" class="h-10 w-auto object-contain">
+                        </div>
+                    <?php else : ?>
+                        <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white mb-3 shadow-lg shadow-blue-900/20">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        </div>
+                    <?php endif; ?>
+
+                    <h2 class="text-2xl font-extrabold text-white tracking-tight leading-snug drop-shadow-xs">
+                        <?= esc($brandName) ?>
+                    </h2>
+                    <p class="text-blue-100 text-xs font-medium mt-1 leading-relaxed">
+                        <?= esc($brandSlogan) ?>
+                    </p>
+                </div>
             </div>
 
-            <!-- Pesan Sukses -->
-            <?php if (session()->getFlashdata('success')) : ?>
-                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl mb-4 text-xs font-medium flex items-start space-x-2.5 shadow-sm">
-                    <svg class="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <!-- Bagian Tengah: Fitur Unggulan Berwarna Kaca Bersih (3 Kelebihan Sistem) -->
+            <div class="relative z-10 space-y-3 my-6">
+                <!-- Kelebihan 1: AI Scoring 5C -->
+                <div class="flex items-start gap-3 p-3 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md shadow-xs">
+                    <div class="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
                     <div>
-                        <p class="font-bold text-emerald-900 mb-0.5">Pemberitahuan Sistem</p>
-                        <p class="text-emerald-700 leading-relaxed"><?= session()->getFlashdata('success'); ?></p>
+                        <h4 class="text-xs font-bold text-white">AI Credit Scoring 5C</h4>
+                        <p class="text-[11px] text-blue-100 leading-relaxed">Evaluasi presisi Character, Capacity, Capital, Collateral & Condition otomatis.</p>
                     </div>
                 </div>
-            <?php endif; ?>
 
-            <!-- Pesan Error -->
-            <?php if (session()->getFlashdata('error')) : ?>
-                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-xs font-medium flex items-start space-x-2.5 shadow-sm">
-                    <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <!-- Kelebihan 2: Verifikasi SLIK OJK -->
+                <div class="flex items-start gap-3 p-3 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md shadow-xs">
+                    <div class="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
                     <div>
-                        <p class="font-bold text-red-900 mb-0.5">Akses Ditolak / Perhatian</p>
-                        <p class="text-red-700 leading-relaxed"><?= session()->getFlashdata('error'); ?></p>
-                    </div>
-                </div>
-            <?php endif; ?>
-
-            <!-- Form -->
-            <form action="<?= base_url('auth/process') ?>" method="post" class="space-y-6">
-                <?= csrf_field() ?>
-                
-                <div>
-                    <label for="username" class="block text-sm font-semibold text-slate-700 mb-1.5">Username</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        </div>
-                        <input type="text" name="username" id="username" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-4 text-sm text-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all placeholder-slate-400 font-medium" placeholder="Masukkan Username" required autofocus>
+                        <h4 class="text-xs font-bold text-white">Verifikasi SLIK Terstandar</h4>
+                        <p class="text-[11px] text-blue-100 leading-relaxed">Penyelarasan scoring kolektibilitas OJK dengan modul rekomendasi CAM.</p>
                     </div>
                 </div>
 
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label for="password" class="block text-sm font-semibold text-slate-700">Password</label>
-                        <a href="#" class="text-xs font-semibold text-indigo-700 hover:text-indigo-900 transition-colors">Lupa sandi?</a>
+                <!-- Kelebihan 3: Rekomendasi CAM & Keputusan Cepat -->
+                <div class="flex items-start gap-3 p-3 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md shadow-xs">
+                    <div class="w-8 h-8 rounded-xl bg-white/20 text-white flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </div>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <div>
+                        <h4 class="text-xs font-bold text-white">Rekomendasi CAM & Plafon</h4>
+                        <p class="text-[11px] text-blue-100 leading-relaxed">Perhitungan limit kredit, rasio angsuran, dan mitigasi risiko instan.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian Bawah Panel Kiri -->
+            <div class="relative z-10 pt-4 border-t border-white/20 text-[11px] text-blue-100 font-medium">
+                <span class="truncate block"><?= esc($brandLembaga) ?></span>
+            </div>
+        </div>
+
+        <!-- KOLOM KANAN: Formulir Login -->
+        <div class="w-full md:w-7/12 p-6 sm:p-8 md:p-10 lg:p-12 flex flex-col justify-between bg-white">
+            
+            <div>
+                <!-- Bar Navigasi Atas Form -->
+                <div class="flex items-center justify-between mb-6">
+                    <a href="<?= base_url('/') ?>" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 border border-slate-200/80 transition-all duration-200 group">
+                        <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        <span>Kembali ke Beranda</span>
+                    </a>
+
+                    <!-- Badge Status Lembaga -->
+                    <span class="hidden sm:inline-flex text-[11px] font-medium text-slate-400 truncate max-w-[170px]" title="<?= esc($brandLembaga) ?>">
+                        <?= esc($brandLembaga) ?>
+                    </span>
+                </div>
+
+                <!-- Header Brand (Khusus Tampilan Mobile & Tablet) -->
+                <div class="md:hidden flex items-center gap-3 mb-6 pb-5 border-b border-slate-100">
+                    <?php if (!empty($brandLogo)) : ?>
+                        <div class="p-1.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <img src="<?= base_url($brandLogo) ?>" alt="Logo" class="h-9 w-auto object-contain">
                         </div>
-                        <input type="password" name="password" id="password" class="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-11 pr-12 text-sm text-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all placeholder-slate-400 font-medium" placeholder="••••••••" required>
-                        <!-- Icon Mata (Toggle Password) -->
-                        <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-indigo-600 focus:outline-none transition-colors">
-                            <svg id="eye-icon" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    <?php else : ?>
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        </div>
+                    <?php endif; ?>
+                    <div>
+                        <h2 class="text-lg font-extrabold text-slate-800 leading-tight"><?= esc($brandName) ?></h2>
+                        <p class="text-[11px] text-slate-500 font-medium"><?= esc($brandSlogan) ?></p>
+                    </div>
+                </div>
+
+                <!-- Judul Form & Ucapan Waktu Dinamis -->
+                <div class="mb-6">
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>Masuk ke Akun</span>
+                        <span class="text-xl"><?= $salamIcon ?></span>
+                    </h1>
+                    <p class="text-slate-500 text-sm mt-1 font-normal">
+                        Selamat <?= $salam ?>. Silakan login untuk mengakses modul dan data Anda.
+                    </p>
+                </div>
+
+                <!-- Notifikasi Flashdata Sukses -->
+                <?php if (session()->getFlashdata('success')) : ?>
+                    <div class="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3 shadow-xs">
+                        <div class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-emerald-900 mb-0.5">Berhasil</p>
+                            <p class="text-xs text-emerald-700 leading-relaxed"><?= session()->getFlashdata('success'); ?></p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Notifikasi Flashdata Error -->
+                <?php if (session()->getFlashdata('error')) : ?>
+                    <div class="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3 shadow-xs">
+                        <div class="w-6 h-6 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs font-bold text-rose-900 mb-0.5">Gagal Masuk</p>
+                            <p class="text-xs text-rose-700 leading-relaxed"><?= session()->getFlashdata('error'); ?></p>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Form Login -->
+                <form id="loginForm" action="<?= base_url('auth/process') ?>" method="post" class="space-y-4">
+                    <?= csrf_field() ?>
+                    
+                    <!-- Input Username -->
+                    <div>
+                        <label for="username" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                            Username / ID Pegawai
+                        </label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+                            <input 
+                                type="text" 
+                                name="username" 
+                                id="username" 
+                                class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-3 pl-11 pr-4 text-sm text-slate-800 placeholder-slate-400 font-medium focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all duration-200" 
+                                placeholder="Masukkan username Anda" 
+                                required 
+                                autofocus
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Input Password -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="password" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                                Kata Sandi
+                            </label>
+                            <button 
+                                type="button" 
+                                onclick="handleLupaSandi()" 
+                                class="text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors focus:outline-none"
+                            >
+                                Lupa sandi?
+                            </button>
+                        </div>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                </svg>
+                            </div>
+                            <input 
+                                type="password" 
+                                name="password" 
+                                id="password" 
+                                class="w-full rounded-xl border border-slate-200 bg-slate-50/60 py-3 pl-11 pr-12 text-sm text-slate-800 placeholder-slate-400 font-medium focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all duration-200" 
+                                placeholder="••••••••" 
+                                required
+                            >
+                            <!-- Tombol Toggle Show/Hide Password -->
+                            <button 
+                                type="button" 
+                                onclick="togglePassword()" 
+                                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                                title="Lihat/Sembunyikan Kata Sandi"
+                                aria-label="Toggle password visibility"
+                            >
+                                <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Checkbox Ingat Sesi -->
+                    <div class="flex items-center pt-1">
+                        <input 
+                            id="remember-me" 
+                            name="remember-me" 
+                            type="checkbox" 
+                            class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition"
+                        >
+                        <label for="remember-me" class="ml-2.5 block text-xs sm:text-sm font-medium text-slate-600 cursor-pointer select-none">
+                            Ingat sesi saya di perangkat ini
+                        </label>
+                    </div>
+
+                    <!-- Tombol Masuk ke Sistem -->
+                    <div class="pt-2">
+                        <button 
+                            type="submit" 
+                            id="btnLogin"
+                            class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 active:scale-[0.99] text-white text-sm font-bold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-blue-600/25 hover:shadow-xl hover:shadow-blue-600/35 cursor-pointer"
+                        >
+                            <span id="btnText">Masuk ke Sistem</span>
+                            <svg id="btnArrow" class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                            <svg id="btnSpinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                         </button>
                     </div>
-                </div>
+                </form>
+            </div>
 
-                <div class="flex items-center">
-                    <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[#1a1c6a] focus:ring-[#1a1c6a] cursor-pointer">
-                    <label for="remember-me" class="ml-2 block text-sm text-slate-600 cursor-pointer">
-                        Ingat sesi saya
-                    </label>
-                </div>
-
-                <!-- Tombol Login Full Width -->
-                <div class="pt-3">
-                    <button type="submit" class="w-full flex items-center justify-center bg-gradient-to-r from-[#100a8f] to-indigo-800 hover:from-[#0a0663] hover:to-indigo-900 text-white text-sm font-bold py-3.5 px-8 rounded-xl transition-all duration-300 shadow-lg shadow-indigo-900/30 hover:-translate-y-1 hover:shadow-indigo-900/40">
-                        <span>Masuk ke Sistem</span>
-                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                    </button>
-                </div>
-
-                <!-- Link Pendaftaran Pengusul Baru -->
-                <div class="mt-4 text-center">
-                    <p class="text-xs text-slate-500">
-                        Belum punya akun petugas? 
-                        <a href="<?= base_url('auth/register') ?>" class="font-bold text-indigo-700 hover:text-indigo-900 underline transition">
-                            Daftar Akun Pengusul
-                        </a>
-                    </p>
-                </div>
-            </form>
-
-            <!-- Footer Copyright (Paling Bawah) -->
-            <div class="absolute bottom-6 left-0 right-0 text-center">
-                <p class="text-[11px] text-slate-400 font-medium">
-                    &copy;<?= date('Y') ?> OTW Computer Gusaha. All rights reserved.
+            <!-- Footer Hak Cipta (Mengalir Normal Tanpa Bertumpuk) -->
+            <div class="mt-8 pt-4 border-t border-slate-100 text-center">
+                <p class="text-xs text-slate-400 font-medium">
+                    &copy; <?= date('Y') ?> <?= esc($brandLembaga ?: $brandName) ?>. Seluruh hak cipta dilindungi.
                 </p>
             </div>
 
         </div>
     </div>
 
-</body>
-
-<script>
-    function togglePassword() {
-        const passwordInput = document.getElementById('password');
-        const eyeIcon = document.getElementById('eye-icon');
-        
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            // Ubah icon jadi mata dicoret (eye-off)
-            eyeIcon.innerHTML = `
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
-            `;
-        } else {
-            passwordInput.type = 'password';
-            // Ubah icon jadi mata normal (eye)
-            eyeIcon.innerHTML = `
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-            `;
+    <!-- SCRIPT CLIENT -->
+    <script>
+        // Toggle Show / Hide Password
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eye-icon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
+                `;
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                `;
+            }
         }
-    }
-</script>
+
+        // Popup Informasi Lupa Kata Sandi
+        function handleLupaSandi() {
+            Swal.fire({
+                icon: 'info',
+                title: 'Bantuan Akses & Sandi',
+                html: `
+                    <div class="text-left text-xs sm:text-sm text-slate-600 space-y-3">
+                        <p class="leading-relaxed">Demi alasan keamanan dan audit internal perbankan, permohonan reset kata sandi dikelola langsung oleh Administrator Sistem.</p>
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-1.5 font-medium text-slate-700">
+                            <div><span class="text-slate-400">Instansi:</span> <?= esc($brandLembaga) ?></div>
+                            <div><span class="text-slate-400">Email IT:</span> <a href="mailto:<?= esc($brandEmail) ?>" class="text-blue-600 hover:underline"><?= esc($brandEmail) ?></a></div>
+                            <div><span class="text-slate-400">Telepon / Ext:</span> <?= esc($brandTelepon) ?></div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 leading-normal">Silakan hubungi IT Helpdesk dengan menyertakan Username atau Nomor Induk Pegawai Anda.</p>
+                    </div>
+                `,
+                confirmButtonText: 'Mengerti',
+                confirmButtonColor: '#2563EB',
+                buttonsStyling: true,
+                customClass: {
+                    popup: 'rounded-2xl shadow-xl',
+                    confirmButton: 'rounded-xl px-6 py-2.5 text-xs font-bold'
+                }
+            });
+        }
+
+        // Form Submit Loading Feedback
+        document.getElementById('loginForm').addEventListener('submit', function() {
+            const btn = document.getElementById('btnLogin');
+            const text = document.getElementById('btnText');
+            const arrow = document.getElementById('btnArrow');
+            const spinner = document.getElementById('btnSpinner');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+            text.textContent = 'Memverifikasi...';
+            arrow.classList.add('hidden');
+            spinner.classList.remove('hidden');
+        });
+    </script>
+</body>
 </html>

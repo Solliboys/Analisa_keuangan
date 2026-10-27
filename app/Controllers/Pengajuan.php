@@ -53,23 +53,109 @@ class Pengajuan extends BaseController
     {
         if ($redirect = $this->cekAuth()) return $redirect;
 
-        $userId = session()->get('user_id');
+        $userId  = session()->get('user_id');
         $jabatan = strtolower(session()->get('jabatan') ?? '');
 
-        if ($jabatan === 'superadmin') {
+        // Superadmin, CEO, Direktur, Reviewer, dan Petugas SLIK melihat seluruh pengajuan
+        $isGlobal = ($jabatan === 'superadmin' || 
+                     strpos($jabatan, 'ceo') !== false || 
+                     strpos($jabatan, 'direk') !== false || 
+                     strpos($jabatan, 'review') !== false || 
+                     strpos($jabatan, 'slik') !== false);
+
+        if ($isGlobal) {
             $daftarKredit = $this->kreditModel->orderBy('created_at', 'DESC')->findAll();
         } else {
             $daftarKredit = $this->kreditModel->where('user_id', $userId)->orderBy('created_at', 'DESC')->findAll();
         }
 
+        $db = \Config\Database::connect();
+        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
+            'nama_aplikasi' => 'OTW Credit Engine & CAM',
+            'nama_lembaga'  => 'PT BPR / Lembaga Pembiayaan',
+            'logo_aplikasi' => ''
+        ];
+
         $data = [
-            'title'        => 'Daftar Pengajuan Kredit',
-            'nama_lengkap' => session()->get('nama_lengkap'),
-            'jabatan'      => session()->get('jabatan'),
-            'daftar_kredit'=> $daftarKredit
+            'title'             => 'Daftar Pengajuan Kredit | ' . ($pengaturanSistem['nama_aplikasi'] ?? 'Credit Engine'),
+            'nama_lengkap'      => session()->get('nama_lengkap'),
+            'jabatan'           => session()->get('jabatan'),
+            'daftar_kredit'     => $daftarKredit,
+            'pengaturan_sistem' => $pengaturanSistem
         ];
 
         return view('pengajuan/index', $data);
+    }
+
+    /**
+     * Download Ekspor Data Pengajuan Kredit ke CSV/Excel
+     */
+    public function download()
+    {
+        if ($redirect = $this->cekAuth()) return $redirect;
+
+        $userId  = session()->get('user_id');
+        $jabatan = strtolower(session()->get('jabatan') ?? '');
+
+        $isGlobal = ($jabatan === 'superadmin' || 
+                     strpos($jabatan, 'ceo') !== false || 
+                     strpos($jabatan, 'direk') !== false || 
+                     strpos($jabatan, 'review') !== false || 
+                     strpos($jabatan, 'slik') !== false);
+
+        if ($isGlobal) {
+            $daftarKredit = $this->kreditModel->orderBy('created_at', 'DESC')->findAll();
+        } else {
+            $daftarKredit = $this->kreditModel->where('user_id', $userId)->orderBy('created_at', 'DESC')->findAll();
+        }
+
+        $filename = 'Daftar_Pengajuan_Kredit_' . date('Ymd_His') . '.csv';
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        $output = fopen('php://output', 'w');
+        fputs($output, "\xEF\xBB\xBF");
+
+        fputcsv($output, [
+            'No',
+            'No. Aplikasi',
+            'Tipe Aplikasi',
+            'Nama Debitur',
+            'Nama Usaha',
+            'Jenis Debitur',
+            'Plafon Pinjaman (Rp)',
+            'Tenor (Bulan)',
+            'Skema Pembayaran',
+            'Bunga per Bulan (%)',
+            'Jenis Jaminan',
+            'Status Pengajuan',
+            'Tanggal Buat'
+        ], ';');
+
+        $no = 1;
+        foreach ($daftarKredit as $row) {
+            fputcsv($output, [
+                $no++,
+                $row['nomor_aplikasi'] ?? '-',
+                $row['tipe_aplikasi'] ?? 'Fasilitas Baru',
+                $row['nama_debitur'] ?? '-',
+                $row['nama_usaha'] ?? '-',
+                $row['jenis_debitur'] ?? 'Individu',
+                (float)($row['plafon_pengajuan'] ?? 0),
+                (int)($row['tenor_bulan'] ?? 12),
+                $row['skema_pembayaran'] ?? 'Installment',
+                (float)($row['bunga_per_bulan'] ?? 0),
+                $row['jenis_jaminan'] ?? 'On Hand',
+                $row['status_pengajuan'] ?? 'Draft',
+                $row['created_at'] ?? '-'
+            ], ';');
+        }
+
+        fclose($output);
+        exit;
     }
 
     public function baru()
@@ -78,22 +164,26 @@ class Pengajuan extends BaseController
 
         $nomorAplikasi = 'CAM-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
 
+        $db = \Config\Database::connect();
+        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+
         $data = [
-            'title'          => 'Form Pengajuan & Analisa Kredit',
-            'nama_lengkap'   => session()->get('nama_lengkap'),
-            'jabatan'        => session()->get('jabatan'),
-            'kredit_id'      => null,
-            'nomor_aplikasi' => $nomorAplikasi,
-            'kredit'         => [],
-            'agunan'         => [],
-            'slik'           => [],
-            'webcheck'       => [],
-            'analisa'        => [],
-            'rekening'       => [],
-            'keuangan'       => [],
-            'disbursement'   => [],
-            'dokumen'        => [],
-            'komite'         => []
+            'title'             => 'Form Pengajuan & Analisa Kredit',
+            'nama_lengkap'      => session()->get('nama_lengkap'),
+            'jabatan'           => session()->get('jabatan'),
+            'kredit_id'         => null,
+            'nomor_aplikasi'    => $nomorAplikasi,
+            'kredit'            => [],
+            'agunan'            => [],
+            'slik'              => [],
+            'webcheck'          => [],
+            'analisa'           => [],
+            'rekening'          => [],
+            'keuangan'          => [],
+            'disbursement'      => [],
+            'dokumen'           => [],
+            'komite'            => [],
+            'pengaturan_sistem' => $pengaturanSistem
         ];
 
         return view('pengajuan/form', $data);
@@ -108,22 +198,26 @@ class Pengajuan extends BaseController
             return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan.');
         }
 
+        $db = \Config\Database::connect();
+        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+
         $data = [
-            'title'          => 'Edit Analisa Kredit - ' . $kredit['nomor_aplikasi'],
-            'nama_lengkap'   => session()->get('nama_lengkap'),
-            'jabatan'        => session()->get('jabatan'),
-            'kredit_id'      => $id,
-            'nomor_aplikasi' => $kredit['nomor_aplikasi'],
-            'kredit'         => $kredit,
-            'agunan'         => $this->agunanModel->where('kredit_id', $id)->findAll(),
-            'slik'           => $this->slikModel->where('kredit_id', $id)->findAll(),
-            'webcheck'       => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],
-            'analisa'        => $this->analisaModel->where('kredit_id', $id)->first() ?? [],
-            'rekening'       => $this->rekeningModel->where('kredit_id', $id)->findAll(),
-            'keuangan'       => $this->keuanganModel->where('kredit_id', $id)->first() ?? [],
-            'disbursement'   => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
-            'dokumen'        => $this->dokumenModel->where('kredit_id', $id)->findAll(),
-            'komite'         => $this->komiteModel->where('kredit_id', $id)->findAll()
+            'title'             => 'Edit Analisa Kredit - ' . $kredit['nomor_aplikasi'],
+            'nama_lengkap'      => session()->get('nama_lengkap'),
+            'jabatan'           => session()->get('jabatan'),
+            'kredit_id'         => $id,
+            'nomor_aplikasi'    => $kredit['nomor_aplikasi'],
+            'kredit'            => $kredit,
+            'agunan'            => $this->agunanModel->where('kredit_id', $id)->findAll(),
+            'slik'              => $this->slikModel->where('kredit_id', $id)->findAll(),
+            'webcheck'          => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],
+            'analisa'           => $this->analisaModel->where('kredit_id', $id)->first() ?? [],
+            'rekening'          => $this->rekeningModel->where('kredit_id', $id)->findAll(),
+            'keuangan'          => $this->keuanganModel->where('kredit_id', $id)->first() ?? [],
+            'disbursement'      => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
+            'dokumen'           => $this->dokumenModel->where('kredit_id', $id)->findAll(),
+            'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
+            'pengaturan_sistem' => $pengaturanSistem
         ];
 
         return view('pengajuan/form', $data);
@@ -251,7 +345,32 @@ class Pengajuan extends BaseController
 
     private function simpanSlik($kreditId, $input)
     {
-        $this->slikModel->where('kredit_id', $kreditId)->delete();
+        $db = \Config\Database::connect();
+        $pengaturan = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+        $ijinPengusul = (int)($pengaturan['ijin_pengusul_isi_slik'] ?? 1);
+
+        $jabatan = strtolower(session()->get('jabatan') ?? '');
+        $isPetugasSlik = ($jabatan === 'superadmin' || strpos($jabatan, 'slik') !== false);
+
+        // Jika bukan Petugas SLIK dan izin pengisian dinonaktifkan, jangan ubah data SLIK yang sudah ada
+        if (!$isPetugasSlik && $ijinPengusul === 0) {
+            return;
+        }
+
+        // Jika bukan Petugas SLIK dan data resmi SLIK sudah diverifikasi (is_verified = 1), jangan ditimpa oleh pengusul
+        $dataResmiAda = $this->slikModel->where('kredit_id', $kreditId)->where('is_verified', 1)->countAllResults();
+        if (!$isPetugasSlik && $dataResmiAda > 0) {
+            return;
+        }
+
+        // Hapus data SLIK lama
+        if (!$isPetugasSlik) {
+            // Pengusul hanya memperbarui data draf miliknya (is_verified = 0)
+            $this->slikModel->where('kredit_id', $kreditId)->where('is_verified', 0)->delete();
+        } else {
+            $this->slikModel->where('kredit_id', $kreditId)->delete();
+        }
+
         if (isset($input['slik']) && is_array($input['slik'])) {
             foreach ($input['slik'] as $row) {
                 if (empty($row['bank_lembaga']) && empty($row['nama_debitur'])) continue;
@@ -262,7 +381,9 @@ class Pengajuan extends BaseController
                     'outstanding'  => $this->cleanNumber($row['outstanding'] ?? 0),
                     'kelancaran'   => $row['kelancaran'] ?? 'Lancar',
                     'bank_lembaga' => $row['bank_lembaga'] ?? '',
-                    'keterangan'   => $row['keterangan'] ?? ''
+                    'keterangan'   => $row['keterangan'] ?? '',
+                    'is_verified'  => $isPetugasSlik ? 1 : 0,
+                    'diinput_oleh' => $isPetugasSlik ? 'petugas_slik' : 'pengusul'
                 ]);
             }
         }
@@ -503,6 +624,13 @@ class Pengajuan extends BaseController
     public function hapus($id = null)
     {
         if ($redirect = $this->cekAuth()) return $redirect;
+
+        $userRole = strtolower(trim(session()->get('jabatan') ?? ''));
+        $canDelete = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false || $userRole === 'superadmin' || $userRole === 'admin');
+
+        if (!$canDelete) {
+            return redirect()->to('/pengajuan')->with('error', 'Akses ditolak: Hanya CEO / Direksi yang berhak menghapus data pengajuan kredit.');
+        }
 
         $this->kreditModel->delete($id);
         return redirect()->to('/pengajuan')->with('success', 'Data pengajuan berhasil dihapus.');

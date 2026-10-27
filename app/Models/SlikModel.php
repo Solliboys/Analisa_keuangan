@@ -20,6 +20,8 @@ class SlikModel extends Model
         'kelancaran',
         'bank_lembaga',
         'keterangan',
+        'is_verified',
+        'diinput_oleh',
     ];
 
     protected $useTimestamps = true;

@@ -16,15 +16,28 @@
             .page-break { page-break-before: always; break-before: page; padding-top: 15mm; }
             @page { size: A4; margin: 12mm 15mm; }
         }
+        html.is-modal .no-print-toolbar,
+        .is-modal .no-print-toolbar { display: none !important; }
+        html.is-modal body,
+        .is-modal body { padding: 1rem !important; }
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #cbd5e1; padding: 5px 8px; vertical-align: top; }
         th { background-color: #f8fafc; font-weight: 700; text-transform: uppercase; font-size: 10px; color: #334155; }
     </style>
+    <script>
+        if (window.self !== window.top || window.location.search.includes('modal=1')) {
+            document.documentElement.classList.add('is-modal');
+        }
+    </script>
 </head>
 <body class="bg-slate-100 p-4 sm:p-8 antialiased">
 
+    <?php 
+    $isModalView = !empty($_GET['modal']) || isset($_GET['preview']) || isset($_GET['popup']);
+    if (!$isModalView): 
+    ?>
     <!-- Top Action Toolbar (No-Print) -->
-    <div class="max-w-4xl mx-auto mb-6 flex items-center justify-between no-print">
+    <div id="topActionToolbar" class="max-w-4xl mx-auto mb-6 flex items-center justify-between no-print no-print-toolbar">
         <a href="<?= base_url('pengajuan/edit/' . $kredit['kredit_id']) ?>" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition flex items-center gap-1.5 shadow-sm">
             &larr; Kembali ke Form
         </a>
@@ -36,6 +49,13 @@
             </button>
         </div>
     </div>
+    <script>
+        if (window.self !== window.top) {
+            const tb = document.getElementById('topActionToolbar');
+            if (tb) tb.style.display = 'none';
+        }
+    </script>
+    <?php endif; ?>
 
     <!-- Paper Container (Matches result.pdf layout exactly) -->
     <div class="page-sheet max-w-4xl mx-auto bg-white border border-slate-200 rounded-xl p-8 sm:p-12 shadow-sm">

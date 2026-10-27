@@ -6,6 +6,8 @@
     <title><?= esc($title ?? 'Konfigurasi Parameter Analisis 5C | OTW Kredit') ?></title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,30 +26,44 @@
     <!-- Include Sidebar Navbar -->
     <?= $this->include('navbar', [
         'active_menu'  => 'ai_5c',
-        'nama_lengkap' => $nama_lengkap ?? session()->get('nama_lengkap') ?? 'Budi Santoso',
-        'jabatan'      => $jabatan ?? session()->get('jabatan') ?? 'Senior Credit Analyst'
+        'nama_lengkap' => $nama_lengkap ?? session()->get('nama_lengkap') ?? 'Super Administrator',
+        'jabatan'      => $jabatan ?? session()->get('jabatan') ?? 'Superadmin'
     ]) ?>
 
     <!-- MAIN WRAPPER (Offset by sidebar width md:pl-64) -->
-    <div class="md:pl-64 flex flex-col min-h-screen">
+    <div class="md:pl-64 flex flex-col min-h-screen w-full">
 
         <!-- Mobile Header Bar -->
-        <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
+        <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20 w-full">
             <div class="flex items-center gap-3">
                 <button type="button" onclick="toggleSidebar()" class="p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
-                <span class="font-bold text-slate-900 text-sm">OTW <span class="text-blue-600">Kredit</span></span>
+                <div class="flex items-center gap-2">
+                    <?php if (!empty($pengaturan_sistem['logo_aplikasi'])): ?>
+                        <img src="<?= base_url($pengaturan_sistem['logo_aplikasi']) ?>" class="w-6 h-6 object-contain rounded" alt="Logo">
+                    <?php endif; ?>
+                    <span class="font-bold text-slate-900 text-sm"><?= esc($pengaturan_sistem['nama_aplikasi'] ?? 'OTW Kredit') ?></span>
+                </div>
             </div>
             <a href="<?= base_url('auth/logout') ?>" class="text-xs text-rose-600 font-semibold px-2.5 py-1.5 rounded-lg bg-rose-50 border border-rose-200">
                 Logout
             </a>
         </header>
 
-        <!-- Main Content -->
-        <main class="flex-1 p-5 sm:p-8 max-w-7xl w-full mx-auto">
+        <!-- Desktop Topbar Full Width -->
+        <div class="bg-white border-b border-slate-200/80 px-6 lg:px-8 py-3.5 hidden md:flex items-center justify-between sticky top-0 z-20 w-full">
+            <div class="flex items-center gap-2.5">
+                <span class="text-xs font-bold text-slate-900 uppercase tracking-wider">Super Administrator</span>
+                <span class="text-slate-300">/</span>
+                <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">AI 5C Analysis</span>
+            </div>
+        </div>
+
+        <!-- Main Content Full Width -->
+        <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full">
             
             <!-- Page Header -->
             <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-6">
@@ -60,9 +76,6 @@
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             Active &amp; Verified
-                        </span>
-                        <span class="px-2.5 py-1 rounded-md text-xs font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                            Engine: CreditScoring-v3.4
                         </span>
                     </div>
                     <p class="text-slate-500 text-sm mt-1.5 max-w-3xl leading-relaxed">
@@ -87,7 +100,115 @@
                 </div>
             </div>
 
-            <!-- Tab Navigation (Pill Tabs) -->
+            <!-- Card Utama: KONFIGURASI API & LINK GATEWAY MODEL AI (Diletakkan di Atas Nomor Pilar) -->
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 mb-6 shadow-2xs">
+                
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100 mb-5">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                KONFIGURASI API &amp; LINK GATEWAY MODEL AI
+                            </h2>
+                            <p class="text-[11px] text-slate-400">Pilih model LLM terintegrasi dan atur URL gateway endpoint komunikasi AI</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Gateway Terhubung
+                        </span>
+                    </div>
+                </div>
+
+                <?php
+                    $currentModel = $pengaturan_sistem['model_ai'] ?? $pengaturan_ai['model_ai'] ?? 'gemini-2.5-flash';
+                    $currentEndpoint = $pengaturan_sistem['api_endpoint'] ?? 'https://generativelanguage.googleapis.com/v1beta/models';
+                    $currentKey = $pengaturan_sistem['api_key'] ?? $pengaturan_ai['api_key'] ?? '';
+                ?>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    
+                    <!-- Col 1: API Pemilihan Model -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                                <span>API Pemilihan Model</span>
+                                <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">Engine Core</span>
+                        </div>
+                        <div class="relative">
+                            <select id="selectModelAi" class="w-full px-3.5 py-2.5 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition appearance-none pr-8 cursor-pointer shadow-2xs">
+                                <option value="gemini-2.5-flash" <?= $currentModel === 'gemini-2.5-flash' ? 'selected' : '' ?>>Google Gemini 2.5 Flash (Recommended)</option>
+                                <option value="gemini-1.5-pro" <?= $currentModel === 'gemini-1.5-pro' ? 'selected' : '' ?>>Google Gemini 1.5 Pro (Deep Multimodal)</option>
+                                <option value="gemini-1.5-flash" <?= $currentModel === 'gemini-1.5-flash' ? 'selected' : '' ?>>Google Gemini 1.5 Flash (Lightweight)</option>
+                                <option value="gemini-2.0-flash" <?= $currentModel === 'gemini-2.0-flash' ? 'selected' : '' ?>>Google Gemini 2.0 Flash (Next-Gen)</option>
+                                <option value="gpt-4o" <?= $currentModel === 'gpt-4o' ? 'selected' : '' ?>>OpenAI GPT-4o (Omni Intelligence)</option>
+                                <option value="gpt-4o-mini" <?= $currentModel === 'gpt-4o-mini' ? 'selected' : '' ?>>OpenAI GPT-4o Mini (Cost Efficient)</option>
+                                <option value="claude-3-5-sonnet" <?= $currentModel === 'claude-3-5-sonnet' ? 'selected' : '' ?>>Anthropic Claude 3.5 Sonnet</option>
+                                <option value="deepseek-chat" <?= $currentModel === 'deepseek-chat' ? 'selected' : '' ?>>DeepSeek V3 / R1</option>
+                                <option value="custom" <?= !in_array($currentModel, ['gemini-2.5-flash','gemini-1.5-pro','gemini-1.5-flash','gemini-2.0-flash','gpt-4o','gpt-4o-mini','claude-3-5-sonnet','deepseek-chat']) ? 'selected' : '' ?>>Model Kustom / Self-Hosted</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Pilih model LLM untuk pipeline penilaian 5C</p>
+                    </div>
+
+                    <!-- Col 2: Link Gateway API (Opsional) -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                                <span>Link Gateway</span>
+                                <span class="text-[10px] text-slate-400 font-normal">(Opsional)</span>
+                            </label>
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">Opsional</span>
+                        </div>
+                        <div class="relative">
+                            <input type="url" 
+                                   id="inputApiEndpoint" 
+                                   value="<?= esc($currentEndpoint) ?>" 
+                                   placeholder="Default bawaan jika dikosongkan..." 
+                                   class="w-full px-3.5 py-2.5 text-xs font-mono text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition shadow-2xs" />
+                        </div>
+                        <p class="text-[11px] text-slate-400">Kosongkan jika menggunakan gateway resmi default bawaan model</p>
+                    </div>
+
+                    <!-- Col 3: API Key Otentikasi -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-semibold text-slate-700">API Key / Token Gateway</label>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Tersimpan</span>
+                        </div>
+                        <div class="relative">
+                            <input type="password" 
+                                   id="inputApiKey" 
+                                   value="<?= esc($currentKey) ?>" 
+                                   placeholder="Masukkan API Key..." 
+                                   class="w-full pl-3.5 pr-10 py-2.5 text-xs font-mono text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition shadow-2xs" />
+                            <button type="button" 
+                                    onclick="toggleApiKeyVisibility()" 
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer" 
+                                    title="Tampilkan / Sembunyikan Key">
+                                <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-400">Kredensial otentikasi API yang terenkripsi</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Tab Navigation (Pill Tabs dengan Nomor 1 - 6) -->
             <div class="bg-slate-100/80 p-1.5 rounded-2xl mb-6 overflow-x-auto">
                 <div class="flex items-center gap-1.5 min-w-max">
                     
@@ -138,7 +259,7 @@
                 </div>
             </div>
 
-            <!-- Card 1: Parameter Metrik Risiko Pilar Agunan -->
+            <!-- Card 2: Parameter Metrik Risiko Pilar (Berdasarkan Tab Aktif) -->
             <div class="bg-white rounded-2xl border border-slate-200/80 p-6 mb-6 shadow-2xs">
                 
                 <!-- Card Header -->
@@ -155,8 +276,8 @@
                     </a>
                 </div>
 
-                <!-- 3 Metric Columns -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- 2 Metric Columns (Bobot & Threshold) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     
                     <!-- Col 1: Bobot Portofolio Pilar -->
                     <div class="space-y-1.5">
@@ -165,7 +286,7 @@
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">Max 40%</span>
                         </div>
                         <div class="relative">
-                            <input type="number" id="inputBobot" value="20" class="w-full pl-3.5 pr-8 py-2.5 text-sm font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition" />
+                            <input type="number" id="inputBobot" value="20" class="w-full pl-3.5 pr-8 py-2.5 text-sm font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition shadow-2xs" />
                             <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-bold text-slate-400">%</span>
                         </div>
                         <p class="text-[11px] text-slate-400">Alokasi porsi skor terhadap total 5C</p>
@@ -178,25 +299,14 @@
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Toleransi Sedang</span>
                         </div>
                         <div class="relative">
-                            <input type="number" id="inputThreshold" value="75" class="w-full pl-3.5 pr-14 py-2.5 text-sm font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition" />
+                            <input type="number" id="inputThreshold" value="75" class="w-full pl-3.5 pr-14 py-2.5 text-sm font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition shadow-2xs" />
                             <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-semibold text-slate-400">/ 100</span>
                         </div>
                         <p class="text-[11px] text-slate-400">Batas minimum kelayakan jaminan kredit</p>
                     </div>
 
-                    <!-- Col 3: Fokus Penilaian Utama -->
-                    <div class="space-y-1.5">
-                        <div class="flex items-center justify-between">
-                            <label class="text-xs font-semibold text-slate-700">Fokus Penilaian Utama</label>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-mono">OJK POJK-40</span>
-                        </div>
-                        <div>
-                            <input type="text" id="inputFokus" value="Legalitas & Nilai Likuidasi Jaminan" class="w-full px-3.5 py-2.5 text-sm font-medium text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition" />
-                        </div>
-                        <p class="text-[11px] text-slate-400">Kepatuhan hak tanggungan &amp; coverage ratio</p>
-                    </div>
-
                 </div>
+
             </div>
 
             <!-- Card 2: System Directive / Prompt Pipeline Editor -->
@@ -446,12 +556,23 @@ System Execution Directives:
             document.getElementById('metricTitle').innerText = data.title;
             document.getElementById('inputBobot').value = data.bobot;
             document.getElementById('inputThreshold').value = data.threshold;
-            document.getElementById('inputFokus').value = data.fokus;
             document.getElementById('directiveTitle').innerText = data.directive;
             document.getElementById('promptEditor').value = data.prompt;
             document.getElementById('btnRunText').innerText = `Terapkan & Jalankan Analisis (${capitalize(pillarKey)})`;
 
             updateTokenCount();
+        }
+
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('inputApiKey');
+            const eyeIcon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />`;
+            } else {
+                input.type = 'password';
+                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+            }
         }
 
         function insertVariable(tag) {
@@ -468,7 +589,14 @@ System Execution Directives:
         function formatPrompt() {
             const textarea = document.getElementById('promptEditor');
             textarea.value = textarea.value.trim().replace(/\n{3,}/g, '\n\n');
-            showToast('Prompt berhasil diformat rapi.');
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Prompt berhasil diformat rapi',
+                showConfirmButton: false,
+                timer: 2000
+            });
             updateTokenCount();
         }
 
@@ -480,18 +608,97 @@ System Execution Directives:
         }
 
         function resetDefaultPrompt() {
-            if (confirm('Kembalikan konfigurasi pilar ini ke pengaturan default standar perbankan?')) {
-                switchPillar(currentPillar);
-                showToast('Parameter dikembalikan ke default.');
+            Swal.fire({
+                title: 'Kembalikan ke Default?',
+                text: 'Reset konfigurasi dan prompt pilar ini ke standar bawaan perbankan?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Kembalikan',
+                cancelButtonText: 'Batal'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    switchPillar(currentPillar);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Tereset',
+                        text: 'Parameter pilar telah dikembalikan ke default.',
+                        timer: 1800,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        async function simpanKonfigurasiAi(actionType = 'draft') {
+            const modelAi = document.getElementById('selectModelAi').value;
+            const apiEndpoint = document.getElementById('inputApiEndpoint').value;
+            const apiKey = document.getElementById('inputApiKey').value;
+            const prompt = document.getElementById('promptEditor').value;
+            const pillar = currentPillar;
+
+            const formData = new FormData();
+            formData.append('model_ai', modelAi);
+            formData.append('api_endpoint', apiEndpoint);
+            formData.append('api_key', apiKey);
+            formData.append('pillar', pillar);
+            formData.append('prompt', prompt);
+
+            Swal.fire({
+                title: actionType === 'apply' ? 'Menerapkan Konfigurasi...' : 'Menyimpan Draf...',
+                text: 'Menghubungkan ke gateway API dan menyimpan konfigurasi model...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const response = await fetch('<?= base_url('superadmin/simpan-pengaturan-ai') ?>', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const res = await response.json();
+
+                if (res.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: actionType === 'apply' ? 'Model & Pipeline Diterapkan!' : 'Draf Berhasil Disimpan!',
+                        html: `<span class="text-xs text-slate-600">${res.message}</span><br><div class="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-left font-mono space-y-1"><div><b>Model:</b> <span class="text-blue-600">${res.model}</span></div><div class="truncate"><b>Gateway:</b> <span class="text-slate-700">${res.gateway}</span></div></div>`,
+                        confirmButtonColor: '#2563eb',
+                        confirmButtonText: 'OK, Selesai',
+                        customClass: {
+                            popup: 'rounded-3xl p-6 shadow-2xl border border-slate-100',
+                            confirmButton: 'rounded-xl px-6 py-2.5 font-bold text-xs shadow-md'
+                        }
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal Menyimpan',
+                        text: res.message || 'Terjadi kendala saat menyimpan konfigurasi.',
+                        confirmButtonColor: '#e11d48'
+                    });
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Kesalahan Jaringan',
+                    text: 'Tidak dapat terhubung ke server backend.',
+                    confirmButtonColor: '#e11d48'
+                });
             }
         }
 
         function saveDraft() {
-            showToast('Draf konfigurasi parameter berhasil disimpan secara lokal!');
+            simpanKonfigurasiAi('draft');
         }
 
         function applyAndRunAnalysis() {
-            showToast(`Konfigurasi parameter ${capitalize(currentPillar)} aktif dan diterapkan ke AI Engine!`, 'success');
+            simpanKonfigurasiAi('apply');
         }
 
         function openSandboxModal() {
@@ -504,17 +711,6 @@ System Execution Directives:
 
         function capitalize(s) {
             return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
-        }
-
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 text-xs font-medium text-white ${type === 'success' ? 'bg-emerald-600' : 'bg-slate-900'} animate-bounce`;
-            toast.innerHTML = `
-                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                <span>${message}</span>
-            `;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3500);
         }
 
         document.getElementById('promptEditor').addEventListener('input', updateTokenCount);

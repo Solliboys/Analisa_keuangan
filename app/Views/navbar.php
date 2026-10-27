@@ -14,26 +14,49 @@ if (empty($active_menu)) {
         $active_menu = 'ai_5c';
     } elseif (str_contains($current_uri, 'user')) {
         $active_menu = 'users';
+    } elseif (str_contains($current_uri, 'log')) {
+        $active_menu = 'log';
     } elseif (str_contains($current_uri, 'pengaturan')) {
         $active_menu = 'pengaturan';
-    } else {
+    } elseif (str_contains($current_uri, 'simulasi')) {
         $active_menu = 'simulasi';
+    } elseif (str_contains($current_uri, 'pengajuan')) {
+        $active_menu = 'pengajuan';
+    } else {
+        $active_menu = 'dashboard';
     }
 } else {
-    // Jika active_menu default simulasi tapi sedang membuka ai_5c/users/pengaturan
-    if ($active_menu === 'simulasi') {
+    // Jika active_menu default tapi membuka rute lain
+    if ($active_menu === 'simulasi' || $active_menu === 'dashboard') {
         if (str_contains($current_uri, 'ai_5c') || str_contains($current_uri, 'review')) {
             $active_menu = 'ai_5c';
         } elseif (str_contains($current_uri, 'user')) {
             $active_menu = 'users';
+        } elseif (str_contains($current_uri, 'log')) {
+            $active_menu = 'log';
         } elseif (str_contains($current_uri, 'pengaturan')) {
             $active_menu = 'pengaturan';
+        } elseif (str_contains($current_uri, 'pengajuan')) {
+            $active_menu = 'pengajuan';
         }
     }
 }
 
-$current_name = $nama_lengkap ?? session()->get('nama_lengkap') ?? 'Budi Santoso';
-$current_role = $jabatan ?? session()->get('jabatan') ?? 'Senior Credit Analyst';
+$current_name = $nama_lengkap ?? session()->get('nama_lengkap') ?? 'Super Administrator';
+$current_role = $jabatan ?? session()->get('jabatan') ?? 'Superadmin';
+
+// Ambil pengaturan sistem jika belum tersedia
+if (!isset($pengaturan_sistem)) {
+    try {
+        $pengaturan_sistem = \Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+    } catch (\Throwable $e) {
+        $pengaturan_sistem = [];
+    }
+}
+
+$brandName   = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Kredit';
+$brandSlogan = !empty($pengaturan_sistem['slogan_aplikasi']) ? $pengaturan_sistem['slogan_aplikasi'] : 'Sistem Analisa Kredit';
+$brandLogo   = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
 
 // Hitung inisial nama
 $words = explode(' ', trim($current_name));
@@ -42,7 +65,7 @@ foreach (array_slice($words, 0, 2) as $w) {
     $initials .= strtoupper(substr($w, 0, 1));
 }
 if (empty($initials)) {
-    $initials = 'BS';
+    $initials = 'SA';
 }
 ?>
 
@@ -52,27 +75,31 @@ if (empty($initials)) {
     <!-- Top Part: Logo & Menu -->
     <div class="p-5 flex flex-col h-full overflow-y-auto">
         
-        <!-- App Logo & Brand -->
+        <!-- App Logo & Brand (Dinamis dari Pengaturan) -->
         <div class="flex items-center justify-between pb-6 border-b border-slate-100">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
-                    <!-- Shield Check Icon -->
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                </div>
-                <div>
-                    <div class="font-extrabold text-[17px] tracking-tight text-slate-900 leading-none">
-                        OTW <span class="text-blue-600">Kredit</span>
+            <a href="<?= base_url('dashboard') ?>" class="flex items-center gap-3 overflow-hidden group">
+                <?php if (!empty($brandLogo)): ?>
+                    <img src="<?= base_url($brandLogo) ?>" alt="<?= esc($brandName) ?>" class="w-10 h-10 object-contain rounded-xl p-1 bg-white border border-slate-200 shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                <?php else: ?>
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0 group-hover:scale-105 transition-transform">
+                        <!-- Shield Check Icon Bawaan -->
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
                     </div>
-                    <div class="text-[11px] text-slate-400 font-medium tracking-tight mt-1">
-                        Sistem Analisa Kredit
+                <?php endif; ?>
+                <div class="overflow-hidden">
+                    <div class="font-extrabold text-[15px] sm:text-[16px] tracking-tight text-slate-900 leading-tight truncate" title="<?= esc($brandName) ?>">
+                        <?= esc($brandName) ?>
+                    </div>
+                    <div class="text-[11px] text-slate-400 font-medium tracking-tight mt-0.5 truncate" title="<?= esc($brandSlogan) ?>">
+                        <?= esc($brandSlogan) ?>
                     </div>
                 </div>
-            </div>
+            </a>
 
             <!-- Close button for mobile -->
-            <button type="button" onclick="toggleSidebar()" class="md:hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+            <button type="button" onclick="toggleSidebar()" class="md:hidden p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
@@ -82,20 +109,29 @@ if (empty($initials)) {
         <!-- Navigation Section -->
         <div class="mt-6 flex-1">
             <div class="text-[11px] font-bold tracking-wider text-slate-400 px-3 uppercase mb-3">
-                MENU UTAMA
+                MENU SUPER ADMIN
             </div>
             
             <nav class="space-y-1.5">
-                <!-- Simulasi Kredit -->
-                <a href="<?= base_url('superadmin/simulasi') ?>" 
-                   class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 <?= ($active_menu === 'simulasi') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' ?>">
-                    <svg class="w-5 h-5 <?= ($active_menu === 'simulasi') ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <!-- Dashboard Utama -->
+                <a href="<?= base_url('dashboard') ?>" 
+                   class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 <?= ($active_menu === 'dashboard') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' ?>">
+                    <svg class="w-5 h-5 <?= ($active_menu === 'dashboard') ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
-                    <span>Simulasi Kredit</span>
+                    <span>Dashboard Utama</span>
                 </a>
 
-                <!-- AI 5C Analysis -->
+                <!-- Semua Pengajuan (superadmin/simulasi) -->
+                <a href="<?= base_url('superadmin/simulasi') ?>" 
+                   class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 <?= ($active_menu === 'simulasi' || $active_menu === 'pengajuan') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' ?>">
+                    <svg class="w-5 h-5 <?= ($active_menu === 'simulasi' || $active_menu === 'pengajuan') ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <span>Semua Pengajuan</span>
+                </a>
+
+                <!-- AI 5C Analysis (superadmin/ai_5c) -->
                 <a href="<?= base_url('superadmin/ai_5c') ?>" 
                    class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 <?= ($active_menu === 'ai_5c') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' ?>">
                     <svg class="w-5 h-5 <?= ($active_menu === 'ai_5c') ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,13 +140,22 @@ if (empty($initials)) {
                     <span>AI 5C Analysis</span>
                 </a>
 
-                <!-- Manajemen User -->
+                <!-- Manajemen User (superadmin/manajemen_user) -->
                 <a href="<?= base_url('superadmin/manajemen_user') ?>" 
                    class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 <?= ($active_menu === 'users') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' ?>">
                     <svg class="w-5 h-5 <?= ($active_menu === 'users') ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
                     <span>Manajemen User</span>
+                </a>
+
+                <!-- Log Aktivitas (superadmin/log) -->
+                <a href="<?= base_url('superadmin/log') ?>" 
+                   class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 <?= ($active_menu === 'log') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' ?>">
+                    <svg class="w-5 h-5 <?= ($active_menu === 'log') ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    <span>Log Aktivitas</span>
                 </a>
 
                 <!-- Pengaturan -->

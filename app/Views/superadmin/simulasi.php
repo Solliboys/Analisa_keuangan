@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($title ?? 'Daftar Simulasi Analisa Kredit | OTW Kredit') ?></title>
+    <title><?= esc($title ?? 'Semua Pengajuan Kredit | OTW Kredit') ?></title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Google Fonts: Plus Jakarta Sans & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,15 +23,15 @@
     <!-- Include Sidebar Navbar -->
     <?= $this->include('navbar', [
         'active_menu'  => 'simulasi',
-        'nama_lengkap' => $nama_lengkap ?? session()->get('nama_lengkap') ?? 'Budi Santoso',
-        'jabatan'      => $jabatan ?? session()->get('jabatan') ?? 'Senior Credit Analyst'
+        'nama_lengkap' => $nama_lengkap ?? session()->get('nama_lengkap') ?? 'Super Administrator',
+        'jabatan'      => $jabatan ?? session()->get('jabatan') ?? 'Superadmin'
     ]) ?>
 
-    <!-- MAIN WRAPPER (Offset by sidebar width md:pl-64) -->
-    <div class="md:pl-64 flex flex-col min-h-screen">
+    <!-- MAIN WRAPPER (Full Width md:pl-64) -->
+    <div class="md:pl-64 flex flex-col min-h-screen w-full">
 
         <!-- Mobile Header Bar -->
-        <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
+        <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20 w-full">
             <div class="flex items-center gap-3">
                 <button type="button" onclick="toggleSidebar()" class="p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,12 +39,10 @@
                     </svg>
                 </button>
                 <div class="flex items-center gap-2">
-                    <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                    </div>
-                    <span class="font-bold text-slate-900 text-sm">OTW <span class="text-blue-600">Kredit</span></span>
+                    <?php if (!empty($pengaturan_sistem['logo_aplikasi'])): ?>
+                        <img src="<?= base_url($pengaturan_sistem['logo_aplikasi']) ?>" class="w-6 h-6 object-contain rounded" alt="Logo">
+                    <?php endif; ?>
+                    <span class="font-bold text-slate-900 text-sm"><?= esc($pengaturan_sistem['nama_aplikasi'] ?? 'OTW Kredit') ?></span>
                 </div>
             </div>
             <div class="flex items-center gap-2">
@@ -52,35 +52,65 @@
             </div>
         </header>
 
-        <!-- Main Content Body -->
-        <main class="flex-1 p-5 sm:p-8 max-w-7xl w-full mx-auto">
+        <!-- Desktop Topbar Full Width -->
+        <div class="bg-white border-b border-slate-200/80 px-6 lg:px-8 py-3.5 hidden md:flex items-center justify-between sticky top-0 z-20 w-full">
+            <div class="flex items-center gap-2.5">
+                <span class="text-xs font-bold text-slate-900 uppercase tracking-wider">Super Administrator</span>
+                <span class="text-slate-300">/</span>
+                <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">Semua Pengajuan</span>
+            </div>
+        </div>
+
+        <!-- Main Content Body Full Width -->
+        <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full">
+
+            <!-- Persistent Flash Message Alerts -->
+            <?php if (session()->getFlashdata('success')): ?>
+                <div id="flashSuccessAlert" class="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between shadow-2xs w-full">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span><?= session()->getFlashdata('success') ?></span>
+                    </div>
+                    <button onclick="document.getElementById('flashSuccessAlert').remove()" class="text-emerald-500 hover:text-emerald-800 font-bold text-sm">&times;</button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (session()->getFlashdata('error')): ?>
+                <div id="flashErrorAlert" class="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center justify-between shadow-2xs w-full">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        <span><?= session()->getFlashdata('error') ?></span>
+                    </div>
+                    <button onclick="document.getElementById('flashErrorAlert').remove()" class="text-rose-500 hover:text-rose-800 font-bold text-sm">&times;</button>
+                </div>
+            <?php endif; ?>
             
             <!-- Page Header: Title & Action Buttons -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
                     <h1 class="text-2xl sm:text-[26px] font-bold text-slate-900 tracking-tight">
-                        Daftar Simulasi Analisa Kredit
+                        Semua Pengajuan Kredit
                     </h1>
                     <p class="text-slate-500 text-sm mt-1">
-                        Riwayat dan draf kalkulasi simulasi kredit nasabah.
+                        Daftar seluruh berkas permohonan pembiayaan, skema tenor, jaminan, dan status analisis CAM.
                     </p>
                 </div>
                 <div class="flex items-center gap-3">
                     <!-- Export Button -->
-                    <button type="button" onclick="handleExportData()" class="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200 text-xs font-semibold inline-flex items-center gap-2 transition-colors shadow-2xs">
+                    <button type="button" onclick="handleExportData()" class="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200 text-xs font-semibold inline-flex items-center gap-2 transition-colors shadow-2xs cursor-pointer">
                         <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        <span>Export</span>
+                        <span>Export Data</span>
                     </button>
 
-                    <!-- + Tambah Simulasi Button -->
-                    <button type="button" onclick="openTambahSimulasiModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2 transition-colors shadow-xs shadow-blue-500/20">
+                    <!-- + Buat Pengajuan Baru -->
+                    <a href="<?= base_url('pengajuan/baru') ?>" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2 transition-colors shadow-xs shadow-blue-500/20 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
-                        <span>+ Tambah Simulasi</span>
-                    </button>
+                        <span>Tambah Pengajuan Baru</span>
+                    </a>
                 </div>
             </div>
 
@@ -98,14 +128,15 @@
                         <input type="text" 
                                id="searchInput" 
                                onkeyup="filterTable()" 
-                               placeholder="Cari nama debitur, ID simulasi, atau NIK..." 
+                               placeholder="Cari nomor aplikasi, nama debitur, atau nama usaha..." 
                                class="w-full pl-10 pr-4 py-2 text-sm bg-transparent rounded-xl border border-transparent focus:border-blue-500 focus:bg-slate-50/50 outline-none text-slate-800 placeholder-slate-400 transition" />
                     </div>
 
                     <!-- Filter Tenor Dropdown -->
-                    <div class="relative w-full md:w-auto shrink-0">
-                        <select id="tenorFilter" onchange="filterTable()" class="w-full md:w-44 px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl appearance-none pr-9 focus:border-blue-500 focus:outline-none transition cursor-pointer">
+                    <div class="relative w-full md:w-44 shrink-0">
+                        <select id="tenorFilter" onchange="filterTable()" class="w-full px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl appearance-none pr-9 focus:border-blue-500 focus:outline-none transition cursor-pointer">
                             <option value="">Semua Tenor</option>
+                            <option value="6">6 Bulan</option>
                             <option value="12">12 Bulan</option>
                             <option value="24">24 Bulan</option>
                             <option value="36">36 Bulan</option>
@@ -113,231 +144,154 @@
                             <option value="60">60 Bulan</option>
                         </select>
                         <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                         </div>
                     </div>
 
-                    <!-- Filter Rentang Plafon Dropdown -->
-                    <div class="relative w-full md:w-auto shrink-0">
-                        <select id="plafonFilter" onchange="filterTable()" class="w-full md:w-44 px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl appearance-none pr-9 focus:border-blue-500 focus:outline-none transition cursor-pointer">
-                            <option value="">Rentang Plafon</option>
-                            <option value="under_100">< Rp 100 Juta</option>
-                            <option value="100_300">Rp 100 - 300 Juta</option>
-                            <option value="300_500">Rp 300 - 500 Juta</option>
-                            <option value="above_500">> Rp 500 Juta</option>
+                    <!-- Filter Status Pengajuan Dropdown -->
+                    <div class="relative w-full md:w-48 shrink-0">
+                        <select id="statusFilter" onchange="filterTable()" class="w-full px-3.5 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-xl appearance-none pr-9 focus:border-blue-500 focus:outline-none transition cursor-pointer">
+                            <option value="">Semua Status</option>
+                            <option value="disetujui">Disetujui</option>
+                            <option value="disetujui bersyarat">Disetujui Bersyarat</option>
+                            <option value="diajukan">Diajukan</option>
+                            <option value="draft">Draft</option>
+                            <option value="ditolak">Ditolak</option>
                         </select>
                         <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                         </div>
                     </div>
 
                 </div>
             </div>
 
-            <!-- Table Card -->
+            <!-- Table Card (Struktur Gambar 1 & Aksi Detail + Hapus) -->
             <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse" id="simulasiTable">
                         <thead>
                             <tr class="border-b border-slate-100 bg-white text-slate-400 text-[11px] font-bold uppercase tracking-wider">
-                                <th scope="col" class="py-4 px-6 font-semibold">TANGGAL SIMULASI</th>
-                                <th scope="col" class="py-4 px-6 font-semibold">NAMA NASABAH / CALON DEBITUR</th>
-                                <th scope="col" class="py-4 px-6 font-semibold">PLAFON PINJAMAN</th>
-                                <th scope="col" class="py-4 px-6 font-semibold">TENOR</th>
-                                <th scope="col" class="py-4 px-6 font-semibold text-right">AKSI</th>
+                                <th scope="col" class="py-4 px-4 font-semibold whitespace-nowrap">NO. APLIKASI</th>
+                                <th scope="col" class="py-4 px-4 font-semibold whitespace-nowrap">NAMA DEBITUR &amp; USAHA</th>
+                                <th scope="col" class="py-4 px-4 font-semibold whitespace-nowrap">PLAFON PINJAMAN</th>
+                                <th scope="col" class="py-4 px-4 font-semibold whitespace-nowrap">SKEMA &amp; TENOR</th>
+                                <th scope="col" class="py-4 px-4 font-semibold whitespace-nowrap">JAMINAN</th>
+                                <th scope="col" class="py-4 px-4 font-semibold whitespace-nowrap">STATUS</th>
+                                <th scope="col" class="py-4 px-4 font-semibold whitespace-nowrap">TANGGAL BUAT</th>
+                                <th scope="col" class="py-4 px-4 font-semibold text-center whitespace-nowrap">AKSI</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-sm" id="tableBody">
                             
-                            <!-- Row 1: Hendrawan Pratama -->
-                            <tr class="hover:bg-slate-50/70 transition-colors data-row" data-tenor="12" data-plafon="200000000">
-                                <td class="py-4 px-6 text-slate-500 text-xs font-medium whitespace-nowrap">
-                                    24 Okt 2024
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap nama-nasabah">
-                                    Hendrawan Pratama
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap">
-                                    Rp 200.000.000
-                                </td>
-                                <td class="py-4 px-6 text-slate-600 whitespace-nowrap">
-                                    12 Bulan
-                                </td>
-                                <td class="py-4 px-6 text-right whitespace-nowrap">
-                                    <div class="inline-flex items-center gap-2">
-                                        <button type="button" onclick="viewDetail('Hendrawan Pratama', 'Rp 200.000.000', '12 Bulan', '24 Okt 2024', 'Perorangan', '82 / 100 (Layak)')" class="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/70 hover:bg-blue-100/70 border border-blue-100 rounded-lg transition-colors">
-                                            Detail
-                                        </button>
-                                        <button type="button" onclick="analisaUlang('Hendrawan Pratama')" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                                            Analisa Ulang
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            <?php if (empty($daftar_kredit)): ?>
+                                <tr id="emptyRow">
+                                    <td colspan="8" class="text-center py-12 text-slate-400">
+                                        <div class="w-12 h-12 mx-auto mb-3 text-slate-300">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                        </div>
+                                        <p class="font-medium text-slate-600">Belum ada berkas pengajuan kredit.</p>
+                                        <p class="text-xs text-slate-400 mt-1">Klik tombol "+ Tambah Pengajuan Baru" untuk membuat berkas pengajuan kredit.</p>
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($daftar_kredit as $row): ?>
+                                    <tr id="row-kredit-<?= $row['kredit_id'] ?>" 
+                                        class="hover:bg-slate-50/70 transition-colors data-row" 
+                                        data-id="<?= $row['kredit_id'] ?>"
+                                        data-nomor="<?= strtolower(esc($row['nomor_aplikasi'])) ?>"
+                                        data-nama="<?= strtolower(esc($row['nama_debitur'] ?: '')) ?>"
+                                        data-usaha="<?= strtolower(esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? ''))) ?>"
+                                        data-tenor="<?= (int)($row['tenor_bulan'] ?? 12) ?>"
+                                        data-plafon="<?= (float)($row['plafon_pengajuan'] ?? 0) ?>"
+                                        data-status="<?= strtolower($row['status_pengajuan'] ?? 'draft') ?>">
+                                        
+                                        <!-- 1. NO. APLIKASI -->
+                                        <td class="py-3.5 px-4 font-bold text-slate-900 whitespace-nowrap">
+                                            <?= esc($row['nomor_aplikasi']) ?>
+                                            <span class="block text-xs font-normal text-slate-400"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?></span>
+                                        </td>
 
-                            <!-- Row 2: PT Maju Bersama -->
-                            <tr class="hover:bg-slate-50/70 transition-colors data-row" data-tenor="36" data-plafon="750000000">
-                                <td class="py-4 px-6 text-slate-500 text-xs font-medium whitespace-nowrap">
-                                    24 Okt 2024
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap nama-nasabah">
-                                    PT Maju Bersama
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap">
-                                    Rp 750.000.000
-                                </td>
-                                <td class="py-4 px-6 text-slate-600 whitespace-nowrap">
-                                    36 Bulan
-                                </td>
-                                <td class="py-4 px-6 text-right whitespace-nowrap">
-                                    <div class="inline-flex items-center gap-2">
-                                        <button type="button" onclick="viewDetail('PT Maju Bersama', 'Rp 750.000.000', '36 Bulan', '24 Okt 2024', 'Badan Usaha (PT)', '88 / 100 (Sangat Layak)')" class="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/70 hover:bg-blue-100/70 border border-blue-100 rounded-lg transition-colors">
-                                            Detail
-                                        </button>
-                                        <button type="button" onclick="analisaUlang('PT Maju Bersama')" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                                            Analisa Ulang
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                        <!-- 2. NAMA DEBITUR & USAHA -->
+                                        <td class="py-3.5 px-4">
+                                            <div class="font-bold text-slate-900"><?= esc($row['nama_debitur'] ?: '-') ?></div>
+                                            <div class="text-xs text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?></div>
+                                        </td>
 
-                            <!-- Row 3: CV Berkah Mandiri -->
-                            <tr class="hover:bg-slate-50/70 transition-colors data-row" data-tenor="24" data-plafon="350000000">
-                                <td class="py-4 px-6 text-slate-500 text-xs font-medium whitespace-nowrap">
-                                    23 Okt 2024
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap nama-nasabah">
-                                    CV Berkah Mandiri
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap">
-                                    Rp 350.000.000
-                                </td>
-                                <td class="py-4 px-6 text-slate-600 whitespace-nowrap">
-                                    24 Bulan
-                                </td>
-                                <td class="py-4 px-6 text-right whitespace-nowrap">
-                                    <div class="inline-flex items-center gap-2">
-                                        <button type="button" onclick="viewDetail('CV Berkah Mandiri', 'Rp 350.000.000', '24 Bulan', '23 Okt 2024', 'Badan Usaha (CV)', '76 / 100 (Layak Bersyarat)')" class="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/70 hover:bg-blue-100/70 border border-blue-100 rounded-lg transition-colors">
-                                            Detail
-                                        </button>
-                                        <button type="button" onclick="analisaUlang('CV Berkah Mandiri')" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                                            Analisa Ulang
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                        <!-- 3. PLAFON PINJAMAN (Warna Biru Tebal) -->
+                                        <td class="py-3.5 px-4 font-bold text-blue-600 whitespace-nowrap">
+                                            Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?>
+                                        </td>
 
-                            <!-- Row 4: Dewi Sartika -->
-                            <tr class="hover:bg-slate-50/70 transition-colors data-row" data-tenor="12" data-plafon="120000000">
-                                <td class="py-4 px-6 text-slate-500 text-xs font-medium whitespace-nowrap">
-                                    23 Okt 2024
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap nama-nasabah">
-                                    Dewi Sartika
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap">
-                                    Rp 120.000.000
-                                </td>
-                                <td class="py-4 px-6 text-slate-600 whitespace-nowrap">
-                                    12 Bulan
-                                </td>
-                                <td class="py-4 px-6 text-right whitespace-nowrap">
-                                    <div class="inline-flex items-center gap-2">
-                                        <button type="button" onclick="viewDetail('Dewi Sartika', 'Rp 120.000.000', '12 Bulan', '23 Okt 2024', 'Perorangan', '85 / 100 (Layak)')" class="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/70 hover:bg-blue-100/70 border border-blue-100 rounded-lg transition-colors">
-                                            Detail
-                                        </button>
-                                        <button type="button" onclick="analisaUlang('Dewi Sartika')" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                                            Analisa Ulang
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                        <!-- 4. SKEMA & TENOR -->
+                                        <td class="py-3.5 px-4 whitespace-nowrap">
+                                            <div class="font-semibold text-slate-800"><?= esc($row['skema_pembayaran'] ?? 'Balloon Payment') ?></div>
+                                            <div class="text-xs text-slate-500"><?= (int)($row['tenor_bulan'] ?? 12) ?> Bulan (<?= (float)($row['bunga_per_bulan'] ?? 0) ?>%/bln)</div>
+                                        </td>
 
-                            <!-- Row 5: Budi Prasetyo -->
-                            <tr class="hover:bg-slate-50/70 transition-colors data-row" data-tenor="36" data-plafon="500000000">
-                                <td class="py-4 px-6 text-slate-500 text-xs font-medium whitespace-nowrap">
-                                    22 Okt 2024
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap nama-nasabah">
-                                    Budi Prasetyo
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap">
-                                    Rp 500.000.000
-                                </td>
-                                <td class="py-4 px-6 text-slate-600 whitespace-nowrap">
-                                    36 Bulan
-                                </td>
-                                <td class="py-4 px-6 text-right whitespace-nowrap">
-                                    <div class="inline-flex items-center gap-2">
-                                        <button type="button" onclick="viewDetail('Budi Prasetyo', 'Rp 500.000.000', '36 Bulan', '22 Okt 2024', 'Perorangan', '79 / 100 (Layak)')" class="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/70 hover:bg-blue-100/70 border border-blue-100 rounded-lg transition-colors">
-                                            Detail
-                                        </button>
-                                        <button type="button" onclick="analisaUlang('Budi Prasetyo')" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                                            Analisa Ulang
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                        <!-- 5. JAMINAN (Badge On Hand / Jenis Jaminan) -->
+                                        <td class="py-3.5 px-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
+                                                <?= esc($row['jenis_jaminan'] ?? 'On Hand') ?>
+                                            </span>
+                                        </td>
 
-                            <!-- Row 6: Siti Aminah -->
-                            <tr class="hover:bg-slate-50/70 transition-colors data-row" data-tenor="24" data-plafon="50000000">
-                                <td class="py-4 px-6 text-slate-500 text-xs font-medium whitespace-nowrap">
-                                    22 Okt 2024
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap nama-nasabah">
-                                    Siti Aminah
-                                </td>
-                                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap">
-                                    Rp 50.000.000
-                                </td>
-                                <td class="py-4 px-6 text-slate-600 whitespace-nowrap">
-                                    24 Bulan
-                                </td>
-                                <td class="py-4 px-6 text-right whitespace-nowrap">
-                                    <div class="inline-flex items-center gap-2">
-                                        <button type="button" onclick="viewDetail('Siti Aminah', 'Rp 50.000.000', '24 Bulan', '22 Okt 2024', 'Perorangan', '91 / 100 (Sangat Layak)')" class="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/70 hover:bg-blue-100/70 border border-blue-100 rounded-lg transition-colors">
-                                            Detail
-                                        </button>
-                                        <button type="button" onclick="analisaUlang('Siti Aminah')" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                                            Analisa Ulang
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                        <!-- 6. STATUS -->
+                                        <td class="py-3.5 px-4 whitespace-nowrap">
+                                            <?php
+                                                $st = strtolower($row['status_pengajuan'] ?? 'draft');
+                                                $badgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+                                                if ($st === 'disetujui') {
+                                                    $badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                                                } elseif ($st === 'disetujui bersyarat' || str_contains($st, 'bersyarat')) {
+                                                    $badgeClass = 'bg-blue-50/70 text-slate-700 border-blue-200';
+                                                } elseif ($st === 'ditolak') {
+                                                    $badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+                                                } elseif ($st === 'diajukan') {
+                                                    $badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                                                }
+                                            ?>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border <?= $badgeClass ?>">
+                                                <?= esc($row['status_pengajuan'] ?? 'Draft') ?>
+                                            </span>
+                                        </td>
+
+                                        <!-- 7. TANGGAL BUAT -->
+                                        <td class="py-3.5 px-4 text-xs text-slate-500 whitespace-nowrap">
+                                            <?= !empty($row['created_at']) ? date('d M Y', strtotime($row['created_at'])) : '-' ?>
+                                        </td>
+
+                                        <!-- 8. AKSI (Hanya Detail dan Hapus) -->
+                                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-1.5">
+                                                <button type="button" 
+                                                        onclick="viewDetailKredit(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>)" 
+                                                        class="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors cursor-pointer">
+                                                    Detail
+                                                </button>
+                                                <button type="button" 
+                                                        onclick="hapusSimulasi(<?= (int)$row['kredit_id'] ?>, '<?= esc($row['nomor_aplikasi']) ?>')" 
+                                                        class="px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-colors cursor-pointer">
+                                                    Hapus
+                                                </button>
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
 
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Table Footer & Pagination -->
+                <!-- Table Footer & Counter -->
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-slate-100 text-xs text-slate-500">
                     <div>
-                        Menampilkan <span class="font-bold text-slate-800" id="showingCount">1–6</span> dari <span class="font-bold text-slate-800">48</span> simulasi kredit
+                        Menampilkan <span class="font-bold text-slate-800" id="showingCount"><?= count($daftar_kredit ?? []) ?></span> berkas pengajuan kredit
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <button type="button" class="px-3 py-1.5 text-slate-400 font-medium cursor-not-allowed rounded-lg hover:bg-slate-50">
-                            Sebelumnya
-                        </button>
-                        <button type="button" class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center shadow-xs shadow-blue-500/20">
-                            1
-                        </button>
-                        <button type="button" class="w-8 h-8 rounded-lg text-slate-600 hover:bg-slate-100 font-medium flex items-center justify-center transition">
-                            2
-                        </button>
-                        <button type="button" class="w-8 h-8 rounded-lg text-slate-600 hover:bg-slate-100 font-medium flex items-center justify-center transition">
-                            3
-                        </button>
-                        <span class="px-1 text-slate-400">...</span>
-                        <button type="button" class="w-8 h-8 rounded-lg text-slate-600 hover:bg-slate-100 font-medium flex items-center justify-center transition">
-                            8
-                        </button>
-                        <button type="button" class="px-3 py-1.5 text-slate-700 font-semibold hover:text-blue-600 rounded-lg hover:bg-slate-50 transition">
-                            Selanjutnya
-                        </button>
+                    <div class="text-[11px] text-slate-400">
+                        Sinkron real-time dengan basis data CAM
                     </div>
                 </div>
             </div>
@@ -345,79 +299,248 @@
         </main>
     </div>
 
-    <!-- MODAL: Tambah Simulasi Kredit -->
-    <div id="tambahSimulasiModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-lg w-full p-6 animate-in fade-in duration-200">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    <!-- MODAL: Detail Pengajuan Kredit (Format Form Reviewer) -->
+    <div id="detailModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 hidden overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl w-full my-auto overflow-hidden animate-in fade-in duration-200 max-h-[92vh] flex flex-col">
+            
+            <!-- Modal Header (Aksen Form Reviewer) -->
+            <div class="p-5 border-b border-blue-100 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md font-extrabold text-lg shrink-0">
+                        ⚖️
                     </div>
-                    <h3 class="font-bold text-slate-900 text-lg">Tambah Simulasi Baru</h3>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[11px] font-extrabold text-blue-700 uppercase tracking-wider">Lembar Evaluasi Reviewer</span>
+                            <span class="text-slate-300">&bull;</span>
+                            <span class="text-[11px] text-slate-500 font-semibold" id="detailNomorAplikasi">CAM-XXXXXXXX-XXXX</span>
+                            <span class="text-slate-300">&bull;</span>
+                            <span class="text-[11px] text-slate-400" id="detailTanggalBuat">-</span>
+                        </div>
+                        <h2 class="text-base sm:text-lg font-extrabold text-slate-900" id="detailNamaDebiturHeader">
+                            Nama Debitur
+                        </h2>
+                    </div>
                 </div>
-                <button onclick="closeTambahSimulasiModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+
+                <div class="flex items-center gap-3">
+                    <div class="text-right hidden sm:block">
+                        <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Plafon Pengajuan</span>
+                        <div class="text-base font-extrabold text-blue-700" id="detailPlafonHeader">
+                            Rp 0
+                        </div>
+                    </div>
+                    <span id="detailBadgeStatus" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border bg-blue-50 text-blue-700 border-blue-200">
+                        Draft
+                    </span>
+                    <button type="button" onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer ml-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
             </div>
             
-            <form onsubmit="submitSimulasiBaru(event)" class="mt-4 space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Nasabah / Badan Usaha</label>
-                    <input type="text" id="newNama" required placeholder="Contoh: Hendrawan Pratama" class="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none" />
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Plafon Pinjaman (Rp)</label>
-                        <input type="number" id="newPlafon" required placeholder="200000000" class="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tenor (Bulan)</label>
-                        <select id="newTenor" class="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none">
-                            <option value="12">12 Bulan</option>
-                            <option value="24">24 Bulan</option>
-                            <option value="36">36 Bulan</option>
-                            <option value="48">48 Bulan</option>
-                            <option value="60">60 Bulan</option>
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori Usaha / Segmentasi</label>
-                    <select id="newKategori" class="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none">
-                        <option value="Perorangan">Perorangan / Mikro</option>
-                        <option value="Badan Usaha (CV)">Badan Usaha (CV / Retail)</option>
-                        <option value="Badan Usaha (PT)">Badan Usaha (PT / Komersial)</option>
-                    </select>
-                </div>
-                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
-                    <button type="button" onclick="closeTambahSimulasiModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
-                        Batal
-                    </button>
-                    <button type="submit" class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition">
-                        Simpan Simulasi
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+            <!-- Modal Body (Scrollable 2 Kolom) -->
+            <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6 text-slate-800" id="detailReviewerBody">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                    
+                    <!-- SEBELAH KIRI (lg:col-span-7): RINGKASAN BERKAS INPUTAN PENGUSUL -->
+                    <div class="lg:col-span-7 flex flex-col space-y-4">
+                        <div class="flex items-center justify-between pb-1 border-b border-slate-100">
+                            <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Ringkasan Berkas Inputan Pengusul
+                            </h3>
+                            <span class="text-[11px] text-slate-400">Data Pokok Analisis</span>
+                        </div>
 
-    <!-- MODAL: Detail Simulasi -->
-    <div id="detailModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full p-6 animate-in fade-in duration-200">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-                <h3 class="font-bold text-slate-900 text-lg">Detail Draf Simulasi</h3>
-                <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+                        <!-- 4 Kotak Data Pokok -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            
+                            <!-- 1. Calon Debitur & Usaha -->
+                            <div class="p-3.5 bg-slate-50/90 rounded-xl border border-slate-200 flex flex-col justify-between">
+                                <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center gap-1.5">
+                                    <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">1</span>
+                                    <span>Calon Debitur & Usaha</span>
+                                </span>
+                                <div class="space-y-1.5 my-2 text-xs">
+                                    <div>
+                                        <span class="text-slate-400 text-[10px] uppercase font-semibold block">Nama & Jenis:</span>
+                                        <strong class="text-slate-800 text-xs block" id="modalDebiturNama">-</strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-400 text-[10px] uppercase font-semibold block">Usaha & Sektor:</span>
+                                        <span class="text-blue-800 font-bold block" id="modalDebiturUsaha">-</span>
+                                    </div>
+                                </div>
+                                <div class="text-[11px] text-slate-500 pt-1.5 border-t border-slate-200/60 flex justify-between">
+                                    <span>HP: <strong class="text-slate-700" id="modalDebiturHp">-</strong></span>
+                                    <span>Lama: <strong class="text-slate-700" id="modalDebiturLama">-</strong></span>
+                                </div>
+                            </div>
+
+                            <!-- 2. Struktur Pembiayaan -->
+                            <div class="p-3.5 bg-slate-50/90 rounded-xl border border-slate-200 flex flex-col justify-between">
+                                <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center gap-1.5">
+                                    <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">2</span>
+                                    <span>Struktur Pembiayaan</span>
+                                </span>
+                                <div class="space-y-1.5 my-2 text-xs">
+                                    <div>
+                                        <span class="text-slate-400 text-[10px] uppercase font-semibold block">Plafon Pinjaman:</span>
+                                        <strong class="text-blue-700 text-sm block font-extrabold" id="modalPlafonPinjaman">Rp 0</strong>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span>Tenor: <strong id="modalTenorBulan">12 Bulan</strong></span>
+                                        <span>Bunga: <strong id="modalSukuBunga">2.5% / bln</strong></span>
+                                    </div>
+                                </div>
+                                <div class="text-[11px] text-blue-700 font-semibold pt-1.5 border-t border-slate-200/60 flex justify-between">
+                                    <span id="modalSkemaPembayaran">Installment</span>
+                                    <span id="modalEstAngsuran">Est: -</span>
+                                </div>
+                            </div>
+
+                            <!-- 3. SLIK OJK (Ideb) -->
+                            <div class="p-3.5 bg-slate-50/90 rounded-xl border border-slate-200 flex flex-col justify-between">
+                                <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center gap-1.5">
+                                    <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">3</span>
+                                    <span>SLIK OJK (Ideb)</span>
+                                </span>
+                                <div class="space-y-1.5 my-2 text-xs flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-slate-400 text-[10px] uppercase font-semibold">Status SLIK:</span>
+                                        <span class="font-bold text-xs" id="modalStatusSlik">Terbit</span>
+                                    </div>
+                                    <p class="text-slate-600 text-[11px] line-clamp-2 leading-relaxed" id="modalRingkasanSlik">
+                                        Riwayat fasilitas pembiayaan debitur lancar tanpa catatan NPL.
+                                    </p>
+                                </div>
+                                <div class="text-[11px] text-slate-500 pt-1.5 border-t border-slate-200/60 flex justify-between">
+                                    <span>Kolektibilitas:</span>
+                                    <span class="text-emerald-700 font-bold" id="modalKolSlik">Kol 1 (Lancar)</span>
+                                </div>
+                            </div>
+
+                            <!-- 4. Agunan & Jaminan -->
+                            <div class="p-3.5 bg-slate-50/90 rounded-xl border border-slate-200 flex flex-col justify-between">
+                                <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center gap-1.5">
+                                    <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">4</span>
+                                    <span>Agunan & Jaminan</span>
+                                </span>
+                                <div class="space-y-1.5 my-2 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400 text-[10px] uppercase font-semibold">Nilai Likuidasi (LV):</span>
+                                        <strong class="text-slate-800" id="modalNilaiLv">Rp 0</strong>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400 text-[10px] uppercase font-semibold">Coverage LTV:</span>
+                                        <strong class="text-blue-700 font-bold" id="modalCoverageLv">0%</strong>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400 text-[10px] uppercase font-semibold">Jenis Jaminan:</span>
+                                        <span class="text-slate-700 font-medium" id="modalJenisJaminan">On Hand</span>
+                                    </div>
+                                </div>
+                                <div class="text-[11px] pt-1.5 border-t border-slate-200/60 flex justify-between items-center">
+                                    <span class="text-slate-400">Nilai Pasar (MV):</span>
+                                    <strong class="text-slate-700" id="modalNilaiMv">Rp 0</strong>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- SEBELAH KANAN (lg:col-span-5): LEMBAR KEPUTUSAN REVIEWER & AI 5C -->
+                    <div class="lg:col-span-5 flex flex-col space-y-4">
+                        
+                        <!-- Card Keputusan Reviewer / Komite -->
+                        <div class="bg-slate-50/90 rounded-2xl border border-slate-200 p-4 flex flex-col space-y-3">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-200/80">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+                                    <h3 class="text-xs font-extrabold text-blue-900 uppercase tracking-wider">
+                                        Keputusan Reviewer / Komite
+                                    </h3>
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Sidang Komite</span>
+                            </div>
+
+                            <!-- Opsi Status Visual -->
+                            <div class="grid grid-cols-3 gap-2 text-center" id="modalOpsiKeputusan">
+                                <div class="p-2 rounded-xl border border-slate-200 bg-white" id="badgeKepSetuju">
+                                    <div class="text-[11px] font-bold text-slate-700">Setuju</div>
+                                    <div class="text-[9px] text-slate-400">Penuh</div>
+                                </div>
+                                <div class="p-2 rounded-xl border border-slate-200 bg-white" id="badgeKepBersyarat">
+                                    <div class="text-[11px] font-bold text-slate-700">Bersyarat</div>
+                                    <div class="text-[9px] text-slate-400">Ketentuan</div>
+                                </div>
+                                <div class="p-2 rounded-xl border border-slate-200 bg-white" id="badgeKepTolak">
+                                    <div class="text-[11px] font-bold text-slate-700">Ditolak</div>
+                                    <div class="text-[9px] text-slate-400">Risiko</div>
+                                </div>
+                            </div>
+
+                            <!-- Catatan Reviewer -->
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Catatan & Notulensi Komite:</span>
+                                <div class="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-700 min-h-[64px] italic" id="modalCatatanReviewer">
+                                    Belum ada catatan review komite kredit.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Inferensi AI 5C Gemini -->
+                        <div class="bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/80 rounded-2xl border border-indigo-100 p-4 space-y-2.5 shadow-2xs">
+                            <div class="flex items-center justify-between pb-2 border-b border-indigo-100">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-sm">✨</span>
+                                    <h3 class="text-xs font-extrabold text-indigo-900 uppercase tracking-wider">
+                                        Analisis 5C & Skor AI
+                                    </h3>
+                                </div>
+                                <div class="flex items-center gap-1 bg-indigo-600 text-white px-2 py-0.5 rounded-lg text-xs font-extrabold" id="modalSkorAiBadge">
+                                    <span>Skor</span>
+                                    <span id="modalSkorAiVal">82</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-slate-500">Rekomendasi AI:</span>
+                                <span class="font-extrabold text-indigo-700" id="modalRekomendasiAi">Disetujui Penuh</span>
+                            </div>
+
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Analisis Risiko & Mitigasi:</span>
+                                <p class="text-slate-600 text-[11px] leading-relaxed line-clamp-3 bg-white/80 p-2.5 rounded-xl border border-indigo-100/60" id="modalAnalisisRisikoAi">
+                                    Profil arus kas positif dengan nilai jaminan mencukupi. Kapasitas pembayaran debitur dinilai aman untuk plafon yang diajukan.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
             </div>
-            <div class="mt-4 space-y-3 text-xs" id="detailContent">
-                <!-- Dynamically populated via JS -->
-            </div>
-            <div class="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4">
-                <a id="btnReview5C" href="<?= base_url('superadmin/review') ?>" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition">
-                    Buka AI 5C Review &rarr;
+
+            <!-- Modal Footer -->
+            <div class="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+                <a id="btnCetakPdf" href="#" target="_blank" class="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs inline-flex items-center justify-center gap-2 border border-slate-200 transition shadow-2xs">
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Cetak CAM PDF</span>
                 </a>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <button type="button" onclick="closeDetailModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs border border-slate-200 transition cursor-pointer">
+                        Tutup
+                    </button>
+                    <a id="btnBukaReview" href="#" class="flex-1 sm:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition inline-flex items-center justify-center gap-1.5 shadow-sm">
+                        <span>Buka Form Reviewer</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </a>
+                </div>
             </div>
+
         </div>
     </div>
 
@@ -426,31 +549,23 @@
         function filterTable() {
             const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
             const tenorVal = document.getElementById('tenorFilter').value;
-            const plafonVal = document.getElementById('plafonFilter').value;
+            const statusVal = document.getElementById('statusFilter').value.toLowerCase();
             const rows = document.querySelectorAll('#tableBody tr.data-row');
             
             let visibleCount = 0;
 
             rows.forEach(row => {
-                const nama = row.querySelector('.nama-nasabah')?.innerText.toLowerCase() || '';
+                const nomor = row.getAttribute('data-nomor') || '';
+                const nama = row.getAttribute('data-nama') || '';
+                const usaha = row.getAttribute('data-usaha') || '';
                 const tenor = row.getAttribute('data-tenor');
-                const plafon = parseInt(row.getAttribute('data-plafon'), 10);
+                const status = row.getAttribute('data-status') || '';
 
-                let matchSearch = (nama.indexOf(searchVal) !== -1);
-                let matchTenor = !tenorVal || (tenor === tenorVal);
-                let matchPlafon = true;
+                let matchSearch = (!searchVal) || (nomor.includes(searchVal) || nama.includes(searchVal) || usaha.includes(searchVal));
+                let matchTenor = (!tenorVal) || (tenor === tenorVal);
+                let matchStatus = (!statusVal) || (status.includes(statusVal));
 
-                if (plafonVal === 'under_100') {
-                    matchPlafon = (plafon < 100000000);
-                } else if (plafonVal === '100_300') {
-                    matchPlafon = (plafon >= 100000000 && plafon <= 300000000);
-                } else if (plafonVal === '300_500') {
-                    matchPlafon = (plafon > 300000000 && plafon <= 500000000);
-                } else if (plafonVal === 'above_500') {
-                    matchPlafon = (plafon > 500000000);
-                }
-
-                if (matchSearch && matchTenor && matchPlafon) {
+                if (matchSearch && matchTenor && matchStatus) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -458,94 +573,132 @@
                 }
             });
 
-            document.getElementById('showingCount').innerText = visibleCount > 0 ? `1–${visibleCount}` : '0';
+            document.getElementById('showingCount').innerText = visibleCount;
         }
 
-        function handleExportData() {
-            alert('Menyiapkan file export data simulasi (Excel/PDF)... File siap diunduh.');
+        function updateRowCount() {
+            const visibleRows = document.querySelectorAll('#tableBody tr.data-row:not([style*="display: none"])');
+            document.getElementById('showingCount').innerText = visibleRows.length;
+            
+            const totalRows = document.querySelectorAll('#tableBody tr.data-row');
+            if (totalRows.length === 0) {
+                document.getElementById('tableBody').innerHTML = `
+                    <tr id="emptyRow">
+                        <td colspan="8" class="text-center py-12 text-slate-400">
+                            <div class="w-12 h-12 mx-auto mb-3 text-slate-300">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </div>
+                            <p class="font-medium text-slate-600">Semua berkas simulasi kredit telah dihapus.</p>
+                        </td>
+                    </tr>
+                `;
+            }
         }
 
-        function openTambahSimulasiModal() {
-            document.getElementById('tambahSimulasiModal').classList.remove('hidden');
-        }
+        function viewDetailKredit(data) {
+            const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 
-        function closeTambahSimulasiModal() {
-            document.getElementById('tambahSimulasiModal').classList.add('hidden');
-        }
+            // Header Data
+            document.getElementById('detailNomorAplikasi').innerText = data.nomor_aplikasi || 'CAM-000000';
+            document.getElementById('detailTanggalBuat').innerText = data.created_at ? new Date(data.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+            document.getElementById('detailNamaDebiturHeader').innerText = (data.nama_debitur || '-') + ' (' + (data.nama_usaha || data.jenis_debitur || 'Individu') + ')';
+            document.getElementById('detailPlafonHeader').innerText = formatRupiah(data.plafon_pengajuan);
 
-        function submitSimulasiBaru(e) {
-            e.preventDefault();
-            const nama = document.getElementById('newNama').value;
-            const plafon = document.getElementById('newPlafon').value;
-            const tenor = document.getElementById('newTenor').value;
-            const kategori = document.getElementById('newKategori').value;
+            // Badge Status Header
+            const statusBadge = document.getElementById('detailBadgeStatus');
+            const statusTxt = data.status_komite || data.status_pengajuan || 'Draft';
+            statusBadge.innerText = statusTxt;
+            if (statusTxt.toLowerCase().includes('setuju') && !statusTxt.toLowerCase().includes('bersyarat')) {
+                statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200';
+            } else if (statusTxt.toLowerCase().includes('bersyarat')) {
+                statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border bg-amber-50 text-amber-700 border-amber-200';
+            } else if (statusTxt.toLowerCase().includes('tolak')) {
+                statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border bg-rose-50 text-rose-700 border-rose-200';
+            } else {
+                statusBadge.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border bg-blue-50 text-blue-700 border-blue-200';
+            }
 
-            const formattedPlafon = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(plafon);
+            // Kotak 1: Calon Debitur & Usaha
+            document.getElementById('modalDebiturNama').innerText = (data.nama_debitur || '-') + (data.npwp_pribadi ? ' • NIK: ' + data.npwp_pribadi : '');
+            document.getElementById('modalDebiturUsaha').innerText = (data.nama_usaha || '-') + (data.sektor_usaha ? ' • ' + data.sektor_usaha : '');
+            document.getElementById('modalDebiturHp').innerText = data.nomor_hp || '-';
+            document.getElementById('modalDebiturLama').innerText = data.lama_usaha ? data.lama_usaha : '-';
 
-            const tableBody = document.getElementById('tableBody');
-            const newRow = document.createElement('tr');
-            newRow.className = 'hover:bg-slate-50/70 transition-colors data-row bg-blue-50/30';
-            newRow.setAttribute('data-tenor', tenor);
-            newRow.setAttribute('data-plafon', plafon);
-            newRow.innerHTML = `
-                <td class="py-4 px-6 text-slate-500 text-xs font-medium whitespace-nowrap">Hari Ini</td>
-                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap nama-nasabah">${nama}</td>
-                <td class="py-4 px-6 font-bold text-slate-900 whitespace-nowrap">${formattedPlafon}</td>
-                <td class="py-4 px-6 text-slate-600 whitespace-nowrap">${tenor} Bulan</td>
-                <td class="py-4 px-6 text-right whitespace-nowrap">
-                    <div class="inline-flex items-center gap-2">
-                        <button type="button" onclick="viewDetail('${nama}', '${formattedPlafon}', '${tenor} Bulan', 'Hari Ini', '${kategori}', 'Dalam Evaluasi')" class="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50/70 hover:bg-blue-100/70 border border-blue-100 rounded-lg transition-colors">
-                            Detail
-                        </button>
-                        <button type="button" onclick="analisaUlang('${nama}')" class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                            Analisa Ulang
-                        </button>
-                    </div>
-                </td>
-            `;
+            // Kotak 2: Struktur Pembiayaan
+            document.getElementById('modalPlafonPinjaman').innerText = formatRupiah(data.plafon_pengajuan);
+            const tenor = parseInt(data.tenor_bulan) || 12;
+            const bungaBln = parseFloat(data.bunga_per_bulan) || 0;
+            document.getElementById('modalTenorBulan').innerText = tenor + ' Bulan';
+            document.getElementById('modalSukuBunga').innerText = (bungaBln > 0 ? bungaBln + '% / bln' : (data.bunga_per_tahun || 0) + '% / thn');
+            document.getElementById('modalSkemaPembayaran').innerText = data.skema_pembayaran || 'Installment';
+            
+            // Hitung estimasi angsuran
+            const pokok = parseFloat(data.plafon_pengajuan) || 0;
+            if (pokok > 0 && tenor > 0) {
+                const estAngs = (pokok / tenor) + (pokok * (bungaBln / 100));
+                document.getElementById('modalEstAngsuran').innerText = 'Est: ' + formatRupiah(estAngs) + '/bln';
+            } else {
+                document.getElementById('modalEstAngsuran').innerText = 'Est: -';
+            }
 
-            tableBody.insertBefore(newRow, tableBody.firstChild);
-            closeTambahSimulasiModal();
-            filterTable();
+            // Kotak 3: SLIK OJK
+            const statusSlik = data.status_slik || 'Terbit';
+            const slikElem = document.getElementById('modalStatusSlik');
+            slikElem.innerText = statusSlik;
+            slikElem.className = 'font-bold text-xs ' + (statusSlik === 'Terbit' ? 'text-emerald-700' : 'text-amber-700');
+            document.getElementById('modalRingkasanSlik').innerText = data.ringkasan_slik || 'Riwayat fasilitas pembiayaan debitur lancar tanpa catatan NPL aktif.';
+            const isKolLancar = !data.ada_tunggakan_slik || data.ada_tunggakan_slik == 0;
+            const kolElem = document.getElementById('modalKolSlik');
+            kolElem.innerText = isKolLancar ? 'Kol 1 (Lancar)' : 'Kol 2+ (Perhatian)';
+            kolElem.className = isKolLancar ? 'text-emerald-700 font-bold' : 'text-rose-600 font-bold';
 
-            // feedback toast
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-5 right-5 z-50 bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 text-xs font-medium';
-            toast.innerHTML = `<span>Simulasi untuk <strong>${nama}</strong> berhasil ditambahkan!</span>`;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3500);
-        }
+            // Kotak 4: Agunan & Jaminan
+            document.getElementById('modalNilaiLv').innerText = formatRupiah(data.total_nilai_likuidasi || 0);
+            document.getElementById('modalCoverageLv').innerText = (data.coverage_lv || 0) + '%';
+            document.getElementById('modalJenisJaminan').innerText = data.jenis_jaminan || 'Sertifikat / BPKB';
+            document.getElementById('modalNilaiMv').innerText = formatRupiah(data.total_nilai_pasar || 0);
 
-        function viewDetail(nama, plafon, tenor, tgl, kategori, skor) {
-            const container = document.getElementById('detailContent');
-            container.innerHTML = `
-                <div class="p-3 bg-slate-50 rounded-xl space-y-2">
-                    <div class="flex justify-between py-1 border-b border-slate-200/60">
-                        <span class="text-slate-500">Nama Debitur:</span>
-                        <span class="font-bold text-slate-900">${nama}</span>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-slate-200/60">
-                        <span class="text-slate-500">Plafon Pinjaman:</span>
-                        <span class="font-bold text-blue-600">${plafon}</span>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-slate-200/60">
-                        <span class="text-slate-500">Tenor:</span>
-                        <span class="font-semibold text-slate-800">${tenor}</span>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-slate-200/60">
-                        <span class="text-slate-500">Tanggal Simulasi:</span>
-                        <span class="text-slate-800">${tgl}</span>
-                    </div>
-                    <div class="flex justify-between py-1 border-b border-slate-200/60">
-                        <span class="text-slate-500">Segmentasi Usaha:</span>
-                        <span class="text-slate-800">${kategori}</span>
-                    </div>
-                    <div class="flex justify-between py-1">
-                        <span class="text-slate-500">Skor Kelayakan AI:</span>
-                        <span class="font-bold text-emerald-600">${skor}</span>
-                    </div>
-                </div>
-            `;
+            // Opsi Keputusan Reviewer / Komite Highlight
+            const bSetuju = document.getElementById('badgeKepSetuju');
+            const bBersyarat = document.getElementById('badgeKepBersyarat');
+            const bTolak = document.getElementById('badgeKepTolak');
+
+            // Reset classes
+            bSetuju.className = 'p-2 rounded-xl border border-slate-200 bg-white transition';
+            bBersyarat.className = 'p-2 rounded-xl border border-slate-200 bg-white transition';
+            bTolak.className = 'p-2 rounded-xl border border-slate-200 bg-white transition';
+
+            if (statusTxt.toLowerCase().includes('bersyarat')) {
+                bBersyarat.className = 'p-2 rounded-xl border-2 border-amber-500 bg-amber-50 text-amber-900 shadow-xs font-bold';
+            } else if (statusTxt.toLowerCase().includes('setuju')) {
+                bSetuju.className = 'p-2 rounded-xl border-2 border-emerald-500 bg-emerald-50 text-emerald-900 shadow-xs font-bold';
+            } else if (statusTxt.toLowerCase().includes('tolak')) {
+                bTolak.className = 'p-2 rounded-xl border-2 border-rose-500 bg-rose-50 text-rose-900 shadow-xs font-bold';
+            }
+
+            // Catatan Reviewer
+            const catatanElem = document.getElementById('modalCatatanReviewer');
+            if (data.catatan_reviewer && data.catatan_reviewer.trim() !== '') {
+                catatanElem.innerText = '"' + data.catatan_reviewer + '"';
+                catatanElem.classList.remove('text-slate-400');
+                catatanElem.classList.add('text-slate-800');
+            } else {
+                catatanElem.innerText = 'Belum ada catatan review atau notulensi komite.';
+                catatanElem.classList.remove('text-slate-800');
+                catatanElem.classList.add('text-slate-400');
+            }
+
+            // Card AI 5C
+            const skor = data.skor_ai || 82;
+            document.getElementById('modalSkorAiVal').innerText = skor;
+            document.getElementById('modalRekomendasiAi').innerText = data.rekomendasi_ai || (skor >= 75 ? 'Disetujui Penuh' : 'Perlu Mitigasi Ketat');
+            document.getElementById('modalAnalisisRisikoAi').innerText = data.analisis_risiko || 'Profil arus kas positif dengan nilai jaminan mencukupi. Kapasitas pembayaran debitur dinilai aman untuk plafon yang diajukan.';
+
+            // Link Actions
+            document.getElementById('btnCetakPdf').href = '<?= base_url('pengajuan/cetak') ?>/' + data.kredit_id;
+            document.getElementById('btnBukaReview').href = '<?= base_url('reviewer/review') ?>/' + data.kredit_id;
+
+            // Show Modal
             document.getElementById('detailModal').classList.remove('hidden');
         }
 
@@ -553,8 +706,63 @@
             document.getElementById('detailModal').classList.add('hidden');
         }
 
-        function analisaUlang(nama) {
-            window.location.href = '<?= base_url('superadmin/review') ?>?nasabah=' + encodeURIComponent(nama);
+        function hapusSimulasi(id, nomor) {
+            Swal.fire({
+                title: 'Hapus Berkas Pengajuan?',
+                html: `Apakah Anda yakin ingin menghapus berkas nomor <b>${nomor}</b>?<br><small class="text-slate-400">Data yang dihapus tidak dapat dipulihkan kembali.</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Hapus Sekarang',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`<?= base_url('superadmin/hapus-simulasi') ?>/${id}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const tr = document.getElementById(`row-kredit-${id}`);
+                            if (tr) {
+                                tr.style.transition = 'all 0.3s ease';
+                                tr.style.opacity = '0';
+                                tr.style.transform = 'scale(0.95)';
+                                setTimeout(() => {
+                                    tr.remove();
+                                    updateRowCount();
+                                }, 300);
+                            }
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil Dihapus',
+                                text: data.message,
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire('Gagal!', data.message || 'Terjadi kesalahan saat menghapus data.', 'error');
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire('Error!', 'Gagal menghubungi server atau sesi telah berakhir.', 'error');
+                    });
+                }
+            });
+        }
+
+        function handleExportData() {
+            Swal.fire({
+                icon: 'info',
+                title: 'Export Data CAM',
+                text: 'Mempersiapkan data rekapitulasi pengajuan kredit...',
+                timer: 1500,
+                showConfirmButton: false
+            });
         }
     </script>
 </body>
