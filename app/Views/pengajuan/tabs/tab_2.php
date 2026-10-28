@@ -32,7 +32,7 @@
         }
 
         // Deteksi jenis debitur
-        $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
+        $rawJd = $kredit['jenis_debitur'] ?? 'Individu';
         $isPt = (stripos($rawJd, 'PT') !== false);
         $isCv = (stripos($rawJd, 'CV') !== false);
         $isBadanUsaha = ($isPt || $isCv || stripos($rawJd, 'Badan Usaha') !== false);
@@ -44,67 +44,26 @@
         }
         ?>
 
-        <!-- 3 Opsi Tipe Pemohon: Perorangan, PT, CV -->
-        <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-50/70 via-slate-50/80 to-indigo-50/60 border border-blue-200/70 shadow-2xs">
-            <div class="flex items-center justify-between mb-3">
-                <label class="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    Kategori Pemohon / Badan Hukum <span class="text-rose-500 font-extrabold">*</span>
-                </label>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-200" id="badge_tipe_terpilih">
-                    <?= $tipeAwal === 'PT' ? 'Badan Usaha (PT)' : ($tipeAwal === 'CV' ? 'Badan Usaha (CV)' : 'Perorangan / Individu') ?>
-                </span>
-            </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <!-- Opsi 1: Perorangan -->
-                <label onclick="pilihTipeDebitur('Perorangan')" id="card_tipe_perorangan" 
-                       class="tipe-card cursor-pointer rounded-xl p-3 border-2 transition flex items-center gap-3 <?= $tipeAwal === 'Perorangan' ? 'bg-white border-blue-600 text-blue-900 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:border-slate-300' ?>">
-                    <input type="radio" name="tipe_debitur_opsi" value="Perorangan" <?= $tipeAwal === 'Perorangan' ? 'checked' : '' ?> class="sr-only">
-                    <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 <?= $tipeAwal === 'Perorangan' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600' ?>" id="icon_tipe_perorangan">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    </div>
-                    <div>
-                        <div class="text-xs font-bold leading-tight">Perorangan</div>
-                        <div class="text-[10px] text-slate-500">Debitur Individu</div>
-                    </div>
-                </label>
-
-                <!-- Opsi 2: PT -->
-                <label onclick="pilihTipeDebitur('PT')" id="card_tipe_pt" 
-                       class="tipe-card cursor-pointer rounded-xl p-3 border-2 transition flex items-center gap-3 <?= $tipeAwal === 'PT' ? 'bg-white border-blue-600 text-blue-900 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:border-slate-300' ?>">
-                    <input type="radio" name="tipe_debitur_opsi" value="PT" <?= $tipeAwal === 'PT' ? 'checked' : '' ?> class="sr-only">
-                    <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 <?= $tipeAwal === 'PT' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600' ?>" id="icon_tipe_pt">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    </div>
-                    <div>
-                        <div class="text-xs font-bold leading-tight">Badan Usaha (PT)</div>
-                        <div class="text-[10px] text-slate-500">Perseroan Terbatas</div>
-                    </div>
-                </label>
-
-                <!-- Opsi 3: CV -->
-                <label onclick="pilihTipeDebitur('CV')" id="card_tipe_cv" 
-                       class="tipe-card cursor-pointer rounded-xl p-3 border-2 transition flex items-center gap-3 <?= $tipeAwal === 'CV' ? 'bg-white border-blue-600 text-blue-900 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:border-slate-300' ?>">
-                    <input type="radio" name="tipe_debitur_opsi" value="CV" <?= $tipeAwal === 'CV' ? 'checked' : '' ?> class="sr-only">
-                    <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 <?= $tipeAwal === 'CV' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600' ?>" id="icon_tipe_cv">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
-                    </div>
-                    <div>
-                        <div class="text-xs font-bold leading-tight">Badan Usaha (CV)</div>
-                        <div class="text-[10px] text-slate-500">Komanditer</div>
-                    </div>
-                </label>
-            </div>
-        </div>
-
         <!-- Grid Form Fields 2 Kolom Simetris -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Jenis Debitur (Dropdown disesuaikan persis seperti Gambar 2) -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    Jenis Debitur
+                </label>
+                <select id="jenis_debitur_tab2" onchange="ubahJenisDebitur(this.value)" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                    <option value="Individu" <?= (!$isBadanUsaha) ? 'selected' : '' ?>>Individu / Perorangan</option>
+                    <option value="Badan Usaha (PT)" <?= ($isBadanUsaha && $isPt) ? 'selected' : '' ?>>Badan Usaha (PT)</option>
+                    <option value="Badan Usaha (CV)" <?= ($isBadanUsaha && $isCv) ? 'selected' : '' ?>>Badan Usaha (CV)</option>
+                </select>
+            </div>
+
             <!-- Nama Lengkap Sesuai KTP / Nama Perusahaan -->
-            <div class="md:col-span-2">
+            <div>
                 <label id="label_nama_debitur_tab2" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <span><?= $isBadanUsaha ? 'Nama Perusahaan / Badan Usaha (' . $tipeAwal . ')' : 'Nama Lengkap (Sesuai KTP)' ?></span> <span class="text-rose-500 font-extrabold">*</span>
+                    <span><?= $isBadanUsaha ? 'Nama Perusahaan (' . $tipeAwal . ')' : 'Nama Lengkap (Sesuai KTP)' ?></span> <span class="text-rose-500 font-extrabold">*</span>
                 </label>
                 <input type="text" name="nama_debitur" id="nama_debitur_tab2" 
                        value="<?= esc($kredit['nama_debitur'] ?? '') ?>" 
@@ -241,61 +200,39 @@
 </div>
 
 <script>
-function pilihTipeDebitur(tipe) {
-    const isBadan = (tipe === 'PT' || tipe === 'CV');
-    const wrapRumah = document.getElementById('wrapper_kepemilikan_rumah');
-    const wrapUsaha = document.getElementById('wrapper_jenis_usaha');
-    const badge = document.getElementById('badge_tipe_terpilih');
+function ubahJenisDebitur(val) {
+    const isBadan = (val.includes('PT') || val.includes('CV'));
+    const isPt = val.includes('PT');
+    const tipe = isPt ? 'PT' : (val.includes('CV') ? 'CV' : 'Perorangan');
     
-    // Sync ke dropdown jenis_debitur di Tab 1 jika ada
-    const jdSelect = document.getElementById('jenis_debitur') || document.querySelector('select[name="jenis_debitur"]');
-    if (jdSelect) {
-        if (tipe === 'Perorangan') jdSelect.value = 'Individu';
-        else if (tipe === 'PT') jdSelect.value = 'Badan Usaha (PT)';
-        else if (tipe === 'CV') jdSelect.value = 'Badan Usaha (CV)';
+    // Sync dropdown di Tab 1
+    const jdTab1 = document.getElementById('jenis_debitur');
+    if (jdTab1 && jdTab1.value !== val) {
+        jdTab1.value = val;
+    }
+    // Sync dropdown di Tab 2
+    const jdTab2 = document.getElementById('jenis_debitur_tab2');
+    if (jdTab2 && jdTab2.value !== val) {
+        jdTab2.value = val;
     }
 
     // Toggle field Kepemilikan Rumah vs Jenis Usaha
+    const wrapRumah = document.getElementById('wrapper_kepemilikan_rumah');
+    const wrapUsaha = document.getElementById('wrapper_jenis_usaha');
     if (isBadan) {
         if (wrapRumah) wrapRumah.classList.add('hidden');
         if (wrapUsaha) wrapUsaha.classList.remove('hidden');
-        if (badge) badge.innerText = tipe === 'PT' ? 'Badan Usaha (PT)' : 'Badan Usaha (CV)';
     } else {
         if (wrapRumah) wrapRumah.classList.remove('hidden');
         if (wrapUsaha) wrapUsaha.classList.add('hidden');
-        if (badge) badge.innerText = 'Perorangan / Individu';
     }
 
-    // Update style visual 3 card opsi
-    ['perorangan', 'pt', 'cv'].forEach(key => {
-        const card = document.getElementById('card_tipe_' + key);
-        const icon = document.getElementById('icon_tipe_' + key);
-        const radio = card ? card.querySelector('input[type="radio"]') : null;
-        const isActive = (key.toUpperCase() === tipe.toUpperCase() || (key === 'perorangan' && tipe === 'Perorangan'));
-        
-        if (card) {
-            if (isActive) {
-                card.className = 'tipe-card cursor-pointer rounded-xl p-3 border-2 transition flex items-center gap-3 bg-white border-blue-600 text-blue-900 shadow-sm';
-            } else {
-                card.className = 'tipe-card cursor-pointer rounded-xl p-3 border-2 transition flex items-center gap-3 bg-white/80 border-slate-200 text-slate-700 hover:border-slate-300';
-            }
-        }
-        if (icon) {
-            if (isActive) {
-                icon.className = 'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-blue-600 text-white';
-            } else {
-                icon.className = 'w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-slate-100 text-slate-600';
-            }
-        }
-        if (radio) radio.checked = isActive;
-    });
-
-    // Update adaptif label & placeholder
+    // Update label & placeholder adaptif
     const labelNama = document.querySelector('#label_nama_debitur_tab2 span');
     const inputNama = document.getElementById('nama_debitur_tab2');
     if (labelNama && inputNama) {
         if (isBadan) {
-            labelNama.innerText = `Nama Perusahaan / Badan Usaha (${tipe})`;
+            labelNama.innerText = `Nama Perusahaan (${tipe})`;
             inputNama.placeholder = `Contoh: ${tipe} Maju Sejahtera Bersama`;
         } else {
             labelNama.innerText = 'Nama Lengkap (Sesuai KTP)';
@@ -304,33 +241,27 @@ function pilihTipeDebitur(tipe) {
     }
 
     const labelTempat = document.querySelector('#label_tempat_lahir_tab2 span');
-    if (labelTempat) {
-        labelTempat.innerText = isBadan ? 'Kota Pendirian / Kedudukan' : 'Tempat Lahir';
-    }
+    if (labelTempat) labelTempat.innerText = isBadan ? 'Kota Pendirian / Kedudukan' : 'Tempat Lahir';
 
     const labelTgl = document.querySelector('#label_tanggal_lahir_tab2 span');
-    if (labelTgl) {
-        labelTgl.innerText = isBadan ? 'Tanggal Pendirian (Akta / SK)' : 'Tanggal Lahir';
-    }
+    if (labelTgl) labelTgl.innerText = isBadan ? 'Tanggal Pendirian (Akta / SK)' : 'Tanggal Lahir';
 
     const labelKtp = document.querySelector('#label_alamat_ktp_tab2 span');
-    if (labelKtp) {
-        labelKtp.innerText = isBadan ? 'Alamat Legal Sesuai Akta / Kedudukan Perusahaan' : 'Alamat KTP Lengkap';
-    }
+    if (labelKtp) labelKtp.innerText = isBadan ? 'Alamat Legal Sesuai Akta / Kedudukan Perusahaan' : 'Alamat KTP Lengkap';
 
     const labelDom = document.querySelector('#label_alamat_domisili_tab2 span');
-    if (labelDom) {
-        labelDom.innerText = isBadan ? 'Alamat Kantor / Operasional Usaha' : 'Alamat Domisili Sekarang';
-    }
+    if (labelDom) labelDom.innerText = isBadan ? 'Alamat Kantor / Operasional Usaha' : 'Alamat Domisili Sekarang';
 
     const labelNpwp = document.querySelector('#label_npwp_tab2 span');
-    if (labelNpwp) {
-        labelNpwp.innerText = isBadan ? 'NPWP Perusahaan / NIK Direktur (16 Digit)' : 'NIK KTP / NPWP Debitur (16 Digit Angka)';
-    }
+    if (labelNpwp) labelNpwp.innerText = isBadan ? 'NPWP Perusahaan / NIK Direktur (16 Digit)' : 'NIK KTP / NPWP Debitur (16 Digit Angka)';
 
     const labelKontak = document.querySelector('#label_kontak_darurat_tab2 span');
-    if (labelKontak) {
-        labelKontak.innerText = isBadan ? 'Nama PIC / Kontak Darurat Perusahaan' : 'Nama Kontak Darurat';
-    }
+    if (labelKontak) labelKontak.innerText = isBadan ? 'Nama PIC / Kontak Darurat Perusahaan' : 'Nama Kontak Darurat';
+}
+
+function pilihTipeDebitur(tipe) {
+    if (tipe === 'PT') ubahJenisDebitur('Badan Usaha (PT)');
+    else if (tipe === 'CV') ubahJenisDebitur('Badan Usaha (CV)');
+    else ubahJenisDebitur('Individu');
 }
 </script>
