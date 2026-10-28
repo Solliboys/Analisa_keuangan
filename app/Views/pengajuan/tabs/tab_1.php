@@ -78,7 +78,7 @@
                                         <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                                         Jenis Debitur
                                     </label>
-                                    <select name="jenis_debitur" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                                    <select name="jenis_debitur" id="jenis_debitur" onchange="if(typeof pilihTipeDebitur === 'function') pilihTipeDebitur(this.value.includes('PT') ? 'PT' : (this.value.includes('CV') ? 'CV': 'Perorangan'))" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                                         <?php $jd = $kredit['jenis_debitur'] ?? 'Individu'; ?>
                                         <option value="Individu" <?= $jd === 'Individu' ? 'selected' : '' ?>>Individu / Perorangan</option>
                                         <option value="Badan Usaha (PT)" <?= $jd === 'Badan Usaha (PT)' ? 'selected' : '' ?>>Badan Usaha (PT)</option>
