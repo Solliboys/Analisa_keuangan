@@ -60,19 +60,67 @@
     <!-- Paper Container (Matches result.pdf layout exactly) -->
     <div class="page-sheet max-w-4xl mx-auto bg-white border border-slate-200 rounded-xl p-8 sm:p-12 shadow-sm">
 
-        <!-- Top Blue Header Banner -->
-        <div class="bg-[#0284c7] text-white p-6 rounded-xl mb-3 shadow-xs">
-            <h1 class="text-lg sm:text-xl font-extrabold uppercase tracking-wide leading-tight">
-                LAPORAN ANALISA KELAYAKAN KREDIT DAN REKOMENDASI KOMITE KREDIT
-            </h1>
-            <p class="text-xs text-sky-100 font-medium mt-1">
-                Draft Review Independen Berbasis Metode 5C dan Credit Scoring | STATUS: <?= strtoupper(esc($kredit['status_pengajuan'] ?? 'DRAFT - RAHASIA')) ?>
-            </p>
+        <!-- ============================================================== -->
+        <!-- KOP SURAT RESMI PERBANKAN / LEMBAGA KEUANGAN                   -->
+        <!-- ============================================================== -->
+        <div class="mb-5 pb-2">
+            <div class="flex items-center justify-between gap-5 pb-3">
+                <!-- Logo Lembaga di Kiri -->
+                <div class="shrink-0 flex items-center justify-center">
+                    <?php if (!empty($pengaturan_sistem['logo_aplikasi'])): ?>
+                        <img src="<?= base_url('uploads/logo/' . $pengaturan_sistem['logo_aplikasi']) ?>" alt="Logo" class="h-16 w-auto max-w-[120px] object-contain">
+                    <?php else: ?>
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-900 to-blue-900 text-white flex flex-col items-center justify-center shadow-sm border border-slate-700">
+                            <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                            <span class="text-[8px] font-extrabold uppercase tracking-widest text-slate-200 mt-0.5">CREDIT</span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Teks Kop Surat di Tengah -->
+                <div class="flex-1 text-center px-2">
+                    <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase leading-snug">
+                        <?= esc($pengaturan_sistem['nama_lembaga'] ?: 'PT BANK PEREKONOMIAN RAKYAT / LEMBAGA PEMBIAYAAN OTW') ?>
+                    </h2>
+                    <h3 class="text-xs font-bold text-blue-800 uppercase tracking-widest mt-0.5">
+                        KOMITE KREDIT & DIVISI MANAJEMEN RISIKO PEMBIAYAAN
+                    </h3>
+                    <p class="text-[10px] text-slate-600 mt-1 leading-relaxed">
+                        Gedung Graha Finansial Lt. 5, Jl. Jenderal Sudirman Kav. 45-46 &bull; Telp: (021) 5290-8800 (Hunting) &bull; Fax: (021) 5290-8801<br>
+                        Email: <span class="text-blue-700 underline">komite.kredit@bank-otw.co.id</span> &bull; Website: www.credit-engine.co.id
+                    </p>
+                </div>
+
+                <!-- QR / Seal Verifikasi di Kanan -->
+                <div class="shrink-0 text-right hidden sm:block">
+                    <div class="border border-slate-300 rounded-lg p-2 text-center bg-slate-50">
+                        <div class="text-[8px] font-bold text-slate-500 uppercase tracking-wider">STATUS DOKUMEN</div>
+                        <div class="text-[10px] font-extrabold <?= ($kredit['status_pengajuan'] ?? '') === 'Disetujui' ? 'text-emerald-700' : 'text-blue-700' ?> mt-0.5">
+                            <?= strtoupper(esc($kredit['status_pengajuan'] ?? 'DRAFT')) ?>
+                        </div>
+                        <div class="text-[8px] font-mono text-slate-400 mt-0.5"><?= esc($kredit['nomor_aplikasi']) ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Garis Ganda Standar Kop Surat Resmi (Garis Tebal + Garis Tipis) -->
+            <div class="w-full border-t-2 border-slate-900 mt-1"></div>
+            <div class="w-full border-t border-slate-900 mt-[2px]"></div>
         </div>
 
-        <!-- Confirmation Input Strip -->
-        <div class="text-[10px] text-slate-500 font-mono mb-4 px-1">
-            KONFIRMASI INPUT: Unsur terbaca: 5 dari 5; sistem penilaian: Sistem Analisa Kredit & Gemini Underwriting; kode: <?= substr(md5($kredit['nomor_aplikasi']), 0, 6) ?>
+        <!-- Judul Resmi Dokumen CAM -->
+        <div class="text-center my-4">
+            <h1 class="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wide underline underline-offset-4 decoration-2">
+                CREDIT APPLICATION & MEMORANDUM (CAM)
+            </h1>
+            <p class="text-[11px] font-bold text-slate-700 mt-1 uppercase tracking-wider">
+                LAPORAN ANALISA KELAYAKAN FASILITAS KREDIT & RISALAH KEPUTUSAN KOMITE
+            </p>
+            <p class="text-[10px] text-slate-500 mt-0.5">
+                Nomor: CAM/<?= date('Y/m', strtotime($kredit['created_at'])) ?>/<?= esc($kredit['nomor_aplikasi']) ?> &bull; Sifat: RAHASIA / CONFIDENTIAL
+            </p>
         </div>
 
         <!-- Metadata Box Grid -->

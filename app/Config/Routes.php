@@ -5,8 +5,12 @@ use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
 $routes->get('/', 'Home::index');
 $routes->get('/login', 'Auth::index');
+$routes->get('login', 'Auth::index');
+$routes->get('index.php/login', 'Auth::index');
 $routes->get('/auth', 'Auth::index');
+$routes->get('index.php/auth', 'Auth::index');
 $routes->post('/auth/process', 'Auth::process');
+$routes->post('index.php/auth/process', 'Auth::process');
 $routes->get('/auth/register', 'Auth::register');
 $routes->post('/auth/registerProcess', 'Auth::registerProcess');
 $routes->get('/auth/logout', 'Auth::logout');
@@ -21,6 +25,7 @@ $routes->post('/profil/update', 'Dashboard::updateProfil');
 $routes->get('/log', 'LogAktivitas::index');
 $routes->get('/log/download', 'LogAktivitas::download');
 $routes->get('/log/detail/(:num)', 'LogAktivitas::detail/$1');
+$routes->get('/audit/laporan', 'Dashboard::laporanAudit');
 
 // Modul Pengajuan & Analisa Kredit (CAM)
 $routes->group('pengajuan', static function ($routes) {
@@ -33,6 +38,8 @@ $routes->group('pengajuan', static function ($routes) {
     $routes->post('upload-dokumen', 'Pengajuan::uploadDokumen');
     $routes->post('update-kategori-dokumen', 'Pengajuan::updateKategoriDokumen');
     $routes->post('analisa-ai', 'Pengajuan::analisaAi');
+    $routes->post('ai-webcheck', 'Pengajuan::aiWebCheck');
+    $routes->post('cek-perkara-ma', 'Pengajuan::cekPerkaraMa');
     $routes->get('cetak/(:num)', 'Pengajuan::cetak/$1');
 });
 

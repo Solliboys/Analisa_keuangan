@@ -237,17 +237,109 @@
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
                     <!-- Header Card (Tinggi dan styling lurus sejajar dengan header kiri) -->
                     <div class="p-5 border-b border-slate-100 bg-blue-50/60 min-h-[92px] flex flex-col justify-center">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
-                            <h2 class="text-sm font-extrabold text-blue-900 uppercase tracking-wider">
-                                Lembar Keputusan Reviewer
-                            </h2>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full <?= !empty($currentDecision) ? 'bg-emerald-500' : 'bg-blue-600 animate-pulse' ?>"></span>
+                                <h2 class="text-sm font-extrabold text-blue-900 uppercase tracking-wider">
+                                    Lembar Keputusan Reviewer
+                                </h2>
+                            </div>
+                            <?php if (!empty($currentDecision)): ?>
+                                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                                    🔒 Mode Lihat (Sudah Di-review)
+                                </span>
+                            <?php endif; ?>
                         </div>
                         <p class="text-xs text-blue-700/80 mt-1">
-                            Pilih salah satu dari 3 opsi keputusan komite kredit beserta catatan resmi.
+                            <?= !empty($currentDecision) ? 'Pemeriksaan review telah selesai. Keputusan tercatat resmi pada risalah komite.' : 'Pilih salah satu dari 3 opsi keputusan komite kredit beserta catatan resmi.' ?>
                         </p>
                     </div>
 
+                    <?php 
+                        $userRole = strtolower(session()->get('jabatan') ?? '');
+                        $isCeoRole = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false);
+                        $isFinalized = (!empty($currentDecision) && in_array($currentDecision, ['Disetujui', 'Disetujui Bersyarat', 'Ditolak']));
+                    ?>
+
+                    <?php if ($isFinalized): ?>
+                        <!-- ============================================================== -->
+                        <!-- TAMPILAN READ-ONLY: KETIKA PETUGAS REVIEW TELAH SELESAI       -->
+                        <!-- CEO CUKUP MELIHAT, BEGITUPUN SEBALIKNYA                        -->
+                        <!-- ============================================================== -->
+                        <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                            <!-- Alert Status Final -->
+                            <div class="p-4 rounded-xl border flex items-start gap-3 <?= $currentDecision === 'Disetujui' ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900' : ($currentDecision === 'Ditolak' ? 'bg-rose-50/80 border-rose-200 text-rose-900' : 'bg-amber-50/80 border-amber-200 text-amber-900') ?>">
+                                <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 <?= $currentDecision === 'Disetujui' ? 'bg-emerald-600 text-white' : ($currentDecision === 'Ditolak' ? 'bg-rose-600 text-white' : 'bg-amber-500 text-white') ?>">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-black uppercase tracking-wider">
+                                        <?= $isCeoRole ? 'Pemberitahuan CEO: Review Telah Selesai' : 'Keputusan Resmi Telah Ditetapkan' ?>
+                                    </h4>
+                                    <p class="text-xs mt-0.5 leading-relaxed opacity-90">
+                                        <?= $isCeoRole ? 'Petugas Reviewer telah menyelesaikan penilaian berkas pengajuan kredit ini. Anda berada dalam <strong>Mode Lihat (Read-Only)</strong>.' : 'Keputusan telah disahkan dalam risalah komite. Formulir terkunci untuk menjaga keabsahan dokumen audit.' ?>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Ringkasan Hasil Keputusan -->
+                            <div class="space-y-3">
+                                <div>
+                                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Status Keputusan:</span>
+                                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black border shadow-2xs <?= $currentDecision === 'Disetujui' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : ($currentDecision === 'Ditolak' ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-amber-100 text-amber-800 border-amber-300') ?>">
+                                        <span class="w-2.5 h-2.5 rounded-full <?= $currentDecision === 'Disetujui' ? 'bg-emerald-600' : ($currentDecision === 'Ditolak' ? 'bg-rose-600' : 'bg-amber-600') ?>"></span>
+                                        <span><?= strtoupper(esc($currentDecision)) ?></span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Catatan Pertimbangan / Syarat Realisasi:</span>
+                                    <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 leading-relaxed font-medium">
+                                        <?= nl2br(esc($currentCatatan ?: 'Tidak ada catatan khusus yang dicantumkan.')) ?>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Detail Approver / Reviewer -->
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5 text-xs text-slate-600">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Ditinjau Oleh:</span>
+                                    <span class="font-bold text-slate-800"><?= esc($keputusan_reviewer['nama_approver'] ?? $nama_lengkap ?? 'Senior Credit Reviewer') ?></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Peran Komite:</span>
+                                    <span class="font-semibold text-blue-700"><?= esc($keputusan_reviewer['role_approver'] ?? $jabatan ?? 'Reviewer') ?></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Tanggal Pengesahan:</span>
+                                    <span class="font-medium text-slate-700"><?= !empty($keputusan_reviewer['tanggal_approval']) ? date('d F Y', strtotime($keputusan_reviewer['tanggal_approval'])) : date('d F Y') ?></span>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons Mode Lihat -->
+                            <div class="space-y-2 pt-2">
+                                <a href="<?= base_url('pengajuan/cetak/' . $kredit['kredit_id']) ?>" target="_blank" 
+                                   class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    <span>Cetak Memorandum CAM Resmi</span>
+                                </a>
+
+                                <a href="<?= base_url('dashboard') ?>" 
+                                   class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition text-center block">
+                                    Kembali ke Dashboard
+                                </a>
+
+                                <?php if ($userRole === 'superadmin'): ?>
+                                    <button type="button" onclick="document.getElementById('containerFormEditReviewer').classList.toggle('hidden')" 
+                                            class="w-full py-2 px-3 text-[11px] text-slate-400 hover:text-slate-600 font-medium transition text-center cursor-pointer">
+                                        &bull; Superadmin: Buka Formulir Revisi Keputusan &bull;
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <div id="containerFormEditReviewer" class="<?= $isFinalized ? 'hidden' : '' ?> flex-1 flex flex-col justify-between">
                     <form id="formKeputusanReviewer" class="p-5 flex-1 flex flex-col justify-between space-y-4">
                         <input type="hidden" name="kredit_id" value="<?= esc($kredit['kredit_id']) ?>">
 
@@ -339,6 +431,7 @@
                             </a>
                         </div>
                     </form>
+                    </div>
                 </div>
             </div>
 

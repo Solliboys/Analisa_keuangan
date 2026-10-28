@@ -638,6 +638,15 @@ System Execution Directives:
             const prompt = document.getElementById('promptEditor').value;
             const pillar = currentPillar;
 
+            if (!prompt || prompt.trim().length < 15) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Prompt Terlalu Pendek',
+                    text: 'Prompt untuk pilar ' + pillar.toUpperCase() + ' tidak boleh kosong dan harus minimal 15 karakter agar akurasi analisa terjamin.'
+                });
+                return;
+            }
+
             const formData = new FormData();
             formData.append('model_ai', modelAi);
             formData.append('api_endpoint', apiEndpoint);

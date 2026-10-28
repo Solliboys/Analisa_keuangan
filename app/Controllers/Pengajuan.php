@@ -518,6 +518,12 @@ class Pengajuan extends BaseController
             'negatif_keterangan'   => $input['negatif_keterangan'] ?? ''
         ];
 
+        if (!empty($input['sipp_file'])) $dataWeb['sipp_file'] = $input['sipp_file'];
+        if (!empty($input['internet_file'])) $dataWeb['internet_file'] = $input['internet_file'];
+        if (!empty($input['watchlist_file'])) $dataWeb['watchlist_file'] = $input['watchlist_file'];
+        if (!empty($input['lelang_file'])) $dataWeb['lelang_file'] = $input['lelang_file'];
+        if (!empty($input['negatif_file'])) $dataWeb['negatif_file'] = $input['negatif_file'];
+
         $cek = $this->webcheckModel->where('kredit_id', $kreditId)->first();
         if ($cek) {
             $this->webcheckModel->update($cek['webcheck_id'], $dataWeb);
@@ -721,13 +727,54 @@ class Pengajuan extends BaseController
 
         $newName = $file->getRandomName();
         $file->move($folder, $newName);
+        $destPath = $folder . $newName;
+
+        // Server-side image optimization / compression jika ekstensi gambar
+        $ext = strtolower(pathinfo($newName, PATHINFO_EXTENSION));
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp']) && function_exists('imagecreatefromstring')) {
+            try {
+                $imageInfo = @getimagesize($destPath);
+                if ($imageInfo) {
+                    $src = @imagecreatefromstring(file_get_contents($destPath));
+                    if ($src) {
+                        $width  = imagesx($src);
+                        $height = imagesy($src);
+                        $maxDim = 1600;
+                        if ($width > $maxDim || $height > $maxDim) {
+                            $ratio = min($maxDim / $width, $maxDim / $height);
+                            $newW  = (int)round($width * $ratio);
+                            $newH  = (int)round($height * $ratio);
+                            $dst   = imagecreatetruecolor($newW, $newH);
+                            if ($ext === 'png') {
+                                imagealphablending($dst, false);
+                                imagesavealpha($dst, true);
+                            }
+                            imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $width, $height);
+                            if ($ext === 'png') {
+                                imagepng($dst, $destPath, 7);
+                            } else {
+                                imagejpeg($dst, $destPath, 75);
+                            }
+                            imagedestroy($dst);
+                        } else {
+                            if ($ext === 'jpg' || $ext === 'jpeg') {
+                                imagejpeg($src, $destPath, 75);
+                            }
+                        }
+                        imagedestroy($src);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Biarkan file asli jika terjadi kendala pada GD
+            }
+        }
 
         $docId = $this->dokumenModel->insert([
             'kredit_id'        => $kreditId,
             'kategori_dokumen' => $kategori,
             'nama_file_asli'   => $file->getClientName(),
             'path_file'        => 'uploads/dokumen/' . $newName,
-            'ukuran_file_bytes'=> $file->getSize(),
+            'ukuran_file_bytes'=> file_exists($destPath) ? filesize($destPath) : $file->getSize(),
             'tipe_file'        => $file->getClientMimeType()
         ]);
 
@@ -793,20 +840,68 @@ class Pengajuan extends BaseController
             return redirect()->to('/pengajuan')->with('error', 'Data tidak ditemukan');
         }
 
+        $db = \Config\Database::connect();
+        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
+            'nama_aplikasi' => 'OTW Credit Engine & CAM',
+            'nama_lembaga'  => 'PT BPR / Lembaga Pembiayaan',
+            'logo_aplikasi' => ''
+        ];
+
         $data = [
-            'title'        => 'Credit Application & Memo (CAM) - ' . $kredit['nomor_aplikasi'],
-            'kredit'       => $kredit,
-            'agunan'       => $this->agunanModel->where('kredit_id', $id)->findAll(),
-            'slik'         => $this->slikModel->where('kredit_id', $id)->findAll(),
-            'webcheck'     => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],
-            'analisa'      => $this->analisaModel->where('kredit_id', $id)->first() ?? [],
-            'rekening'     => $this->rekeningModel->where('kredit_id', $id)->findAll(),
-            'keuangan'     => $this->keuanganModel->where('kredit_id', $id)->first() ?? [],
-            'disbursement' => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
-            'komite'       => $this->komiteModel->where('kredit_id', $id)->findAll()
+            'title'             => 'Credit Application & Memo (CAM) - ' . $kredit['nomor_aplikasi'],
+            'kredit'            => $kredit,
+            'agunan'            => $this->agunanModel->where('kredit_id', $id)->findAll(),
+            'slik'              => $this->slikModel->where('kredit_id', $id)->findAll(),
+            'webcheck'          => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],
+            'analisa'           => $this->analisaModel->where('kredit_id', $id)->first() ?? [],
+            'rekening'          => $this->rekeningModel->where('kredit_id', $id)->findAll(),
+            'keuangan'          => $this->keuanganModel->where('kredit_id', $id)->first() ?? [],
+            'disbursement'      => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
+            'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
+            'pengaturan_sistem' => $pengaturanSistem
         ];
 
         return view('pengajuan/cetak', $data);
+    }
+
+    public function aiWebCheck()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $namaDebitur = $this->request->getPost('nama_debitur') ?? '';
+        $namaUsaha   = $this->request->getPost('nama_usaha') ?? '';
+        $kota        = $this->request->getPost('kota') ?? '';
+        $bidangUsaha = $this->request->getPost('bidang_usaha') ?? '';
+
+        $service = new GeminiAiService();
+        $hasil = $service->investigasiWebcheck($namaDebitur, $namaUsaha, $kota, $bidangUsaha);
+
+        return $this->response->setJSON($hasil);
+    }
+
+    public function cekPerkaraMa()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $namaDebitur = trim($this->request->getPost('nama_debitur') ?? '');
+        $kota        = trim($this->request->getPost('kota') ?? '');
+        $namaUsaha   = trim($this->request->getPost('nama_usaha') ?? '');
+
+        if (empty($namaDebitur)) {
+            return $this->response->setJSON([
+                'status'  => false,
+                'message' => 'Nama debitur wajib diisi untuk melakukan penelusuran perkara.'
+            ]);
+        }
+
+        $service = new GeminiAiService();
+        $hasil = $service->cekPerkaraPengadilan($namaDebitur, $kota, $namaUsaha);
+
+        return $this->response->setJSON($hasil);
     }
 
     public function analisaAi()
