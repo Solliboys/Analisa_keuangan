@@ -1,3 +1,9 @@
+<?php
+$ijinSlikPengusul = (int)($pengaturan_sistem['ijin_pengusul_isi_slik'] ?? 1);
+$currentUserRole = strtolower(session()->get('jabatan') ?? '');
+$isPetugasSlikRole = ($currentUserRole === 'superadmin' || strpos($currentUserRole, 'slik') !== false);
+$bisaIsiSlik = ($isPetugasSlikRole || $ijinSlikPengusul === 1);
+?>
 <div id="tab-6" class="tab-panel bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
                 <!-- Section Header -->
                 <div class="flex items-center justify-between pb-5 border-b border-slate-100 mb-6">
