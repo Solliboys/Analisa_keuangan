@@ -5,8 +5,12 @@ use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
 $routes->get('/', 'Home::index');
 $routes->get('/login', 'Auth::index');
+$routes->get('login', 'Auth::index');
+$routes->get('index.php/login', 'Auth::index');
 $routes->get('/auth', 'Auth::index');
+$routes->get('index.php/auth', 'Auth::index');
 $routes->post('/auth/process', 'Auth::process');
+$routes->post('index.php/auth/process', 'Auth::process');
 $routes->get('/auth/register', 'Auth::register');
 $routes->post('/auth/registerProcess', 'Auth::registerProcess');
 $routes->get('/auth/logout', 'Auth::logout');
