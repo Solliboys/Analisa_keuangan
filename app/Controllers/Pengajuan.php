@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\KreditModel;
+use App\Models\KreditUsahaModel;
 use App\Models\AgunanModel;
 use App\Models\KreditDokumenModel;
 use App\Models\SlikModel;
@@ -17,6 +18,7 @@ use App\Services\GeminiAiService;
 class Pengajuan extends BaseController
 {
     protected $kreditModel;
+    protected $usahaModel;
     protected $agunanModel;
     protected $dokumenModel;
     protected $slikModel;
@@ -30,6 +32,7 @@ class Pengajuan extends BaseController
     public function __construct()
     {
         $this->kreditModel       = new KreditModel();
+        $this->usahaModel        = new KreditUsahaModel();
         $this->agunanModel       = new AgunanModel();
         $this->dokumenModel      = new KreditDokumenModel();
         $this->slikModel         = new SlikModel();
@@ -237,6 +240,7 @@ class Pengajuan extends BaseController
             'nomor_aplikasi'    => $nomorAplikasi,
             'kredit'            => [],
             'agunan'            => [],
+            'daftar_usaha'      => [],
             'slik'              => [],
             'webcheck'          => [],
             'analisa'           => [],
@@ -284,6 +288,7 @@ class Pengajuan extends BaseController
             'nomor_aplikasi'    => $kredit['nomor_aplikasi'],
             'kredit'            => $kredit,
             'agunan'            => $this->agunanModel->where('kredit_id', $id)->findAll(),
+            'daftar_usaha'      => $this->usahaModel->where('kredit_id', $id)->orderBy('id', 'ASC')->findAll(),
             'slik'              => $this->slikModel->where('kredit_id', $id)->findAll(),
             'webcheck'          => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],
             'analisa'           => $this->analisaModel->where('kredit_id', $id)->first() ?? [],
@@ -341,6 +346,17 @@ class Pengajuan extends BaseController
             $statusPengajuan = $reqStatus;
         }
 
+        // Ambil data usaha pertama jika dikirim sebagai array dinamis usaha
+        $firstUsaha = (!empty($input['usaha']) && is_array($input['usaha'])) ? ($input['usaha'][0] ?? []) : [];
+        $valNamaUsaha = !empty($firstUsaha['nama_usaha']) ? $firstUsaha['nama_usaha'] : ($input['nama_usaha'] ?? '');
+        $valBidangUsaha = !empty($firstUsaha['bidang_usaha']) ? $firstUsaha['bidang_usaha'] : ($input['bidang_usaha'] ?? ($input['jenis_usaha'] ?? ''));
+        $valJabatan = !empty($firstUsaha['jabatan']) ? $firstUsaha['jabatan'] : ($input['jabatan'] ?? '');
+        $valLamaUsaha = !empty($firstUsaha['lama_usaha']) ? $firstUsaha['lama_usaha'] : ($input['lama_usaha'] ?? '');
+        $valAlamatUsaha = !empty($firstUsaha['alamat_usaha']) ? $firstUsaha['alamat_usaha'] : ($input['alamat_usaha'] ?? '');
+        $valNpwpUsaha = !empty($firstUsaha['npwp_usaha']) ? $firstUsaha['npwp_usaha'] : ($input['npwp_usaha'] ?? '');
+        $valNib = !empty($firstUsaha['nomor_induk_berusaha_nib']) ? $firstUsaha['nomor_induk_berusaha_nib'] : ($input['nomor_induk_berusaha_nib'] ?? '');
+        $valSumberBayar = !empty($firstUsaha['sumber_pembayaran']) ? $firstUsaha['sumber_pembayaran'] : ($input['sumber_pembayaran'] ?? '');
+
         $dataKredit = [
             'user_id'                 => $userIdPembuat,
             'nomor_aplikasi'          => $input['nomor_aplikasi'] ?? ('CAM-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4))),
@@ -358,8 +374,8 @@ class Pengajuan extends BaseController
             'alamat_ktp'              => $input['alamat_ktp'] ?? '',
             'alamat_domisili'         => $input['alamat_domisili'] ?? '',
             'kepemilikan_domisili'    => $input['kepemilikan_domisili'] ?? 'Milik Sendiri',
-            'jenis_usaha'             => $input['bidang_usaha'] ?? ($input['jenis_usaha'] ?? ''),
-            'bidang_usaha'            => $input['bidang_usaha'] ?? ($input['jenis_usaha'] ?? ''),
+            'jenis_usaha'             => $valBidangUsaha,
+            'bidang_usaha'            => $valBidangUsaha,
             'nomor_hp'                => $input['nomor_hp'] ?? '',
             'nomor_emergency'         => $input['nomor_emergency'] ?? '',
             'nama_kontak_darurat'     => $input['nama_kontak_darurat'] ?? ($input['nama_ibu_kandung'] ?? ''),
@@ -374,13 +390,13 @@ class Pengajuan extends BaseController
             'akta_perubahan'          => $input['akta_perubahan'] ?? '',
             'sk_pendirian'            => $input['sk_pendirian'] ?? '',
             'sk_perubahan'            => $input['sk_perubahan'] ?? '',
-            'nama_usaha'              => $input['nama_usaha'] ?? '',
-            'jabatan'                 => $input['jabatan'] ?? '',
-            'lama_usaha'              => $input['lama_usaha'] ?? '',
-            'alamat_usaha'            => $input['alamat_usaha'] ?? '',
-            'npwp_usaha'              => $input['npwp_usaha'] ?? '',
-            'nomor_induk_berusaha_nib'=> $input['nomor_induk_berusaha_nib'] ?? '',
-            'sumber_pembayaran'       => $input['sumber_pembayaran'] ?? '',
+            'nama_usaha'              => $valNamaUsaha,
+            'jabatan'                 => $valJabatan,
+            'lama_usaha'              => $valLamaUsaha,
+            'alamat_usaha'            => $valAlamatUsaha,
+            'npwp_usaha'              => $valNpwpUsaha,
+            'nomor_induk_berusaha_nib'=> $valNib,
+            'sumber_pembayaran'       => $valSumberBayar,
             'ringkasan_slik'          => $input['ringkasan_slik'] ?? '',
             'status_pengajuan'        => $statusPengajuan
         ];
@@ -401,6 +417,9 @@ class Pengajuan extends BaseController
         if (!$kreditId) {
             return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyimpan data induk kredit']);
         }
+
+        // 0. Simpan Daftar Usaha (Multi Usaha Dinamis)
+        $this->simpanUsaha($kreditId, $input);
 
         // 1. Simpan Agunan
         $this->simpanAgunan($kreditId, $input);
@@ -433,6 +452,47 @@ class Pengajuan extends BaseController
             'message'   => 'Data berhasil disimpan',
             'kredit_id' => $kreditId
         ]);
+    }
+
+    private function simpanUsaha($kreditId, $input)
+    {
+        $this->usahaModel->where('kredit_id', $kreditId)->delete();
+
+        $daftar = $input['usaha'] ?? [];
+        if (!empty($daftar) && is_array($daftar)) {
+            $isFirst = true;
+            foreach ($daftar as $row) {
+                if (empty($row['nama_usaha']) && empty($row['bidang_usaha']) && empty($row['alamat_usaha'])) {
+                    continue;
+                }
+                $this->usahaModel->insert([
+                    'kredit_id'                => $kreditId,
+                    'is_utama'                 => $isFirst ? 1 : 0,
+                    'nama_usaha'               => $row['nama_usaha'] ?? '',
+                    'bidang_usaha'             => $row['bidang_usaha'] ?? '',
+                    'jabatan'                  => $row['jabatan'] ?? '',
+                    'lama_usaha'               => $row['lama_usaha'] ?? '',
+                    'sumber_pembayaran'        => $row['sumber_pembayaran'] ?? '',
+                    'alamat_usaha'             => $row['alamat_usaha'] ?? '',
+                    'npwp_usaha'               => $row['npwp_usaha'] ?? '',
+                    'nomor_induk_berusaha_nib' => $row['nomor_induk_berusaha_nib'] ?? '',
+                ]);
+                $isFirst = false;
+            }
+        } elseif (!empty($input['nama_usaha']) || !empty($input['bidang_usaha'])) {
+            $this->usahaModel->insert([
+                'kredit_id'                => $kreditId,
+                'is_utama'                 => 1,
+                'nama_usaha'               => $input['nama_usaha'] ?? '',
+                'bidang_usaha'             => $input['bidang_usaha'] ?? ($input['jenis_usaha'] ?? ''),
+                'jabatan'                  => $input['jabatan'] ?? '',
+                'lama_usaha'               => $input['lama_usaha'] ?? '',
+                'sumber_pembayaran'        => $input['sumber_pembayaran'] ?? '',
+                'alamat_usaha'             => $input['alamat_usaha'] ?? '',
+                'npwp_usaha'               => $input['npwp_usaha'] ?? '',
+                'nomor_induk_berusaha_nib' => $input['nomor_induk_berusaha_nib'] ?? '',
+            ]);
+        }
     }
 
     private function simpanAgunan($kreditId, $input)

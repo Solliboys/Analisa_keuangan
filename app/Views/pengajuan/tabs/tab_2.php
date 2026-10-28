@@ -179,6 +179,152 @@
 </div>
 
 <script>
+function tambahBarisUsaha() {
+    const container = document.getElementById('containerUsaha');
+    const tmpl = document.getElementById('templateBarisUsaha');
+    if (!container || !tmpl) return;
+
+    const items = container.querySelectorAll('.card-usaha-item');
+    const nextIdx = items.length;
+    const nextNum = nextIdx + 1;
+
+    let html = tmpl.innerHTML
+        .replace(/__INDEX__/g, nextIdx)
+        .replace(/__NUM__/g, nextNum);
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html.trim();
+    const newCard = tempDiv.firstElementChild;
+    container.appendChild(newCard);
+
+    // Update label sesuai jenis debitur yang sedang aktif
+    const jdVal = document.getElementById('jenis_debitur')?.value || 'Individu';
+    const isBadan = (jdVal.includes('PT') || jdVal.includes('CV') || jdVal.includes('Badan Usaha'));
+    updateCardUsahaLabels(newCard, isBadan, nextNum);
+
+    // Smooth focus / scroll ke card baru
+    newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const firstInput = newCard.querySelector('input');
+    if (firstInput) firstInput.focus();
+}
+
+function hapusBarisUsaha(btn) {
+    const card = btn.closest('.card-usaha-item');
+    if (!card) return;
+
+    const container = document.getElementById('containerUsaha');
+    card.remove();
+
+    if (!container) return;
+    const items = container.querySelectorAll('.card-usaha-item');
+    const jdVal = document.getElementById('jenis_debitur')?.value || 'Individu';
+    const isBadan = (jdVal.includes('PT') || jdVal.includes('CV') || jdVal.includes('Badan Usaha'));
+
+    items.forEach((item, idx) => {
+        const num = idx + 1;
+        item.setAttribute('data-index', idx);
+
+        const numEl = item.querySelector('.usaha-num');
+        if (numEl) numEl.innerText = num;
+        const numTitle = item.querySelector('.usaha-num-title');
+        if (numTitle) numTitle.innerText = num;
+
+        // Update semua nama input
+        const inputs = item.querySelectorAll('input, textarea, select');
+        inputs.forEach(inp => {
+            if (inp.name) {
+                inp.name = inp.name.replace(/usaha\[\d+\]/, `usaha[${idx}]`);
+            }
+        });
+
+        updateCardUsahaLabels(item, isBadan, num);
+    });
+}
+
+function updateCardUsahaLabels(card, isBadan, num) {
+    const prefixTitle = card.querySelector('.usaha-prefix-title');
+    if (prefixTitle) {
+        prefixTitle.innerText = isBadan ? 'Unit Usaha / Perusahaan #' : 'Usaha / Sumber Penghasilan #';
+    }
+
+    const lblNamaUsaha = card.querySelector('.lbl-nama-usaha');
+    const inpNamaUsaha = card.querySelector('.inp-nama-usaha');
+    if (lblNamaUsaha && inpNamaUsaha) {
+        if (isBadan) {
+            lblNamaUsaha.innerText = 'Nama Perusahaan';
+            inpNamaUsaha.placeholder = 'Contoh: PT Mandiri Sejahtera';
+        } else {
+            lblNamaUsaha.innerText = 'Nama Usaha atau Nama Perusahaan / Tempat Bekerja';
+            inpNamaUsaha.placeholder = 'Nama tempat bekerja / Toko Berkah / Usaha Mandiri';
+        }
+    }
+
+    const lblJabatan = card.querySelector('.lbl-jabatan');
+    const inpJabatan = card.querySelector('.inp-jabatan');
+    if (lblJabatan && inpJabatan) {
+        if (isBadan) {
+            lblJabatan.innerText = 'Jabatan Pemohon di Usaha';
+            inpJabatan.placeholder = 'Direktur / Komisaris / General Manager';
+        } else {
+            lblJabatan.innerText = 'Jabatan / Status (Pemilik, Karyawan, dll.)';
+            inpJabatan.placeholder = 'Pemilik / Karyawan / Pengelola';
+        }
+    }
+
+    const lblLamaUsaha = card.querySelector('.lbl-lama-usaha');
+    if (lblLamaUsaha) {
+        lblLamaUsaha.innerText = isBadan ? 'Lama Usaha Berjalan' : 'Lama Usaha / Lama Bekerja';
+    }
+
+    const lblSumberBayar = card.querySelector('.lbl-sumber-bayar');
+    const inpSumberBayar = card.querySelector('.inp-sumber-bayar');
+    if (lblSumberBayar && inpSumberBayar) {
+        if (isBadan) {
+            lblSumberBayar.innerText = 'Sumber Utama Pembayaran (Repayment)';
+            inpSumberBayar.placeholder = 'Hasil penjualan / invoice piutang / termin proyek';
+        } else {
+            lblSumberBayar.innerText = 'Sumber Utama Pembayaran (gaji atau hasil usaha)';
+            inpSumberBayar.placeholder = 'Gaji bulanan / hasil usaha dagang / laba operasional';
+        }
+    }
+
+    const lblAlamatUsaha = card.querySelector('.lbl-alamat-usaha');
+    const inpAlamatUsaha = card.querySelector('.inp-alamat-usaha');
+    if (lblAlamatUsaha && inpAlamatUsaha) {
+        if (isBadan) {
+            lblAlamatUsaha.innerText = 'Alamat Lokasi Tempat Usaha / Kantor Operasional';
+            inpAlamatUsaha.placeholder = 'Alamat kantor / pabrik / workshop operasional perusahaan';
+        } else {
+            lblAlamatUsaha.innerText = 'Alamat Usaha / Tempat Bekerja';
+            inpAlamatUsaha.placeholder = 'Alamat tempat usaha atau alamat kantor / tempat bekerja';
+        }
+    }
+
+    const lblNpwp = card.querySelector('.lbl-npwp-usaha');
+    if (lblNpwp) {
+        lblNpwp.innerText = isBadan ? 'NPWP Usaha / Badan' : 'NPWP Usaha';
+    }
+
+    const lblNib = card.querySelector('.lbl-nib');
+    if (lblNib) {
+        lblNib.innerText = isBadan ? 'Nomor Induk Berusaha (NIB) / Izin' : 'NIB / Izin Usaha';
+    }
+}
+
+function updateSemuaCardUsaha(isBadan) {
+    const btnText = document.getElementById('btn_text_tambah_usaha');
+    if (btnText) {
+        btnText.innerText = isBadan ? 'Tambah Unit Usaha / Perusahaan' : 'Tambah Usaha / Pekerjaan Lain';
+    }
+
+    const container = document.getElementById('containerUsaha');
+    if (!container) return;
+    const items = container.querySelectorAll('.card-usaha-item');
+    items.forEach((item, idx) => {
+        updateCardUsahaLabels(item, isBadan, idx + 1);
+    });
+}
+
 function ubahJenisDebitur(val) {
     if (!val) {
         val = document.getElementById('jenis_debitur')?.value || 'Individu';
@@ -197,100 +343,15 @@ function ubahJenisDebitur(val) {
         else wrapUsaha.classList.add('hidden');
     }
 
-    // 2. Update Label & Placeholder di Tab 3 (Usaha & Operasional)
-    const txtNamaUsaha = document.getElementById('text_label_nama_usaha');
-    const inputNamaUsaha = document.getElementById('nama_usaha_tab3');
-    if (txtNamaUsaha && inputNamaUsaha) {
-        if (isBadan) {
-            txtNamaUsaha.innerText = 'Nama Perusahaan';
-            inputNamaUsaha.placeholder = 'Contoh: PT Mandiri Sejahtera';
-        } else {
-            txtNamaUsaha.innerText = 'Nama Usaha atau Nama Perusahaan / Tempat Bekerja';
-            inputNamaUsaha.placeholder = 'Nama tempat bekerja / Toko Berkah / Usaha Mandiri';
-        }
-    }
-
-    const txtJabatan = document.getElementById('text_label_jabatan');
-    const inputJabatan = document.getElementById('jabatan_tab3');
-    if (txtJabatan && inputJabatan) {
-        if (isBadan) {
-            txtJabatan.innerText = 'Jabatan Pemohon di Usaha';
-            inputJabatan.placeholder = 'Direktur / Komisaris / General Manager';
-        } else {
-            txtJabatan.innerText = 'Jabatan / Status (Pemilik, Karyawan, dll.)';
-            inputJabatan.placeholder = 'Pemilik / Karyawan / Pengelola';
-        }
-    }
-
-    const txtLamaUsaha = document.getElementById('text_label_lama_usaha');
-    const inputLamaUsaha = document.getElementById('lama_usaha_tab3');
-    if (txtLamaUsaha && inputLamaUsaha) {
-        if (isBadan) {
-            txtLamaUsaha.innerText = 'Lama Usaha Berjalan';
-        } else {
-            txtLamaUsaha.innerText = 'Lama Usaha / Lama Bekerja';
-        }
-    }
-
-    const txtSumberBayar = document.getElementById('text_label_sumber_pembayaran');
-    const inputSumberBayar = document.getElementById('sumber_pembayaran_tab3');
-    if (txtSumberBayar && inputSumberBayar) {
-        if (isBadan) {
-            txtSumberBayar.innerText = 'Sumber Utama Pembayaran (Repayment)';
-            inputSumberBayar.placeholder = 'Hasil penjualan / invoice piutang / termin proyek';
-        } else {
-            txtSumberBayar.innerText = 'Sumber Utama Pembayaran (gaji atau hasil usaha)';
-            inputSumberBayar.placeholder = 'Gaji bulanan / hasil usaha dagang / laba operasional';
-        }
-    }
-
-    const txtAlamatUsaha = document.getElementById('text_label_alamat_usaha');
-    const inputAlamatUsaha = document.getElementById('alamat_usaha_tab3');
-    if (txtAlamatUsaha && inputAlamatUsaha) {
-        if (isBadan) {
-            txtAlamatUsaha.innerText = 'Alamat Lokasi Tempat Usaha / Kantor Operasional';
-            inputAlamatUsaha.placeholder = 'Alamat kantor / pabrik / workshop operasional perusahaan';
-        } else {
-            txtAlamatUsaha.innerText = 'Alamat Usaha / Tempat Bekerja';
-            inputAlamatUsaha.placeholder = 'Alamat tempat usaha atau alamat kantor / tempat bekerja';
-        }
-    }
-
-    // 3. Toggle Legalitas Perorangan vs Legalitas Akta PT/CV
-    const wrapLegalPerorangan = document.getElementById('wrapper_legalitas_perorangan');
+    // 2. Toggle Legalitas Akta Card (khusus PT/CV) di Tab 3
     const cardLegalAkta = document.getElementById('card_legalitas_akta');
-    const npwpPerorangan = document.getElementById('npwp_usaha_perorangan');
-    const nibPerorangan = document.getElementById('nib_perorangan');
-    const npwpBadan = document.getElementById('npwp_usaha_badan');
-    const nibBadan = document.getElementById('nib_badan');
-
-    if (isBadan) {
-        if (wrapLegalPerorangan) wrapLegalPerorangan.classList.add('hidden');
-        if (cardLegalAkta) cardLegalAkta.classList.remove('hidden');
-        if (npwpPerorangan) npwpPerorangan.disabled = true;
-        if (nibPerorangan) nibPerorangan.disabled = true;
-        if (npwpBadan) {
-            npwpBadan.disabled = false;
-            if (npwpPerorangan && npwpPerorangan.value && !npwpBadan.value) npwpBadan.value = npwpPerorangan.value;
-        }
-        if (nibBadan) {
-            nibBadan.disabled = false;
-            if (nibPerorangan && nibPerorangan.value && !nibBadan.value) nibBadan.value = nibPerorangan.value;
-        }
-    } else {
-        if (wrapLegalPerorangan) wrapLegalPerorangan.classList.remove('hidden');
-        if (cardLegalAkta) cardLegalAkta.classList.add('hidden');
-        if (npwpBadan) npwpBadan.disabled = true;
-        if (nibBadan) nibBadan.disabled = true;
-        if (npwpPerorangan) {
-            npwpPerorangan.disabled = false;
-            if (npwpBadan && npwpBadan.value && !npwpPerorangan.value) npwpPerorangan.value = npwpBadan.value;
-        }
-        if (nibPerorangan) {
-            nibPerorangan.disabled = false;
-            if (nibBadan && nibBadan.value && !nibPerorangan.value) nibPerorangan.value = nibBadan.value;
-        }
+    if (cardLegalAkta) {
+        if (isBadan) cardLegalAkta.classList.remove('hidden');
+        else cardLegalAkta.classList.add('hidden');
     }
+
+    // 3. Update semua kartu usaha di Tab 3
+    updateSemuaCardUsaha(isBadan);
 }
 
 // Inisialisasi event listener dan status awal
@@ -300,26 +361,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ubahJenisDebitur(jdVal);
     }
 
-    // Sinkronisasi otomatis antar input yang berpasangan
-    const npwpPerorangan = document.getElementById('npwp_usaha_perorangan');
-    const npwpBadan = document.getElementById('npwp_usaha_badan');
-    if (npwpPerorangan && npwpBadan) {
-        npwpPerorangan.addEventListener('input', (e) => { npwpBadan.value = e.target.value; });
-        npwpBadan.addEventListener('input', (e) => { npwpPerorangan.value = e.target.value; });
-    }
-
-    const nibPerorangan = document.getElementById('nib_perorangan');
-    const nibBadan = document.getElementById('nib_badan');
-    if (nibPerorangan && nibBadan) {
-        nibPerorangan.addEventListener('input', (e) => { nibBadan.value = e.target.value; });
-        nibBadan.addEventListener('input', (e) => { nibPerorangan.value = e.target.value; });
-    }
-
     const ju = document.getElementById('jenis_usaha');
-    const bu = document.getElementById('bidang_usaha_tab3');
-    if (ju && bu) {
-        ju.addEventListener('input', () => { bu.value = ju.value; });
-        bu.addEventListener('input', () => { ju.value = bu.value; });
+    const bu1 = document.querySelector('input[name="usaha[0][bidang_usaha]"]');
+    if (ju && bu1) {
+        ju.addEventListener('input', () => { bu1.value = ju.value; });
+        bu1.addEventListener('input', () => { ju.value = bu1.value; });
     }
 });
 </script>
