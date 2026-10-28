@@ -179,68 +179,7 @@ if (empty($listUsaha)) {
         </div>
     </div>
 
-    <!-- Card Sub: Legalitas Akta & Kemenkumham (Khusus PT / CV) -->
-    <div id="card_legalitas_akta" class="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-7 shadow-xs <?= $isBadanUsaha ? '' : 'hidden' ?>">
-        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
-            <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-                <h4 class="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider">LEGALITAS AKTA & KEMENKUMHAM (UNTUK PT / CV)</h4>
-            </div>
-            <span class="px-2.5 py-0.5 rounded-md text-[11px] font-semibold text-slate-400 bg-slate-50 border border-slate-200">
-                Opsional
-            </span>
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <!-- Nomor Akta Pendirian -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                    Nomor Akta Pendirian
-                </label>
-                <input type="text" name="akta_pendirian" 
-                       value="<?= esc($kredit['akta_pendirian'] ?? '') ?>" 
-                       placeholder="No. Akta Notaris Pendirian"
-                       class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-            </div>
-
-            <!-- SK Pengesahan Kemenkumham Pendirian -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    SK Pengesahan Kemenkumham Pendirian
-                </label>
-                <input type="text" name="sk_pendirian" 
-                       value="<?= esc($kredit['sk_pendirian'] ?? '') ?>" 
-                       placeholder="No. AHU-xxxx.AH.01.01"
-                       class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-            </div>
-
-            <!-- Nomor Akta Perubahan Terakhir -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    Nomor Akta Perubahan Terakhir
-                </label>
-                <input type="text" name="akta_perubahan" 
-                       value="<?= esc($kredit['akta_perubahan'] ?? '') ?>" 
-                       placeholder="No. Akta Perubahan Pengurus/Modal"
-                       class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-            </div>
-
-            <!-- SK Penerimaan Kemenkumham Perubahan -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                    SK Penerimaan Kemenkumham Perubahan
-                </label>
-                <input type="text" name="sk_perubahan" 
-                       value="<?= esc($kredit['sk_perubahan'] ?? '') ?>" 
-                       placeholder="No. AHU Perubahan Terakhir"
-                       class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Template Card Usaha Baru (Hidden) -->

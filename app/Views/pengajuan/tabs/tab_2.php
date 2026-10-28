@@ -343,14 +343,7 @@ function ubahJenisDebitur(val) {
         else wrapUsaha.classList.add('hidden');
     }
 
-    // 2. Toggle Legalitas Akta Card (khusus PT/CV) di Tab 3
-    const cardLegalAkta = document.getElementById('card_legalitas_akta');
-    if (cardLegalAkta) {
-        if (isBadan) cardLegalAkta.classList.remove('hidden');
-        else cardLegalAkta.classList.add('hidden');
-    }
-
-    // 3. Update semua kartu usaha di Tab 3
+    // 2. Update semua kartu usaha di Tab 3
     updateSemuaCardUsaha(isBadan);
 }
 
