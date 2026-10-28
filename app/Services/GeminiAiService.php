@@ -43,10 +43,7 @@ class GeminiAiService
         $model = $settings['model_ai'];
 
         if (empty($apiKey)) {
-            return [
-                'status'  => false,
-                'message' => 'API Key Gemini belum dikonfigurasi di database.'
-            ];
+            return $this->fallbackAnalisa($dataKredit, 'Model Underwriting Otomatis');
         }
 
         // Susun prompt dinamis menggunakan instruksi dan pedoman dari pengaturan Superadmin

@@ -330,11 +330,21 @@ class Reviewer extends BaseController
      */
     public function detailAi($kreditId = null)
     {
-        if ($res = $this->cekAuthReviewer()) return $res;
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Sesi login telah berakhir, silakan login ulang.']);
+        }
+
+        $userId = session()->get('user_id');
+        $isReviewer = $this->isAuthorizedReviewer();
 
         $kredit = $this->kreditModel->find($kreditId);
         if (!$kredit) {
             return $this->response->setJSON(['status' => false, 'message' => 'Data pengajuan kredit tidak ditemukan.']);
+        }
+
+        // Pengusul hanya dapat melihat hasil AI pengajuan miliknya
+        if (!$isReviewer && $kredit['user_id'] != $userId) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Anda tidak memiliki hak akses untuk pengajuan ini.']);
         }
 
         $analisaModel = new \App\Models\KreditAnalisaModel();
@@ -408,6 +418,48 @@ class Reviewer extends BaseController
             'nama_debitur'   => $kredit['nama_debitur'],
             'plafon'         => (float)($kredit['plafon_pengajuan'] ?? 0),
             'analisa'        => $analisa
+        ]);
+    }
+
+    /**
+     * Ambil data hasil evaluasi & keputusan Reviewer / Komite
+     */
+    public function detailReview($kreditId = null)
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Sesi login telah berakhir, silakan login ulang.']);
+        }
+
+        $userId = session()->get('user_id');
+        $isReviewer = $this->isAuthorizedReviewer();
+
+        $kredit = $this->kreditModel->find($kreditId);
+        if (!$kredit) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data pengajuan kredit tidak ditemukan.']);
+        }
+
+        if (!$isReviewer && $kredit['user_id'] != $userId) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Anda tidak memiliki hak akses untuk pengajuan ini.']);
+        }
+
+        $komite = $this->komiteModel->where('kredit_id', $kreditId)
+                                    ->orderBy('komite_id', 'DESC')
+                                    ->first();
+
+        return $this->response->setJSON([
+            'status'           => true,
+            'nomor_aplikasi'   => $kredit['nomor_aplikasi'],
+            'nama_debitur'     => $kredit['nama_debitur'],
+            'nama_usaha'       => $kredit['nama_usaha'] ?: ($kredit['jenis_debitur'] ?? 'Individu'),
+            'plafon'           => (float)($kredit['plafon_pengajuan'] ?? 0),
+            'status_pengajuan' => $kredit['status_pengajuan'] ?? 'Draft',
+            'review'           => [
+                'status_approval'  => $komite['status_approval'] ?? ($kredit['status_pengajuan'] ?? 'Menunggu Review'),
+                'nama_approver'    => $komite['nama_approver'] ?? 'Belum ditentukan',
+                'role_approver'    => $komite['role_approver'] ?? 'Reviewer / Komite Kredit',
+                'tanggal_approval' => !empty($komite['tanggal_approval']) ? date('d M Y', strtotime($komite['tanggal_approval'])) : (!empty($komite['created_at']) ? date('d M Y', strtotime($komite['created_at'])) : '-'),
+                'catatan_approval' => $komite['catatan_approval'] ?? ''
+            ]
         ]);
     }
 }

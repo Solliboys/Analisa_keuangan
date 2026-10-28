@@ -56,18 +56,70 @@ class Pengajuan extends BaseController
         $userId  = session()->get('user_id');
         $jabatan = strtolower(session()->get('jabatan') ?? '');
 
-        // Superadmin, CEO, Direktur, Reviewer, dan Petugas SLIK melihat seluruh pengajuan
-        $isGlobal = ($jabatan === 'superadmin' || 
-                     strpos($jabatan, 'ceo') !== false || 
-                     strpos($jabatan, 'direk') !== false || 
-                     strpos($jabatan, 'review') !== false || 
-                     strpos($jabatan, 'slik') !== false);
-
-        if ($isGlobal) {
+        // Query daftar pengajuan berdasarkan peran
+        if ($jabatan === 'superadmin') {
             $daftarKredit = $this->kreditModel->orderBy('created_at', 'DESC')->findAll();
+        } elseif (strpos($jabatan, 'review') !== false || strpos($jabatan, 'ceo') !== false || strpos($jabatan, 'direk') !== false) {
+            // Reviewer & CEO: Draft JANGAN dimasukkan, hanya yang sudah Diajukan / Disetujui / Ditolak
+            $daftarKredit = $this->kreditModel->where('status_pengajuan !=', 'Draft')
+                                              ->where('status_pengajuan !=', 'draft')
+                                              ->orderBy('created_at', 'DESC')->findAll();
+        } elseif (strpos($jabatan, 'slik') !== false) {
+            $pengaturan = $this->db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+            $ijinSlik = (int)($pengaturan['ijin_pengusul_isi_slik'] ?? 1);
+            if ($ijinSlik === 0) {
+                // Jika fitur upload sendiri ditutup: masuk ketika pencet tombol setuju di slik (status_slik = Menunggu Pengecekan / Terbit) atau status diajukan
+                $daftarKredit = $this->kreditModel->groupStart()
+                                                  ->whereIn('status_slik', ['Menunggu Pengecekan', 'Terbit'])
+                                                  ->orWhere('status_pengajuan !=', 'Draft')
+                                                  ->groupEnd()
+                                                  ->orderBy('created_at', 'DESC')->findAll();
+            } else {
+                $daftarKredit = $this->kreditModel->orderBy('created_at', 'DESC')->findAll();
+            }
         } else {
+            // Pengusul hanya melihat pengajuan miliknya
             $daftarKredit = $this->kreditModel->where('user_id', $userId)->orderBy('created_at', 'DESC')->findAll();
         }
+
+        $semuaAnalisa = $this->analisaModel->findAll();
+        $mapAnalisa   = [];
+        foreach ($semuaAnalisa as $a) {
+            $mapAnalisa[$a['kredit_id']] = $a;
+        }
+
+        $semuaKomite = $this->komiteModel->orderBy('komite_id', 'DESC')->findAll();
+        $mapKomite   = [];
+        foreach ($semuaKomite as $km) {
+            if (!isset($mapKomite[$km['kredit_id']]) && !empty($km['catatan_approval'])) {
+                $mapKomite[$km['kredit_id']] = $km;
+            }
+        }
+        foreach ($semuaKomite as $km) {
+            if (!isset($mapKomite[$km['kredit_id']])) {
+                $mapKomite[$km['kredit_id']] = $km;
+            }
+        }
+
+        foreach ($daftarKredit as &$k) {
+            $km = $mapKomite[$k['kredit_id']] ?? null;
+            $k['catatan_reviewer'] = !empty($km['catatan_approval']) ? $km['catatan_approval'] : '';
+            $k['status_komite']    = !empty($km['status_approval']) ? $km['status_approval'] : '';
+            $k['nama_reviewer']    = !empty($km['nama_approver']) ? $km['nama_approver'] : '';
+            $k['tanggal_review']   = !empty($km['tanggal_approval']) ? $km['tanggal_approval'] : (!empty($km['created_at']) ? date('Y-m-d', strtotime($km['created_at'])) : '');
+
+            $hasOfficialReview = !empty($k['status_komite']) && (!empty($k['nama_reviewer']) || !empty($k['catatan_reviewer']));
+            if ($hasOfficialReview && (empty($k['status_pengajuan']) || in_array(strtolower($k['status_pengajuan']), ['draft', 'diajukan']))) {
+                $k['status_pengajuan'] = $k['status_komite'];
+            }
+
+            $an = $mapAnalisa[$k['kredit_id']] ?? null;
+            $k['skor_ai']              = !empty($an['skor_kelayakan_ai']) ? (int)$an['skor_kelayakan_ai'] : null;
+            $k['rekomendasi_ai']       = !empty($an['rekomendasi_keputusan_ai']) ? $an['rekomendasi_keputusan_ai'] : '';
+            $k['rekomendasi_plafon_ai'] = !empty($an['rekomendasi_plafon_ai']) ? (float)$an['rekomendasi_plafon_ai'] : null;
+            $k['analisis_risiko_ai']   = !empty($an['analisis_risiko_ai']) ? $an['analisis_risiko_ai'] : '';
+        }
+        unset($k);
 
         $db = \Config\Database::connect();
         $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
@@ -97,14 +149,24 @@ class Pengajuan extends BaseController
         $userId  = session()->get('user_id');
         $jabatan = strtolower(session()->get('jabatan') ?? '');
 
-        $isGlobal = ($jabatan === 'superadmin' || 
-                     strpos($jabatan, 'ceo') !== false || 
-                     strpos($jabatan, 'direk') !== false || 
-                     strpos($jabatan, 'review') !== false || 
-                     strpos($jabatan, 'slik') !== false);
-
-        if ($isGlobal) {
+        if ($jabatan === 'superadmin') {
             $daftarKredit = $this->kreditModel->orderBy('created_at', 'DESC')->findAll();
+        } elseif (strpos($jabatan, 'review') !== false || strpos($jabatan, 'ceo') !== false || strpos($jabatan, 'direk') !== false) {
+            $daftarKredit = $this->kreditModel->where('status_pengajuan !=', 'Draft')
+                                              ->where('status_pengajuan !=', 'draft')
+                                              ->orderBy('created_at', 'DESC')->findAll();
+        } elseif (strpos($jabatan, 'slik') !== false) {
+            $pengaturan = $this->db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+            $ijinSlik = (int)($pengaturan['ijin_pengusul_isi_slik'] ?? 1);
+            if ($ijinSlik === 0) {
+                $daftarKredit = $this->kreditModel->groupStart()
+                                                  ->whereIn('status_slik', ['Menunggu Pengecekan', 'Terbit'])
+                                                  ->orWhere('status_pengajuan !=', 'Draft')
+                                                  ->groupEnd()
+                                                  ->orderBy('created_at', 'DESC')->findAll();
+            } else {
+                $daftarKredit = $this->kreditModel->orderBy('created_at', 'DESC')->findAll();
+            }
         } else {
             $daftarKredit = $this->kreditModel->where('user_id', $userId)->orderBy('created_at', 'DESC')->findAll();
         }
@@ -198,6 +260,19 @@ class Pengajuan extends BaseController
             return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan.');
         }
 
+        $userId  = session()->get('user_id');
+        $jabatan = strtolower(session()->get('jabatan') ?? '');
+        $isGlobal = ($jabatan === 'superadmin' || 
+                     strpos($jabatan, 'ceo') !== false || 
+                     strpos($jabatan, 'direk') !== false || 
+                     strpos($jabatan, 'review') !== false || 
+                     strpos($jabatan, 'slik') !== false);
+
+        // Pengusul hanya dapat mengakses pengajuan miliknya sendiri
+        if (!$isGlobal && $kredit['user_id'] != $userId) {
+            return redirect()->to('/pengajuan')->with('error', 'Akses ditolak: Anda hanya dapat mengakses dan mengedit pengajuan yang Anda buat sendiri.');
+        }
+
         $db = \Config\Database::connect();
         $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
 
@@ -229,12 +304,45 @@ class Pengajuan extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'Sesi berakhir, silakan login ulang']);
         }
 
-        $input = $this->request->getPost();
-        $userId = session()->get('user_id');
+        $input    = $this->request->getPost();
+        $userId   = session()->get('user_id');
+        $jabatan  = strtolower(session()->get('jabatan') ?? '');
+        $isReviewer = ($jabatan === 'superadmin' || strpos($jabatan, 'review') !== false || strpos($jabatan, 'direk') !== false || strpos($jabatan, 'ceo') !== false);
         $kreditId = !empty($input['kredit_id']) ? $input['kredit_id'] : null;
 
+        // Tentukan status pengajuan yang sah
+        $statusPengajuan = 'Draft';
+        if ($kreditId) {
+            $existing = $this->kreditModel->find($kreditId);
+            if (!$existing) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Data pengajuan tidak ditemukan']);
+            }
+            if (!$isReviewer && $existing['user_id'] != $userId) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Akses ditolak: Anda hanya dapat memperbarui pengajuan milik Anda sendiri']);
+            }
+            $userIdPembuat = $existing['user_id'];
+
+            // Jika sebelumnya sudah ada keputusan reviewer, pertahankan status reviewer
+            if (!$isReviewer && in_array(strtolower($existing['status_pengajuan']), ['disetujui', 'disetujui bersyarat', 'ditolak'])) {
+                $statusPengajuan = $existing['status_pengajuan'];
+            } else {
+                $reqStatus = $input['status_pengajuan'] ?? $existing['status_pengajuan'] ?? 'Draft';
+                if (!$isReviewer && !in_array(strtolower($reqStatus), ['draft', 'diajukan'])) {
+                    $reqStatus = 'Draft';
+                }
+                $statusPengajuan = $reqStatus;
+            }
+        } else {
+            $userIdPembuat = $userId;
+            $reqStatus = $input['status_pengajuan'] ?? 'Draft';
+            if (!$isReviewer && !in_array(strtolower($reqStatus), ['draft', 'diajukan'])) {
+                $reqStatus = 'Draft';
+            }
+            $statusPengajuan = $reqStatus;
+        }
+
         $dataKredit = [
-            'user_id'                 => $userId,
+            'user_id'                 => $userIdPembuat,
             'nomor_aplikasi'          => $input['nomor_aplikasi'] ?? ('CAM-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4))),
             'tipe_aplikasi'           => $input['tipe_aplikasi'] ?? 'Fasilitas Baru',
             'jenis_debitur'           => $input['jenis_debitur'] ?? 'Individu',
@@ -244,6 +352,7 @@ class Pengajuan extends BaseController
             'jenis_jaminan'           => $input['jenis_jaminan'] ?? 'On Hand',
             'tujuan_pembiayaan'       => $input['tujuan_pembiayaan'] ?? 'Modal Kerja',
             'skema_pembayaran'        => $input['skema_pembayaran'] ?? 'Balloon Payment',
+            'perhitungan_bunga'       => $input['perhitungan_bunga'] ?? 'ANUITAS',
             'bunga_per_bulan'         => (float)($input['bunga_per_bulan'] ?? 3),
             'bunga_per_tahun'         => (float)($input['bunga_per_tahun'] ?? 36),
             'alamat_ktp'              => $input['alamat_ktp'] ?? '',
@@ -266,8 +375,15 @@ class Pengajuan extends BaseController
             'nomor_induk_berusaha_nib'=> $input['nomor_induk_berusaha_nib'] ?? '',
             'sumber_pembayaran'       => $input['sumber_pembayaran'] ?? '',
             'ringkasan_slik'          => $input['ringkasan_slik'] ?? '',
-            'status_pengajuan'        => $input['status_pengajuan'] ?? 'Draft'
+            'status_pengajuan'        => $statusPengajuan
         ];
+
+        if (!empty($input['status_slik'])) {
+            $dataKredit['status_slik'] = $input['status_slik'];
+            if ($input['status_slik'] === 'Menunggu Pengecekan' && empty($dataKredit['hasil_slik'])) {
+                $dataKredit['hasil_slik'] = 'Menunggu Pengecekan Petugas SLIK';
+            }
+        }
 
         if ($kreditId) {
             $this->kreditModel->update($kreditId, $dataKredit);
@@ -300,8 +416,10 @@ class Pengajuan extends BaseController
         // 7. Simpan Disbursement (Tab 12)
         $this->simpanDisbursement($kreditId, $input);
 
-        // 8. Simpan Approval Komite (Tab 13)
-        $this->simpanKomite($kreditId, $input);
+        // 8. Simpan Approval Komite (HANYA boleh disimpan oleh Reviewer / Komite / Superadmin, BUKAN oleh pengusul)
+        if ($isReviewer) {
+            $this->simpanKomite($kreditId, $input);
+        }
 
         return $this->response->setJSON([
             'status'    => true,
@@ -617,7 +735,37 @@ class Pengajuan extends BaseController
             'status'     => true,
             'dokumen_id' => $docId,
             'nama_file'  => $file->getClientName(),
+            'kategori'   => $kategori,
+            'ukuran_kb'  => number_format($file->getSize() / 1024, 1),
             'path'       => base_url('uploads/dokumen/' . $newName)
+        ]);
+    }
+
+    public function updateKategoriDokumen()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $docId    = (int)$this->request->getPost('dokumen_id');
+        $kategori = trim($this->request->getPost('kategori') ?? '');
+        if (empty($kategori)) {
+            $kategori = 'KTP & NPWP';
+        }
+
+        $doc = $this->dokumenModel->find($docId);
+        if (!$doc) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Dokumen tidak ditemukan']);
+        }
+
+        $this->dokumenModel->update($docId, [
+            'kategori_dokumen' => $kategori
+        ]);
+
+        return $this->response->setJSON([
+            'status'   => true,
+            'message'  => 'Kategori berhasil diperbarui',
+            'kategori' => $kategori
         ]);
     }
 

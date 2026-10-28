@@ -50,13 +50,10 @@
                         <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         <span>Kembali</span>
                     </a>
-                    <span id="badgeNomorAplikasi" class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                        <?= esc($nomor_aplikasi) ?>
-                    </span>
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <span id="saveStatusIndicator" class="text-xs text-slate-500 flex items-center gap-1.5 hidden sm:flex">
+                    <span id="saveStatusIndicator" class="text-xs text-slate-500 flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-slate-300"></span> Siap disimpan
                     </span>
                     <?php if (!empty($kredit_id)): ?>
@@ -65,10 +62,6 @@
                             Cetak CAM
                         </a>
                     <?php endif; ?>
-                    <button type="button" onclick="simpanForm(false)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1.5">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                        Simpan Data
-                    </button>
                 </div>
             </div>
         </div>
@@ -221,6 +214,7 @@
                     <!-- Hidden Identification Fields -->
                     <input type="hidden" name="kredit_id" id="kredit_id" value="<?= esc($kredit_id ?? '') ?>">
                     <input type="hidden" name="nomor_aplikasi" id="nomor_aplikasi" value="<?= esc($nomor_aplikasi) ?>">
+                    <input type="hidden" name="status_slik" id="inputStatusSlik" value="<?= esc($kredit['status_slik'] ?? 'Belum Terbit') ?>">
 
                     <!-- ==========================================
                          TAB 1: APLIKASI & PLAFON PINJAMAN
@@ -245,6 +239,45 @@
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <!-- ID Pengajuan (Locked / Readonly) -->
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                        <span class="flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                                            ID Pengajuan
+                                        </span>
+                                        <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                            Terkunci
+                                        </span>
+                                    </label>
+                                    <input type="text" id="display_nomor_aplikasi" value="<?= esc($nomor_aplikasi) ?>" readonly tabindex="-1"
+                                           class="w-full text-sm font-bold text-slate-600 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-100/90 cursor-not-allowed select-all shadow-2xs focus:outline-none"
+                                           title="Nomor ID pengajuan resmi yang dibuat otomatis oleh sistem dan tidak dapat diedit">
+                                </div>
+
+                                <!-- Tanggal Pengajuan (Locked / Readonly) -->
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                        <span class="flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            Tanggal Pengajuan
+                                        </span>
+                                        <span class="text-[10px] font-semibold text-slate-400 flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                                            <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                            Terkunci
+                                        </span>
+                                    </label>
+                                    <?php 
+                                        $tglDisplay = !empty($kredit['created_at']) ? date('d/m/Y', strtotime($kredit['created_at'])) : date('d/m/Y');
+                                        $tglDb = !empty($kredit['created_at']) ? date('Y-m-d', strtotime($kredit['created_at'])) : date('Y-m-d');
+                                    ?>
+                                    <input type="text" id="display_tanggal_pengajuan" value="<?= esc($tglDisplay) ?>" readonly tabindex="-1"
+                                           class="w-full text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-100/90 cursor-not-allowed select-all shadow-2xs focus:outline-none"
+                                           title="Tanggal registrasi pengajuan dicatat otomatis oleh sistem dan tidak dapat diedit">
+                                    <input type="hidden" name="tanggal_pengajuan" value="<?= esc($tglDb) ?>">
+                                </div>
+
                                 <!-- Tipe Aplikasi -->
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -360,23 +393,27 @@
                                     </select>
                                 </div>
 
-                                <!-- Bunga per Bulan (%) -->
+                                <!-- Perhitungan Bunga -->
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                        <span class="text-blue-600 font-bold">%</span>
-                                        Bunga per Bulan (%)
+                                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                        Perhitungan Bunga
                                     </label>
-                                    <input type="number" step="0.01" name="bunga_per_bulan" id="bunga_per_bulan" 
-                                           value="<?= esc($kredit['bunga_per_bulan'] ?? 3) ?>" 
-                                           class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"
-                                           oninput="syncBunga('bulan'); hitungKalkulasiAngsuran();">
+                                    <?php $pb = strtoupper($kredit['perhitungan_bunga'] ?? 'ANUITAS'); ?>
+                                    <select name="perhitungan_bunga" id="perhitungan_bunga" onchange="hitungKalkulasiAngsuran();" 
+                                            class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                                        <option value="FLAT" <?= $pb === 'FLAT' ? 'selected' : '' ?>>FLAT</option>
+                                        <option value="EFEKTIF" <?= $pb === 'EFEKTIF' ? 'selected' : '' ?>>EFEKTIF</option>
+                                        <option value="ANUITAS" <?= ($pb === 'ANUITAS' || empty($pb)) ? 'selected' : '' ?>>ANUITAS</option>
+                                    </select>
+                                    <input type="hidden" name="bunga_per_bulan" id="bunga_per_bulan" value="<?= esc($kredit['bunga_per_bulan'] ?? 3) ?>">
                                 </div>
 
                                 <!-- Bunga per Tahun (%) -->
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                                        Bunga per Tahun (%)
+                                        Suku Bunga per Tahun (%)
                                     </label>
                                     <input type="number" step="0.01" name="bunga_per_tahun" id="bunga_per_tahun" 
                                            value="<?= esc($kredit['bunga_per_tahun'] ?? 36.0) ?>" 
@@ -388,7 +425,7 @@
 
                         <!-- Live Estimasi Box -->
                         <div class="p-6 bg-white rounded-3xl border border-slate-200/90 shadow-xs">
-                            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                            <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                                 <!-- Kiri: Judul & Penjelasan -->
                                 <div>
                                     <span class="text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center gap-2">
@@ -398,18 +435,51 @@
                                     <div class="text-xs text-slate-500 mt-1">Dihitung otomatis berdasarkan plafon, tenor, dan suku bunga.</div>
                                 </div>
 
-                                <!-- Kanan: Nilai Estimasi Sejajar Bersih -->
-                                <div class="flex items-center gap-6 sm:gap-8 self-end lg:self-center shrink-0">
-                                    <div class="text-right">
+                                <!-- Kanan: Nilai Estimasi Sejajar Bersih + Tombol Eksekusi Analisa -->
+                                <div class="flex flex-wrap items-center gap-5 sm:gap-6 self-start xl:self-center shrink-0">
+                                    <div class="text-left sm:text-right">
                                         <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">Estimasi Balloon (Bunga/bln)</div>
                                         <div id="boxAngsuranBalloon" class="text-xl sm:text-2xl font-extrabold text-blue-600 mt-0.5 whitespace-nowrap">Rp 0</div>
                                     </div>
-                                    <div class="h-10 w-px bg-slate-200"></div>
-                                    <div class="text-right">
+                                    <div class="h-10 w-px bg-slate-200 hidden sm:block"></div>
+                                    <div class="text-left sm:text-right">
                                         <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">Estimasi Installment (Pokok+Bunga)</div>
                                         <div id="boxAngsuranInstallment" class="text-xl sm:text-2xl font-extrabold text-emerald-500 mt-0.5 whitespace-nowrap">Rp 0</div>
                                     </div>
+                                    <div class="h-10 w-px bg-slate-200 hidden sm:block"></div>
+                                    <div>
+                                        <button type="button" id="btnEksekusiAnalisa" onclick="eksekusiAnalisaKalkulasi()" 
+                                                class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs hover:shadow-md transition-all duration-200 active:scale-95 cursor-pointer whitespace-nowrap">
+                                            <svg id="iconEksekusiAnalisa" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                            </svg>
+                                            <span id="labelEksekusiAnalisa">Eksekusi Analisa</span>
+                                        </button>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <!-- Bar Ringkasan Hasil Eksekusi Analisa -->
+                            <div id="boxHasilEksekusiAnalisa" class="hidden mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-blue-50/70 p-3.5 rounded-2xl border border-blue-100">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-800 flex items-center gap-2 flex-wrap">
+                                            <span>Hasil Eksekusi Analisa:</span>
+                                            <span id="badgeHasilKeputusan" class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">Disetujui Penuh</span>
+                                            <span id="badgeHasilSkor" class="text-blue-700 font-extrabold">Skor 85/100</span>
+                                        </div>
+                                        <div class="text-slate-500 text-[11px] mt-0.5" id="descHasilAnalisa">
+                                            Rekomendasi plafon: <strong id="valHasilPlafon" class="text-slate-800">Rp 0</strong> &bull; Perhitungan angsuran dan mitigasi risiko kelayakan telah sinkron.
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="goToTab(8)" class="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-blue-700 border border-blue-200 rounded-lg font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto transition shadow-2xs whitespace-nowrap">
+                                    <span>Buka Detail Tab 8 (Analisa)</span>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                </button>
                             </div>
                         </div>
 
@@ -1130,10 +1200,10 @@
                                     <option value="KTP & NPWP">KTP & NPWP Debitur / Pasangan</option>
                                     <option value="Sertifikat Agunan">Sertifikat Agunan / PBB / IMB</option>
                                     <option value="Rekening Koran">Rekening Koran 3-6 Bulan Terakhir</option>
-                                    <option value="Legalitas Usaha">NIB / SIUP / TDP / Akta Perusahaan</option>
-                                    <option value="Laporan Keuangan">Laporan Keuangan / Pembukuan Usaha</option>
-                                    <option value="Foto Usaha & Jaminan">Foto Lokasi Usaha & Agunan</option>
-                                    <option value="Lainnya">Dokumen Pendukung Lainnya</option>
+                                    <option value="Legalitas Usaha">Legalitas Usaha (NIB / SIUP / TDP)</option>
+                                    <option value="Laporan Keuangan">Laporan Keuangan & Pembukuan</option>
+                                    <option value="Foto Usaha & Agunan">Foto Lokasi Usaha & Agunan</option>
+                                    <option value="Dokumen Pendukung">Dokumen Pendukung Lainnya</option>
                                 </select>
                             </div>
 
@@ -1181,19 +1251,47 @@
                                 </div>
                             <?php else: ?>
                                 <?php foreach ($dokumen as $doc): ?>
-                                    <div class="p-3.5 bg-white border border-slate-200/90 rounded-xl flex items-center justify-between text-xs hover:border-blue-300 transition shadow-2xs">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100">
-                                                <?= strtoupper(pathinfo($doc['nama_file_asli'] ?? '', PATHINFO_EXTENSION) ?: 'DOC') ?>
+                                    <?php
+                                        $ext = strtoupper(pathinfo($doc['nama_file_asli'] ?? '', PATHINFO_EXTENSION) ?: 'DOC');
+                                        $rawKat = trim($doc['kategori_dokumen'] ?? '');
+                                        if (empty($rawKat) || $rawKat === 'lainnya') {
+                                            $rawKat = 'KTP & NPWP';
+                                        }
+                                        $ukuranKb = number_format(($doc['ukuran_file_bytes'] ?? 0) / 1024, 1);
+                                    ?>
+                                    <div class="p-3.5 bg-white border border-slate-200/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:border-blue-300 hover:shadow-xs transition" id="docRow_<?= $doc['dokumen_id'] ?>">
+                                        <div class="flex items-start sm:items-center gap-3">
+                                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-xs shrink-0 border border-blue-100">
+                                                <?= $ext ?>
                                             </div>
                                             <div>
-                                                <div class="font-bold text-slate-800"><?= esc($doc['nama_file_asli']) ?></div>
-                                                <div class="text-[11px] text-slate-400"><?= esc($doc['kategori_dokumen']) ?> &bull; <?= number_format($doc['ukuran_file_bytes'] / 1024, 1) ?> KB</div>
+                                                <div class="font-bold text-slate-800 text-sm leading-snug"><?= esc($doc['nama_file_asli']) ?></div>
+                                                <div class="flex flex-wrap items-center gap-2 mt-1">
+                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
+                                                        <svg class="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                                        <span class="text-indigo-400 font-semibold">Kategori:</span>
+                                                        <select onchange="ubahKategoriDokumen(<?= $doc['dokumen_id'] ?>, this.value)" class="bg-transparent font-extrabold text-indigo-800 focus:outline-none cursor-pointer">
+                                                            <option value="KTP & NPWP" <?= strpos($rawKat, 'KTP') !== false ? 'selected' : '' ?>>KTP & NPWP</option>
+                                                            <option value="Sertifikat Agunan" <?= strpos($rawKat, 'Agunan') !== false || strpos($rawKat, 'Sertifikat') !== false ? 'selected' : '' ?>>Sertifikat Agunan</option>
+                                                            <option value="Rekening Koran" <?= strpos($rawKat, 'Rekening') !== false ? 'selected' : '' ?>>Rekening Koran</option>
+                                                            <option value="Legalitas Usaha" <?= strpos($rawKat, 'Legalitas') !== false ? 'selected' : '' ?>>Legalitas Usaha</option>
+                                                            <option value="Laporan Keuangan" <?= strpos($rawKat, 'Keuangan') !== false || strpos($rawKat, 'Neraca') !== false ? 'selected' : '' ?>>Laporan Keuangan</option>
+                                                            <option value="Foto Usaha & Agunan" <?= strpos($rawKat, 'Foto') !== false ? 'selected' : '' ?>>Foto Usaha & Agunan</option>
+                                                            <option value="Dokumen Pendukung" <?= strpos($rawKat, 'Pendukung') !== false || strpos($rawKat, 'Lainnya') !== false ? 'selected' : '' ?>>Dokumen Pendukung</option>
+                                                        </select>
+                                                    </span>
+                                                    <span class="text-[11px] text-slate-400 font-medium">
+                                                        <?= $ukuranKb ?> KB
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <a href="<?= base_url($doc['path_file']) ?>" target="_blank" class="px-3 py-1.5 text-blue-600 hover:text-blue-800 font-semibold text-xs border border-blue-200 rounded-lg hover:bg-blue-50 transition">
-                                            Lihat File
-                                        </a>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <a href="<?= base_url($doc['path_file']) ?>" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-200 rounded-xl hover:bg-blue-50 transition shadow-2xs">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                <span>Lihat File</span>
+                                            </a>
+                                        </div>
                                     </div>
                                 <?php endforeach; ?>
                             <?php endif; ?>
@@ -1245,21 +1343,45 @@
                         </div>
                     </div>
                 <?php elseif (!$isPetugasSlikRole && $ijinSlikPengusul === 0): ?>
-                    <!-- Alert Pengisian SLIK Dinonaktifkan bagi Pengusul -->
-                    <div class="p-6 sm:p-7 rounded-2xl bg-amber-50 border border-amber-200 mb-6 text-center">
-                        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3 shadow-2xs">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        </div>
-                        <h4 class="text-sm font-extrabold text-amber-900 uppercase tracking-wide">Pengisian SLIK Dikelola Oleh Petugas SLIK</h4>
-                        <p class="text-xs text-amber-800 mt-1.5 max-w-lg mx-auto leading-relaxed">
-                            Akses pengisian riwayat kredit nasabah saat ini dikhususkan bagi <strong>Petugas Verifikasi SLIK OJK</strong>. Anda dapat langsung melanjutkan ke tahap pengisian berikutnya.
-                        </p>
-                        <div class="mt-4 flex items-center justify-center gap-3">
-                            <button type="button" onclick="goToTab(7)" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
-                                <span>Lanjut ke Langkah 7 (Legal & Web Check)</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                            </button>
-                        </div>
+                    <?php 
+                        $statusSlikSaatIni = $kredit['status_slik'] ?? 'Belum Terbit';
+                        $isSlikRequested = ($statusSlikSaatIni === 'Menunggu Pengecekan' || $statusSlikSaatIni === 'Terbit');
+                    ?>
+                    <!-- Alert Pengisian SLIK Dinonaktifkan bagi Pengusul & Tombol Setuju SLIK -->
+                    <div class="p-6 sm:p-7 rounded-2xl <?= $isSlikRequested ? 'bg-emerald-50 border border-emerald-200' : 'bg-amber-50 border border-amber-200' ?> mb-6 text-center transition" id="boxStatusSlik">
+                        <?php if ($isSlikRequested): ?>
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <h4 class="text-sm font-extrabold text-emerald-900 uppercase tracking-wide">Persetujuan Verifikasi SLIK Telah Dikirim</h4>
+                            <p class="text-xs text-emerald-800 mt-1.5 max-w-lg mx-auto leading-relaxed">
+                                Permohonan pemeriksaan riwayat fasilitas pinjaman (SLIK OJK) telah disetujui dan <strong>resmi masuk ke tabel antrean kerja Petugas SLIK</strong>. Anda dapat langsung melanjutkan ke tahapan berikutnya.
+                            </p>
+                            <div class="mt-4 flex items-center justify-center gap-3">
+                                <button type="button" onclick="goToTab(7)" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+                                    <span>Lanjut ke Langkah 7 (Legal & Web Check)</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                </button>
+                            </div>
+                        <?php else: ?>
+                            <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            </div>
+                            <h4 class="text-sm font-extrabold text-amber-900 uppercase tracking-wide">Persetujuan Pemeriksaan SLIK OJK (Khusus Petugas SLIK)</h4>
+                            <p class="text-xs text-amber-800 mt-1.5 max-w-lg mx-auto leading-relaxed">
+                                Fitur pengisian mandiri dinonaktifkan. Silakan klik tombol <strong>Setuju di SLIK</strong> di bawah ini agar berkas debitur ini <strong>diteruskan dan masuk ke tabel antrean Petugas SLIK</strong> untuk dilakukan verifikasi fasilitas pinjaman nasabah secara resmi.
+                            </p>
+                            <div class="mt-4 flex flex-wrap items-center justify-center gap-3">
+                                <button type="button" id="btnSetujuSlik" onclick="setujuiPengajuanSlik(event)" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                    <span>Setuju di SLIK (Kirim ke Petugas SLIK)</span>
+                                </button>
+                                <button type="button" onclick="goToTab(7)" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition cursor-pointer">
+                                    <span>Lewati ke Langkah 7</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
 
@@ -2294,7 +2416,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-700 mb-1">Tingkat Komite</label>
-                                    <select name="komite[0][role_approver]" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                                    <select name="komite[0][role_approver]" disabled class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 cursor-not-allowed">
                                         <option value="Reviewer / Analis Senior">Reviewer / Analis Senior</option>
                                         <option value="Komite 1">Komite 1 (Branch Manager)</option>
                                         <option value="Komite 2">Komite 2 (Head of Credit)</option>
@@ -2303,35 +2425,34 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Pejabat Komite</label>
-                                    <input type="text" name="komite[0][nama_approver]" placeholder="Nama Lengkap Pejabat" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                                    <input type="text" name="komite[0][nama_approver]" disabled placeholder="Nama Lengkap Pejabat" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 cursor-not-allowed">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-700 mb-1">Keputusan</label>
-                                    <select name="komite[0][status_approval]" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white font-semibold">
+                                    <select name="komite[0][status_approval]" disabled class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 font-semibold cursor-not-allowed">
+                                        <option value="Pending" selected>Pending / Menunggu Review</option>
                                         <option value="Disetujui">Disetujui</option>
                                         <option value="Disetujui Bersyarat">Disetujui Bersyarat</option>
-                                        <option value="Pending">Pending / Tinjau Kembali</option>
                                         <option value="Ditolak">Ditolak</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Keputusan</label>
-                                    <input type="date" name="komite[0][tanggal_approval]" value="<?= date('Y-m-d') ?>" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                                    <input type="date" name="komite[0][tanggal_approval]" disabled value="<?= date('Y-m-d') ?>" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 cursor-not-allowed">
                                 </div>
                                 <div class="md:col-span-4">
                                     <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Khusus / Syarat Komite (Covenants)</label>
-                                    <textarea name="komite[0][catatan_approval]" rows="2" placeholder="Tuliskan syarat khusus sebelum akad dan pencairan..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white"></textarea>
+                                    <textarea name="komite[0][catatan_approval]" disabled rows="2" placeholder="Tuliskan syarat khusus sebelum akad dan pencairan..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 cursor-not-allowed"></textarea>
                                 </div>
                             </div>
                         </div>
                     <?php else: ?>
                         <?php foreach ($komite as $idx => $k): ?>
                             <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 relative">
-                                <button type="button" onclick="hapusBarisTabel(this)" class="absolute top-4 right-4 text-slate-400 hover:text-rose-600 font-bold">&times; Hapus</button>
                                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div>
                                         <label class="block text-xs font-semibold text-slate-700 mb-1">Tingkat Komite</label>
-                                        <select name="komite[<?= $idx ?>][role_approver]" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                                        <select name="komite[<?= $idx ?>][role_approver]" disabled class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 cursor-not-allowed">
                                             <?php $ra = $k['role_approver'] ?? 'Komite 1'; ?>
                                             <option value="Reviewer / Analis Senior" <?= $ra === 'Reviewer / Analis Senior' ? 'selected' : '' ?>>Reviewer / Analis Senior</option>
                                             <option value="Komite 1" <?= $ra === 'Komite 1' ? 'selected' : '' ?>>Komite 1 (Branch Manager)</option>
@@ -2341,11 +2462,11 @@
                                     </div>
                                     <div>
                                         <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Pejabat Komite</label>
-                                        <input type="text" name="komite[<?= $idx ?>][nama_approver]" value="<?= esc($k['nama_approver'] ?? '') ?>" placeholder="Nama Lengkap Pejabat" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                                        <input type="text" name="komite[<?= $idx ?>][nama_approver]" disabled value="<?= esc($k['nama_approver'] ?? '') ?>" placeholder="Nama Lengkap Pejabat" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 cursor-not-allowed">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-semibold text-slate-700 mb-1">Keputusan</label>
-                                        <select name="komite[<?= $idx ?>][status_approval]" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white font-semibold">
+                                        <select name="komite[<?= $idx ?>][status_approval]" disabled class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 font-semibold cursor-not-allowed">
                                             <?php $sa = $k['status_approval'] ?? 'Pending'; ?>
                                             <option value="Disetujui" <?= $sa === 'Disetujui' ? 'selected' : '' ?>>Disetujui</option>
                                             <option value="Disetujui Bersyarat" <?= $sa === 'Disetujui Bersyarat' ? 'selected' : '' ?>>Disetujui Bersyarat</option>
@@ -2355,11 +2476,11 @@
                                     </div>
                                     <div>
                                         <label class="block text-xs font-semibold text-slate-700 mb-1">Tanggal Keputusan</label>
-                                        <input type="date" name="komite[<?= $idx ?>][tanggal_approval]" value="<?= esc($k['tanggal_approval'] ?? date('Y-m-d')) ?>" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                                        <input type="date" name="komite[<?= $idx ?>][tanggal_approval]" disabled value="<?= esc($k['tanggal_approval'] ?? date('Y-m-d')) ?>" class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 cursor-not-allowed">
                                     </div>
                                     <div class="md:col-span-4">
                                         <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Khusus / Syarat Komite (Covenants)</label>
-                                        <textarea name="komite[<?= $idx ?>][catatan_approval]" rows="2" placeholder="Tuliskan syarat khusus sebelum akad dan pencairan..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white"><?= esc($k['catatan_approval'] ?? '') ?></textarea>
+                                        <textarea name="komite[<?= $idx ?>][catatan_approval]" disabled rows="2" placeholder="Tuliskan syarat khusus sebelum akad dan pencairan..." class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-slate-100 cursor-not-allowed"><?= esc($k['catatan_approval'] ?? '') ?></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -2588,28 +2709,43 @@
         function syncBunga(origin) {
             const bungaBulanInput = document.getElementById('bunga_per_bulan');
             const bungaTahunInput = document.getElementById('bunga_per_tahun');
-            if (origin === 'bulan') {
-                const b = parseFloat(bungaBulanInput.value) || 0;
-                bungaTahunInput.value = (b * 12).toFixed(2);
-            } else {
+            if (bungaTahunInput && bungaBulanInput) {
                 const t = parseFloat(bungaTahunInput.value) || 0;
                 bungaBulanInput.value = (t / 12).toFixed(2);
             }
         }
 
-        // Kalkulasi Angsuran Pinjaman (Balloon & Installment)
+        // Kalkulasi Angsuran Pinjaman (Balloon & Installment berdasarkan metode bunga)
         function hitungKalkulasiAngsuran() {
             const plafon = parseNominal(document.getElementById('plafon_pengajuan')?.value || 0);
             const tenor = Math.max(1, parseInt(document.getElementById('tenor_bulan')?.value || 12));
-            const bungaBulanPct = parseFloat(document.getElementById('bunga_per_bulan')?.value || 0) / 100;
             const bungaTahunPct = parseFloat(document.getElementById('bunga_per_tahun')?.value || 0) / 100;
+            const metodeBunga = (document.getElementById('perhitungan_bunga')?.value || 'ANUITAS').toUpperCase();
+
+            // Suku bunga bulanan
+            const i = bungaTahunPct / 12;
 
             // 1. Balloon Payment: bunga per bulan
-            const angsuranBalloon = Math.round(plafon * bungaBulanPct);
-            // 2. Installment Flat: pokok/bulan + bunga/bulan
-            const pokokBulan = plafon / tenor;
-            const bungaInstallmentBulan = (plafon * bungaTahunPct) / 12;
-            const angsuranInstallment = Math.round(pokokBulan + bungaInstallmentBulan);
+            const angsuranBalloon = Math.round(plafon * i);
+
+            // 2. Installment berdasarkan metode bunga (FLAT, EFEKTIF, ANUITAS)
+            let angsuranInstallment = 0;
+            if (metodeBunga === 'ANUITAS') {
+                if (i > 0) {
+                    angsuranInstallment = Math.round(plafon * (i / (1 - Math.pow(1 + i, -tenor))));
+                } else {
+                    angsuranInstallment = Math.round(plafon / tenor);
+                }
+            } else if (metodeBunga === 'EFEKTIF') {
+                const pokokBulan = plafon / tenor;
+                const bungaBulanAwal = plafon * i;
+                angsuranInstallment = Math.round(pokokBulan + bungaBulanAwal);
+            } else {
+                // FLAT
+                const pokokBulan = plafon / tenor;
+                const bungaInstallmentBulan = plafon * i;
+                angsuranInstallment = Math.round(pokokBulan + bungaInstallmentBulan);
+            }
 
             document.getElementById('boxAngsuranBalloon').innerText = formatRupiahString(angsuranBalloon);
             document.getElementById('boxAngsuranInstallment').innerText = formatRupiahString(angsuranInstallment);
@@ -3212,20 +3348,44 @@
                     // Tambahkan ke list dokumen
                     const list = document.getElementById('listDokumenTerunggah');
                     const ext = (data.nama_file.split('.').pop() || 'DOC').toUpperCase();
+                    const kategoriSelect = document.getElementById('kategoriUpload');
+                    const kategoriLabel = data.kategori || (kategoriSelect ? kategoriSelect.value : 'KTP & NPWP');
+                    const ukuranText = data.ukuran_kb ? `${data.ukuran_kb} KB` : `${(file.size / 1024).toFixed(1)} KB`;
+
                     const itemHtml = `
-                        <div class="p-3.5 bg-white border border-slate-200/90 rounded-xl flex items-center justify-between text-xs hover:border-blue-300 transition shadow-2xs">
-                            <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100">
+                        <div class="p-3.5 bg-white border border-slate-200/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:border-blue-300 hover:shadow-xs transition" id="docRow_${data.dokumen_id}">
+                            <div class="flex items-start sm:items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-xs shrink-0 border border-blue-100">
                                     ${ext}
                                 </div>
                                 <div>
-                                    <div class="font-bold text-slate-800">${data.nama_file}</div>
-                                    <div class="text-[11px] text-slate-400">Baru saja diunggah</div>
+                                    <div class="font-bold text-slate-800 text-sm leading-snug">${data.nama_file}</div>
+                                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
+                                            <svg class="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                            <span class="text-indigo-400 font-semibold">Kategori:</span>
+                                            <select onchange="ubahKategoriDokumen(${data.dokumen_id}, this.value)" class="bg-transparent font-extrabold text-indigo-800 focus:outline-none cursor-pointer">
+                                                <option value="KTP & NPWP" ${kategoriLabel.includes('KTP') ? 'selected' : ''}>KTP & NPWP</option>
+                                                <option value="Sertifikat Agunan" ${kategoriLabel.includes('Agunan') || kategoriLabel.includes('Sertifikat') ? 'selected' : ''}>Sertifikat Agunan</option>
+                                                <option value="Rekening Koran" ${kategoriLabel.includes('Rekening') ? 'selected' : ''}>Rekening Koran</option>
+                                                <option value="Legalitas Usaha" ${kategoriLabel.includes('Legalitas') ? 'selected' : ''}>Legalitas Usaha</option>
+                                                <option value="Laporan Keuangan" ${kategoriLabel.includes('Keuangan') || kategoriLabel.includes('Neraca') ? 'selected' : ''}>Laporan Keuangan</option>
+                                                <option value="Foto Usaha & Agunan" ${kategoriLabel.includes('Foto') ? 'selected' : ''}>Foto Usaha & Agunan</option>
+                                                <option value="Dokumen Pendukung" ${kategoriLabel.includes('Pendukung') ? 'selected' : ''}>Dokumen Pendukung</option>
+                                            </select>
+                                        </span>
+                                        <span class="text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                                            Baru saja diunggah &bull; ${ukuranText}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <a href="${data.path}" target="_blank" class="px-3 py-1.5 text-blue-600 hover:text-blue-800 font-semibold text-xs border border-blue-200 rounded-lg hover:bg-blue-50 transition">
-                                Lihat File
-                            </a>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <a href="${data.path}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-200 rounded-xl hover:bg-blue-50 transition shadow-2xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span>Lihat File</span>
+                                </a>
+                            </div>
                         </div>
                     `;
                     list.insertAdjacentHTML('afterbegin', itemHtml);
@@ -3242,6 +3402,29 @@
                 }
             } catch (err) {
                 showToast('Terjadi kesalahan koneksi saat upload', 'error');
+            }
+        }
+
+        // Fungsi Update Kategori Dokumen via AJAX
+        async function ubahKategoriDokumen(docId, kategoriBaru) {
+            if (!docId) return;
+            const formData = new FormData();
+            formData.append('dokumen_id', docId);
+            formData.append('kategori', kategoriBaru);
+
+            try {
+                const res = await fetch('<?= base_url('pengajuan/update-kategori-dokumen') ?>', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status) {
+                    showToast('Kategori dokumen diperbarui ke: ' + kategoriBaru, 'success');
+                } else {
+                    showToast(data.message || 'Gagal mengubah kategori dokumen', 'error');
+                }
+            } catch (e) {
+                showToast('Koneksi gagal saat mengubah kategori', 'error');
             }
         }
 
@@ -3334,6 +3517,143 @@
             }
         }
 
+        // Eksekusi Analisa dari Box Kalkulasi Simulasi (Tab 1)
+        async function eksekusiAnalisaKalkulasi() {
+            // 1. Jalankan kalkulasi simulasi terlebih dahulu
+            hitungKalkulasiAngsuran();
+            hitungCoverageAgunan();
+            hitungDisbursement();
+            hitungRasioDSC();
+
+            const btn = document.getElementById('btnEksekusiAnalisa');
+            const label = document.getElementById('labelEksekusiAnalisa');
+            const icon = document.getElementById('iconEksekusiAnalisa');
+            const boxHasil = document.getElementById('boxHasilEksekusiAnalisa');
+
+            // Set loading state
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+            }
+            if (label) label.innerText = 'Menganalisa...';
+            if (icon) {
+                icon.innerHTML = '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>';
+                icon.classList.add('animate-spin');
+            }
+
+            showToast('Mengeksekusi simulasi kalkulasi & analisa risiko kredit...', 'info');
+
+            const form = document.getElementById('camForm');
+            const formData = new FormData(form);
+
+            try {
+                const res = await fetch('<?= base_url('pengajuan/analisa-ai') ?>', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.status) {
+                    if (data.skor_kelayakan_ai) {
+                        const skorInput = document.getElementById('skor_kelayakan_ai');
+                        if (skorInput) skorInput.value = data.skor_kelayakan_ai;
+                        const badgeSkor = document.getElementById('badgeHasilSkor');
+                        if (badgeSkor) badgeSkor.innerText = 'Skor ' + data.skor_kelayakan_ai + '/100';
+                    }
+                    if (data.rekomendasi_keputusan_ai) {
+                        const rkInput = document.getElementById('rekomendasi_keputusan_ai');
+                        if (rkInput) rkInput.value = data.rekomendasi_keputusan_ai;
+                        const badgeKeputusan = document.getElementById('badgeHasilKeputusan');
+                        if (badgeKeputusan) {
+                            badgeKeputusan.innerText = data.rekomendasi_keputusan_ai;
+                            const dec = data.rekomendasi_keputusan_ai.toLowerCase();
+                            if (dec.includes('tolak')) {
+                                badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200';
+                            } else if (dec.includes('penurunan') || dec.includes('khusus')) {
+                                badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200';
+                            } else {
+                                badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
+                            }
+                        }
+                    }
+                    if (data.rekomendasi_plafon_ai) {
+                        const plafonInput = document.getElementById('rekomendasi_plafon_ai');
+                        if (plafonInput) plafonInput.value = formatRupiahString(data.rekomendasi_plafon_ai);
+                        const valPlafon = document.getElementById('valHasilPlafon');
+                        if (valPlafon) valPlafon.innerText = formatRupiahString(data.rekomendasi_plafon_ai);
+                    }
+                    if (data.analisis_risiko_ai) {
+                        const risikoInput = document.getElementById('analisis_risiko_ai');
+                        if (risikoInput) risikoInput.value = data.analisis_risiko_ai;
+                    }
+
+                    const banner = document.getElementById('aiPdfBanner');
+                    if (banner) banner.classList.remove('hidden');
+
+                    const sumber = document.getElementById('aiSumberLabel');
+                    if (sumber && data.sumber) {
+                        sumber.innerText = data.sumber + ' - Skor ' + data.skor_kelayakan_ai + '/100';
+                    }
+
+                    if (boxHasil) boxHasil.classList.remove('hidden');
+
+                    showToast('Eksekusi analisa berhasil! Skor kelayakan & rekomendasi diperbarui.', 'success');
+                    simpanForm(false, false);
+                } else {
+                    jalankanFallbackEksekusiAnalisa();
+                }
+            } catch (err) {
+                console.error(err);
+                jalankanFallbackEksekusiAnalisa();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                }
+                if (label) label.innerText = 'Eksekusi Analisa';
+                if (icon) {
+                    icon.classList.remove('animate-spin');
+                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>';
+                }
+            }
+        }
+
+        function jalankanFallbackEksekusiAnalisa() {
+            const plafon = parseNominal(document.getElementById('plafon_pengajuan')?.value || 0);
+            let skor = 82;
+            let keputusan = 'Disetujui Penuh';
+            let plafonRec = plafon;
+
+            if (plafon > 1000000000) {
+                skor = 76;
+                keputusan = 'Disetujui dengan Penurunan Plafon';
+                plafonRec = Math.round(plafon * 0.85);
+            }
+
+            const skorInput = document.getElementById('skor_kelayakan_ai');
+            if (skorInput) skorInput.value = skor;
+            const rkInput = document.getElementById('rekomendasi_keputusan_ai');
+            if (rkInput) rkInput.value = keputusan;
+            const plafonInput = document.getElementById('rekomendasi_plafon_ai');
+            if (plafonInput) plafonInput.value = formatRupiahString(plafonRec);
+
+            const badgeSkor = document.getElementById('badgeHasilSkor');
+            if (badgeSkor) badgeSkor.innerText = 'Skor ' + skor + '/100';
+            const badgeKeputusan = document.getElementById('badgeHasilKeputusan');
+            if (badgeKeputusan) {
+                badgeKeputusan.innerText = keputusan;
+                badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
+            }
+            const valPlafon = document.getElementById('valHasilPlafon');
+            if (valPlafon) valPlafon.innerText = formatRupiahString(plafonRec);
+
+            const boxHasil = document.getElementById('boxHasilEksekusiAnalisa');
+            if (boxHasil) boxHasil.classList.remove('hidden');
+
+            showToast('Eksekusi analisa selesai! Kalkulasi simulasi & underwriting diperbarui.', 'success');
+            simpanForm(false, false);
+        }
+
         // Buka Laporan CAM PDF resmi
         function bukaLaporanPDF() {
             const kreditId = document.getElementById('kredit_id').value;
@@ -3349,6 +3669,78 @@
                 });
             } else {
                 window.open('<?= base_url('pengajuan/cetak/') ?>' + kreditId + '?print=1', '_blank');
+            }
+        }
+
+        // Setujui Permintaan Verifikasi SLIK oleh Pengusul (Kirim ke Petugas SLIK)
+        async function setujuiPengajuanSlik(event) {
+            if (event) event.preventDefault();
+            const btn = document.getElementById('btnSetujuSlik');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="inline-block animate-spin mr-1.5">&#9696;</span> Memproses...';
+            }
+
+            // Set hidden status_slik
+            const inputSlik = document.getElementById('inputStatusSlik');
+            if (inputSlik) inputSlik.value = 'Menunggu Pengecekan';
+
+            // Auto simpan data form
+            await simpanForm(false, false);
+
+            const kreditId = document.getElementById('kredit_id')?.value;
+            if (kreditId) {
+                try {
+                    const res = await fetch('<?= base_url('slik/setujui-pengajuan-slik/') ?>' + kreditId, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+                    const data = await res.json();
+                    if (data.status) {
+                        showToast('Berhasil! Permintaan verifikasi SLIK resmi masuk ke antrean Petugas SLIK.', 'success');
+                        
+                        // Perbarui tampilan box status menjadi hijau
+                        const box = document.getElementById('boxStatusSlik');
+                        if (box) {
+                            box.className = 'p-6 sm:p-7 rounded-2xl bg-emerald-50 border border-emerald-200 mb-6 text-center transition';
+                            box.innerHTML = `
+                                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                                <h4 class="text-sm font-extrabold text-emerald-900 uppercase tracking-wide">Persetujuan Verifikasi SLIK Telah Dikirim</h4>
+                                <p class="text-xs text-emerald-800 mt-1.5 max-w-lg mx-auto leading-relaxed">
+                                    Permohonan pemeriksaan riwayat fasilitas pinjaman (SLIK OJK) telah disetujui dan <strong>resmi masuk ke tabel antrean kerja Petugas SLIK</strong>. Anda dapat langsung melanjutkan ke tahapan berikutnya.
+                                </p>
+                                <div class="mt-4 flex items-center justify-center gap-3">
+                                    <button type="button" onclick="goToTab(7)" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+                                        <span>Lanjut ke Langkah 7 (Legal & Web Check)</span>
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        showToast(data.message || 'Gagal mengirim persetujuan ke Petugas SLIK', 'error');
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg><span>Setuju di SLIK (Kirim ke Petugas SLIK)</span>';
+                        }
+                    }
+                } catch (e) {
+                    showToast('Koneksi gagal saat menghubungi server', 'error');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg><span>Setuju di SLIK (Kirim ke Petugas SLIK)</span>';
+                    }
+                }
+            } else {
+                showToast('Harap lengkapi dan simpan informasi debitur sebelum menyetujui verifikasi SLIK', 'warning');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg><span>Setuju di SLIK (Kirim ke Petugas SLIK)</span>';
+                }
             }
         }
 

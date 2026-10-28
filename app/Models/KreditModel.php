@@ -23,6 +23,7 @@ class KreditModel extends Model
         'jenis_jaminan',
         'tujuan_pembiayaan',
         'skema_pembayaran',
+        'perhitungan_bunga',
         'bunga_per_bulan',
         'bunga_per_tahun',
         'alamat_ktp',

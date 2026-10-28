@@ -31,6 +31,7 @@ $routes->group('pengajuan', static function ($routes) {
     $routes->post('simpan', 'Pengajuan::simpan');
     $routes->get('hapus/(:num)', 'Pengajuan::hapus/$1');
     $routes->post('upload-dokumen', 'Pengajuan::uploadDokumen');
+    $routes->post('update-kategori-dokumen', 'Pengajuan::updateKategoriDokumen');
     $routes->post('analisa-ai', 'Pengajuan::analisaAi');
     $routes->get('cetak/(:num)', 'Pengajuan::cetak/$1');
 });
@@ -40,6 +41,7 @@ $routes->group('slik', static function ($routes) {
     $routes->get('verifikasi/(:num)', 'Slik::verifikasi/$1');
     $routes->post('simpan', 'Slik::simpan');
     $routes->post('setujui-pengusul/(:num)', 'Slik::setujuiPengusul/$1');
+    $routes->post('setujui-pengajuan-slik/(:num)', 'Slik::setujuiPengajuanSlik/$1');
     $routes->post('toggle-akses-pengusul', 'Slik::toggleAksesPengusul');
 });
 
@@ -48,6 +50,7 @@ $routes->group('reviewer', static function ($routes) {
     $routes->get('review/(:num)', 'Reviewer::review/$1');
     $routes->post('simpan-keputusan', 'Reviewer::simpanKeputusan');
     $routes->get('detail-ai/(:num)', 'Reviewer::detailAi/$1');
+    $routes->get('detail-review/(:num)', 'Reviewer::detailReview/$1');
     $routes->post('setujui/(:num)', 'Reviewer::setujui/$1');
     $routes->post('setujui', 'Reviewer::setujui');
     $routes->post('tolak/(:num)', 'Reviewer::tolak/$1');

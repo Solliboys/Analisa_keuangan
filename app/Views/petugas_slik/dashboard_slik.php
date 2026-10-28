@@ -224,13 +224,16 @@
                                         <div class="text-xs text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?></div>
                                     </td>
 
-                                    <!-- 3. Status SLIK (Belum Terbit / Terbit) -->
+                                    <!-- 3. Status SLIK (Belum Terbit / Menunggu Pengecekan / Terbit) -->
                                     <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                         <?php
                                             $slikStatus = $row['status_slik'] ?? 'Belum Terbit';
                                             if ($slikStatus === 'Terbit') {
                                                 $slikClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
                                                 $slikIcon = '<svg class="w-3 h-3 text-emerald-600 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>';
+                                            } elseif ($slikStatus === 'Menunggu Pengecekan') {
+                                                $slikClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                                                $slikIcon = '<svg class="w-3 h-3 text-blue-600 inline mr-1 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
                                             } else {
                                                 $slikClass = 'bg-amber-50 text-amber-700 border-amber-200';
                                                 $slikIcon = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block mr-1.5"></span>';

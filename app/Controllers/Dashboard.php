@@ -101,19 +101,64 @@ class Dashboard extends BaseController
             // Data Spesifik Pengusul: Hanya aplikasi milik akun login ini
             $kreditSaya = $kreditModel->where('user_id', $userId)->orderBy('created_at', 'DESC')->findAll();
             
+            $analisaModel = new \App\Models\KreditAnalisaModel();
+            $komiteModel  = new \App\Models\KomiteModel();
+
+            $semuaAnalisa = $analisaModel->findAll();
+            $mapAnalisa   = [];
+            foreach ($semuaAnalisa as $a) {
+                $mapAnalisa[$a['kredit_id']] = $a;
+            }
+
+            // Ambil keputusan & catatan reviewer dari tabel komite
+            $semuaKomite = $komiteModel->orderBy('komite_id', 'DESC')->findAll();
+            $mapKomite   = [];
+            foreach ($semuaKomite as $km) {
+                if (!isset($mapKomite[$km['kredit_id']]) && !empty($km['catatan_approval'])) {
+                    $mapKomite[$km['kredit_id']] = $km;
+                }
+            }
+            foreach ($semuaKomite as $km) {
+                if (!isset($mapKomite[$km['kredit_id']])) {
+                    $mapKomite[$km['kredit_id']] = $km;
+                }
+            }
+
             $totalPengajuanSaya = count($kreditSaya);
             $totalPlafonSaya    = 0;
             $draftSaya          = 0;
             $diajukanSaya       = 0;
             $disetujuiSaya      = 0;
 
-            foreach ($kreditSaya as $k) {
+            foreach ($kreditSaya as &$k) {
                 $totalPlafonSaya += (float)($k['plafon_pengajuan'] ?? 0);
+
+                // Ambil keputusan & catatan komite / reviewer
+                $km = $mapKomite[$k['kredit_id']] ?? null;
+                $k['catatan_reviewer'] = !empty($km['catatan_approval']) ? $km['catatan_approval'] : '';
+                $k['status_komite']    = !empty($km['status_approval']) ? $km['status_approval'] : '';
+                $k['nama_reviewer']    = !empty($km['nama_approver']) ? $km['nama_approver'] : '';
+                $k['tanggal_review']   = !empty($km['tanggal_approval']) ? $km['tanggal_approval'] : (!empty($km['created_at']) ? date('Y-m-d', strtotime($km['created_at'])) : '');
+
+                // Sinkronkan status pengajuan HANYA jika reviewer resmi telah memberikan keputusan (ada nama approver atau catatan)
+                $hasOfficialReview = !empty($k['status_komite']) && (!empty($k['nama_reviewer']) || !empty($k['catatan_reviewer']));
+                if ($hasOfficialReview && (empty($k['status_pengajuan']) || in_array(strtolower($k['status_pengajuan']), ['draft', 'diajukan']))) {
+                    $k['status_pengajuan'] = $k['status_komite'];
+                }
+
+                // Ambil data analisa AI
+                $an = $mapAnalisa[$k['kredit_id']] ?? null;
+                $k['skor_ai']              = !empty($an['skor_kelayakan_ai']) ? (int)$an['skor_kelayakan_ai'] : null;
+                $k['rekomendasi_ai']       = !empty($an['rekomendasi_keputusan_ai']) ? $an['rekomendasi_keputusan_ai'] : '';
+                $k['rekomendasi_plafon_ai'] = !empty($an['rekomendasi_plafon_ai']) ? (float)$an['rekomendasi_plafon_ai'] : null;
+                $k['analisis_risiko_ai']   = !empty($an['analisis_risiko_ai']) ? $an['analisis_risiko_ai'] : '';
+
                 $st = strtolower($k['status_pengajuan'] ?? '');
                 if ($st === 'draft') $draftSaya++;
                 elseif ($st === 'diajukan') $diajukanSaya++;
-                elseif ($st === 'disetujui') $disetujuiSaya++;
+                elseif (strpos($st, 'setuju') !== false || strpos($st, 'bersyarat') !== false) $disetujuiSaya++;
             }
+            unset($k);
 
             $data = [
                 'title'               => 'Workspace Account Officer | ' . ($pengaturanSistem['nama_aplikasi'] ?? 'Credit Engine'),
@@ -124,7 +169,7 @@ class Dashboard extends BaseController
                 'total_draft'         => $draftSaya,
                 'total_diajukan'      => $diajukanSaya,
                 'total_disetujui'     => $disetujuiSaya,
-                'daftar_pengajuan'    => array_slice($kreditSaya, 0, 8),
+                'daftar_pengajuan'    => array_slice($kreditSaya, 0, 15),
                 'pengaturan_sistem'   => $pengaturanSistem
             ];
 
@@ -132,8 +177,22 @@ class Dashboard extends BaseController
 
         } elseif ($role === 'petugas_slik' || $role === 'petugas slik' || $role === 'slik') {
             // Data untuk Petugas SLIK
-            $semuaKredit = $kreditModel->orderBy('created_at', 'DESC')->findAll();
+            $ijinSlikPengusul = (int)($pengaturanSistem['ijin_pengusul_isi_slik'] ?? 1);
             $slikModel   = new \App\Models\SlikModel();
+
+            if ($ijinSlikPengusul === 0) {
+                // Jika fitur upload sendiri ditutup:
+                // Masuk ketika pengusul memencet tombol setuju di slik (status_slik = 'Menunggu Pengecekan' / 'Terbit')
+                // ATAU berkas sudah resmi diajukan (status_pengajuan != 'Draft')
+                $semuaKredit = $kreditModel->groupStart()
+                                           ->whereIn('status_slik', ['Menunggu Pengecekan', 'Terbit'])
+                                           ->orWhere('status_pengajuan !=', 'Draft')
+                                           ->groupEnd()
+                                           ->orderBy('created_at', 'DESC')
+                                           ->findAll();
+            } else {
+                $semuaKredit = $kreditModel->orderBy('created_at', 'DESC')->findAll();
+            }
             
             $totalPengajuan = count($semuaKredit);
             $totalPlafon    = 0;
@@ -147,7 +206,7 @@ class Dashboard extends BaseController
                 $st = strtolower($k['status_pengajuan'] ?? '');
                 if ($st === 'draft') $totalDraft++;
                 elseif ($st === 'diajukan') $totalDiajukan++;
-                elseif ($st === 'disetujui') $totalDisetujui++;
+                elseif (strpos($st, 'setuju') !== false) $totalDisetujui++;
 
                 // Periksa data fasilitas SLIK
                 $slikRows = $slikModel->where('kredit_id', $k['kredit_id'])->findAll();
@@ -164,8 +223,8 @@ class Dashboard extends BaseController
                 $k['total_baki_debet_slik'] = $totalBakiDebet;
                 $k['ada_tunggakan_slik']    = $adaTunggakan;
                 
-                // Status Terbit SLIK (Belum Terbit / Terbit) & Hasil SLIK
-                if (count($slikRows) > 0 || !empty($k['ringkasan_slik'])) {
+                // Status Terbit SLIK (Belum Terbit / Menunggu Pengecekan / Terbit) & Hasil SLIK
+                if (count($slikRows) > 0 || !empty($k['ringkasan_slik']) || ($k['status_slik'] ?? '') === 'Terbit') {
                     $totalSlikChecked++;
                     $k['status_slik'] = 'Terbit';
                     if ($adaTunggakan) {
@@ -173,6 +232,9 @@ class Dashboard extends BaseController
                     } else {
                         $k['hasil_slik'] = 'Kol 1 (Lancar / Bersih)';
                     }
+                } elseif (($k['status_slik'] ?? '') === 'Menunggu Pengecekan') {
+                    $k['status_slik'] = 'Menunggu Pengecekan';
+                    $k['hasil_slik']  = 'Menunggu Pengecekan Petugas SLIK';
                 } else {
                     $k['status_slik'] = 'Belum Terbit';
                     $k['hasil_slik']  = 'Menunggu Pengecekan';
@@ -197,8 +259,10 @@ class Dashboard extends BaseController
             return view('petugas_slik/dashboard_slik', $data);
 
         } elseif ($role === 'reviewer' || strpos($role, 'review') !== false) {
-            // Data untuk Reviewer / Komite Kredit
-            $semuaKredit  = $kreditModel->orderBy('created_at', 'DESC')->findAll();
+            // Data untuk Reviewer / Komite Kredit (Draft tidak boleh masuk)
+            $semuaKredit  = $kreditModel->where('status_pengajuan !=', 'Draft')
+                                        ->where('status_pengajuan !=', 'draft')
+                                        ->orderBy('created_at', 'DESC')->findAll();
             $slikModel    = new \App\Models\SlikModel();
             $analisaModel = new \App\Models\KreditAnalisaModel();
             $komiteModel  = new \App\Models\KomiteModel();
@@ -296,8 +360,10 @@ class Dashboard extends BaseController
             return view('reviewer/dashboard_review', $data);
 
         } elseif ($role === 'ceo' || $role === 'direktur' || $role === 'direksi' || strpos($role, 'ceo') !== false || strpos($role, 'direk') !== false) {
-            // Data untuk CEO / Direktur / Direksi Eksekutif
-            $semuaKredit  = $kreditModel->orderBy('created_at', 'DESC')->findAll();
+            // Data untuk CEO / Direktur / Direksi Eksekutif (Draft tidak boleh masuk)
+            $semuaKredit  = $kreditModel->where('status_pengajuan !=', 'Draft')
+                                        ->where('status_pengajuan !=', 'draft')
+                                        ->orderBy('created_at', 'DESC')->findAll();
             $slikModel    = new \App\Models\SlikModel();
             $analisaModel = new \App\Models\KreditAnalisaModel();
             $komiteModel  = new \App\Models\KomiteModel();

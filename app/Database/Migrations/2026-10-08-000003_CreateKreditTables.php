@@ -164,7 +164,7 @@ class CreateKreditTables extends Migration
         $this->db->query("CREATE TABLE IF NOT EXISTS `kredit_dokumen` (
             `dokumen_id` int NOT NULL AUTO_INCREMENT,
             `kredit_id` int NOT NULL,
-            `kategori_dokumen` enum('dataDiri','dataJaminan','legalitas','repayment','lainnya') NOT NULL,
+            `kategori_dokumen` varchar(100) NOT NULL DEFAULT 'KTP & NPWP',
             `nama_file_asli` varchar(255) NOT NULL,
             `path_file` varchar(255) NOT NULL,
             `ukuran_file_bytes` int DEFAULT '0',

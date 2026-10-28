@@ -249,6 +249,35 @@ class Slik extends BaseController
         ]);
     }
 
+    /**
+     * Persetujuan / Permintaan verifikasi SLIK dari Pengusul
+     */
+    public function setujuiPengajuanSlik($kreditId = null)
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Sesi berakhir, silakan login ulang']);
+        }
+
+        if (!$kreditId) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID Pengajuan tidak valid']);
+        }
+
+        $kredit = $this->kreditModel->find($kreditId);
+        if (!$kredit) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data pengajuan kredit tidak ditemukan']);
+        }
+
+        $this->kreditModel->update($kreditId, [
+            'status_slik' => 'Menunggu Pengecekan',
+            'hasil_slik'  => 'Menunggu Pengecekan Petugas SLIK'
+        ]);
+
+        return $this->response->setJSON([
+            'status'  => true,
+            'message' => 'Persetujuan verifikasi SLIK berhasil dikirim ke meja kerja Petugas SLIK!'
+        ]);
+    }
+
     private function cleanNumber($val)
     {
         if (is_numeric($val)) return (float)$val;
