@@ -35,6 +35,8 @@ class KreditModel extends Model
         'npwp_pribadi',
         'nama_ibu_kandung',
         'tempat_tanggal_lahir',
+        'tempat_lahir',
+        'tanggal_lahir',
         'akta_pendirian',
         'akta_perubahan',
         'sk_pendirian',

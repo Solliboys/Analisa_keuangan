@@ -363,7 +363,11 @@ class Pengajuan extends BaseController
             'nama_kontak_darurat'     => $input['nama_kontak_darurat'] ?? ($input['nama_ibu_kandung'] ?? ''),
             'npwp_pribadi'            => $input['npwp_pribadi'] ?? '',
             'nama_ibu_kandung'        => $input['nama_kontak_darurat'] ?? ($input['nama_ibu_kandung'] ?? ''),
-            'tempat_tanggal_lahir'    => $input['tempat_tanggal_lahir'] ?? '',
+            'tempat_tanggal_lahir'    => (!empty($input['tempat_lahir']) && !empty($input['tanggal_lahir']))
+                                            ? (trim($input['tempat_lahir']) . ', ' . trim($input['tanggal_lahir']))
+                                            : (!empty($input['tempat_lahir']) ? trim($input['tempat_lahir']) : ($input['tempat_tanggal_lahir'] ?? '')),
+            'tempat_lahir'            => $input['tempat_lahir'] ?? '',
+            'tanggal_lahir'           => !empty($input['tanggal_lahir']) ? $input['tanggal_lahir'] : null,
             'akta_pendirian'          => $input['akta_pendirian'] ?? '',
             'akta_perubahan'          => $input['akta_perubahan'] ?? '',
             'sk_pendirian'            => $input['sk_pendirian'] ?? '',
