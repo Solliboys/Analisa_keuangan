@@ -21,6 +21,7 @@ $routes->post('/profil/update', 'Dashboard::updateProfil');
 $routes->get('/log', 'LogAktivitas::index');
 $routes->get('/log/download', 'LogAktivitas::download');
 $routes->get('/log/detail/(:num)', 'LogAktivitas::detail/$1');
+$routes->get('/audit/laporan', 'Dashboard::laporanAudit');
 
 // Modul Pengajuan & Analisa Kredit (CAM)
 $routes->group('pengajuan', static function ($routes) {

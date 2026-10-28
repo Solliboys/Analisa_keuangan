@@ -636,4 +636,20 @@ class Dashboard extends BaseController
 
         return redirect()->to('/profil')->with('success', 'Profil dan foto akun Anda berhasil diperbarui!');
     }
+
+    public function laporanAudit()
+    {
+        $db = \Config\Database::connect();
+        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
+            'nama_aplikasi' => 'OTW Credit Engine & CAM',
+            'nama_lembaga'  => 'PT BPR / Lembaga Pembiayaan'
+        ];
+
+        return view('audit/laporan_qa_qc', [
+            'title'             => 'Laporan Resmi Audit QA & QC - OTW Credit Engine & CAM',
+            'pengaturan_sistem' => $pengaturanSistem,
+            'tanggal_audit'     => date('d F Y')
+        ]);
+    }
 }
+
