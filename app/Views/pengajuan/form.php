@@ -60,114 +60,51 @@
                 </div>
 
                 <!-- Vertical Stepper List (12 Tahap Pengusul + 13 Dinonaktifkan) -->
+                <?php
+                $sidebarSteps = [
+                    1  => ['title' => '1. Aplikasi',       'sub' => 'Parameter dasar'],
+                    2  => ['title' => '2. Info Pribadi',   'sub' => 'Data demografi'],
+                    3  => ['title' => '3. Info Usaha',     'sub' => 'Legalitas usaha'],
+                    4  => ['title' => '4. Jaminan',        'sub' => 'Agunan kredit'],
+                    5  => ['title' => '5. Dokumen',        'sub' => 'Unggah berkas'],
+                    6  => ['title' => '6. SLIK / CLIK',    'sub' => 'Cek riwayat kredit'],
+                    7  => ['title' => '7. Web Check',      'sub' => 'Verifikasi online'],
+                    8  => ['title' => '8. Analisa Kredit', 'sub' => 'Scoring kelayakan'],
+                    9  => ['title' => '9. Rekening Koran', 'sub' => 'Analisis mutasi'],
+                    10 => ['title' => '10. Laba Rugi',     'sub' => 'Proyeksi keuangan'],
+                    11 => ['title' => '11. Repayment',     'sub' => 'Kemampuan angsur'],
+                    12 => ['title' => '12. Disbursement',  'sub' => 'Jadwal pencairan'],
+                ];
+                ?>
+                <!-- Vertical Stepper List (12 Tahap Pengusul) -->
                 <div class="flex-1 overflow-y-auto scroll-smooth space-y-1 relative pr-1" id="verticalStepperList">
-                    <!-- Step 1 -->
-                    <button type="button" onclick="goToTab(1)" id="step-item-1" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 bg-blue-50/80 border border-blue-200/80">
-                        <span id="step-circle-1" class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0">1</span>
-                        <div class="min-w-0">
-                            <div id="step-title-1" class="text-xs font-bold text-blue-900 truncate">1. Aplikasi</div>
-                            <div id="step-sub-1" class="text-[11px] text-blue-600 font-semibold truncate">Sedang dikerjakan</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 2 -->
-                    <button type="button" onclick="goToTab(2)" id="step-item-2" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-2" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">2</span>
-                        <div class="min-w-0">
-                            <div id="step-title-2" class="text-xs font-bold text-slate-700 truncate">2. Info Pribadi</div>
-                            <div id="step-sub-2" class="text-[11px] text-slate-400 truncate">Data demografi</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 3 -->
-                    <button type="button" onclick="goToTab(3)" id="step-item-3" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-3" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">3</span>
-                        <div class="min-w-0">
-                            <div id="step-title-3" class="text-xs font-bold text-slate-700 truncate">3. Info Usaha</div>
-                            <div id="step-sub-3" class="text-[11px] text-slate-400 truncate">Legalitas usaha</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 4 -->
-                    <button type="button" onclick="goToTab(4)" id="step-item-4" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-4" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">4</span>
-                        <div class="min-w-0">
-                            <div id="step-title-4" class="text-xs font-bold text-slate-700 truncate">4. Jaminan</div>
-                            <div id="step-sub-4" class="text-[11px] text-slate-400 truncate">Agunan kredit</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 5 -->
-                    <button type="button" onclick="goToTab(5)" id="step-item-5" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-5" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">5</span>
-                        <div class="min-w-0">
-                            <div id="step-title-5" class="text-xs font-bold text-slate-700 truncate">5. Dokumen</div>
-                            <div id="step-sub-5" class="text-[11px] text-slate-400 truncate">Unggah berkas</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 6 -->
-                    <button type="button" onclick="goToTab(6)" id="step-item-6" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-6" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">6</span>
-                        <div class="min-w-0">
-                            <div id="step-title-6" class="text-xs font-bold text-slate-700 truncate">6. SLIK / CLIK</div>
-                            <div id="step-sub-6" class="text-[11px] text-slate-400 truncate">Cek riwayat kredit</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 7 -->
-                    <button type="button" onclick="goToTab(7)" id="step-item-7" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-7" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">7</span>
-                        <div class="min-w-0">
-                            <div id="step-title-7" class="text-xs font-bold text-slate-700 truncate">7. Web Check</div>
-                            <div id="step-sub-7" class="text-[11px] text-slate-400 truncate">Verifikasi online</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 8 -->
-                    <button type="button" onclick="goToTab(8)" id="step-item-8" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-8" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">8</span>
-                        <div class="min-w-0">
-                            <div id="step-title-8" class="text-xs font-bold text-slate-700 truncate">8. Analisa Kredit</div>
-                            <div id="step-sub-8" class="text-[11px] text-slate-400 truncate">Scoring kelayakan</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 9 -->
-                    <button type="button" onclick="goToTab(9)" id="step-item-9" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-9" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">9</span>
-                        <div class="min-w-0">
-                            <div id="step-title-9" class="text-xs font-bold text-slate-700 truncate">9. Rekening Koran</div>
-                            <div id="step-sub-9" class="text-[11px] text-slate-400 truncate">Analisis mutasi</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 10 -->
-                    <button type="button" onclick="goToTab(10)" id="step-item-10" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-10" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">10</span>
-                        <div class="min-w-0">
-                            <div id="step-title-10" class="text-xs font-bold text-slate-700 truncate">10. Laba Rugi</div>
-                            <div id="step-sub-10" class="text-[11px] text-slate-400 truncate">Proyeksi keuangan</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 11 -->
-                    <button type="button" onclick="goToTab(11)" id="step-item-11" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-11" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">11</span>
-                        <div class="min-w-0">
-                            <div id="step-title-11" class="text-xs font-bold text-slate-700 truncate">11. Repayment</div>
-                            <div id="step-sub-11" class="text-[11px] text-slate-400 truncate">Kemampuan angsur</div>
-                        </div>
-                    </button>
-
-                    <!-- Step 12 -->
-                    <button type="button" onclick="goToTab(12)" id="step-item-12" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent">
-                        <span id="step-circle-12" class="w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0">12</span>
-                        <div class="min-w-0">
-                            <div id="step-title-12" class="text-xs font-bold text-slate-700 truncate">12. Disbursement</div>
-                            <div id="step-sub-12" class="text-[11px] text-slate-400 truncate">Jadwal pencairan</div>
-                        </div>
-                    </button>
+                    <?php foreach ($sidebarSteps as $stepNum => $step): ?>
+                        <?php 
+                            $isActive = ($stepNum === 1);
+                            $btnClass = $isActive 
+                                ? 'bg-blue-50/80 border-blue-200/80 shadow-2xs' 
+                                : 'hover:bg-slate-50 border-transparent';
+                            $circleClass = $isActive 
+                                ? 'bg-blue-600 text-white shadow-xs' 
+                                : 'bg-white border border-slate-300 text-slate-500';
+                            $titleClass = $isActive ? 'text-blue-900' : 'text-slate-700';
+                            $subClass = $isActive ? 'text-blue-600 font-semibold' : 'text-slate-400';
+                            $subText = $isActive ? 'Sedang dikerjakan' : $step['sub'];
+                        ?>
+                        <button type="button" onclick="goToTab(<?= $stepNum ?>)" id="step-item-<?= $stepNum ?>" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 border <?= $btnClass ?>">
+                            <span id="step-circle-<?= $stepNum ?>" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 <?= $circleClass ?>">
+                                <?= $stepNum ?>
+                            </span>
+                            <div class="min-w-0">
+                                <div id="step-title-<?= $stepNum ?>" class="text-xs font-bold truncate <?= $titleClass ?>">
+                                    <?= esc($step['title']) ?>
+                                </div>
+                                <div id="step-sub-<?= $stepNum ?>" class="text-[11px] truncate <?= $subClass ?>">
+                                    <?= esc($subText) ?>
+                                </div>
+                            </div>
+                        </button>
+                    <?php endforeach; ?>
                 </div>
             </aside>
 
