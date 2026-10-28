@@ -276,18 +276,6 @@ function updateCardUsahaLabels(card, isBadan, num) {
         lblLamaUsaha.innerText = isBadan ? 'Lama Usaha Berjalan' : 'Lama Usaha / Lama Bekerja';
     }
 
-    const lblSumberBayar = card.querySelector('.lbl-sumber-bayar');
-    const inpSumberBayar = card.querySelector('.inp-sumber-bayar');
-    if (lblSumberBayar && inpSumberBayar) {
-        if (isBadan) {
-            lblSumberBayar.innerText = 'Sumber Utama Pembayaran (Repayment)';
-            inpSumberBayar.placeholder = 'Hasil penjualan / invoice piutang / termin proyek';
-        } else {
-            lblSumberBayar.innerText = 'Sumber Utama Pembayaran (gaji atau hasil usaha)';
-            inpSumberBayar.placeholder = 'Gaji bulanan / hasil usaha dagang / laba operasional';
-        }
-    }
-
     const lblAlamatUsaha = card.querySelector('.lbl-alamat-usaha');
     const inpAlamatUsaha = card.querySelector('.inp-alamat-usaha');
     if (lblAlamatUsaha && inpAlamatUsaha) {

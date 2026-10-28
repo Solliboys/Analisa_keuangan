@@ -123,20 +123,7 @@ if (empty($listUsaha)) {
                                    class="inp-lama-usaha w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
-                        <!-- 5. Sumber Utama Pembayaran -->
-                        <div class="md:col-span-2">
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                <span class="lbl-sumber-bayar"><?= $isBadanUsaha ? 'Sumber Utama Pembayaran (Repayment)' : 'Sumber Utama Pembayaran (gaji atau hasil usaha)' ?></span>
-                                <span class="text-rose-500 font-extrabold">*</span>
-                            </label>
-                            <input type="text" name="usaha[<?= $idx ?>][sumber_pembayaran]" 
-                                   value="<?= esc($u['sumber_pembayaran'] ?? '') ?>" 
-                                   placeholder="<?= $isBadanUsaha ? 'Hasil penjualan / invoice piutang / termin proyek' : 'Gaji bulanan / hasil usaha dagang / laba operasional' ?>"
-                                   class="inp-sumber-bayar w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                        </div>
-
-                        <!-- 6. Alamat Usaha / Tempat Bekerja -->
+                        <!-- 5. Alamat Usaha / Tempat Bekerja -->
                         <div class="md:col-span-2">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -251,19 +238,7 @@ if (empty($listUsaha)) {
                        class="inp-lama-usaha w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 
-            <!-- 5. Sumber Utama Pembayaran -->
-            <div class="md:col-span-2">
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="lbl-sumber-bayar">Sumber Utama Pembayaran (gaji atau hasil usaha)</span>
-                    <span class="text-rose-500 font-extrabold">*</span>
-                </label>
-                <input type="text" name="usaha[__INDEX__][sumber_pembayaran]" 
-                       placeholder="Gaji bulanan / hasil usaha dagang / laba operasional"
-                       class="inp-sumber-bayar w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-            </div>
-
-            <!-- 6. Alamat Usaha / Tempat Bekerja -->
+            <!-- 5. Alamat Usaha / Tempat Bekerja -->
             <div class="md:col-span-2">
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
