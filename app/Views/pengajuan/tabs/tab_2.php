@@ -46,21 +46,8 @@
 
         <!-- Grid Form Fields 2 Kolom Simetris -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <!-- Jenis Debitur (Dropdown disesuaikan persis seperti Gambar 2) -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    Jenis Debitur
-                </label>
-                <select id="jenis_debitur_tab2" onchange="ubahJenisDebitur(this.value)" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                    <option value="Individu" <?= (!$isBadanUsaha) ? 'selected' : '' ?>>Individu / Perorangan</option>
-                    <option value="Badan Usaha (PT)" <?= ($isBadanUsaha && $isPt) ? 'selected' : '' ?>>Badan Usaha (PT)</option>
-                    <option value="Badan Usaha (CV)" <?= ($isBadanUsaha && $isCv) ? 'selected' : '' ?>>Badan Usaha (CV)</option>
-                </select>
-            </div>
-
             <!-- Nama Lengkap Sesuai KTP / Nama Perusahaan -->
-            <div>
+            <div class="md:col-span-2">
                 <label id="label_nama_debitur_tab2" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     <span><?= $isBadanUsaha ? 'Nama Perusahaan (' . $tipeAwal . ')' : 'Nama Lengkap (Sesuai KTP)' ?></span> <span class="text-rose-500 font-extrabold">*</span>
@@ -201,22 +188,14 @@
 
 <script>
 function ubahJenisDebitur(val) {
+    if (!val) {
+        val = document.getElementById('jenis_debitur')?.value || 'Individu';
+    }
     const isBadan = (val.includes('PT') || val.includes('CV'));
     const isPt = val.includes('PT');
     const tipe = isPt ? 'PT' : (val.includes('CV') ? 'CV' : 'Perorangan');
-    
-    // Sync dropdown di Tab 1
-    const jdTab1 = document.getElementById('jenis_debitur');
-    if (jdTab1 && jdTab1.value !== val) {
-        jdTab1.value = val;
-    }
-    // Sync dropdown di Tab 2
-    const jdTab2 = document.getElementById('jenis_debitur_tab2');
-    if (jdTab2 && jdTab2.value !== val) {
-        jdTab2.value = val;
-    }
 
-    // Toggle field Kepemilikan Rumah vs Jenis Usaha
+    // Toggle field Kepemilikan Rumah vs Jenis Usaha di Tab 2
     const wrapRumah = document.getElementById('wrapper_kepemilikan_rumah');
     const wrapUsaha = document.getElementById('wrapper_jenis_usaha');
     if (isBadan) {
@@ -227,7 +206,7 @@ function ubahJenisDebitur(val) {
         if (wrapUsaha) wrapUsaha.classList.add('hidden');
     }
 
-    // Update label & placeholder adaptif
+    // Update label & placeholder adaptif di Tab 2
     const labelNama = document.querySelector('#label_nama_debitur_tab2 span');
     const inputNama = document.getElementById('nama_debitur_tab2');
     if (labelNama && inputNama) {
@@ -259,9 +238,11 @@ function ubahJenisDebitur(val) {
     if (labelKontak) labelKontak.innerText = isBadan ? 'Nama PIC / Kontak Darurat Perusahaan' : 'Nama Kontak Darurat';
 }
 
-function pilihTipeDebitur(tipe) {
-    if (tipe === 'PT') ubahJenisDebitur('Badan Usaha (PT)');
-    else if (tipe === 'CV') ubahJenisDebitur('Badan Usaha (CV)');
-    else ubahJenisDebitur('Individu');
-}
+// Inisialisasi status Tab 2 saat halaman dimuat
+document.addEventListener('DOMContentLoaded', () => {
+    const jdVal = document.getElementById('jenis_debitur')?.value;
+    if (jdVal) {
+        ubahJenisDebitur(jdVal);
+    }
+});
 </script>
