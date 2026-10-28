@@ -30,6 +30,7 @@ class KreditModel extends Model
         'alamat_domisili',
         'kepemilikan_domisili',
         'jenis_usaha',
+        'bidang_usaha',
         'nomor_hp',
         'nomor_emergency',
         'nama_kontak_darurat',

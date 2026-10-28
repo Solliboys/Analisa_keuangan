@@ -3,6 +3,7 @@ $rawJd = $kredit['jenis_debitur'] ?? 'Individu';
 $isPt = (stripos($rawJd, 'PT') !== false);
 $isCv = (stripos($rawJd, 'CV') !== false);
 $isBadanUsaha = ($isPt || $isCv || stripos($rawJd, 'Badan Usaha') !== false);
+$valBidangUsaha = $kredit['bidang_usaha'] ?? ($kredit['jenis_usaha'] ?? '');
 ?>
 <div id="tab-3" class="tab-panel space-y-6">
     <!-- Card Utama: Profil Kegiatan Usaha -->
@@ -24,71 +25,120 @@ $isBadanUsaha = ($isPt || $isCv || stripos($rawJd, 'Badan Usaha') !== false);
             </span>
         </div>
 
-        <!-- Grid Form 2 Kolom Seimbang -->
+        <!-- Grid Form Kolom -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <!-- Nama Usaha / Nama Perusahaan -->
+            <!-- 1. Nama Usaha / Nama Perusahaan / Tempat Bekerja -->
             <div>
                 <label id="label_nama_usaha_tab3" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    <span><?= ($isPt || $isBadanUsaha) ? 'Nama Perusahaan' : 'Nama Usaha / Merk Dagang' ?></span>
+                    <span id="text_label_nama_usaha"><?= $isBadanUsaha ? 'Nama Perusahaan' : 'Nama Usaha atau Nama Perusahaan / Tempat Bekerja' ?></span>
+                    <span class="text-rose-500 font-extrabold">*</span>
                 </label>
                 <input type="text" name="nama_usaha" id="nama_usaha_tab3" 
                        value="<?= esc($kredit['nama_usaha'] ?? '') ?>" 
-                       placeholder="<?= ($isPt || $isBadanUsaha) ? 'Contoh: PT Mandiri Sejahtera' : 'Contoh: Toko Berkah / Usaha Dagang Mandiri' ?>"
+                       placeholder="<?= $isBadanUsaha ? 'Contoh: PT Mandiri Sejahtera' : 'Nama tempat bekerja / Toko Berkah / Usaha Mandiri' ?>"
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 
-            <!-- Jabatan Pemohon di Usaha -->
+            <!-- 2. Bidang Usaha -->
             <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <label id="label_bidang_usaha_tab3" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    Jabatan Pemohon di Usaha
+                    <span>Bidang Usaha</span>
+                    <span class="text-rose-500 font-extrabold">*</span>
                 </label>
-                <input type="text" name="jabatan" 
-                       value="<?= esc($kredit['jabatan'] ?? '') ?>" 
-                       placeholder="Pemilik / Direktur / General Manager"
+                <input type="text" name="bidang_usaha" id="bidang_usaha_tab3" 
+                       value="<?= esc($valBidangUsaha) ?>" 
+                       placeholder="Contoh: Perdagangan / Jasa / F&B / Industri / Karyawan"
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 
-            <!-- Lama Usaha Berjalan -->
+            <!-- 3. Jabatan / Status (Pemilik, Karyawan, dll.) -->
             <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Lama Usaha Berjalan
+                <label id="label_jabatan_tab3" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <span id="text_label_jabatan"><?= $isBadanUsaha ? 'Jabatan Pemohon di Usaha' : 'Jabatan / Status (Pemilik, Karyawan, dll.)' ?></span>
+                    <span class="text-rose-500 font-extrabold">*</span>
                 </label>
-                <input type="text" name="lama_usaha" 
+                <input type="text" name="jabatan" id="jabatan_tab3"
+                       value="<?= esc($kredit['jabatan'] ?? '') ?>" 
+                       placeholder="<?= $isBadanUsaha ? 'Direktur / Komisaris / General Manager' : 'Pemilik / Karyawan / Pengelola' ?>"
+                       class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+            </div>
+
+            <!-- 4. Lama Usaha / Lama Bekerja -->
+            <div>
+                <label id="label_lama_usaha_tab3" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="text_label_lama_usaha"><?= $isBadanUsaha ? 'Lama Usaha Berjalan' : 'Lama Usaha / Lama Bekerja' ?></span>
+                    <span class="text-rose-500 font-extrabold">*</span>
+                </label>
+                <input type="text" name="lama_usaha" id="lama_usaha_tab3"
                        value="<?= esc($kredit['lama_usaha'] ?? '') ?>" 
                        placeholder="Contoh: 5 Tahun"
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 
-            <!-- Sumber Utama Pembayaran (Repayment) -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <!-- 5. Sumber Utama Pembayaran (gaji atau hasil usaha) -->
+            <div class="md:col-span-2">
+                <label id="label_sumber_pembayaran_tab3" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    Sumber Utama Pembayaran (Repayment)
+                    <span id="text_label_sumber_pembayaran"><?= $isBadanUsaha ? 'Sumber Utama Pembayaran (Repayment)' : 'Sumber Utama Pembayaran (gaji atau hasil usaha)' ?></span>
+                    <span class="text-rose-500 font-extrabold">*</span>
                 </label>
-                <input type="text" name="sumber_pembayaran" 
+                <input type="text" name="sumber_pembayaran" id="sumber_pembayaran_tab3"
                        value="<?= esc($kredit['sumber_pembayaran'] ?? '') ?>" 
-                       placeholder="Hasil penjualan harian / invoice piutang"
+                       placeholder="<?= $isBadanUsaha ? 'Hasil penjualan / invoice piutang / termin proyek' : 'Gaji bulanan / hasil usaha dagang / laba operasional' ?>"
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 
-            <!-- Alamat Lokasi Tempat Usaha -->
+            <!-- 6. Alamat Usaha / Tempat Bekerja -->
             <div class="md:col-span-2">
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <label id="label_alamat_usaha_tab3" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    Alamat Lokasi Tempat Usaha
+                    <span id="text_label_alamat_usaha"><?= $isBadanUsaha ? 'Alamat Lokasi Tempat Usaha / Kantor Operasional' : 'Alamat Usaha / Tempat Bekerja' ?></span>
+                    <span class="text-rose-500 font-extrabold">*</span>
                 </label>
-                <textarea name="alamat_usaha" rows="2" 
-                          placeholder="Alamat fisik workshop/toko/pabrik yang beroperasi"
+                <textarea name="alamat_usaha" id="alamat_usaha_tab3" rows="2" 
+                          placeholder="<?= $isBadanUsaha ? 'Alamat kantor / pabrik / workshop operasional perusahaan' : 'Alamat tempat usaha atau alamat kantor / tempat bekerja' ?>"
                           class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"><?= esc($kredit['alamat_usaha'] ?? '') ?></textarea>
+            </div>
+
+            <!-- 7 & 8: NPWP Usaha & NIB / Izin Usaha (Khusus Perorangan, Opsional) -->
+            <div id="wrapper_legalitas_perorangan" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 <?= $isBadanUsaha ? 'hidden' : '' ?>">
+                <!-- 7. NPWP Usaha -->
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>NPWP Usaha</span>
+                        <span class="text-slate-400 text-[10px] font-normal lowercase">(opsional)</span>
+                    </label>
+                    <input type="text" name="npwp_usaha" id="npwp_usaha_perorangan" 
+                           value="<?= esc($kredit['npwp_usaha'] ?? '') ?>" 
+                           <?= $isBadanUsaha ? 'disabled' : '' ?>
+                           placeholder="NPWP Usaha (jika ada)"
+                           class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                </div>
+
+                <!-- 8. NIB / Izin Usaha -->
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        <span>NIB / Izin Usaha</span>
+                        <span class="text-slate-400 text-[10px] font-normal lowercase">(opsional)</span>
+                    </label>
+                    <input type="text" name="nomor_induk_berusaha_nib" id="nib_perorangan" 
+                           value="<?= esc($kredit['nomor_induk_berusaha_nib'] ?? '') ?>" 
+                           <?= $isBadanUsaha ? 'disabled' : '' ?>
+                           placeholder="NIB OSS RBA / SKU / Izin Usaha"
+                           class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Card Sub: Legalitas Akta & Kemenkumham (Khusus PT / CV) -->
-    <div class="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-7 shadow-xs">
+    <div id="card_legalitas_akta" class="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-7 shadow-xs <?= $isBadanUsaha ? '' : 'hidden' ?>">
         <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
             <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
@@ -104,10 +154,12 @@ $isBadanUsaha = ($isPt || $isCv || stripos($rawJd, 'Badan Usaha') !== false);
             <div>
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    NPWP Usaha / Badan
+                    <span>NPWP Usaha / Badan</span>
+                    <span class="text-slate-400 text-[10px] font-normal lowercase">(opsional)</span>
                 </label>
-                <input type="text" name="npwp_usaha" 
+                <input type="text" name="npwp_usaha" id="npwp_usaha_badan" 
                        value="<?= esc($kredit['npwp_usaha'] ?? '') ?>" 
+                       <?= $isBadanUsaha ? '' : 'disabled' ?>
                        placeholder="Nomor Pokok Wajib Pajak Usaha"
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
@@ -116,10 +168,12 @@ $isBadanUsaha = ($isPt || $isCv || stripos($rawJd, 'Badan Usaha') !== false);
             <div>
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                    Nomor Induk Berusaha (NIB) / Izin
+                    <span>Nomor Induk Berusaha (NIB) / Izin</span>
+                    <span class="text-slate-400 text-[10px] font-normal lowercase">(opsional)</span>
                 </label>
-                <input type="text" name="nomor_induk_berusaha_nib" 
+                <input type="text" name="nomor_induk_berusaha_nib" id="nib_badan" 
                        value="<?= esc($kredit['nomor_induk_berusaha_nib'] ?? '') ?>" 
+                       <?= $isBadanUsaha ? '' : 'disabled' ?>
                        placeholder="NIB OSS RBA"
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>

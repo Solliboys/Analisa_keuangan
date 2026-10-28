@@ -184,7 +184,6 @@ function ubahJenisDebitur(val) {
         val = document.getElementById('jenis_debitur')?.value || 'Individu';
     }
     const isBadan = (val.includes('PT') || val.includes('CV') || val.includes('Badan Usaha'));
-    const isPt = val.includes('PT');
 
     // 1. Toggle field Kepemilikan Rumah vs Bidang Usaha di Tab 2
     const wrapRumah = document.getElementById('wrapper_kepemilikan_rumah');
@@ -198,25 +197,129 @@ function ubahJenisDebitur(val) {
         else wrapUsaha.classList.add('hidden');
     }
 
-    // 2. Update label Nama Usaha / Nama Perusahaan di Tab 3
-    const labelNamaUsaha = document.querySelector('#label_nama_usaha_tab3 span');
+    // 2. Update Label & Placeholder di Tab 3 (Usaha & Operasional)
+    const txtNamaUsaha = document.getElementById('text_label_nama_usaha');
     const inputNamaUsaha = document.getElementById('nama_usaha_tab3');
-    if (labelNamaUsaha && inputNamaUsaha) {
-        if (isPt || isBadan) {
-            labelNamaUsaha.innerText = 'Nama Perusahaan';
+    if (txtNamaUsaha && inputNamaUsaha) {
+        if (isBadan) {
+            txtNamaUsaha.innerText = 'Nama Perusahaan';
             inputNamaUsaha.placeholder = 'Contoh: PT Mandiri Sejahtera';
         } else {
-            labelNamaUsaha.innerText = 'Nama Usaha / Merk Dagang';
-            inputNamaUsaha.placeholder = 'Contoh: Toko Berkah / Usaha Dagang Mandiri';
+            txtNamaUsaha.innerText = 'Nama Usaha atau Nama Perusahaan / Tempat Bekerja';
+            inputNamaUsaha.placeholder = 'Nama tempat bekerja / Toko Berkah / Usaha Mandiri';
+        }
+    }
+
+    const txtJabatan = document.getElementById('text_label_jabatan');
+    const inputJabatan = document.getElementById('jabatan_tab3');
+    if (txtJabatan && inputJabatan) {
+        if (isBadan) {
+            txtJabatan.innerText = 'Jabatan Pemohon di Usaha';
+            inputJabatan.placeholder = 'Direktur / Komisaris / General Manager';
+        } else {
+            txtJabatan.innerText = 'Jabatan / Status (Pemilik, Karyawan, dll.)';
+            inputJabatan.placeholder = 'Pemilik / Karyawan / Pengelola';
+        }
+    }
+
+    const txtLamaUsaha = document.getElementById('text_label_lama_usaha');
+    const inputLamaUsaha = document.getElementById('lama_usaha_tab3');
+    if (txtLamaUsaha && inputLamaUsaha) {
+        if (isBadan) {
+            txtLamaUsaha.innerText = 'Lama Usaha Berjalan';
+        } else {
+            txtLamaUsaha.innerText = 'Lama Usaha / Lama Bekerja';
+        }
+    }
+
+    const txtSumberBayar = document.getElementById('text_label_sumber_pembayaran');
+    const inputSumberBayar = document.getElementById('sumber_pembayaran_tab3');
+    if (txtSumberBayar && inputSumberBayar) {
+        if (isBadan) {
+            txtSumberBayar.innerText = 'Sumber Utama Pembayaran (Repayment)';
+            inputSumberBayar.placeholder = 'Hasil penjualan / invoice piutang / termin proyek';
+        } else {
+            txtSumberBayar.innerText = 'Sumber Utama Pembayaran (gaji atau hasil usaha)';
+            inputSumberBayar.placeholder = 'Gaji bulanan / hasil usaha dagang / laba operasional';
+        }
+    }
+
+    const txtAlamatUsaha = document.getElementById('text_label_alamat_usaha');
+    const inputAlamatUsaha = document.getElementById('alamat_usaha_tab3');
+    if (txtAlamatUsaha && inputAlamatUsaha) {
+        if (isBadan) {
+            txtAlamatUsaha.innerText = 'Alamat Lokasi Tempat Usaha / Kantor Operasional';
+            inputAlamatUsaha.placeholder = 'Alamat kantor / pabrik / workshop operasional perusahaan';
+        } else {
+            txtAlamatUsaha.innerText = 'Alamat Usaha / Tempat Bekerja';
+            inputAlamatUsaha.placeholder = 'Alamat tempat usaha atau alamat kantor / tempat bekerja';
+        }
+    }
+
+    // 3. Toggle Legalitas Perorangan vs Legalitas Akta PT/CV
+    const wrapLegalPerorangan = document.getElementById('wrapper_legalitas_perorangan');
+    const cardLegalAkta = document.getElementById('card_legalitas_akta');
+    const npwpPerorangan = document.getElementById('npwp_usaha_perorangan');
+    const nibPerorangan = document.getElementById('nib_perorangan');
+    const npwpBadan = document.getElementById('npwp_usaha_badan');
+    const nibBadan = document.getElementById('nib_badan');
+
+    if (isBadan) {
+        if (wrapLegalPerorangan) wrapLegalPerorangan.classList.add('hidden');
+        if (cardLegalAkta) cardLegalAkta.classList.remove('hidden');
+        if (npwpPerorangan) npwpPerorangan.disabled = true;
+        if (nibPerorangan) nibPerorangan.disabled = true;
+        if (npwpBadan) {
+            npwpBadan.disabled = false;
+            if (npwpPerorangan && npwpPerorangan.value && !npwpBadan.value) npwpBadan.value = npwpPerorangan.value;
+        }
+        if (nibBadan) {
+            nibBadan.disabled = false;
+            if (nibPerorangan && nibPerorangan.value && !nibBadan.value) nibBadan.value = nibPerorangan.value;
+        }
+    } else {
+        if (wrapLegalPerorangan) wrapLegalPerorangan.classList.remove('hidden');
+        if (cardLegalAkta) cardLegalAkta.classList.add('hidden');
+        if (npwpBadan) npwpBadan.disabled = true;
+        if (nibBadan) nibBadan.disabled = true;
+        if (npwpPerorangan) {
+            npwpPerorangan.disabled = false;
+            if (npwpBadan && npwpBadan.value && !npwpPerorangan.value) npwpPerorangan.value = npwpBadan.value;
+        }
+        if (nibPerorangan) {
+            nibPerorangan.disabled = false;
+            if (nibBadan && nibBadan.value && !nibPerorangan.value) nibPerorangan.value = nibBadan.value;
         }
     }
 }
 
-// Inisialisasi status Tab 2 saat halaman dimuat
+// Inisialisasi event listener dan status awal
 document.addEventListener('DOMContentLoaded', () => {
     const jdVal = document.getElementById('jenis_debitur')?.value;
     if (jdVal) {
         ubahJenisDebitur(jdVal);
+    }
+
+    // Sinkronisasi otomatis antar input yang berpasangan
+    const npwpPerorangan = document.getElementById('npwp_usaha_perorangan');
+    const npwpBadan = document.getElementById('npwp_usaha_badan');
+    if (npwpPerorangan && npwpBadan) {
+        npwpPerorangan.addEventListener('input', (e) => { npwpBadan.value = e.target.value; });
+        npwpBadan.addEventListener('input', (e) => { npwpPerorangan.value = e.target.value; });
+    }
+
+    const nibPerorangan = document.getElementById('nib_perorangan');
+    const nibBadan = document.getElementById('nib_badan');
+    if (nibPerorangan && nibBadan) {
+        nibPerorangan.addEventListener('input', (e) => { nibBadan.value = e.target.value; });
+        nibBadan.addEventListener('input', (e) => { nibPerorangan.value = e.target.value; });
+    }
+
+    const ju = document.getElementById('jenis_usaha');
+    const bu = document.getElementById('bidang_usaha_tab3');
+    if (ju && bu) {
+        ju.addEventListener('input', () => { bu.value = ju.value; });
+        bu.addEventListener('input', () => { ju.value = bu.value; });
     }
 });
 </script>

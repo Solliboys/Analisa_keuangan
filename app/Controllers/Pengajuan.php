@@ -359,6 +359,7 @@ class Pengajuan extends BaseController
             'alamat_domisili'         => $input['alamat_domisili'] ?? '',
             'kepemilikan_domisili'    => $input['kepemilikan_domisili'] ?? 'Milik Sendiri',
             'jenis_usaha'             => $input['bidang_usaha'] ?? ($input['jenis_usaha'] ?? ''),
+            'bidang_usaha'            => $input['bidang_usaha'] ?? ($input['jenis_usaha'] ?? ''),
             'nomor_hp'                => $input['nomor_hp'] ?? '',
             'nomor_emergency'         => $input['nomor_emergency'] ?? '',
             'nama_kontak_darurat'     => $input['nama_kontak_darurat'] ?? ($input['nama_ibu_kandung'] ?? ''),
