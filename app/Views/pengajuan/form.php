@@ -72,8 +72,8 @@
                     8  => ['title' => '8. Analisa Kredit', 'sub' => 'Scoring kelayakan'],
                     9  => ['title' => '9. Rekening Koran', 'sub' => 'Analisis mutasi'],
                     10 => ['title' => '10. Laba Rugi',     'sub' => 'Proyeksi keuangan'],
-                    11 => ['title' => '11. Repayment',     'sub' => 'Kemampuan angsur'],
-                    12 => ['title' => '12. Disbursement',  'sub' => 'Jadwal pencairan'],
+                    11 => ['title' => '11. Disbursement',  'sub' => 'Jadwal pencairan'],
+                    12 => ['title' => '12. Repayment',     'sub' => 'Kemampuan angsur'],
                 ];
                 ?>
                 <!-- Vertical Stepper List (12 Tahap Pengusul) -->

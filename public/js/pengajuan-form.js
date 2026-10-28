@@ -40,8 +40,8 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             { title: '8. Analisa Kredit', sub: 'Sedang dikerjakan', defaultSub: 'Scoring kelayakan', mainTitle: 'Langkah 8: Analisa Kelayakan 5C & AI', desc: 'Evaluasi prinsip 5C dan rekomendasi skor risiko cerdas dari AI.' },
             { title: '9. Rekening Koran', sub: 'Sedang dikerjakan', defaultSub: 'Analisis mutasi', mainTitle: 'Langkah 9: Analisis Mutasi Rekening', desc: 'Pencatatan saldo rata-rata dan total mutasi kredit debet rekening koran.' },
             { title: '10. Laba Rugi', sub: 'Sedang dikerjakan', defaultSub: 'Proyeksi keuangan', mainTitle: 'Langkah 10: Analisis Laba Rugi Usaha', desc: 'Perhitungan omset pendapatan, HPP pengeluaran, dan laba bersih riil.' },
-            { title: '11. Repayment', sub: 'Sedang dikerjakan', defaultSub: 'Kemampuan angsur', mainTitle: 'Langkah 11: Kemampuan Angsur & DSC', desc: 'Perhitungan rasio Debt Service Coverage dan batas aman angsuran bulanan.' },
-            { title: '12. Disbursement', sub: 'Sedang dikerjakan', defaultSub: 'Jadwal pencairan', mainTitle: 'Langkah 12: Jadwal Pencairan (Tahap Akhir Pengusul)', desc: 'Rincian simulasi potongan biaya muka, estimasi pencairan bersih, dan status pengajuan.' }
+            { title: '11. Disbursement', sub: 'Sedang dikerjakan', defaultSub: 'Jadwal pencairan', mainTitle: 'Langkah 11: Simulasi Biaya & Pencairan (Disbursement)', desc: 'Rincian seluruh komponen biaya potong muka dan estimasi dana riil yang diterima debitur saat akad.' },
+            { title: '12. Repayment', sub: 'Sedang dikerjakan', defaultSub: 'Kemampuan angsur', mainTitle: 'Langkah 12: Kemampuan Angsur & DSC (Tahap Akhir Pengusul)', desc: 'Pengujian kemampuan bayar debitur terhadap angsuran pinjaman (Standar aman DSC >= 1.30x).' }
         ];
 
         // Tab Navigation

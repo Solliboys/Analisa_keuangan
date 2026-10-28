@@ -1,80 +1,151 @@
 <div id="tab-11" class="tab-panel bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
-                <!-- Section Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
-                            11
-                        </div>
-                        <div>
-                            <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">REPAYMENT CAPACITY & DEBT SERVICE COVERAGE (DSC)</h3>
-                            <p class="text-[11px] text-slate-500">Pengujian kemampuan bayar debitur terhadap angsuran pinjaman (Standar aman DSC &ge; 1.30x)</p>
-                        </div>
-                    </div>
-                    <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 shadow-2xs self-start sm:self-auto">
-                        Standar DSC &ge; 1.30x
-                    </span>
+    <!-- Section Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 mb-6">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
+                11
+            </div>
+            <div>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">SIMULASI BIAYA & PENCAIRAN BERSIH (DISBURSEMENT)</h3>
+                <p class="text-[11px] text-slate-500">Rincian seluruh komponen biaya potong muka dan estimasi dana riil yang diterima debitur saat akad</p>
+            </div>
+        </div>
+        <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 shadow-2xs self-start sm:self-auto">
+            Simulasi Potongan Muka
+        </span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Left: Input Biaya -->
+        <div class="space-y-4">
+            <!-- Provisi -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Provisi (%)</label>
+                    <input type="number" step="0.1" name="provisi_persen" id="provisi_persen" 
+                           value="<?= esc($disbursement['provisi_persen'] ?? 7) ?>" 
+                           class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]" 
+                           oninput="hitungDisbursement();">
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-                    <!-- Angsuran Balloon Payment -->
-                    <div class="p-5 bg-blue-50/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between shadow-2xs">
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Angsuran Balloon Payment</label>
-                            <input type="text" name="angsuran_balloon" id="angsuran_balloon" 
-                                   value="<?= number_format((float)($keuangan['angsuran_balloon'] ?? 0), 0, ',', '.') ?>" 
-                                   class="w-full text-lg font-black text-blue-700 bg-transparent border-0 p-0 focus:ring-0 cursor-default" readonly>
-                        </div>
-                        <div class="text-[11px] text-slate-400 font-medium mt-2 pt-2 border-t border-blue-100/60">Pembayaran bunga bulanan</div>
-                    </div>
-
-                    <!-- Angsuran Installment -->
-                    <div class="p-5 bg-blue-50/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between shadow-2xs">
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Angsuran Installment</label>
-                            <input type="text" name="angsuran_installment" id="angsuran_installment" 
-                                   value="<?= number_format((float)($keuangan['angsuran_installment'] ?? 0), 0, ',', '.') ?>" 
-                                   class="w-full text-lg font-black text-blue-700 bg-transparent border-0 p-0 focus:ring-0 cursor-default" readonly>
-                        </div>
-                        <div class="text-[11px] text-slate-400 font-medium mt-2 pt-2 border-t border-blue-100/60">Pokok + Bunga bulanan</div>
-                    </div>
-
-                    <!-- Angsuran yang Dipilih Sebagai Acuan -->
-                    <div class="p-5 bg-blue-600 text-white rounded-2xl shadow-xs flex flex-col justify-between">
-                        <div>
-                            <label class="block text-[11px] font-bold text-blue-100 uppercase tracking-wider mb-2">Angsuran yang Dipilih (Acuan)</label>
-                            <input type="text" name="angsuran_dipilih" id="angsuran_dipilih" 
-                                   value="<?= number_format((float)($keuangan['angsuran_dipilih'] ?? 0), 0, ',', '.') ?>" 
-                                   class="w-full text-base font-black text-blue-900 bg-white border border-white/40 rounded-xl px-3.5 py-2 rupiah-input focus:ring-2 focus:ring-blue-300 transition shadow-2xs h-[42px]"
-                                   oninput="formatRupiah(this); hitungRasioDSC(); hitungDisbursement();">
-                        </div>
-                        <div class="text-[11px] text-blue-100 font-medium mt-2 pt-2 border-t border-blue-500/50">Acuan rasio DSC & Hold Angsuran</div>
-                    </div>
-                </div>
-
-                <!-- Hasil Perhitungan Rasio DSC -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="p-6 rounded-2xl border border-blue-200/80 bg-white shadow-2xs hover:border-blue-300 transition">
-                        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Rasio DSC (Basis Rekening Koran)</span>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Data Riil Bank</span>
-                        </div>
-                        <div class="flex items-baseline gap-3 my-2">
-                            <span id="labelRasioDSCRK" class="text-4xl font-black text-slate-900 tracking-tight">0.00x</span>
-                            <span id="badgeStatusDSCRK" class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">Analisa</span>
-                        </div>
-                        <div class="text-[11px] text-slate-400 mt-3 pt-3 border-t border-slate-100 font-medium">Rumus: Laba Bersih Rekening Koran / Angsuran Acuan</div>
-                    </div>
-
-                    <div class="p-6 rounded-2xl border border-blue-200/80 bg-white shadow-2xs hover:border-blue-300 transition">
-                        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Rasio DSC (Basis Wawancara)</span>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Data Wawancara</span>
-                        </div>
-                        <div class="flex items-baseline gap-3 my-2">
-                            <span id="labelRasioDSCIV" class="text-4xl font-black text-slate-900 tracking-tight">0.00x</span>
-                            <span id="badgeStatusDSCIV" class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">Analisa</span>
-                        </div>
-                        <div class="text-[11px] text-slate-400 mt-3 pt-3 border-t border-slate-100 font-medium">Rumus: Laba Bersih Wawancara / Angsuran Acuan</div>
+                <div class="col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Provisi</label>
+                    <div class="w-full text-xs font-bold text-slate-800 bg-slate-50/80 border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
+                        <span id="nomProvisi" class="font-bold text-slate-800">Rp 0</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Agent Fee -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Agent Fee (%)</label>
+                    <input type="number" step="0.1" name="agent_persen" id="agent_persen" 
+                           value="<?= esc($disbursement['agent_persen'] ?? 1) ?>" 
+                           class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]" 
+                           oninput="hitungDisbursement();">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Agent Fee</label>
+                    <div class="w-full text-xs font-bold text-slate-800 bg-slate-50/80 border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
+                        <span id="nomAgent" class="font-bold text-slate-800">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Fee -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Admin Fee (%)</label>
+                    <input type="number" step="0.1" name="admin_persen" id="admin_persen" 
+                           value="<?= esc($disbursement['admin_persen'] ?? 1) ?>" 
+                           class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]" 
+                           oninput="hitungDisbursement();">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Admin Fee</label>
+                    <div class="w-full text-xs font-bold text-slate-800 bg-slate-50/80 border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
+                        <span id="nomAdmin" class="font-bold text-slate-800">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hold Angsuran -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Hold (Bulan)</label>
+                    <input type="number" name="hold_angsuran_bulan" id="hold_angsuran_bulan" 
+                           value="<?= esc($disbursement['hold_angsuran_bulan'] ?? 4) ?>" min="0" max="24"
+                           class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]" 
+                           oninput="hitungDisbursement();">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Hold Angsuran</label>
+                    <div class="w-full text-xs font-bold text-slate-800 bg-slate-50/80 border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
+                        <span id="nomHoldAngsuran" class="font-bold text-slate-800">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Asuransi Jiwa & Kebakaran -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Premi Asuransi Jiwa (Rp)</label>
+                    <input type="text" name="asuransi_jiwa" id="asuransi_jiwa" 
+                           value="<?= number_format((float)($disbursement['asuransi_jiwa'] ?? 0), 0, ',', '.') ?>" 
+                           class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]" 
+                           oninput="formatRupiah(this); hitungDisbursement();">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Premi Asuransi Kebakaran / Agunan (Rp)</label>
+                    <input type="text" name="asuransi_kebakaran" id="asuransi_kebakaran" 
+                           value="<?= number_format((float)($disbursement['asuransi_kebakaran'] ?? 0), 0, ',', '.') ?>" 
+                           class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]" 
+                           oninput="formatRupiah(this); hitungDisbursement();">
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Summary Box (Clean Corporate Blue) -->
+        <div class="p-6 bg-blue-50/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between shadow-2xs">
+            <div>
+                <div class="flex items-center gap-2.5 pb-3 mb-5 border-b border-blue-100">
+                    <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-extrabold text-xs shadow-xs">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Struktur Rekapitulasi Pencairan</h3>
+                        <span class="text-[11px] text-slate-400 font-medium">Kalkulasi dana riil siap cair</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3 p-4 bg-white rounded-xl border border-blue-100 shadow-2xs text-xs">
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-slate-600">Plafon Pinjaman Pokok:</span>
+                        <span id="disbPlafon" class="font-bold text-slate-800 text-sm">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2.5 border-t border-slate-100">
+                        <span class="font-semibold text-slate-600">Total Biaya & Potongan Muka:</span>
+                        <span id="disbTotalPotongan" class="font-bold text-rose-600 text-sm">- Rp 0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Highlight Dana Bersih -->
+            <div class="mt-6 p-5 bg-blue-600 text-white rounded-2xl shadow-xs">
+                <div class="flex items-center gap-2.5 mb-2">
+                    <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-blue-200">Estimasi Dana Bersih yang Dicairkan (Nett)</div>
+                        <div class="text-[11px] text-blue-100 font-medium">Dana riil masuk ke rekening debitur</div>
+                    </div>
+                </div>
+                <div class="pt-3 border-t border-blue-500/50 flex justify-between items-baseline">
+                    <span class="text-xs text-blue-100 font-semibold">Total Bersih:</span>
+                    <span id="disbDanaBersih" class="text-2xl sm:text-3xl font-black text-white tracking-tight whitespace-nowrap">Rp 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
