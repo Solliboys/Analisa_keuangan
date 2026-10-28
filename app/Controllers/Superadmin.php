@@ -245,9 +245,16 @@ class Superadmin extends BaseController
         }
 
         if (!empty($pillar) && !empty($prompt)) {
+            if (strlen(trim($prompt)) < 15) {
+                $msg = 'Prompt analisis pilar 5C tidak boleh terlalu pendek (minimal 15 karakter).';
+                if ($this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest') {
+                    return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
+                }
+                return redirect()->to('/superadmin/ai_5c')->with('error', $msg);
+            }
             $promptCol = 'prompt_' . strtolower($pillar);
             if (in_array($promptCol, ['prompt_character', 'prompt_capacity', 'prompt_capital', 'prompt_collateral', 'prompt_condition', 'prompt_final'])) {
-                $updateAi[$promptCol] = $prompt;
+                $updateAi[$promptCol] = trim($prompt);
             }
         }
         $db->table('pengaturan_ai')->where('id', 1)->update($updateAi);
@@ -385,6 +392,15 @@ class Superadmin extends BaseController
         // Validasi field wajib
         if (empty($namaLengkap) || empty($username) || empty($password)) {
             $msg = 'Nama lengkap, username, dan kata sandi wajib diisi.';
+            if ($isAjax) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
+            }
+            return redirect()->to('/superadmin/manajemen_user')->with('error', $msg);
+        }
+
+        // Validasi password minimal 8 karakter & berkarakter
+        if (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password) || !preg_match('/[^a-zA-Z0-9]/', $password)) {
+            $msg = 'Password wajib minimal 8 karakter dan berkarakter (kombinasi huruf besar A-Z, kecil a-z, angka 0-9, dan simbol khusus).';
             if ($isAjax) {
                 return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
             }

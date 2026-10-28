@@ -436,6 +436,61 @@ class Dashboard extends BaseController
         return redirect()->to('/dashboard')->with('error', 'User tidak ditemukan.');
     }
 
+    public function updateAi()
+    {
+        if (!session()->get('logged_in') || strtolower(session()->get('jabatan') ?? '') !== 'superadmin') {
+            return redirect()->to('/dashboard')->with('error', 'Akses ditolak.');
+        }
+
+        $db = \Config\Database::connect();
+        $apiKey       = trim($this->request->getPost('api_key') ?? '');
+        $modelAi      = trim($this->request->getPost('model_ai') ?? '');
+        $promptSistem = trim($this->request->getPost('prompt_sistem') ?? '');
+
+        if (!empty($promptSistem) && strlen($promptSistem) < 15) {
+            return redirect()->back()->with('error', 'Prompt sistem terlalu pendek (minimal 15 karakter).');
+        }
+
+        $updateSistem = [];
+        if (!empty($modelAi)) $updateSistem['model_ai'] = $modelAi;
+        if (!empty($apiKey)) $updateSistem['api_key'] = $apiKey;
+        if (!empty($promptSistem)) $updateSistem['prompt_sistem'] = $promptSistem;
+
+        if (!empty($updateSistem)) {
+            $db->table('pengaturan_sistem')->where('id', 1)->update($updateSistem);
+        }
+
+        $promptKeys = ['prompt_character', 'prompt_capacity', 'prompt_capital', 'prompt_collateral', 'prompt_condition', 'prompt_final'];
+        $aiUpdate = [];
+        if (!empty($modelAi)) $aiUpdate['model_ai'] = $modelAi;
+        if (!empty($apiKey)) $aiUpdate['api_key'] = $apiKey;
+
+        foreach ($promptKeys as $pk) {
+            $val = trim($this->request->getPost($pk) ?? '');
+            if (!empty($val)) {
+                if (strlen($val) < 15) {
+                    return redirect()->back()->with('error', 'Prompt ' . str_replace('prompt_', '', $pk) . ' terlalu pendek (minimal 15 karakter).');
+                }
+                $aiUpdate[$pk] = $val;
+            }
+        }
+
+        if (!empty($aiUpdate)) {
+            $aiUpdate['diubah_oleh'] = session()->get('nama_lengkap');
+            $aiUpdate['updated_at']  = date('Y-m-d H:i:s');
+            $db->table('pengaturan_ai')->where('id', 1)->update($aiUpdate);
+        }
+
+        LogAktivitasModel::catat(
+            'Memperbarui konfigurasi Master AI & Prompt',
+            'AI_ENGINE',
+            'SUCCESS',
+            ['model' => $modelAi]
+        );
+
+        return redirect()->back()->with('success', 'Konfigurasi Master Prompt AI berhasil diperbarui!');
+    }
+
     public function updatePengaturan()
     {
         if (!session()->get('logged_in') || strtolower(session()->get('jabatan') ?? '') !== 'superadmin') {
@@ -503,13 +558,19 @@ class Dashboard extends BaseController
             $updateData['api_endpoint'] = trim($this->request->getPost('api_endpoint'));
         }
         if ($this->request->getPost('prompt_sistem') !== null) {
-            $updateData['prompt_sistem'] = trim($this->request->getPost('prompt_sistem'));
+            $promptSistemVal = trim($this->request->getPost('prompt_sistem'));
+            if (!empty($promptSistemVal) && strlen($promptSistemVal) >= 15) {
+                $updateData['prompt_sistem'] = $promptSistemVal;
+            }
         }
 
         $promptKeys = ['prompt_character', 'prompt_capacity', 'prompt_capital', 'prompt_collateral', 'prompt_condition', 'prompt_final'];
         foreach ($promptKeys as $pk) {
             if ($this->request->getPost($pk) !== null) {
-                $aiUpdate[$pk] = trim($this->request->getPost($pk));
+                $val = trim($this->request->getPost($pk));
+                if (!empty($val) && strlen($val) >= 15) {
+                    $aiUpdate[$pk] = $val;
+                }
             }
         }
 
