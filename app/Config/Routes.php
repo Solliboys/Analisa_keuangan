@@ -37,6 +37,8 @@ $routes->group('pengajuan', static function ($routes) {
     $routes->get('hapus/(:num)', 'Pengajuan::hapus/$1');
     $routes->post('upload-dokumen', 'Pengajuan::uploadDokumen');
     $routes->post('analisa-ai', 'Pengajuan::analisaAi');
+    $routes->post('ai-webcheck', 'Pengajuan::aiWebCheck');
+    $routes->post('cek-perkara-ma', 'Pengajuan::cekPerkaraMa');
     $routes->get('cetak/(:num)', 'Pengajuan::cetak/$1');
 });
 

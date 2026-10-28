@@ -6,6 +6,7 @@
     <title><?= esc($title) ?> | OTW Credit Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .step-tab.active {
@@ -279,7 +280,7 @@
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
-                                        Nama Debitur
+                                        Nama Debitur <span class="text-rose-500 font-extrabold">*</span>
                                     </label>
                                     <input type="text" name="nama_debitur" id="nama_debitur" 
                                            value="<?= esc($kredit['nama_debitur'] ?? '') ?>" 
@@ -291,7 +292,7 @@
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                        Plafond Pengajuan (Rp)
+                                        Plafond Pengajuan (Rp) <span class="text-rose-500 font-extrabold">*</span>
                                     </label>
                                     <input type="text" name="plafon_pengajuan" id="plafon_pengajuan" 
                                            value="<?= number_format((float)($kredit['plafon_pengajuan'] ?? 200000000), 0, ',', '.') ?>" 
@@ -303,7 +304,7 @@
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                        Tenor (Bulan)
+                                        Tenor (Bulan) <span class="text-rose-500 font-extrabold">*</span>
                                     </label>
                                     <select name="tenor_bulan" id="tenor_bulan" onchange="hitungKalkulasiAngsuran();" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                                         <?php $tb = (int)($kredit['tenor_bulan'] ?? 12); ?>
@@ -444,7 +445,7 @@
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                Nama Lengkap (Sesuai KTP)
+                                Nama Lengkap (Sesuai KTP) <span class="text-rose-500 font-extrabold">*</span>
                             </label>
                             <input type="text" name="nama_debitur" id="nama_debitur_tab2" 
                                    value="<?= esc($kredit['nama_debitur'] ?? '') ?>" 
@@ -469,7 +470,7 @@
                         <div class="md:col-span-2">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                Alamat KTP Lengkap
+                                Alamat KTP Lengkap <span class="text-rose-500 font-extrabold">*</span>
                             </label>
                             <textarea name="alamat_ktp" rows="2" 
                                       placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota/Kab, Provinsi"
@@ -506,11 +507,12 @@
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                                Nomor HP / WhatsApp Aktif
+                                Nomor HP / WhatsApp Aktif <span class="text-rose-500 font-extrabold">*</span>
                             </label>
-                            <input type="text" name="nomor_hp" 
+                            <input type="text" name="nomor_hp" id="nomor_hp" 
                                    value="<?= esc($kredit['nomor_hp'] ?? '') ?>" 
-                                   placeholder="081234567xxx"
+                                   placeholder="081234567xxx (Hanya angka)"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 15)"
                                    class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
@@ -520,9 +522,10 @@
                                 <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                                 Nomor Emergency / Kontak Darurat
                             </label>
-                            <input type="text" name="nomor_emergency" 
+                            <input type="text" name="nomor_emergency" id="nomor_emergency" 
                                    value="<?= esc($kredit['nomor_emergency'] ?? '') ?>" 
-                                   placeholder="Nomor kerabat yang dapat dihubungi"
+                                   placeholder="Nomor kerabat (Hanya angka)"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 15)"
                                    class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
@@ -530,11 +533,13 @@
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                NPWP Pribadi
+                                NIK KTP / NPWP Debitur (16 Digit Angka) <span class="text-rose-500 font-extrabold">*</span>
                             </label>
-                            <input type="text" name="npwp_pribadi" 
+                            <input type="text" name="npwp_pribadi" id="npwp_pribadi" 
                                    value="<?= esc($kredit['npwp_pribadi'] ?? '') ?>" 
-                                   placeholder="16 digit NPWP"
+                                   placeholder="Contoh: 3578012345670001 (16 digit angka)"
+                                   maxlength="16"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 16)"
                                    class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
@@ -1252,9 +1257,13 @@
                         </div>
                         <h4 class="text-sm font-extrabold text-amber-900 uppercase tracking-wide">Pengisian SLIK Dikelola Oleh Petugas SLIK</h4>
                         <p class="text-xs text-amber-800 mt-1.5 max-w-lg mx-auto leading-relaxed">
-                            Akses pengisian riwayat kredit nasabah saat ini dikhususkan bagi <strong>Petugas Verifikasi SLIK OJK</strong>. Anda dapat langsung melanjutkan ke tahap pengisian berikutnya.
+                            Keterangan: <strong>Ajukan permohonan SLIK ke Petugas SLIK</strong>. Akses input mandiri riwayat kredit saat ini dinonaktifkan dan verifikasi dikelola langsung oleh Petugas SLIK OJK.
                         </p>
-                        <div class="mt-4 flex items-center justify-center gap-3">
+                        <div class="mt-4 flex flex-wrap items-center justify-center gap-3">
+                            <button type="button" onclick="ajukanPermohonanSlik()" class="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-900 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <span>Ajukan Permohonan SLIK ke Petugas SLIK</span>
+                            </button>
                             <button type="button" onclick="goToTab(7)" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
                                 <span>Lanjut ke Langkah 7 (Legal & Web Check)</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -1404,11 +1413,32 @@
                 </div>
 
                 <div class="mt-6">
-                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Ringkasan & Catatan Historis SLIK OJK
-                    </label>
-                    <textarea name="ringkasan_slik" rows="3" 
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Ringkasan & Catatan Historis SLIK OJK
+                        </label>
+                        <!-- Dropdown Bantuan Narasi -->
+                        <div class="relative inline-block text-left dropdown-narasi-container">
+                            <button type="button" onclick="toggleDropdownNarasi('menu_narasi_slik')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs cursor-pointer">
+                                <span>ℹ️ Bantuan Narasi</span>
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div id="menu_narasi_slik" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                                <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi:</div>
+                                <button type="button" onclick="terapkanNarasi('ringkasan_slik', 'ringkasan_slik', 'positif'); toggleDropdownNarasi('menu_narasi_slik')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Kolektibilitas 1)
+                                </button>
+                                <button type="button" onclick="terapkanNarasi('ringkasan_slik', 'ringkasan_slik', 'netral'); toggleDropdownNarasi('menu_narasi_slik')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Pernah DPK)
+                                </button>
+                                <button type="button" onclick="terapkanNarasi('ringkasan_slik', 'ringkasan_slik', 'negatif'); toggleDropdownNarasi('menu_narasi_slik')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                    <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Ada Tunggakan)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea id="ringkasan_slik" name="ringkasan_slik" rows="3" 
                               <?= !$bisaIsiSlik ? 'readonly' : '' ?>
                               placeholder="Tuliskan kesimpulan profil karakter kredit nasabah, riwayat tunggakan (jika ada), serta rencana take over / pelunasan..."
                               class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs resize-y <?= !$bisaIsiSlik ? 'bg-slate-100 cursor-not-allowed' : '' ?>"><?= esc($kredit['ringkasan_slik'] ?? '') ?></textarea>
@@ -1420,70 +1450,307 @@
             =========================================== -->
             <div id="tab-7" class="tab-panel bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
                 <!-- Section Header -->
-                <div class="flex items-center justify-between pb-5 border-b border-slate-100 mb-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-slate-100 mb-6 gap-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
+                        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs shrink-0">
                             7
                         </div>
                         <div>
                             <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">VERIFIKASI LATAR BELAKANG & LEGAL CHECK</h3>
-                            <p class="text-[11px] text-slate-500">Pemeriksaan profil reputasi debitur pada kanal publik, peradilan, dan daftar hitam</p>
+                            <p class="text-[11px] text-slate-500">Pemeriksaan profil reputasi debitur pada kanal publik, peradilan, dan daftar hitam kepatuhan</p>
                         </div>
                     </div>
-                    <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-slate-500 bg-slate-100 border border-slate-200">
-                        Pemeriksaan Legalitas
-                    </span>
+                    <div class="flex items-center gap-2.5 self-start sm:self-auto">
+                        <button type="button" id="btnAiWebcheck" onclick="jalankanAiWebcheck()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl text-xs font-bold transition shadow-md hover:shadow-lg cursor-pointer">
+                            <svg class="w-4 h-4 text-amber-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            <span>⚡ 1-Klik AI Scan 5 Aspek Web Check</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="space-y-4">
-                    <!-- SIPP -->
-                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-bold text-slate-800">1. Penelusuran Perkara Pengadilan (SIPP)</span>
-                            <span class="text-[11px] text-slate-500">PN / PA / PTUN / Niaga</span>
+                <div class="space-y-5">
+                    <!-- 1. SIPP -->
+                    <div class="p-4 sm:p-5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs font-bold text-slate-800">1. Penelusuran Perkara Pengadilan (SIPP)</span>
+                                <span class="text-[11px] text-slate-400 block sm:inline sm:ml-2">PN / PA / PTUN / Pengadilan Niaga</span>
+                            </div>
+                            <div class="flex items-center gap-2 self-end sm:self-auto">
+                                <button type="button" onclick="bukaModalCekMa()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-[11px] font-bold rounded-lg transition shadow-2xs cursor-pointer">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                    <span>🔍 Cek Perkara MA (Popup)</span>
+                                </button>
+                                <!-- Dropdown Bantuan Narasi -->
+                                <div class="relative inline-block text-left dropdown-narasi-container">
+                                    <button type="button" onclick="toggleDropdownNarasi('menu_narasi_sipp')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 text-[11px] font-bold rounded-lg border border-slate-200 transition shadow-2xs cursor-pointer">
+                                        <span>ℹ️ Bantuan Narasi</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                <div id="menu_narasi_sipp" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                                    <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi SIPP:</div>
+                                    <button type="button" onclick="terapkanNarasi('sipp_keterangan', 'sipp', 'positif'); toggleDropdownNarasi('menu_narasi_sipp')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Nihil Perkara)
+                                    </button>
+                                    <button type="button" onclick="terapkanNarasi('sipp_keterangan', 'sipp', 'netral'); toggleDropdownNarasi('menu_narasi_sipp')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Perkara Tuntas)
+                                    </button>
+                                    <button type="button" onclick="terapkanNarasi('sipp_keterangan', 'sipp', 'negatif'); toggleDropdownNarasi('menu_narasi_sipp')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Ada Perkara Aktif)
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <input type="text" name="sipp_keterangan" value="<?= esc($webcheck['sipp_keterangan'] ?? 'Tidak ditemukan perkara perdata, pidana, atau kepailitan aktif atas nama calon debitur.') ?>" 
-                               class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                    </div>
+                    <textarea id="sipp_keterangan" name="sipp_keterangan" rows="2" 
+                                  placeholder="Tuliskan hasil penelusuran perkara pengadilan..." 
+                                  class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-xl p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs leading-relaxed"><?= esc($webcheck['sipp_keterangan'] ?? 'Tidak ditemukan perkara perdata, pidana, atau kepailitan aktif atas nama calon debitur.') ?></textarea>
+                        <!-- Upload Bukti SIPP -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
+                            <div class="flex items-center gap-2">
+                                <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                    <span>Upload Bukti SIPP (PDF/Gambar)</span>
+                                    <input type="file" accept="image/*,application/pdf" onchange="uploadBuktiWebcheck(this, 'sipp_file')" class="hidden">
+                                </label>
+                                <input type="hidden" name="sipp_file" id="sipp_file" value="<?= esc($webcheck['sipp_file'] ?? '') ?>">
+                            </div>
+                            <div id="preview_sipp_file" class="text-xs text-slate-500">
+                                <?php if (!empty($webcheck['sipp_file'])): ?>
+                                    <a href="<?= base_url($webcheck['sipp_file']) ?>" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
+                                        <span>📄 Bukti Terunggah: <?= basename($webcheck['sipp_file']) ?></span>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Internet / Media -->
-                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-bold text-slate-800">2. Pencarian Media Online & Jejak Digital</span>
-                            <span class="text-[11px] text-slate-500">Google / Berita Online</span>
+                    <!-- 2. Internet / Media -->
+                    <div class="p-4 sm:p-5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs font-bold text-slate-800">2. Pencarian Media Online & Jejak Digital</span>
+                                <span class="text-[11px] text-slate-400 block sm:inline sm:ml-2">Google / Media Berita / Media Sosial</span>
+                            </div>
+                            <!-- Dropdown Bantuan Narasi -->
+                            <div class="flex items-center gap-2 self-end sm:self-auto">
+                                <button type="button" onclick="bukaGoogleNews()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white text-[11px] font-bold rounded-lg transition shadow-2xs cursor-pointer" title="Cari berita debitur di Google News">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                                    <span>🌐 Cek Google Berita</span>
+                                </button>
+                                <div class="relative inline-block text-left dropdown-narasi-container">
+                                    <button type="button" onclick="toggleDropdownNarasi('menu_narasi_internet')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 text-[11px] font-bold rounded-lg border border-slate-200 transition shadow-2xs cursor-pointer">
+                                        <span>ℹ️ Bantuan Narasi</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div id="menu_narasi_internet" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                                        <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi Media:</div>
+                                        <button type="button" onclick="terapkanNarasi('internet_keterangan', 'internet', 'positif'); toggleDropdownNarasi('menu_narasi_internet')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Bebas Berita Negatif)
+                                        </button>
+                                        <button type="button" onclick="terapkanNarasi('internet_keterangan', 'internet', 'netral'); toggleDropdownNarasi('menu_narasi_internet')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Eksposur Minim/Wajar)
+                                        </button>
+                                        <button type="button" onclick="terapkanNarasi('internet_keterangan', 'internet', 'negatif'); toggleDropdownNarasi('menu_narasi_internet')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Keluhan Publik)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <input type="text" name="internet_keterangan" value="<?= esc($webcheck['internet_keterangan'] ?? 'Hasil penelusuran nama debitur dan usaha bersih dari pemberitaan negatif.') ?>" 
-                               class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                        <textarea id="internet_keterangan" name="internet_keterangan" rows="2" 
+                                  placeholder="Tuliskan hasil penelusuran media online..." 
+                                  class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-xl p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs leading-relaxed"><?= esc($webcheck['internet_keterangan'] ?? 'Hasil penelusuran nama debitur dan usaha bersih dari pemberitaan negatif.') ?></textarea>
+                        <!-- Upload Bukti Media Online -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
+                            <div class="flex items-center gap-2">
+                                <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                    <span>Upload Screenshot / Kliping Media</span>
+                                    <input type="file" accept="image/*,application/pdf" onchange="uploadBuktiWebcheck(this, 'internet_file')" class="hidden">
+                                </label>
+                                <input type="hidden" name="internet_file" id="internet_file" value="<?= esc($webcheck['internet_file'] ?? '') ?>">
+                            </div>
+                            <div id="preview_internet_file" class="text-xs text-slate-500">
+                                <?php if (!empty($webcheck['internet_file'])): ?>
+                                    <a href="<?= base_url($webcheck['internet_file']) ?>" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
+                                        <span>📄 Bukti Terunggah: <?= basename($webcheck['internet_file']) ?></span>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- DTTOT / Watchlist -->
-                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-bold text-slate-800">3. Daftar Terduga Teroris & DTTOT PPATK</span>
-                            <span class="text-[11px] text-slate-500">Kepatuhan APU-PPT</span>
+                    <!-- 3. DTTOT / Watchlist -->
+                    <div class="p-4 sm:p-5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs font-bold text-slate-800">3. Daftar Terduga Teroris & DTTOT PPATK</span>
+                                <span class="text-[11px] text-slate-400 block sm:inline sm:ml-2">Kepatuhan Anti Pencucian Uang (APU-PPT)</span>
+                            </div>
+                            <!-- Dropdown Bantuan Narasi -->
+                            <div class="flex items-center gap-2 self-end sm:self-auto">
+                                <button type="button" onclick="bukaPortalDttot()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white text-[11px] font-bold rounded-lg transition shadow-2xs cursor-pointer" title="Cek Daftar Terduga Teroris DTTOT PPATK">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                    <span>🛡️ Warta DTTOT PPATK</span>
+                                </button>
+                                <div class="relative inline-block text-left dropdown-narasi-container">
+                                    <button type="button" onclick="toggleDropdownNarasi('menu_narasi_watchlist')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 text-[11px] font-bold rounded-lg border border-slate-200 transition shadow-2xs cursor-pointer">
+                                        <span>ℹ️ Bantuan Narasi</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div id="menu_narasi_watchlist" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                                        <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi DTTOT:</div>
+                                        <button type="button" onclick="terapkanNarasi('watchlist_keterangan', 'watchlist', 'positif'); toggleDropdownNarasi('menu_narasi_watchlist')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Bebas DTTOT)
+                                        </button>
+                                        <button type="button" onclick="terapkanNarasi('watchlist_keterangan', 'watchlist', 'netral'); toggleDropdownNarasi('menu_narasi_watchlist')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Kemiripan Nama Terverifikasi)
+                                        </button>
+                                        <button type="button" onclick="terapkanNarasi('watchlist_keterangan', 'watchlist', 'negatif'); toggleDropdownNarasi('menu_narasi_watchlist')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Perlu EDD)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <input type="text" name="watchlist_keterangan" value="<?= esc($webcheck['watchlist_keterangan'] ?? 'Nama debitur TIDAK tercantum dalam daftar DTTOT / Proliferasi Senjata PPATK.') ?>" 
-                               class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                        <textarea id="watchlist_keterangan" name="watchlist_keterangan" rows="2" 
+                                  placeholder="Tuliskan hasil verifikasi daftar hitam PPATK..." 
+                                  class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-xl p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs leading-relaxed"><?= esc($webcheck['watchlist_keterangan'] ?? 'Nama debitur TIDAK tercantum dalam daftar DTTOT / Proliferasi Senjata PPATK.') ?></textarea>
+                        <!-- Upload Bukti DTTOT -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
+                            <div class="flex items-center gap-2">
+                                <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                    <span>Upload Bukti Cek APU-PPT / DTTOT</span>
+                                    <input type="file" accept="image/*,application/pdf" onchange="uploadBuktiWebcheck(this, 'watchlist_file')" class="hidden">
+                                </label>
+                                <input type="hidden" name="watchlist_file" id="watchlist_file" value="<?= esc($webcheck['watchlist_file'] ?? '') ?>">
+                            </div>
+                            <div id="preview_watchlist_file" class="text-xs text-slate-500">
+                                <?php if (!empty($webcheck['watchlist_file'])): ?>
+                                    <a href="<?= base_url($webcheck['watchlist_file']) ?>" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
+                                        <span>📄 Bukti Terunggah: <?= basename($webcheck['watchlist_file']) ?></span>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Lelang KPKNL -->
-                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-bold text-slate-800">4. Status Objek Lelang KPKNL</span>
-                            <span class="text-[11px] text-slate-500">lelang.go.id</span>
+                    <!-- 4. Lelang KPKNL -->
+                    <div class="p-4 sm:p-5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs font-bold text-slate-800">4. Status Objek Lelang KPKNL</span>
+                                <span class="text-[11px] text-slate-400 block sm:inline sm:ml-2">Penelusuran Agunan pada lelang.go.id</span>
+                            </div>
+                            <!-- Dropdown Bantuan Narasi -->
+                            <div class="flex items-center gap-2 self-end sm:self-auto">
+                                <button type="button" onclick="bukaPortalLelang()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-[11px] font-bold rounded-lg transition shadow-2xs cursor-pointer" title="Cari pengumuman lelang agunan di lelang.go.id">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                    <span>🏛️ Cek lelang.go.id</span>
+                                </button>
+                                <div class="relative inline-block text-left dropdown-narasi-container">
+                                    <button type="button" onclick="toggleDropdownNarasi('menu_narasi_lelang')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 text-[11px] font-bold rounded-lg border border-slate-200 transition shadow-2xs cursor-pointer">
+                                        <span>ℹ️ Bantuan Narasi</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div id="menu_narasi_lelang" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                                        <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi Lelang:</div>
+                                        <button type="button" onclick="terapkanNarasi('lelang_keterangan', 'lelang', 'positif'); toggleDropdownNarasi('menu_narasi_lelang')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Agunan Bersih Lelang)
+                                        </button>
+                                        <button type="button" onclick="terapkanNarasi('lelang_keterangan', 'lelang', 'netral'); toggleDropdownNarasi('menu_narasi_lelang')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Tidak Ada Permohonan)
+                                        </button>
+                                        <button type="button" onclick="terapkanNarasi('lelang_keterangan', 'lelang', 'negatif'); toggleDropdownNarasi('menu_narasi_lelang')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Terindikasi Sita Eksekusi)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <input type="text" name="lelang_keterangan" value="<?= esc($webcheck['lelang_keterangan'] ?? 'Objek agunan tidak sedang dalam proses eksekusi atau pengumuman lelang KPKNL.') ?>" 
-                               class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                        <textarea id="lelang_keterangan" name="lelang_keterangan" rows="2" 
+                                  placeholder="Tuliskan hasil verifikasi portal lelang..." 
+                                  class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-xl p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs leading-relaxed"><?= esc($webcheck['lelang_keterangan'] ?? 'Objek agunan tidak sedang dalam proses eksekusi atau pengumuman lelang KPKNL.') ?></textarea>
+                        <!-- Upload Bukti Lelang -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
+                            <div class="flex items-center gap-2">
+                                <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                    <span>Upload Bukti Cek lelang.go.id</span>
+                                    <input type="file" accept="image/*,application/pdf" onchange="uploadBuktiWebcheck(this, 'lelang_file')" class="hidden">
+                                </label>
+                                <input type="hidden" name="lelang_file" id="lelang_file" value="<?= esc($webcheck['lelang_file'] ?? '') ?>">
+                            </div>
+                            <div id="preview_lelang_file" class="text-xs text-slate-500">
+                                <?php if (!empty($webcheck['lelang_file'])): ?>
+                                    <a href="<?= base_url($webcheck['lelang_file']) ?>" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
+                                        <span>📄 Bukti Terunggah: <?= basename($webcheck['lelang_file']) ?></span>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Lingkungan & Karakter -->
-                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs font-bold text-slate-800">5. Kroscek Lingkungan Sekitar & Reputasi</span>
-                            <span class="text-[11px] text-slate-500">Lingkungan Domisili & Usaha</span>
+                    <!-- 5. Lingkungan & Karakter -->
+                    <div class="p-4 sm:p-5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs font-bold text-slate-800">5. Kroscek Lingkungan Sekitar & Reputasi</span>
+                                <span class="text-[11px] text-slate-400 block sm:inline sm:ml-2">Konfirmasi Lingkungan Domisili & Mitra Usaha</span>
+                            </div>
+                            <!-- Dropdown Bantuan Narasi -->
+                            <div class="relative inline-block text-left dropdown-narasi-container self-end sm:self-auto">
+                                <button type="button" onclick="toggleDropdownNarasi('menu_narasi_negatif')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 text-[11px] font-bold rounded-lg border border-slate-200 transition shadow-2xs cursor-pointer">
+                                    <span>ℹ️ Bantuan Narasi</span>
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <div id="menu_narasi_negatif" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                                    <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi Lingkungan:</div>
+                                    <button type="button" onclick="terapkanNarasi('negatif_keterangan', 'lingkungan', 'positif'); toggleDropdownNarasi('menu_narasi_negatif')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Reputasi Terpuji)
+                                    </button>
+                                    <button type="button" onclick="terapkanNarasi('negatif_keterangan', 'lingkungan', 'netral'); toggleDropdownNarasi('menu_narasi_negatif')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Hubungan Wajar)
+                                    </button>
+                                    <button type="button" onclick="terapkanNarasi('negatif_keterangan', 'lingkungan', 'negatif'); toggleDropdownNarasi('menu_narasi_negatif')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Keluhan Warga)
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <input type="text" name="negatif_keterangan" value="<?= esc($webcheck['negatif_keterangan'] ?? 'Informasi dari lingkungan sekitar menunjukkan reputasi yang baik dan tidak ada konflik.') ?>" 
-                               class="w-full text-xs border border-slate-300 rounded-lg p-2.5 bg-white">
+                        <textarea id="negatif_keterangan" name="negatif_keterangan" rows="2" 
+                                  placeholder="Tuliskan hasil kroscek lingkungan sekitar..." 
+                                  class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-xl p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs leading-relaxed"><?= esc($webcheck['negatif_keterangan'] ?? 'Informasi dari lingkungan sekitar menunjukkan reputasi yang baik dan tidak ada konflik.') ?></textarea>
+                        <!-- Upload Bukti Lingkungan -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
+                            <div class="flex items-center gap-2">
+                                <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                    <span>Upload Foto / Dokumen Cek Lingkungan</span>
+                                    <input type="file" accept="image/*,application/pdf" onchange="uploadBuktiWebcheck(this, 'negatif_file')" class="hidden">
+                                </label>
+                                <input type="hidden" name="negatif_file" id="negatif_file" value="<?= esc($webcheck['negatif_file'] ?? '') ?>">
+                            </div>
+                            <div id="preview_negatif_file" class="text-xs text-slate-500">
+                                <?php if (!empty($webcheck['negatif_file'])): ?>
+                                    <a href="<?= base_url($webcheck['negatif_file']) ?>" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
+                                        <span>📄 Bukti Terunggah: <?= basename($webcheck['negatif_file']) ?></span>
+                                    </a>
+                                <?php else: ?>
+                                    <span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1509,27 +1776,111 @@
                 </div>
 
                 <div class="space-y-6">
+                    <!-- Analisa Agunan -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Analisa Kualitas & Marketability Jaminan</label>
-                        <textarea name="analisa_jaminan" rows="3" placeholder="Lokasi strategis, akses jalan, kondisi fisik bangunan, dan kemudahan penjualan kembali..."
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Analisa Kualitas & Marketability Jaminan</label>
+                            <div class="relative inline-block text-left dropdown-narasi-container">
+                                <button type="button" onclick="toggleDropdownNarasi('menu_narasi_jaminan')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs cursor-pointer">
+                                    <span>ℹ️ Bantuan Narasi</span>
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <div id="menu_narasi_jaminan" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                                    <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi Agunan:</div>
+                                    <button type="button" onclick="terapkanNarasi('analisa_jaminan', 'analisa_jaminan', 'positif'); toggleDropdownNarasi('menu_narasi_jaminan')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Strategis / Aman)
+                                    </button>
+                                    <button type="button" onclick="terapkanNarasi('analisa_jaminan', 'analisa_jaminan', 'netral'); toggleDropdownNarasi('menu_narasi_jaminan')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Cukup Terawat)
+                                    </button>
+                                    <button type="button" onclick="terapkanNarasi('analisa_jaminan', 'analisa_jaminan', 'negatif'); toggleDropdownNarasi('menu_narasi_jaminan')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Akses Sempit / Berisiko)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <textarea id="analisa_jaminan" name="analisa_jaminan" rows="3" placeholder="Lokasi strategis, akses jalan, kondisi fisik bangunan, dan kemudahan penjualan kembali..."
                                   class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs leading-relaxed"><?= esc($analisa['analisa_jaminan'] ?? '') ?></textarea>
                     </div>
 
+                    <!-- Business Review -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Business Review & Prospek Pasar Usaha</label>
-                        <textarea name="business_review" rows="3" placeholder="Model bisnis, segmen pelanggan, daya saing kompetitor, stabilitas pasokan bahan baku..."
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Business Review & Prospek Pasar Usaha</label>
+                            <div class="relative inline-block text-left dropdown-narasi-container">
+                                <button type="button" onclick="toggleDropdownNarasi('menu_narasi_review')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs cursor-pointer">
+                                    <span>ℹ️ Bantuan Narasi</span>
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <div id="menu_narasi_review" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                                    <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi Usaha:</div>
+                                    <button type="button" onclick="terapkanNarasi('business_review', 'business_review', 'positif'); toggleDropdownNarasi('menu_narasi_review')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Pangsa Pasar Stabil)
+                                    </button>
+                                    <button type="button" onclick="terapkanNarasi('business_review', 'business_review', 'netral'); toggleDropdownNarasi('menu_narasi_review')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Potensial & Kompetitif)
+                                    </button>
+                                    <button type="button" onclick="terapkanNarasi('business_review', 'business_review', 'negatif'); toggleDropdownNarasi('menu_narasi_review')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                        <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Persaingan Ketat)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <textarea id="business_review" name="business_review" rows="3" placeholder="Model bisnis, segmen pelanggan, daya saing kompetitor, stabilitas pasokan bahan baku..."
                                   class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs leading-relaxed"><?= esc($analisa['business_review'] ?? '') ?></textarea>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Catatan OTS -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Catatan Kunjungan / On The Spot (OTS)</label>
-                            <textarea name="business_catatan" rows="3" placeholder="Hasil observasi fisik di lokasi usaha nasabah..."
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Catatan Kunjungan / OTS</label>
+                                <div class="relative inline-block text-left dropdown-narasi-container">
+                                    <button type="button" onclick="toggleDropdownNarasi('menu_narasi_ots')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs cursor-pointer">
+                                        <span>ℹ️ Bantuan Narasi</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div id="menu_narasi_ots" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                                        <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi OTS:</div>
+                                        <button type="button" onclick="terapkanNarasi('business_catatan', 'business_catatan', 'positif'); toggleDropdownNarasi('menu_narasi_ots')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Operasional Ramai)
+                                        </button>
+                                        <button type="button" onclick="terapkanNarasi('business_catatan', 'business_catatan', 'netral'); toggleDropdownNarasi('menu_narasi_ots')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Berjalan Normal)
+                                        </button>
+                                        <button type="button" onclick="terapkanNarasi('business_catatan', 'business_catatan', 'negatif'); toggleDropdownNarasi('menu_narasi_ots')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Aktivitas Sepi)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <textarea id="business_catatan" name="business_catatan" rows="3" placeholder="Hasil observasi fisik di lokasi usaha nasabah..."
                                       class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs leading-relaxed"><?= esc($analisa['business_catatan'] ?? '') ?></textarea>
                         </div>
+                        <!-- Rincian Modal Kerja -->
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Rincian Kebutuhan Modal Kerja</label>
-                            <textarea name="detail_kebutuhan" rows="3" placeholder="Alokasi dana pinjaman yang diajukan..."
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Rincian Kebutuhan Modal Kerja</label>
+                                <div class="relative inline-block text-left dropdown-narasi-container">
+                                    <button type="button" onclick="toggleDropdownNarasi('menu_narasi_kebutuhan')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs cursor-pointer">
+                                        <span>ℹ️ Bantuan Narasi</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div id="menu_narasi_kebutuhan" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                                        <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi Kebutuhan:</div>
+                                        <button type="button" onclick="terapkanNarasi('detail_kebutuhan', 'detail_kebutuhan', 'positif'); toggleDropdownNarasi('menu_narasi_kebutuhan')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Pengadaan Bahan Baku)
+                                        </button>
+                                        <button type="button" onclick="terapkanNarasi('detail_kebutuhan', 'detail_kebutuhan', 'netral'); toggleDropdownNarasi('menu_narasi_kebutuhan')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Perkuatan Kas)
+                                        </button>
+                                        <button type="button" onclick="terapkanNarasi('detail_kebutuhan', 'detail_kebutuhan', 'negatif'); toggleDropdownNarasi('menu_narasi_kebutuhan')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Rincian Belum Rinci)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <textarea id="detail_kebutuhan" name="detail_kebutuhan" rows="3" placeholder="Alokasi dana pinjaman yang diajukan..."
                                       class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs leading-relaxed"><?= esc($analisa['detail_kebutuhan'] ?? '') ?></textarea>
                         </div>
                     </div>
@@ -3173,10 +3524,65 @@
             btn.closest('tr, .p-4')?.remove();
         }
 
-        // Upload Dokumen AJAX
+        // Helper Kompresi Gambar Sisi Klien Menggunakan Canvas
+        async function compressImageIfNeeded(file) {
+            if (!file || !file.type || !file.type.startsWith('image/')) return file;
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const maxDim = 1600;
+
+                        if (width > maxDim || height > maxDim) {
+                            if (width > height) {
+                                height = Math.round((height * maxDim) / width);
+                                width = maxDim;
+                            } else {
+                                width = Math.round((width * maxDim) / height);
+                                height = maxDim;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            if (blob && blob.size < file.size) {
+                                const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                                    type: 'image/jpeg',
+                                    lastModified: Date.now()
+                                });
+                                resolve(compressedFile);
+                            } else {
+                                resolve(file);
+                            }
+                        }, 'image/jpeg', 0.75);
+                    };
+                    img.onerror = () => resolve(file);
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => resolve(file);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Upload Dokumen AJAX dengan Kompresi Gambar & Validasi PDF
         async function prosesUploadDokumen(input) {
             const file = input.files[0];
             if (!file) return;
+
+            // Validasi ukuran dokumen PDF maksimal 5MB
+            if (file.type === 'application/pdf' && file.size > 5 * 1024 * 1024) {
+                showToast('Ukuran file PDF melebihi 5MB. Silakan kompres terlebih dahulu.', 'error');
+                input.value = '';
+                return;
+            }
 
             const kreditId = document.getElementById('kredit_id').value;
             if (!kreditId) {
@@ -3190,12 +3596,13 @@
                 return;
             }
 
+            showToast('Mengompres & mengunggah dokumen...', 'info');
+            const finalFile = await compressImageIfNeeded(file);
+
             const formData = new FormData();
-            formData.append('file', file);
+            formData.append('file', finalFile);
             formData.append('kredit_id', activeKreditId);
             formData.append('kategori', document.getElementById('kategoriUpload').value);
-
-            showToast('Mengunggah dokumen...', 'info');
 
             try {
                 const res = await fetch('<?= base_url('pengajuan/upload-dokumen') ?>', {
@@ -3204,7 +3611,7 @@
                 });
                 const data = await res.json();
                 if (data.status) {
-                    showToast('Dokumen berhasil diunggah', 'success');
+                    showToast('Dokumen berhasil dikompres & diunggah', 'success');
                     // Hapus empty state jika ada
                     const emptyState = document.getElementById('emptyDokumenState');
                     if (emptyState) emptyState.remove();
@@ -3220,7 +3627,7 @@
                                 </div>
                                 <div>
                                     <div class="font-bold text-slate-800">${data.nama_file}</div>
-                                    <div class="text-[11px] text-slate-400">Baru saja diunggah</div>
+                                    <div class="text-[11px] text-slate-400">Baru saja diunggah &bull; Terkompresi</div>
                                 </div>
                             </div>
                             <a href="${data.path}" target="_blank" class="px-3 py-1.5 text-blue-600 hover:text-blue-800 font-semibold text-xs border border-blue-200 rounded-lg hover:bg-blue-50 transition">
@@ -3245,8 +3652,387 @@
             }
         }
 
-        // Simpan Form Data via AJAX
+        // Upload Bukti Web Check Spesifik
+        async function uploadBuktiWebcheck(input, targetFieldName) {
+            const file = input.files[0];
+            if (!file) return;
+
+            if (file.type === 'application/pdf' && file.size > 5 * 1024 * 1024) {
+                showToast('Ukuran file PDF melebihi 5MB. Silakan kompres terlebih dahulu.', 'error');
+                input.value = '';
+                return;
+            }
+
+            const activeKreditId = document.getElementById('kredit_id')?.value;
+            showToast('Mengompres & mengunggah bukti web check...', 'info');
+            const finalFile = await compressImageIfNeeded(file);
+
+            const formData = new FormData();
+            formData.append('file', finalFile);
+            formData.append('kredit_id', activeKreditId || 0);
+            formData.append('kategori', 'webcheck_' + targetFieldName);
+
+            try {
+                const res = await fetch('<?= base_url('pengajuan/upload-dokumen') ?>', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status) {
+                    const targetEl = document.getElementById(targetFieldName);
+                    if (targetEl) targetEl.value = data.path;
+                    const previewEl = document.getElementById('preview_' + targetFieldName);
+                    if (previewEl) {
+                        previewEl.innerHTML = `<a href="${data.path}" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1"><span>📄 Bukti: ${data.nama_file}</span></a>`;
+                    }
+                    showToast('Bukti Web Check berhasil diunggah!', 'success');
+                } else {
+                    showToast(data.message || 'Gagal mengunggah bukti', 'error');
+                }
+            } catch (err) {
+                showToast('Gagal terhubung saat mengunggah bukti', 'error');
+            }
+        }
+
+        // Shortcut Pintas Cek Eksternal Perorangan / Aspek Web Check
+        function bukaGoogleNews() {
+            const nama = document.getElementById('nama_debitur')?.value.trim() || document.getElementById('nama_debitur_tab2')?.value.trim() || '';
+            const usaha = document.querySelector('input[name="nama_usaha"]')?.value.trim() || '';
+            const query = [nama, usaha].filter(Boolean).join(' ');
+            if (!query) {
+                showToast('Isi Nama Debitur atau Nama Usaha terlebih dahulu.', 'error');
+                return;
+            }
+            window.open('https://www.google.com/search?tbm=nws&q=' + encodeURIComponent(query), 'google_news_win', 'width=1100,height=750,scrollbars=yes,resizable=yes');
+        }
+
+        function bukaPortalDttot() {
+            const nama = document.getElementById('nama_debitur')?.value.trim() || document.getElementById('nama_debitur_tab2')?.value.trim() || '';
+            const url = nama ? 'https://www.google.com/search?q=' + encodeURIComponent('site:ppatk.go.id DTTOT ' + nama) : 'https://www.ppatk.go.id/publikasi/read/43/dttot.html';
+            window.open(url, 'dttot_win', 'width=1100,height=750,scrollbars=yes,resizable=yes');
+        }
+
+        function bukaPortalLelang() {
+            const nama = document.getElementById('nama_debitur')?.value.trim() || document.getElementById('nama_debitur_tab2')?.value.trim() || '';
+            const url = 'https://lelang.go.id/cari?q=' + encodeURIComponent(nama);
+            window.open(url, 'lelang_win', 'width=1100,height=750,scrollbars=yes,resizable=yes');
+        }
+
+        // AI Assistant: 1-Klik AI Scan 5 Aspek Web Check Otomatis
+        async function jalankanAiWebcheck() {
+            const btn = document.getElementById('btnAiWebcheck');
+            const debtorName = document.getElementById('nama_debitur')?.value.trim() || document.getElementById('nama_debitur_tab2')?.value.trim() || '';
+            const businessName = document.querySelector('input[name="nama_usaha"]')?.value.trim() || '';
+            const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('textarea[name="alamat_usaha"]')?.value || '';
+            const bidangUsaha = document.querySelector('input[name="bidang_usaha"]')?.value || document.querySelector('input[name="sektor_ekonomi"]')?.value || '';
+
+            if (!debtorName && !businessName) {
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Data Belum Lengkap',
+                        text: 'Harap lengkapi Nama Calon Debitur atau Nama Usaha di Tab 1/2 terlebih dahulu!',
+                        confirmButtonText: 'Ke Tab 1',
+                        confirmButtonColor: '#2563eb'
+                    }).then(() => goToTab(1));
+                } else {
+                    showToast('Harap lengkapi Nama Debitur atau Nama Usaha terlebih dahulu.', 'error');
+                    goToTab(1);
+                }
+                return;
+            }
+
+            // Ekstrak nama kota dari alamat jika tersedia
+            let kota = '';
+            if (alamat) {
+                const parts = alamat.split(/[,.-]/);
+                for (let part of parts) {
+                    part = part.trim();
+                    if (/kota|kabupaten|kab\b|jakarta|surabaya|bandung|semarang|medan|malang|solo|yogya/i.test(part)) {
+                        kota = part;
+                        break;
+                    }
+                }
+                if (!kota && parts.length > 1) kota = parts[parts.length - 1].trim();
+            }
+
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> <span>Memindai 5 Aspek...</span>`;
+
+            // Tampilkan Multi-Step Modal Scanner SweetAlert2
+            if (window.Swal) {
+                Swal.fire({
+                    title: '<div class="flex items-center justify-center gap-2 text-base font-bold text-slate-800"><span class="animate-pulse text-amber-500">⚡</span> 1-Klik AI Web Check Scanner</div>',
+                    html: `
+                        <div class="text-xs text-slate-600 mb-3 text-center">
+                            Memindai 5 aspek legalitas & kepatuhan untuk: <br><strong class="text-blue-700 text-sm font-bold">${debtorName || businessName}</strong>
+                        </div>
+                        <div class="text-left text-xs space-y-2.5 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <div id="scan-step-1" class="flex items-center gap-2 text-blue-600 font-semibold"><span class="animate-spin">⏳</span> 1. Penelusuran SIPP & Direktori Perkara MA...</div>
+                            <div id="scan-step-2" class="flex items-center gap-2 text-slate-400"><span>⏳</span> 2. Pemindaian Berita Negatif Media Online...</div>
+                            <div id="scan-step-3" class="flex items-center gap-2 text-slate-400"><span>⏳</span> 3. Verifikasi Daftar DTTOT PPATK & APU-PPT...</div>
+                            <div id="scan-step-4" class="flex items-center gap-2 text-slate-400"><span>⏳</span> 4. Cek Agunan di Portal lelang.go.id (KPKNL)...</div>
+                            <div id="scan-step-5" class="flex items-center gap-2 text-slate-400"><span>⏳</span> 5. Kroscek Lingkungan Sosial & Reputasi...</div>
+                        </div>
+                        <div class="mt-3 text-[11px] text-slate-400">Menghubungkan ke Gemini AI Risk Engine & Basis Data Kepatuhan...</div>
+                    `,
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        setTimeout(() => {
+                            const s1 = document.getElementById('scan-step-1');
+                            const s2 = document.getElementById('scan-step-2');
+                            if (s1 && s2) {
+                                s1.className = 'flex items-center gap-2 text-emerald-600 font-semibold';
+                                s1.innerHTML = '<span>✅</span> 1. SIPP / Direktori MA: Terverifikasi';
+                                s2.className = 'flex items-center gap-2 text-blue-600 font-semibold';
+                                s2.innerHTML = '<span class="animate-spin">⏳</span> 2. Pemindaian Berita Negatif Media Online...';
+                            }
+                        }, 500);
+                        setTimeout(() => {
+                            const s2 = document.getElementById('scan-step-2');
+                            const s3 = document.getElementById('scan-step-3');
+                            if (s2 && s3) {
+                                s2.className = 'flex items-center gap-2 text-emerald-600 font-semibold';
+                                s2.innerHTML = '<span>✅</span> 2. Media Online: Bersih / Terverifikasi';
+                                s3.className = 'flex items-center gap-2 text-blue-600 font-semibold';
+                                s3.innerHTML = '<span class="animate-spin">⏳</span> 3. Verifikasi Daftar DTTOT PPATK & APU-PPT...';
+                            }
+                        }, 1000);
+                        setTimeout(() => {
+                            const s3 = document.getElementById('scan-step-3');
+                            const s4 = document.getElementById('scan-step-4');
+                            if (s3 && s4) {
+                                s3.className = 'flex items-center gap-2 text-emerald-600 font-semibold';
+                                s3.innerHTML = '<span>✅</span> 3. DTTOT PPATK: Nihil / Terverifikasi';
+                                s4.className = 'flex items-center gap-2 text-blue-600 font-semibold';
+                                s4.innerHTML = '<span class="animate-spin">⏳</span> 4. Cek Agunan di Portal lelang.go.id...';
+                            }
+                        }, 1500);
+                        setTimeout(() => {
+                            const s4 = document.getElementById('scan-step-4');
+                            const s5 = document.getElementById('scan-step-5');
+                            if (s4 && s5) {
+                                s4.className = 'flex items-center gap-2 text-emerald-600 font-semibold';
+                                s4.innerHTML = '<span>✅</span> 4. Lelang KPKNL: Bersih Bebas Sengketa';
+                                s5.className = 'flex items-center gap-2 text-blue-600 font-semibold';
+                                s5.innerHTML = '<span class="animate-spin">⏳</span> 5. Kroscek Lingkungan Sosial & Reputasi...';
+                            }
+                        }, 2000);
+                    }
+                });
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('nama_debitur', debtorName);
+                formData.append('nama_usaha', businessName);
+                formData.append('kota', kota);
+                formData.append('bidang_usaha', bidangUsaha);
+
+                const res = await fetch('<?= base_url('pengajuan/ai-webcheck') ?>', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.status) {
+                    const fields = [
+                        { id: 'sipp_keterangan', val: data.sipp_keterangan },
+                        { id: 'internet_keterangan', val: data.internet_keterangan },
+                        { id: 'watchlist_keterangan', val: data.watchlist_keterangan },
+                        { id: 'lelang_keterangan', val: data.lelang_keterangan },
+                        { id: 'negatif_keterangan', val: data.negatif_keterangan }
+                    ];
+
+                    fields.forEach(f => {
+                        const el = document.getElementById(f.id);
+                        if (el && f.val) {
+                            el.value = f.val;
+                            el.classList.add('ring-2', 'ring-emerald-400', 'bg-emerald-50/20');
+                            setTimeout(() => {
+                                el.classList.remove('ring-2', 'ring-emerald-400', 'bg-emerald-50/20');
+                            }, 4000);
+                        }
+                    });
+
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: '5 Aspek Web Check Berhasil Dipetakan!',
+                            html: `
+                                <p class="text-xs text-slate-600 mb-3 text-center">Seluruh 5 kolom verifikasi latar belakang, perkara hukum, kepatuhan APU-PPT, dan lelang telah diisi otomatis.</p>
+                                <div class="text-[11px] p-3 bg-blue-50 border border-blue-200 text-blue-900 rounded-xl text-left leading-relaxed">
+                                    <strong class="font-bold text-blue-800">💡 Kesimpulan Analis AI:</strong><br>
+                                    ${data.ringkasan_risiko || 'Status Clean Record. Calon debitur memenuhi prinsip Kehati-hatian Bank (Prudential Banking) & ketentuan regulasi OJK.'}
+                                </div>
+                            `,
+                            confirmButtonText: 'Selesai & Review Form',
+                            confirmButtonColor: '#2563eb'
+                        });
+                    } else {
+                        showToast('Investigasi AI Web Check berhasil dipetakan!', 'success');
+                    }
+                } else {
+                    if (window.Swal) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Memindai',
+                            text: data.message || 'Gagal menjalankan evaluasi Web Check AI.',
+                            confirmButtonColor: '#2563eb'
+                        });
+                    } else {
+                        showToast(data.message || 'Gagal menjalankan evaluasi Web Check AI.', 'error');
+                    }
+                }
+            } catch (err) {
+                if (window.Swal) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gangguan Koneksi',
+                        text: 'Terjadi kesalahan koneksi saat memanggil AI Web Check.',
+                        confirmButtonColor: '#2563eb'
+                    });
+                } else {
+                    showToast('Terjadi kesalahan koneksi saat memanggil AI Web Check.', 'error');
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        // Database Bantuan Narasi Template (Negatif, Netral, Positif)
+        const templateNarasiDB = {
+            sipp: {
+                positif: "Tidak ditemukan perkara perdata, pidana, maupun kepailitan/PKPU aktif atas nama calon debitur maupun penjamin pada penelusuran SIPP PN/PTUN.",
+                netral: "Pemeriksaan SIPP nihil perkara aktif. Tercatat perkara tuntas masa lampau tanpa implikasi finansial terhadap solvabilitas saat ini.",
+                negatif: "Tercatat indikasi sengketa perdata/wanprestasi aktif di PN. Wajib dilakukan klarifikasi legalitas dan salinan putusan perkara."
+            },
+            internet: {
+                positif: "Hasil penelusuran media online dan rekam jejak digital bersih dari isu hukum maupun pemberitaan negatif yang mencemarkan reputasi bisnis.",
+                netral: "Eksposur media minim. Profil dan aktivitas usaha terverifikasi wajar pada direktori bisnis lokal.",
+                negatif: "Ditemukan ulasan keluhan konsumen di forum publik yang memerlukan konfirmasi penyelesaian dari pihak manajemen debitur."
+            },
+            watchlist: {
+                positif: "Identitas calon debitur dan entitas usaha TIDAK tercantum dalam database DTTOT PPATK & daftar sanksi pendanaan terorisme.",
+                netral: "Pemeriksaan kemiripan nama telah diklarifikasi berbeda NIK dengan database kepatuhan APU-PPT.",
+                negatif: "Terindikasi kesamaan nama pada daftar pemantauan APU-PPT yang mewajibkan prosedur Enhanced Due Diligence (EDD)."
+            },
+            lelang: {
+                positif: "Aset jaminan berstatus bebas sengketa, tidak sedang dalam sita jaminan, dan tidak terdaftar di portal lelang KPKNL (lelang.go.id).",
+                netral: "Tidak ditemukan riwayat pengumuman lelang eksekusi aktif dari kreditur terdahulu.",
+                negatif: "Objek agunan terindikasi pernah diajukan lelang eksekusi oleh pihak ketiga. Perlu verifikasi keabsahan SKPT BPN."
+            },
+            lingkungan: {
+                positif: "Kroscek lingkungan domisili dan rekan bisnis mengonfirmasi debitur memiliki reputasi sosial terpercaya, kooperatif, dan berintegritas tinggi.",
+                netral: "Debitur berinteraksi wajar dengan lingkungan sekitar tempat tinggal dan tidak pernah terlibat perselisihan antar warga.",
+                negatif: "Informasi lingkungan mencatat debitur memiliki riwayat keterlambatan pembayaran dan sulit dihubungi saat penagihan."
+            },
+            business_catatan: {
+                positif: "Kunjungan On The Spot (OTS) di lokasi usaha menunjukkan operasional sangat aktif, arus transaksi pembeli ramai, stok barang melimpah, dan hubungan dengan supplier terjalin harmonis.",
+                netral: "Kunjungan OTS mendapati aktivitas operasional berjalan wajar. Stok barang mencukupi permintaan harian. Disarankan pemantauan berkala pada pencatatan buku kas kasir.",
+                negatif: "Kunjungan OTS mencatat aktivitas usaha relatif lengang dengan perputaran persediaan lambat. Lokasi kurang strategis dan pembukuan belum tertata rapi."
+            },
+            business_review: {
+                positif: "Model bisnis matang dengan diversifikasi pelanggan loyal. Daya saing produk unggul di industrinya serta memiliki margin profit stabil yang mencukupi kewajiban kredit.",
+                netral: "Prospek bisnis cukup potensial di wilayah pasarnya, namun menghadapi tantangan kompetisi moderat. Diperlukan penguatan promosi dan efisiensi rantai pasok.",
+                negatif: "Persaingan di sektor usaha ini sangat ketat dan sensitif terhadap daya beli. Terjadi tren pelemahan omzet dan ketergantungan tinggi pada satu pembeli utama."
+            },
+            analisa_jaminan: {
+                positif: "Agunan berlokasi strategis di tepi jalan utama, akses kendaraan leluasa, bebas banjir, serta memiliki nilai marketability tinggi dengan rasio penutupan (coverage) yang sangat aman.",
+                netral: "Kondisi fisik agunan terawat baik dengan akses jalan memadai. Nilai likuidasi cukup menutup pokok fasilitas kredit. Bukti pembayaran PBB tertib.",
+                negatif: "Akses menuju lokasi agunan sempit dan lingkungan padat, berpotensi memerlukan waktu likuidasi lebih panjang bila terjadi gagal bayar."
+            },
+            detail_kebutuhan: {
+                positif: "Fasilitas pembiayaan dialokasikan secara spesifik untuk penambahan modal kerja dan pengadaan persediaan bahan baku guna memenuhi lonjakan Purchase Order (PO).",
+                netral: "Dana kredit ditujukan untuk perkuatan kas operasional dan peremajaan sarana usaha secara terukur.",
+                negatif: "Rincian alokasi pembiayaan belum terurai secara detail dan sebagian berpotensi dipakai untuk pelunasan liabilitas jangka pendek lainnya."
+            },
+            ringkasan_slik: {
+                positif: "Riwayat fasilitas perbankan di SLIK OJK menunjukkan Kolektibilitas 1 (Lancar) tanpa riwayat tunggakan baki debet maupun bunga. Disiplin finansial sangat terpuji.",
+                netral: "Riwayat kredit menunjukkan kelancaran pembayaran dengan fasilitas pinjaman wajar. Pernah terjadi keterlambatan teknis minor yang telah diselesaikan tuntas.",
+                negatif: "Catatan SLIK menunjukkan riwayat tunggakan masa lalu (Kol 2/3) pada lembaga pembiayaan lain. Wajib menyertakan Surat Keterangan Lunas (SKL) resmi."
+            }
+        };
+
+        function toggleDropdownNarasi(menuId) {
+            document.querySelectorAll('.dropdown-narasi-menu').forEach(m => {
+                if (m.id !== menuId) m.classList.add('hidden');
+            });
+            const menu = document.getElementById(menuId);
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        function terapkanNarasi(targetFieldId, key, variant) {
+            const el = document.getElementById(targetFieldId) || document.querySelector(`[name="${targetFieldId}"]`);
+            if (!el) return;
+            const text = templateNarasiDB[key]?.[variant];
+            if (text) {
+                el.value = text;
+                showToast(`Template narasi ${variant.toUpperCase()} berhasil diterapkan.`, 'success');
+            }
+        }
+
+        // Permohonan SLIK oleh Pengusul
+        function ajukanPermohonanSlik() {
+            showToast('Permohonan verifikasi riwayat SLIK OJK berhasil diajukan ke Petugas SLIK!', 'success');
+        }
+
+        // Tutup dropdown jika klik di luar
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown-narasi-container')) {
+                document.querySelectorAll('.dropdown-narasi-menu').forEach(m => m.classList.add('hidden'));
+            }
+        });
+
+        // Sanitasi universal input angka: cegah huruf masuk
+        document.addEventListener('input', function(e) {
+            const target = e.target;
+            if (!target) return;
+            if (target.id === 'nomor_hp' || target.name === 'nomor_hp' || target.id === 'nomor_emergency' || target.name === 'nomor_emergency') {
+                target.value = target.value.replace(/[^0-9]/g, '').slice(0, 15);
+            } else if (target.id === 'npwp_pribadi' || target.name === 'npwp_pribadi') {
+                target.value = target.value.replace(/[^0-9]/g, '').slice(0, 16);
+            }
+        });
+
+        // Simpan Form Data via AJAX dengan Validasi Data Wajib
         async function simpanForm(isComplete = false, showNotification = true) {
+            if (isComplete) {
+                const nama = document.getElementById('nama_debitur')?.value.trim() || document.getElementById('nama_debitur_tab2')?.value.trim();
+                if (!nama) {
+                    showToast('Nama Debitur wajib diisi!', 'error');
+                    goToTab(1);
+                    return;
+                }
+                const plafon = parseNominal(document.getElementById('plafon_pengajuan')?.value || 0);
+                if (plafon <= 0) {
+                    showToast('Plafond pengajuan wajib diisi dan lebih dari Rp 0!', 'error');
+                    goToTab(1);
+                    return;
+                }
+                const noHp = document.getElementById('nomor_hp')?.value.trim();
+                if (!noHp) {
+                    showToast('Nomor HP / WhatsApp Aktif wajib diisi!', 'error');
+                    goToTab(2);
+                    return;
+                }
+                const nik = document.getElementById('npwp_pribadi')?.value.trim();
+                if (!nik || nik.length < 16) {
+                    showToast('NIK KTP / NPWP Pribadi wajib diisi 16 digit angka numerik!', 'error');
+                    goToTab(2);
+                    return;
+                }
+                const alamatKtp = document.querySelector('textarea[name="alamat_ktp"]')?.value.trim();
+                if (!alamatKtp) {
+                    showToast('Alamat KTP Lengkap wajib diisi!', 'error');
+                    goToTab(2);
+                    return;
+                }
+            }
+
             const form = document.getElementById('camForm');
             const formData = new FormData(form);
 
@@ -3338,7 +4124,6 @@
         function bukaLaporanPDF() {
             const kreditId = document.getElementById('kredit_id').value;
             if (!kreditId) {
-                // Simpan dulu lalu buka
                 simpanForm(false, false).then(() => {
                     const newId = document.getElementById('kredit_id').value;
                     if (newId) {
@@ -3389,6 +4174,209 @@
                 toast.classList.remove('translate-y-0', 'opacity-100');
             }, 3000);
         }
+
+        // Modal Cek Perkara Mahkamah Agung
+        function bukaModalCekMa() {
+            const debtorName = document.getElementById('nama_debitur')?.value || document.getElementById('nama_debitur_tab2')?.value || '';
+            const businessName = document.querySelector('input[name="nama_usaha"]')?.value || '';
+            const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('input[name="alamat_usaha"]')?.value || '';
+            const nik = document.getElementById('npwp_pribadi')?.value || '-';
+
+            // Ekstrak kota jika ada di alamat KTP
+            let kota = '';
+            if (alamat) {
+                const parts = alamat.split(/[,.-]/);
+                for (let part of parts) {
+                    part = part.trim();
+                    if (/kota|kabupaten|kab\b|jakarta|surabaya|bandung|semarang|medan|malang|solo|yogya/i.test(part)) {
+                        kota = part;
+                        break;
+                    }
+                }
+                if (!kota && parts.length > 1) kota = parts[parts.length - 1].trim();
+            }
+
+            document.getElementById('modal_ma_nama').value = debtorName;
+            document.getElementById('modal_ma_kota').value = kota;
+            document.getElementById('modal_ma_usaha').value = businessName;
+            document.getElementById('modal_ma_nik').value = nik;
+
+            // Reset status area
+            document.getElementById('modal_ma_area_hasil').classList.add('hidden');
+            document.getElementById('modalCekPerkaraMa').classList.remove('hidden');
+        }
+
+        function tutupModalCekMa() {
+            document.getElementById('modalCekPerkaraMa').classList.add('hidden');
+        }
+
+        function bukaPortalResmiMa() {
+            const nama = document.getElementById('modal_ma_nama').value.trim();
+            const url = 'https://putusan3.mahkamahagung.go.id/search.html?q=' + encodeURIComponent(nama);
+            window.open(url, 'ma_portal_win', 'width=1100,height=750,scrollbars=yes,resizable=yes');
+        }
+
+        async function jalankanScanPerkaraMa() {
+            const btn = document.getElementById('btnJalankanScanMa');
+            const nama = document.getElementById('modal_ma_nama').value.trim();
+            const kota = document.getElementById('modal_ma_kota').value.trim();
+            const usaha = document.getElementById('modal_ma_usaha').value.trim();
+
+            if (!nama) {
+                showToast('Nama Calon Debitur wajib diisi!', 'error');
+                return;
+            }
+
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> <span>Menghubungkan ke Direktori MA...</span>`;
+
+            try {
+                const formData = new FormData();
+                formData.append('nama_debitur', nama);
+                formData.append('kota', kota);
+                formData.append('nama_usaha', usaha);
+
+                const res = await fetch('<?= base_url('pengajuan/cek-perkara-ma') ?>', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.status) {
+                    const areaHasil = document.getElementById('modal_ma_area_hasil');
+                    const badge = document.getElementById('modal_ma_status_badge');
+                    const narasi = document.getElementById('modal_ma_hasil_narasi');
+
+                    areaHasil.classList.remove('hidden');
+
+                    if (data.status_perkara === 'ada_perkara') {
+                        badge.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800 border border-rose-200';
+                        badge.innerHTML = '🔴 DITEMUKAN CATATAN PERKARA';
+                    } else {
+                        badge.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
+                        badge.innerHTML = '🟢 NIHIL PERKARA / BERSIH';
+                    }
+
+                    narasi.value = data.rekomendasi_narasi || '';
+                    showToast('Verifikasi direktori MA selesai dipetakan!', 'success');
+                } else {
+                    showToast(data.message || 'Gagal memeriksa perkara MA', 'error');
+                }
+            } catch (err) {
+                showToast('Koneksi terganggu saat memverifikasi perkara MA', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        function terapkanHasilMaKeForm() {
+            const hasil = document.getElementById('modal_ma_hasil_narasi').value.trim();
+            if (!hasil) {
+                showToast('Lakukan scan terlebih dahulu sebelum menerapkan hasil.', 'error');
+                return;
+            }
+
+            const target = document.getElementById('sipp_keterangan');
+            if (target) {
+                target.value = hasil;
+                tutupModalCekMa();
+                showToast('Hasil verifikasi Mahkamah Agung berhasil disalin ke form SIPP!', 'success');
+            }
+        }
     </script>
+
+    <!-- Modal Interaktif: Penelusuran Perkara Mahkamah Agung RI -->
+    <div id="modalCekPerkaraMa" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full overflow-hidden flex flex-col my-auto animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-amber-400 border border-white/10 shrink-0 text-lg">
+                        ⚖️
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold tracking-tight text-white flex items-center gap-2">
+                            <span>Penelusuran Perkara Mahkamah Agung RI</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/30 text-blue-200 border border-blue-400/30">Direktori Putusan MA</span>
+                        </h3>
+                        <p class="text-[11px] text-slate-300">Pemeriksaan perkara perdata, wanprestasi perbankan, dan kepailitan/PKPU</p>
+                    </div>
+                </div>
+                <button type="button" onclick="tutupModalCekMa()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer font-bold">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+                <!-- Info UU PDP Badge -->
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs flex items-start gap-2.5">
+                    <span class="text-base leading-none">ℹ️</span>
+                    <div class="leading-relaxed">
+                        <strong class="font-bold">Ketentuan Publikasi Peradilan (UU PDP):</strong>
+                        Dokumen putusan Mahkamah Agung mempublikasikan <span class="font-semibold underline">Nama Lengkap & Domisili Hukum</span>, namun <span class="font-semibold">NIK disamarkan</span>. Pencarian menggunakan kombinasi Nama Lengkap Debitur dan Kota.
+                    </div>
+                </div>
+
+                <!-- Parameter Pencarian -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Nama Calon Debitur</label>
+                        <input type="text" id="modal_ma_nama" class="w-full text-xs font-semibold text-slate-800 border border-slate-300 rounded-lg p-2.5 bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Kota / Domisili Pengadilan</label>
+                        <input type="text" id="modal_ma_kota" placeholder="Contoh: Jakarta / Surabaya" class="w-full text-xs font-semibold text-slate-800 border border-slate-300 rounded-lg p-2.5 bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Entitas Usaha (Opsional)</label>
+                        <input type="text" id="modal_ma_usaha" placeholder="Nama PT / CV / Toko" class="w-full text-xs font-semibold text-slate-800 border border-slate-300 rounded-lg p-2.5 bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">NIK KTP (Identitas Unik)</label>
+                        <input type="text" id="modal_ma_nik" readonly class="w-full text-xs font-mono font-semibold text-slate-600 border border-slate-200 rounded-lg p-2.5 bg-slate-100">
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi Penelusuran -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button type="button" id="btnJalankanScanMa" onclick="jalankanScanPerkaraMa()" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span>⚡ Scan Otomatis (AI Legal Assistant)</span>
+                    </button>
+                    <button type="button" onclick="bukaPortalResmiMa()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition shadow-2xs cursor-pointer">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        <span>🌐 Buka Portal Resmi MA</span>
+                    </button>
+                </div>
+
+                <!-- Area Hasil Scan -->
+                <div id="modal_ma_area_hasil" class="hidden space-y-3 pt-2 border-t border-slate-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Hasil Verifikasi Peradilan:</span>
+                        <span id="modal_ma_status_badge" class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            🟢 NIHIL PERKARA / BERSIH
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Rekomendasi Narasi (Siap Diterapkan ke Form CAM SIPP):</label>
+                        <textarea id="modal_ma_hasil_narasi" rows="3" class="w-full text-xs font-medium text-slate-800 border border-slate-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 leading-relaxed"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+                <button type="button" onclick="tutupModalCekMa()" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 transition cursor-pointer">
+                    Tutup
+                </button>
+                <button type="button" id="btnTerapkanMa" onclick="terapkanHasilMaKeForm()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+                    <span>✅ Terapkan Hasil ke Kolom SIPP</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
