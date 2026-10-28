@@ -367,6 +367,37 @@ if ($jam >= 4 && $jam < 11) {
                         </button>
                     </div>
                 </form>
+
+                <!-- KARTU AKUN PENGUJIAN (QUICK LOGIN 1-KLIK) -->
+                <div class="mt-6 pt-5 border-t border-slate-200/80">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Pilih Akun Demo (Klik untuk Isi)</span>
+                        <span class="text-[10px] bg-blue-50 text-blue-700 border border-blue-200 font-bold px-2 py-0.5 rounded-full">Dev Mode</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <button type="button" onclick="quickFill('superadmin', 'admin123')" class="p-2 text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-xl transition text-xs group cursor-pointer">
+                            <div class="font-bold text-slate-800 group-hover:text-blue-700">👑 Superadmin</div>
+                            <div class="text-[10px] text-slate-400 font-mono">admin123</div>
+                        </button>
+                        <button type="button" onclick="quickFill('pengusul', 'pengusul123')" class="p-2 text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-xl transition text-xs group cursor-pointer">
+                            <div class="font-bold text-slate-800 group-hover:text-blue-700">📝 AO Pengusul</div>
+                            <div class="text-[10px] text-slate-400 font-mono">pengusul123</div>
+                        </button>
+                        <button type="button" onclick="quickFill('slik', 'slik123')" class="p-2 text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-xl transition text-xs group cursor-pointer">
+                            <div class="font-bold text-slate-800 group-hover:text-blue-700">🔍 Petugas SLIK</div>
+                            <div class="text-[10px] text-slate-400 font-mono">slik123</div>
+                        </button>
+                        <button type="button" onclick="quickFill('reviewer', 'reviewer123')" class="p-2 text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-xl transition text-xs group cursor-pointer">
+                            <div class="font-bold text-slate-800 group-hover:text-blue-700">⚖️ Reviewer</div>
+                            <div class="text-[10px] text-slate-400 font-mono">reviewer123</div>
+                        </button>
+                        <button type="button" onclick="quickFill('ceo', 'ceo123')" class="p-2 text-left bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-xl transition text-xs group cursor-pointer">
+                            <div class="font-bold text-slate-800 group-hover:text-blue-700">👔 Direktur CEO</div>
+                            <div class="text-[10px] text-slate-400 font-mono">ceo123</div>
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Footer Hak Cipta (Mengalir Normal Tanpa Bertumpuk) -->
@@ -381,6 +412,21 @@ if ($jam >= 4 && $jam < 11) {
 
     <!-- SCRIPT CLIENT -->
     <script>
+        // Fungsi Quick Fill Akun Demo
+        function quickFill(user, pass) {
+            const u = document.getElementById('username');
+            const p = document.getElementById('password');
+            if (u && p) {
+                u.value = user;
+                p.value = pass;
+                u.classList.add('border-blue-500', 'bg-blue-50/50');
+                p.classList.add('border-blue-500', 'bg-blue-50/50');
+                setTimeout(() => {
+                    u.classList.remove('border-blue-500', 'bg-blue-50/50');
+                    p.classList.remove('border-blue-500', 'bg-blue-50/50');
+                }, 800);
+            }
+        }
         // Toggle Show / Hide Password
         function togglePassword() {
             const passwordInput = document.getElementById('password');

