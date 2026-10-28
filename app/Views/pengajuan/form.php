@@ -388,9 +388,9 @@
                                         Skema Pembayaran
                                     </label>
                                     <select name="skema_pembayaran" id="skema_pembayaran" onchange="hitungKalkulasiAngsuran();" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                                        <?php $sp = $kredit['skema_pembayaran'] ?? 'Balloon Payment'; ?>
-                                        <option value="Balloon Payment" <?= $sp === 'Balloon Payment' ? 'selected' : '' ?>>Balloon Payment</option>
-                                        <option value="Installment" <?= $sp === 'Installment' ? 'selected' : '' ?>>Installment</option>
+                                        <?php $sp = $kredit['skema_pembayaran'] ?? 'Installment'; ?>
+                                        <option value="Installment" <?= $sp === 'Installment' ? 'selected' : '' ?>>Installment (Pokok + Bunga Rutin Tiap Bulan)</option>
+                                        <option value="Balloon Payment" <?= $sp === 'Balloon Payment' ? 'selected' : '' ?>>Balloon Payment (Bunga Bulanan, Pokok Lunas di Akhir)</option>
                                     </select>
                                 </div>
 
@@ -401,7 +401,7 @@
                                         Perhitungan Bunga
                                     </label>
                                     <?php $pb = strtoupper($kredit['perhitungan_bunga'] ?? 'ANUITAS'); ?>
-                                    <select name="perhitungan_bunga" id="perhitungan_bunga" onchange="hitungKalkulasiAngsuran();" 
+                                    <select name="perhitungan_bunga" id="perhitungan_bunga" onchange="if(document.getElementById('skema_pembayaran').value==='Balloon Payment'){document.getElementById('skema_pembayaran').value='Installment';} hitungKalkulasiAngsuran();" 
                                             class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                                         <option value="FLAT" <?= $pb === 'FLAT' ? 'selected' : '' ?>>FLAT</option>
                                         <option value="EFEKTIF" <?= $pb === 'EFEKTIF' ? 'selected' : '' ?>>EFEKTIF</option>
@@ -462,29 +462,6 @@
 
                             <!-- Hasil Eksekusi Analisa: Data Anda, Angsuran Anda & Tabel Angsuran (Sesuai Gambar 2) -->
                             <div id="boxHasilEksekusiAnalisa" class="<?= (!empty($kredit['skor_kelayakan_ai']) || !empty($kredit['rekomendasi_keputusan_ai'])) ? '' : 'hidden' ?> mt-6 pt-5 border-t border-slate-200/90 space-y-5">
-                                <!-- Banner Ringkasan Hasil Analisa AI -->
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-blue-50/70 p-3.5 rounded-2xl border border-blue-100 shadow-2xs">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        </div>
-                                        <div>
-                                            <div class="font-bold text-slate-800 flex items-center gap-2 flex-wrap">
-                                                <span>Hasil Eksekusi Analisa:</span>
-                                                <span id="badgeHasilKeputusan" class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">Disetujui Penuh</span>
-                                                <span id="badgeHasilSkor" class="text-blue-700 font-extrabold">Skor 85/100</span>
-                                            </div>
-                                            <div class="text-slate-500 text-[11px] mt-0.5" id="descHasilAnalisa">
-                                                Rekomendasi plafon: <strong id="valHasilPlafon" class="text-slate-800">Rp 0</strong> &bull; Perhitungan angsuran dan mitigasi risiko kelayakan telah sinkron.
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button type="button" onclick="goToTab(8)" class="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-blue-700 border border-blue-200 rounded-lg font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto transition shadow-2xs whitespace-nowrap">
-                                        <span>Buka Detail Tab 8 (Analisa)</span>
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                    </button>
-                                </div>
-
                                 <!-- Box 1: Data Anda (Sesuai Gambar 2) -->
                                 <div class="rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-white text-xs">
                                     <div class="bg-[#334177] text-white font-bold px-4 py-2 text-xs sm:text-sm tracking-wide">
