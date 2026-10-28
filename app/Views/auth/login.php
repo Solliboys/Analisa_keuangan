@@ -473,17 +473,18 @@ if ($jam >= 4 && $jam < 11) {
         }
 
         // Form Submit Loading Feedback
-        document.getElementById('loginForm').addEventListener('submit', function() {
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
             const btn = document.getElementById('btnLogin');
             const text = document.getElementById('btnText');
             const arrow = document.getElementById('btnArrow');
             const spinner = document.getElementById('btnSpinner');
 
-            btn.disabled = true;
-            btn.classList.add('opacity-80', 'cursor-not-allowed');
+            // Gunakan pointer-events none agar tidak klik ganda tanpa membatalkan submit browser
+            btn.style.pointerEvents = 'none';
+            btn.classList.add('opacity-80');
             text.textContent = 'Memverifikasi...';
-            arrow.classList.add('hidden');
-            spinner.classList.remove('hidden');
+            if (arrow) arrow.classList.add('hidden');
+            if (spinner) spinner.classList.remove('hidden');
         });
     </script>
 </body>
