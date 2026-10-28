@@ -460,27 +460,111 @@
                                 </div>
                             </div>
 
-                            <!-- Bar Ringkasan Hasil Eksekusi Analisa -->
-                            <div id="boxHasilEksekusiAnalisa" class="hidden mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-blue-50/70 p-3.5 rounded-2xl border border-blue-100">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-slate-800 flex items-center gap-2 flex-wrap">
-                                            <span>Hasil Eksekusi Analisa:</span>
-                                            <span id="badgeHasilKeputusan" class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">Disetujui Penuh</span>
-                                            <span id="badgeHasilSkor" class="text-blue-700 font-extrabold">Skor 85/100</span>
+                            <!-- Hasil Eksekusi Analisa: Data Anda, Angsuran Anda & Tabel Angsuran (Sesuai Gambar 2) -->
+                            <div id="boxHasilEksekusiAnalisa" class="<?= (!empty($kredit['skor_kelayakan_ai']) || !empty($kredit['rekomendasi_keputusan_ai'])) ? '' : 'hidden' ?> mt-6 pt-5 border-t border-slate-200/90 space-y-5">
+                                <!-- Banner Ringkasan Hasil Analisa AI -->
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-blue-50/70 p-3.5 rounded-2xl border border-blue-100 shadow-2xs">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 font-bold text-xs shadow-2xs">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                         </div>
-                                        <div class="text-slate-500 text-[11px] mt-0.5" id="descHasilAnalisa">
-                                            Rekomendasi plafon: <strong id="valHasilPlafon" class="text-slate-800">Rp 0</strong> &bull; Perhitungan angsuran dan mitigasi risiko kelayakan telah sinkron.
+                                        <div>
+                                            <div class="font-bold text-slate-800 flex items-center gap-2 flex-wrap">
+                                                <span>Hasil Eksekusi Analisa:</span>
+                                                <span id="badgeHasilKeputusan" class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">Disetujui Penuh</span>
+                                                <span id="badgeHasilSkor" class="text-blue-700 font-extrabold">Skor 85/100</span>
+                                            </div>
+                                            <div class="text-slate-500 text-[11px] mt-0.5" id="descHasilAnalisa">
+                                                Rekomendasi plafon: <strong id="valHasilPlafon" class="text-slate-800">Rp 0</strong> &bull; Perhitungan angsuran dan mitigasi risiko kelayakan telah sinkron.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="goToTab(8)" class="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-blue-700 border border-blue-200 rounded-lg font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto transition shadow-2xs whitespace-nowrap">
+                                        <span>Buka Detail Tab 8 (Analisa)</span>
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </button>
+                                </div>
+
+                                <!-- Box 1: Data Anda (Sesuai Gambar 2) -->
+                                <div class="rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-white text-xs">
+                                    <div class="bg-[#334177] text-white font-bold px-4 py-2 text-xs sm:text-sm tracking-wide">
+                                        Data Anda
+                                    </div>
+                                    <div class="divide-y divide-slate-100 font-medium">
+                                        <div class="grid grid-cols-12 py-2.5 px-4 bg-white items-center">
+                                            <div class="col-span-5 sm:col-span-4 text-slate-800 font-semibold text-right pr-4">Jumlah Pinjaman</div>
+                                            <div class="col-span-1 text-center font-bold text-slate-400">:</div>
+                                            <div class="col-span-6 sm:col-span-7 font-bold text-slate-900" id="tabelDataPlafon">Rp 0,00</div>
+                                        </div>
+                                        <div class="grid grid-cols-12 py-2.5 px-4 bg-[#f0f3fa] items-center">
+                                            <div class="col-span-5 sm:col-span-4 text-slate-800 font-semibold text-right pr-4">Lama Pinjaman</div>
+                                            <div class="col-span-1 text-center font-bold text-slate-400">:</div>
+                                            <div class="col-span-6 sm:col-span-7 font-bold text-slate-900">
+                                                <span id="tabelDataTenorBulan">0 bulan</span>
+                                                <span class="block text-[11px] font-normal text-slate-500" id="tabelDataTenorTahun">(0 tahun)</span>
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-12 py-2.5 px-4 bg-white items-center">
+                                            <div class="col-span-5 sm:col-span-4 text-slate-800 font-semibold text-right pr-4">Bunga per Tahun</div>
+                                            <div class="col-span-1 text-center font-bold text-slate-400">:</div>
+                                            <div class="col-span-6 sm:col-span-7 font-bold text-slate-900">
+                                                <span id="tabelDataBungaTahun">0 % / tahun</span>
+                                                <span class="block text-[11px] font-normal text-slate-500" id="tabelDataBungaBulan">(0 % / bulan)</span>
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-12 py-2.5 px-4 bg-[#f0f3fa] items-center">
+                                            <div class="col-span-5 sm:col-span-4 text-slate-800 font-semibold text-right pr-4">Cicilan Tiap</div>
+                                            <div class="col-span-1 text-center font-bold text-slate-400">:</div>
+                                            <div class="col-span-6 sm:col-span-7 font-bold text-slate-900">BULAN</div>
+                                        </div>
+                                        <div class="grid grid-cols-12 py-2.5 px-4 bg-white items-center">
+                                            <div class="col-span-5 sm:col-span-4 text-slate-800 font-semibold text-right pr-4">Mulai Meminjam</div>
+                                            <div class="col-span-1 text-center font-bold text-slate-400">:</div>
+                                            <div class="col-span-6 sm:col-span-7 font-bold text-slate-900" id="tabelDataMulaiBulan">-</div>
+                                        </div>
+                                        <div class="grid grid-cols-12 py-2.5 px-4 bg-[#f0f3fa] items-center">
+                                            <div class="col-span-5 sm:col-span-4 text-slate-800 font-semibold text-right pr-4">Perhitungan Bunga</div>
+                                            <div class="col-span-1 text-center font-bold text-slate-400">:</div>
+                                            <div class="col-span-6 sm:col-span-7 font-bold text-slate-900" id="tabelDataMetodeBunga">ANUITAS</div>
                                         </div>
                                     </div>
                                 </div>
-                                <button type="button" onclick="goToTab(8)" class="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-blue-700 border border-blue-200 rounded-lg font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto transition shadow-2xs whitespace-nowrap">
-                                    <span>Buka Detail Tab 8 (Analisa)</span>
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                </button>
+
+                                <!-- Box 2: Angsuran Anda (Sesuai Gambar 2) -->
+                                <div class="rounded-xl overflow-hidden border border-slate-200 shadow-2xs bg-white text-xs">
+                                    <div class="bg-[#334177] text-white font-bold px-4 py-2 text-xs sm:text-sm tracking-wide">
+                                        Angsuran Anda
+                                    </div>
+                                    <div class="grid grid-cols-12 py-3 px-4 bg-white items-center">
+                                        <div class="col-span-5 sm:col-span-4 text-slate-800 font-semibold text-right pr-4">Angsuran per BULAN</div>
+                                        <div class="col-span-1 text-center font-bold text-slate-400">:</div>
+                                        <div class="col-span-6 sm:col-span-7 font-extrabold text-blue-700 text-sm sm:text-base" id="tabelDataAngsuranBulan">Rp 0,00</div>
+                                    </div>
+                                </div>
+
+                                <!-- Box 3: Tabel Angsuran Lengkap (Sesuai Gambar 2) -->
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-900 mb-2">Tabel Angsuran</h4>
+                                    <div class="overflow-x-auto rounded-xl border border-slate-200/90 shadow-2xs max-h-[520px] overflow-y-auto bg-white">
+                                        <table class="w-full text-xs text-left border-collapse" id="tabelJadwalAngsuran">
+                                            <thead class="bg-[#334177] text-white font-bold uppercase tracking-wider sticky top-0 z-10 text-[11px]">
+                                                <tr>
+                                                    <th class="py-3 px-3.5 text-center">Periode</th>
+                                                    <th class="py-3 px-3.5 text-right">Angsuran Bunga</th>
+                                                    <th class="py-3 px-3.5 text-right">Angsuran Pokok</th>
+                                                    <th class="py-3 px-3.5 text-right">Total Angsuran</th>
+                                                    <th class="py-3 px-3.5 text-right">Sisa pinjaman</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-slate-100 font-medium text-slate-700" id="bodyTabelJadwalAngsuran">
+                                                <!-- Baris angsuran diisi via Javascript renderTabelSimulasiAngsuran -->
+                                            </tbody>
+                                            <tfoot class="bg-[#e9edf5] font-extrabold text-slate-900 border-t-2 border-slate-300 sticky bottom-0 z-10 text-[11px]" id="footTabelJadwalAngsuran">
+                                                <!-- Total baris footer -->
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -2899,6 +2983,11 @@
             hitungLabaRugi();
             hitungDisbursement();
 
+            const boxHasil = document.getElementById('boxHasilEksekusiAnalisa');
+            if (boxHasil && !boxHasil.classList.contains('hidden')) {
+                renderTabelSimulasiAngsuran();
+            }
+
             // Buka tab spesifik jika ada query parameter misal ?tab=6 untuk Petugas SLIK
             const urlParams = new URLSearchParams(window.location.search);
             const initialTab = parseInt(urlParams.get('tab'));
@@ -3110,6 +3199,10 @@
             }
 
             hitungRasioDSC();
+            const boxHasil = document.getElementById('boxHasilEksekusiAnalisa');
+            if (boxHasil && !boxHasil.classList.contains('hidden')) {
+                renderTabelSimulasiAngsuran();
+            }
         }
 
         // Kalkulasi Agunan & Coverage Ratio
@@ -4031,7 +4124,10 @@
                         sumber.innerText = data.sumber + ' - Skor ' + data.skor_kelayakan_ai + '/100';
                     }
 
-                    if (boxHasil) boxHasil.classList.remove('hidden');
+                    if (boxHasil) {
+                        boxHasil.classList.remove('hidden');
+                        renderTabelSimulasiAngsuran();
+                    }
 
                     showToast('Eksekusi analisa berhasil! Skor kelayakan & rekomendasi diperbarui.', 'success');
                     simpanForm(false, false);
@@ -4084,10 +4180,182 @@
             if (valPlafon) valPlafon.innerText = formatRupiahString(plafonRec);
 
             const boxHasil = document.getElementById('boxHasilEksekusiAnalisa');
-            if (boxHasil) boxHasil.classList.remove('hidden');
+            if (boxHasil) {
+                boxHasil.classList.remove('hidden');
+                renderTabelSimulasiAngsuran();
+            }
 
-            showToast('Eksekusi analisa selesai! Kalkulasi simulasi & underwriting diperbarui.', 'success');
+            showToast('Eksekusi analisa selesai! Kalkulasi simulasi & jadwal angsuran siap.', 'success');
             simpanForm(false, false);
+        }
+
+        // Format angka desimal mata uang Rupiah (contoh: Rp 120.000.000,00)
+        function formatRupiahDecimal(num) {
+            if (num === null || num === undefined || isNaN(num)) return 'Rp 0,00';
+            const fixed = Number(num).toFixed(2);
+            const parts = fixed.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return 'Rp ' + parts.join(',');
+        }
+
+        // Render Data Anda, Angsuran Anda, dan Tabel Jadwal Angsuran Lengkap (Sesuai Gambar 2)
+        function renderTabelSimulasiAngsuran() {
+            const plafon = parseNominal(document.getElementById('plafon_pengajuan')?.value || 0);
+            const tenor = Math.max(1, parseInt(document.getElementById('tenor_bulan')?.value || 12));
+            const bungaTahun = parseFloat(document.getElementById('bunga_per_tahun')?.value || 0);
+            const bungaTahunPct = bungaTahun / 100;
+            const metodeBunga = (document.getElementById('perhitungan_bunga')?.value || 'ANUITAS').toUpperCase();
+            const skema = document.getElementById('skema_pembayaran')?.value || 'Installment';
+
+            const bungaBulan = bungaTahun / 12;
+            const i = bungaTahunPct / 12;
+
+            // 1. Update Box Data Anda
+            const elPlafon = document.getElementById('tabelDataPlafon');
+            if (elPlafon) elPlafon.innerText = formatRupiahDecimal(plafon);
+
+            const elTenorBulan = document.getElementById('tabelDataTenorBulan');
+            if (elTenorBulan) elTenorBulan.innerText = tenor + ' bulan';
+
+            const elTenorTahun = document.getElementById('tabelDataTenorTahun');
+            if (elTenorTahun) {
+                const thn = (tenor / 12).toFixed(tenor % 12 === 0 ? 0 : 1);
+                elTenorTahun.innerText = '(' + thn + ' tahun)';
+            }
+
+            const elBungaTahun = document.getElementById('tabelDataBungaTahun');
+            if (elBungaTahun) elBungaTahun.innerText = bungaTahun.toFixed(bungaTahun % 1 === 0 ? 1 : 2) + ' % / tahun';
+
+            const elBungaBulan = document.getElementById('tabelDataBungaBulan');
+            if (elBungaBulan) elBungaBulan.innerText = '(' + bungaBulan.toFixed(2) + ' % / bulan)';
+
+            // Tanggal Mulai Meminjam
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const tglInput = document.getElementById('display_tanggal_pengajuan')?.value || '';
+            let startDate = new Date();
+            if (tglInput) {
+                const parts = tglInput.split('/');
+                if (parts.length === 3) {
+                    startDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                }
+            }
+
+            const elMulaiBulan = document.getElementById('tabelDataMulaiBulan');
+            if (elMulaiBulan) {
+                elMulaiBulan.innerText = months[startDate.getMonth()] + ' ' + startDate.getFullYear();
+            }
+
+            const elMetode = document.getElementById('tabelDataMetodeBunga');
+            if (elMetode) elMetode.innerText = metodeBunga;
+
+            // 2. Hitung Angsuran Per Bulan (Angsuran Anda)
+            let angsuranPerBulan = 0;
+            if (skema === 'Balloon Payment') {
+                angsuranPerBulan = plafon * i;
+            } else if (metodeBunga === 'ANUITAS') {
+                if (i > 0) {
+                    angsuranPerBulan = plafon * (i / (1 - Math.pow(1 + i, -tenor)));
+                } else {
+                    angsuranPerBulan = plafon / tenor;
+                }
+            } else if (metodeBunga === 'EFEKTIF') {
+                angsuranPerBulan = (plafon / tenor) + (plafon * i);
+            } else {
+                // FLAT
+                angsuranPerBulan = (plafon / tenor) + (plafon * i);
+            }
+
+            const elAngsuranBulan = document.getElementById('tabelDataAngsuranBulan');
+            if (elAngsuranBulan) elAngsuranBulan.innerText = formatRupiahDecimal(angsuranPerBulan);
+
+            // 3. Generate Rows Tabel Angsuran
+            const tbody = document.getElementById('bodyTabelJadwalAngsuran');
+            const tfoot = document.getElementById('footTabelJadwalAngsuran');
+            if (!tbody || !tfoot) return;
+
+            let sisaPokok = plafon;
+            let totalBunga = 0;
+            let totalPokok = 0;
+            let totalAngsuran = 0;
+
+            let htmlRows = '';
+
+            // Periode 0 (Bulan Pinjaman Masuk)
+            const periode0 = months[startDate.getMonth()] + ' ' + startDate.getFullYear();
+            htmlRows += `
+                <tr class="bg-white hover:bg-blue-50/40 transition">
+                    <td class="py-2.5 px-3.5 text-center font-bold text-slate-800">${periode0}</td>
+                    <td class="py-2.5 px-3.5 text-right font-medium text-slate-600">0</td>
+                    <td class="py-2.5 px-3.5 text-right font-medium text-slate-600">0</td>
+                    <td class="py-2.5 px-3.5 text-right font-medium text-slate-600">0</td>
+                    <td class="py-2.5 px-3.5 text-right font-bold text-slate-900">${formatRupiahDecimal(sisaPokok)}</td>
+                </tr>
+            `;
+
+            for (let k = 1; k <= tenor; k++) {
+                const curDate = new Date(startDate.getFullYear(), startDate.getMonth() + k, 1);
+                const periodeName = months[curDate.getMonth()] + ' ' + curDate.getFullYear();
+
+                let bungaBulanIni = 0;
+                let pokokBulanIni = 0;
+                let totalBulanIni = 0;
+
+                if (skema === 'Balloon Payment') {
+                    bungaBulanIni = sisaPokok * i;
+                    pokokBulanIni = (k === tenor) ? sisaPokok : 0;
+                    totalBulanIni = bungaBulanIni + pokokBulanIni;
+                    sisaPokok = Math.max(0, sisaPokok - pokokBulanIni);
+                } else if (metodeBunga === 'ANUITAS') {
+                    bungaBulanIni = sisaPokok * i;
+                    if (k === tenor) {
+                        pokokBulanIni = sisaPokok;
+                        totalBulanIni = pokokBulanIni + bungaBulanIni;
+                        sisaPokok = 0;
+                    } else {
+                        pokokBulanIni = angsuranPerBulan - bungaBulanIni;
+                        totalBulanIni = angsuranPerBulan;
+                        sisaPokok = Math.max(0, sisaPokok - pokokBulanIni);
+                    }
+                } else if (metodeBunga === 'EFEKTIF') {
+                    bungaBulanIni = sisaPokok * i;
+                    pokokBulanIni = (k === tenor) ? sisaPokok : (plafon / tenor);
+                    totalBulanIni = bungaBulanIni + pokokBulanIni;
+                    sisaPokok = Math.max(0, sisaPokok - pokokBulanIni);
+                } else {
+                    // FLAT
+                    bungaBulanIni = plafon * i;
+                    pokokBulanIni = (k === tenor) ? sisaPokok : (plafon / tenor);
+                    totalBulanIni = bungaBulanIni + pokokBulanIni;
+                    sisaPokok = Math.max(0, sisaPokok - pokokBulanIni);
+                }
+
+                totalBunga += bungaBulanIni;
+                totalPokok += pokokBulanIni;
+                totalAngsuran += totalBulanIni;
+
+                const bgRow = (k % 2 === 0) ? 'bg-[#f8fafc]' : 'bg-white';
+                htmlRows += `
+                    <tr class="${bgRow} hover:bg-blue-50/50 transition">
+                        <td class="py-2 px-3.5 text-center font-semibold text-slate-800">${periodeName}</td>
+                        <td class="py-2 px-3.5 text-right font-medium text-slate-700">${formatRupiahDecimal(bungaBulanIni)}</td>
+                        <td class="py-2 px-3.5 text-right font-medium text-slate-700">${formatRupiahDecimal(pokokBulanIni)}</td>
+                        <td class="py-2 px-3.5 text-right font-bold text-slate-900">${formatRupiahDecimal(totalBulanIni)}</td>
+                        <td class="py-2 px-3.5 text-right font-semibold text-slate-800">${formatRupiahDecimal(sisaPokok)}</td>
+                    </tr>
+                `;
+            }
+
+            tbody.innerHTML = htmlRows;
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td class="py-2.5 px-3.5 text-center font-extrabold text-slate-900 uppercase">Total</td>
+                    <td class="py-2.5 px-3.5 text-right font-extrabold text-slate-900">${formatRupiahDecimal(totalBunga)}</td>
+                    <td class="py-2.5 px-3.5 text-right font-extrabold text-slate-900">${formatRupiahDecimal(totalPokok)}</td>
+                    <td class="py-2.5 px-3.5 text-right font-extrabold text-slate-900">${formatRupiahDecimal(totalAngsuran)}</td>
+                    <td class="py-2.5 px-3.5 text-right font-extrabold text-slate-400">-</td>
+                </tr>
+            `;
         }
 
         // Buka Laporan CAM PDF resmi
