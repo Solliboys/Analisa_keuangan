@@ -121,15 +121,15 @@
                                    class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
-                        <!-- Nama Gadis Ibu Kandung -->
+                        <!-- Nama Kontak Darurat -->
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Nama Gadis Ibu Kandung
+                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                Nama Kontak Darurat
                             </label>
-                            <input type="text" name="nama_ibu_kandung" 
-                                   value="<?= esc($kredit['nama_ibu_kandung'] ?? '') ?>" 
-                                   placeholder="Untuk verifikasi data perbankan"
+                            <input type="text" name="nama_kontak_darurat" id="nama_kontak_darurat" 
+                                   value="<?= esc($kredit['nama_kontak_darurat'] ?? ($kredit['nama_ibu_kandung'] ?? '')) ?>" 
+                                   placeholder="Nama lengkap kerabat / kontak darurat"
                                    class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
                     </div>
