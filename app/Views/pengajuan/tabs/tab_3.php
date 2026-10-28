@@ -1,3 +1,9 @@
+<?php
+$rawJd = $kredit['jenis_debitur'] ?? 'Individu';
+$isPt = (stripos($rawJd, 'PT') !== false);
+$isCv = (stripos($rawJd, 'CV') !== false);
+$isBadanUsaha = ($isPt || $isCv || stripos($rawJd, 'Badan Usaha') !== false);
+?>
 <div id="tab-3" class="tab-panel space-y-6">
     <!-- Card Utama: Profil Kegiatan Usaha -->
     <div class="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-7 shadow-xs">
@@ -20,15 +26,15 @@
 
         <!-- Grid Form 2 Kolom Seimbang -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <!-- Nama Usaha / Merk Dagang -->
+            <!-- Nama Usaha / Nama Perusahaan -->
             <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <label id="label_nama_usaha_tab3" class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    Nama Usaha / Merk Dagang
+                    <span><?= ($isPt || $isBadanUsaha) ? 'Nama Perusahaan' : 'Nama Usaha / Merk Dagang' ?></span>
                 </label>
-                <input type="text" name="nama_usaha" 
+                <input type="text" name="nama_usaha" id="nama_usaha_tab3" 
                        value="<?= esc($kredit['nama_usaha'] ?? '') ?>" 
-                       placeholder="Contoh: Toko Berkah / PT Mandiri Sejahtera"
+                       placeholder="<?= ($isPt || $isBadanUsaha) ? 'Contoh: PT Mandiri Sejahtera' : 'Contoh: Toko Berkah / Usaha Dagang Mandiri' ?>"
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 

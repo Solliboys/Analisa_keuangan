@@ -183,17 +183,32 @@ function ubahJenisDebitur(val) {
     if (!val) {
         val = document.getElementById('jenis_debitur')?.value || 'Individu';
     }
-    const isBadan = (val.includes('PT') || val.includes('CV'));
+    const isBadan = (val.includes('PT') || val.includes('CV') || val.includes('Badan Usaha'));
+    const isPt = val.includes('PT');
 
-    // Toggle field Kepemilikan Rumah vs Bidang Usaha di Tab 2
+    // 1. Toggle field Kepemilikan Rumah vs Bidang Usaha di Tab 2
     const wrapRumah = document.getElementById('wrapper_kepemilikan_rumah');
     const wrapUsaha = document.getElementById('wrapper_bidang_usaha');
-    if (isBadan) {
-        if (wrapRumah) wrapRumah.classList.add('hidden');
-        if (wrapUsaha) wrapUsaha.classList.remove('hidden');
-    } else {
-        if (wrapRumah) wrapRumah.classList.remove('hidden');
-        if (wrapUsaha) wrapUsaha.classList.add('hidden');
+    if (wrapRumah) {
+        if (isBadan) wrapRumah.classList.add('hidden');
+        else wrapRumah.classList.remove('hidden');
+    }
+    if (wrapUsaha) {
+        if (isBadan) wrapUsaha.classList.remove('hidden');
+        else wrapUsaha.classList.add('hidden');
+    }
+
+    // 2. Update label Nama Usaha / Nama Perusahaan di Tab 3
+    const labelNamaUsaha = document.querySelector('#label_nama_usaha_tab3 span');
+    const inputNamaUsaha = document.getElementById('nama_usaha_tab3');
+    if (labelNamaUsaha && inputNamaUsaha) {
+        if (isPt || isBadan) {
+            labelNamaUsaha.innerText = 'Nama Perusahaan';
+            inputNamaUsaha.placeholder = 'Contoh: PT Mandiri Sejahtera';
+        } else {
+            labelNamaUsaha.innerText = 'Nama Usaha / Merk Dagang';
+            inputNamaUsaha.placeholder = 'Contoh: Toko Berkah / Usaha Dagang Mandiri';
+        }
     }
 }
 
