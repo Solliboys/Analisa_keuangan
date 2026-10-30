@@ -2102,6 +2102,25 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             document.getElementById('modal_wc_bidang').value = bidang;
             document.getElementById('modal_wc_catatan').value = '';
 
+            // Sinkronisasi status preview file bukti yang sudah terunggah di Tab 7
+            const fieldsBukti = ['sipp_file', 'internet_file', 'watchlist_file', 'lelang_file', 'negatif_file'];
+            fieldsBukti.forEach(f => {
+                const hiddenVal = document.getElementById(f)?.value?.trim();
+                const previewEl = document.getElementById('modal_preview_' + f);
+                if (previewEl) {
+                    if (hiddenVal) {
+                        const namaFile = hiddenVal.split('/').pop();
+                        previewEl.innerHTML = `
+                            <a href="${getBaseUrl() + '/' + hiddenVal}" target="_blank" class="text-blue-600 underline font-semibold truncate block" title="${namaFile}">
+                                📄 ${namaFile}
+                            </a>
+                        `;
+                    } else {
+                        previewEl.innerHTML = `<span class="italic text-slate-400">Belum ada file</span>`;
+                    }
+                }
+            });
+
             // Reset area hasil & loading
             document.getElementById('modal_wc_loading').classList.add('hidden');
             document.getElementById('modal_wc_area_hasil').classList.add('hidden');
@@ -2281,6 +2300,54 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                 showToast('Koneksi terganggu saat upload file', 'error');
                 if (previewEl) previewEl.innerHTML = `<span class="text-[11px] text-rose-500 italic">Gagal upload</span>`;
             }
+        async function uploadBuktiDariModal(inputEl, fieldName) {
+            if (!inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            const previewModalEl = document.getElementById('modal_preview_' + fieldName);
+
+            if (previewModalEl) {
+                previewModalEl.innerHTML = `<span class="text-blue-600 animate-pulse font-semibold">Mengunggah ${file.name}...</span>`;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('field', fieldName);
+
+            try {
+                const res = await fetch(getBaseUrl() + '/pengajuan/upload-bukti-webcheck', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status) {
+                    if (previewModalEl) {
+                        previewModalEl.innerHTML = `
+                            <a href="${data.url}" target="_blank" class="text-emerald-700 underline font-semibold flex items-center gap-1" title="${data.nama_file}">
+                                <span>✅ ${data.nama_file}</span>
+                            </a>
+                        `;
+                    }
+                    // Simpan ke hidden input di Tab 7 & update preview Tab 7 langsung
+                    const targetHidden = document.getElementById(fieldName);
+                    if (targetHidden) targetHidden.value = data.path;
+
+                    const targetPreviewTab = document.getElementById('preview_' + fieldName);
+                    if (targetPreviewTab) {
+                        targetPreviewTab.innerHTML = `
+                            <a href="${data.url}" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
+                                <span>📄 Bukti Terunggah: ${data.nama_file}</span>
+                            </a>
+                        `;
+                    }
+                    showToast('Bukti ' + data.nama_file + ' berhasil diunggah!', 'success');
+                } else {
+                    showToast(data.message || 'Gagal mengunggah file bukti', 'error');
+                    if (previewModalEl) previewModalEl.innerHTML = `<span class="italic text-rose-500">Gagal upload</span>`;
+                }
+            } catch (err) {
+                showToast('Koneksi terganggu saat upload file', 'error');
+                if (previewModalEl) previewModalEl.innerHTML = `<span class="italic text-rose-500">Gagal upload</span>`;
+            }
         }
 
         window.jalankanAiWebcheck = jalankanAiWebcheck;
@@ -2289,6 +2356,7 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
         window.eksekusiAiWebcheckModal = eksekusiAiWebcheckModal;
         window.terapkanSemuaHasilWebcheck = terapkanSemuaHasilWebcheck;
         window.uploadBuktiWebcheck = uploadBuktiWebcheck;
+        window.uploadBuktiDariModal = uploadBuktiDariModal;
 
         /* =========================================================================
          * FITUR BANTUAN NARASI (CAM & OPINI KREDIT)

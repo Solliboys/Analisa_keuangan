@@ -375,9 +375,105 @@
                         <textarea id="modal_wc_catatan" rows="2" placeholder="Tuliskan catatan tambahan jika pengusul sudah memegang info lapangan / bukti dokumen awal..." class="w-full text-xs text-slate-800 border border-slate-300 rounded-lg p-2.5 bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 leading-relaxed"></textarea>
                     </div>
 
+                    <!-- Upload Dokumen / Foto Bukti 5 Aspek -->
+                    <div class="border border-blue-200/90 rounded-xl p-3 bg-white space-y-2.5 shadow-2xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
+                                <span>📎 Unggah Dokumen / Foto Bukti Pendukung (5 Aspek):</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400">PDF, JPG, PNG (Maks 10MB)</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <!-- 1. SIPP -->
+                            <div class="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                                    <span>⚖️ 1. Bukti SIPP / MA</span>
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <label class="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md border border-blue-200 shadow-2xs shrink-0">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        <span>Upload File</span>
+                                        <input type="file" accept="image/*,application/pdf" onchange="uploadBuktiDariModal(this, 'sipp_file')" class="hidden">
+                                    </label>
+                                    <div id="modal_preview_sipp_file" class="text-[10px] text-slate-500 truncate flex-1">
+                                        <span class="italic text-slate-400">Belum ada file</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Media Online -->
+                            <div class="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                                    <span>🌐 2. Bukti Media Online / Kliping</span>
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <label class="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md border border-blue-200 shadow-2xs shrink-0">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        <span>Upload File</span>
+                                        <input type="file" accept="image/*,application/pdf" onchange="uploadBuktiDariModal(this, 'internet_file')" class="hidden">
+                                    </label>
+                                    <div id="modal_preview_internet_file" class="text-[10px] text-slate-500 truncate flex-1">
+                                        <span class="italic text-slate-400">Belum ada file</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. DTTOT -->
+                            <div class="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                                    <span>🛡️ 3. Bukti DTTOT / APU-PPT</span>
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <label class="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md border border-blue-200 shadow-2xs shrink-0">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        <span>Upload File</span>
+                                        <input type="file" accept="image/*,application/pdf" onchange="uploadBuktiDariModal(this, 'watchlist_file')" class="hidden">
+                                    </label>
+                                    <div id="modal_preview_watchlist_file" class="text-[10px] text-slate-500 truncate flex-1">
+                                        <span class="italic text-slate-400">Belum ada file</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 4. Lelang -->
+                            <div class="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                                    <span>🏛️ 4. Bukti Lelang KPKNL</span>
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <label class="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md border border-blue-200 shadow-2xs shrink-0">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        <span>Upload File</span>
+                                        <input type="file" accept="image/*,application/pdf" onchange="uploadBuktiDariModal(this, 'lelang_file')" class="hidden">
+                                    </label>
+                                    <div id="modal_preview_lelang_file" class="text-[10px] text-slate-500 truncate flex-1">
+                                        <span class="italic text-slate-400">Belum ada file</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 5. Lingkungan -->
+                            <div class="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between gap-1.5 sm:col-span-2">
+                                <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
+                                    <span>👥 5. Bukti Kroscek Lingkungan / Reputasi Sosial</span>
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <label class="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md border border-blue-200 shadow-2xs shrink-0">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        <span>Upload File</span>
+                                        <input type="file" accept="image/*,application/pdf" onchange="uploadBuktiDariModal(this, 'negatif_file')" class="hidden">
+                                    </label>
+                                    <div id="modal_preview_negatif_file" class="text-[10px] text-slate-500 truncate flex-1">
+                                        <span class="italic text-slate-400">Belum ada file</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tombol Eksekusi AI -->
                     <div class="pt-1 flex items-center justify-between">
-                        <span class="text-[11px] text-slate-500 italic">Pastikan nama calon debitur sesuai KTP sebelum memproses.</span>
+                        <span class="text-[11px] text-slate-500 italic">Pastikan data & bukti sudah sesuai sebelum memproses.</span>
                         <button type="button" id="btnMulaiScanWebcheck" onclick="eksekusiAiWebcheckModal()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs hover:shadow-md flex items-center gap-2 cursor-pointer">
                             <svg class="w-4 h-4 text-amber-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             <span>🚀 Mulai Investigasi AI (5 Aspek)</span>
