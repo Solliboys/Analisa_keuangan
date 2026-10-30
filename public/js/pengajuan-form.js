@@ -2300,6 +2300,8 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                 showToast('Koneksi terganggu saat upload file', 'error');
                 if (previewEl) previewEl.innerHTML = `<span class="text-[11px] text-rose-500 italic">Gagal upload</span>`;
             }
+        }
+
         async function uploadBuktiDariModal(inputEl, fieldName) {
             if (!inputEl.files || !inputEl.files[0]) return;
             const file = inputEl.files[0];
