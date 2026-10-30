@@ -156,19 +156,6 @@ $renderFilePreview = function($filePath) {
                         </div>
                     </div>
 
-                    <!-- Referensi Berita Live Ditemukan AI (Tersinkronisasi dari AI Web Check) -->
-                    <div id="tab7_area_berita" class="hidden p-4 bg-blue-50/70 rounded-2xl border border-blue-200 space-y-2.5 shadow-2xs">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-                                <span>📰 Referensi Berita & Liputan Media Ditemukan AI:</span>
-                            </span>
-                            <span class="text-[10px] text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-semibold">Tersinkronisasi dari AI Web Check</span>
-                        </div>
-                        <div id="tab7_list_berita" class="space-y-1.5">
-                            <!-- Diisi dinamis -->
-                        </div>
-                    </div>
-
                     <!-- 3. DTTOT / Watchlist -->
                     <div class="p-4 sm:p-5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">

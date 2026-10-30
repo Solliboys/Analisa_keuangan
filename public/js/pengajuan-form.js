@@ -2296,36 +2296,6 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                 document.getElementById('negatif_keterangan').value = negatif;
             }
 
-            // Sinkronkan daftar referensi berita live ke Tab 7 jika ada
-            const tab7AreaBerita = document.getElementById('tab7_area_berita');
-            const tab7ListBerita = document.getElementById('tab7_list_berita');
-            if (tab7AreaBerita && tab7ListBerita && window._lastWebcheckBerita && window._lastWebcheckBerita.length > 0) {
-                let tabBHtml = '';
-                window._lastWebcheckBerita.forEach((item, idx) => {
-                    const sumber = item.source || 'Media Online';
-                    const tgl = item.date ? item.date.replace(/GMT.*$/, '').trim() : '';
-                    tabBHtml += `
-                        <div class="p-2.5 bg-white rounded-xl border border-blue-100 shadow-2xs hover:border-blue-300 transition flex items-start justify-between gap-2.5">
-                            <div class="text-[11px] leading-snug min-w-0 flex-1">
-                                <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="font-bold text-slate-800 hover:text-blue-600 flex items-center gap-1">
-                                    <span class="truncate">${idx + 1}. ${item.title}</span>
-                                    <svg class="w-3 h-3 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                                </a>
-                                <div class="text-[10px] text-slate-400 mt-0.5 flex items-center gap-2">
-                                    <span class="font-semibold text-slate-600">🏛️ ${sumber}</span>
-                                    ${tgl ? `<span>• 📅 ${tgl}</span>` : ''}
-                                </div>
-                            </div>
-                            <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="shrink-0 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold rounded-lg border border-blue-200">
-                                Buka ↗
-                            </a>
-                        </div>
-                    `;
-                });
-                tab7ListBerita.innerHTML = tabBHtml;
-                tab7AreaBerita.classList.remove('hidden');
-            }
-
             tutupModalAiWebcheck();
             showToast('Semua 5 aspek hasil verifikasi berhasil disalin ke form Tab 7!', 'success');
         }
