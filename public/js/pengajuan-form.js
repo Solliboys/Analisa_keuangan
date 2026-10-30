@@ -2187,6 +2187,44 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                         }
                     }
 
+                    // Simpan data berita terakhir
+                    window._lastWebcheckBerita = data.berita_terkait || [];
+
+                    // Render berita ke modal
+                    const areaBerita = document.getElementById('modal_wc_area_berita');
+                    const listBerita = document.getElementById('modal_wc_list_berita');
+                    if (areaBerita && listBerita) {
+                        if (window._lastWebcheckBerita.length > 0) {
+                            let bHtml = '';
+                            window._lastWebcheckBerita.forEach((item, idx) => {
+                                const sumber = item.source || 'Media Online';
+                                const tgl = item.date ? item.date.replace(/GMT.*$/, '').trim() : '';
+                                bHtml += `
+                                    <div class="p-2.5 bg-white rounded-lg border border-blue-100 shadow-2xs hover:border-blue-300 transition flex items-start justify-between gap-2.5">
+                                        <div class="text-[11px] leading-snug min-w-0 flex-1">
+                                            <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="font-bold text-slate-800 hover:text-blue-600 flex items-center gap-1">
+                                                <span class="truncate">${idx + 1}. ${item.title}</span>
+                                                <svg class="w-3 h-3 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                            </a>
+                                            <div class="text-[10px] text-slate-400 mt-0.5 flex items-center gap-2">
+                                                <span class="font-semibold text-slate-600">🏛️ ${sumber}</span>
+                                                ${tgl ? `<span>• 📅 ${tgl}</span>` : ''}
+                                            </div>
+                                        </div>
+                                        <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="shrink-0 px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold rounded border border-blue-200">
+                                            Buka ↗
+                                        </a>
+                                    </div>
+                                `;
+                            });
+                            listBerita.innerHTML = bHtml;
+                            areaBerita.classList.remove('hidden');
+                        } else {
+                            areaBerita.classList.add('hidden');
+                            listBerita.innerHTML = '';
+                        }
+                    }
+
                     // Kesimpulan risiko & badge
                     const summaryEl = document.getElementById('modal_wc_ringkasan_risiko');
                     if (summaryEl) {
@@ -2258,8 +2296,74 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                 document.getElementById('negatif_keterangan').value = negatif;
             }
 
+            // Sinkronkan daftar referensi berita live ke Tab 7 jika ada
+            const tab7AreaBerita = document.getElementById('tab7_area_berita');
+            const tab7ListBerita = document.getElementById('tab7_list_berita');
+            if (tab7AreaBerita && tab7ListBerita && window._lastWebcheckBerita && window._lastWebcheckBerita.length > 0) {
+                let tabBHtml = '';
+                window._lastWebcheckBerita.forEach((item, idx) => {
+                    const sumber = item.source || 'Media Online';
+                    const tgl = item.date ? item.date.replace(/GMT.*$/, '').trim() : '';
+                    tabBHtml += `
+                        <div class="p-2.5 bg-white rounded-xl border border-blue-100 shadow-2xs hover:border-blue-300 transition flex items-start justify-between gap-2.5">
+                            <div class="text-[11px] leading-snug min-w-0 flex-1">
+                                <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="font-bold text-slate-800 hover:text-blue-600 flex items-center gap-1">
+                                    <span class="truncate">${idx + 1}. ${item.title}</span>
+                                    <svg class="w-3 h-3 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                </a>
+                                <div class="text-[10px] text-slate-400 mt-0.5 flex items-center gap-2">
+                                    <span class="font-semibold text-slate-600">🏛️ ${sumber}</span>
+                                    ${tgl ? `<span>• 📅 ${tgl}</span>` : ''}
+                                </div>
+                            </div>
+                            <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="shrink-0 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[10px] font-bold rounded-lg border border-blue-200">
+                                Buka ↗
+                            </a>
+                        </div>
+                    `;
+                });
+                tab7ListBerita.innerHTML = tabBHtml;
+                tab7AreaBerita.classList.remove('hidden');
+            }
+
             tutupModalAiWebcheck();
             showToast('Semua 5 aspek hasil verifikasi berhasil disalin ke form Tab 7!', 'success');
+        }
+
+        function renderThumbnailBukti(url, namaFile) {
+            const isImg = /\.(jpg|jpeg|png|webp|gif)$/i.test(namaFile || url);
+            if (isImg) {
+                return `
+                    <div class="flex items-center gap-2 mt-1 p-1 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                        <a href="${url}" target="_blank" class="block shrink-0 group relative overflow-hidden rounded-lg">
+                            <img src="${url}" class="w-11 h-11 object-cover rounded-lg border border-slate-200 group-hover:scale-105 transition" alt="Foto Bukti">
+                            <span class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-bold transition">🔍 Lihat</span>
+                        </a>
+                        <div class="min-w-0 flex-1 pr-1">
+                            <a href="${url}" target="_blank" class="text-xs font-bold text-blue-600 hover:underline block truncate" title="${namaFile}">
+                                ${namaFile}
+                            </a>
+                            <span class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                                <span>✅ Foto Bukti Terunggah</span>
+                            </span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="flex items-center gap-2 mt-1 p-1 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                        <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center font-extrabold text-[11px] shrink-0">
+                            PDF
+                        </div>
+                        <div class="min-w-0 flex-1 pr-1">
+                            <a href="${url}" target="_blank" class="text-xs font-bold text-blue-600 hover:underline block truncate" title="${namaFile}">
+                                ${namaFile}
+                            </a>
+                            <span class="text-[10px] text-slate-500 font-medium block">Dokumen Terunggah</span>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         async function uploadBuktiWebcheck(inputEl, fieldName) {
@@ -2269,7 +2373,7 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             const hiddenEl = document.getElementById(fieldName);
 
             if (previewEl) {
-                previewEl.innerHTML = `<span class="text-xs text-blue-600 animate-pulse">Mengunggah file ${file.name}...</span>`;
+                previewEl.innerHTML = `<span class="text-xs text-blue-600 animate-pulse font-semibold">Mengunggah file ${file.name}...</span>`;
             }
 
             const formData = new FormData();
@@ -2285,11 +2389,7 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                 if (data.status) {
                     if (hiddenEl) hiddenEl.value = data.path;
                     if (previewEl) {
-                        previewEl.innerHTML = `
-                            <a href="${data.url}" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
-                                <span>📄 Bukti Terunggah: ${data.nama_file}</span>
-                            </a>
-                        `;
+                        previewEl.innerHTML = renderThumbnailBukti(data.url, data.nama_file);
                     }
                     showToast('Bukti file berhasil diunggah!', 'success');
                 } else {
@@ -2323,11 +2423,7 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                 const data = await res.json();
                 if (data.status) {
                     if (previewModalEl) {
-                        previewModalEl.innerHTML = `
-                            <a href="${data.url}" target="_blank" class="text-emerald-700 underline font-semibold flex items-center gap-1" title="${data.nama_file}">
-                                <span>✅ ${data.nama_file}</span>
-                            </a>
-                        `;
+                        previewModalEl.innerHTML = renderThumbnailBukti(data.url, data.nama_file);
                     }
                     // Simpan ke hidden input di Tab 7 & update preview Tab 7 langsung
                     const targetHidden = document.getElementById(fieldName);
@@ -2335,11 +2431,7 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
 
                     const targetPreviewTab = document.getElementById('preview_' + fieldName);
                     if (targetPreviewTab) {
-                        targetPreviewTab.innerHTML = `
-                            <a href="${data.url}" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
-                                <span>📄 Bukti Terunggah: ${data.nama_file}</span>
-                            </a>
-                        `;
+                        targetPreviewTab.innerHTML = renderThumbnailBukti(data.url, data.nama_file);
                     }
                     showToast('Bukti ' + data.nama_file + ' berhasil diunggah!', 'success');
                 } else {

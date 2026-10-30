@@ -1,3 +1,44 @@
+<?php
+$renderFilePreview = function($filePath) {
+    if (empty($filePath)) {
+        return '<span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>';
+    }
+    $url = base_url($filePath);
+    $nama = basename($filePath);
+    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    $isImg = in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+    if ($isImg) {
+        return '
+        <div class="flex items-center gap-2.5 mt-1 p-1 bg-white border border-slate-200 rounded-xl shadow-2xs">
+            <a href="' . $url . '" target="_blank" class="block shrink-0 group relative overflow-hidden rounded-lg">
+                <img src="' . $url . '" class="w-11 h-11 object-cover rounded-lg border border-slate-200 group-hover:scale-105 transition" alt="Foto Bukti">
+                <span class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-bold transition">🔍 Lihat</span>
+            </a>
+            <div class="min-w-0 flex-1 pr-1">
+                <a href="' . $url . '" target="_blank" class="text-xs font-bold text-blue-600 hover:underline block truncate" title="' . esc($nama) . '">
+                    ' . esc($nama) . '
+                </a>
+                <span class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                    <span>✅ Foto Bukti Terunggah</span>
+                </span>
+            </div>
+        </div>';
+    } else {
+        return '
+        <div class="flex items-center gap-2 mt-1 p-1 bg-white border border-slate-200 rounded-xl shadow-2xs">
+            <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center font-extrabold text-[11px] shrink-0">
+                PDF
+            </div>
+            <div class="min-w-0 flex-1 pr-1">
+                <a href="' . $url . '" target="_blank" class="text-xs font-bold text-blue-600 hover:underline block truncate" title="' . esc($nama) . '">
+                    ' . esc($nama) . '
+                </a>
+                <span class="text-[10px] text-slate-500 font-medium block">Dokumen Terunggah</span>
+            </div>
+        </div>';
+    }
+};
+?>
 <div id="tab-7" class="tab-panel bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
                 <!-- Section Header -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-slate-100 mb-6 gap-4">
@@ -62,13 +103,7 @@
                                 <input type="hidden" name="sipp_file" id="sipp_file" value="<?= esc($webcheck['sipp_file'] ?? '') ?>">
                             </div>
                             <div id="preview_sipp_file" class="text-xs text-slate-500">
-                                <?php if (!empty($webcheck['sipp_file'])): ?>
-                                    <a href="<?= base_url($webcheck['sipp_file']) ?>" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
-                                        <span>📄 Bukti Terunggah: <?= basename($webcheck['sipp_file']) ?></span>
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>
-                                <?php endif; ?>
+                                <?= $renderFilePreview($webcheck['sipp_file'] ?? '') ?>
                             </div>
                         </div>
                     </div>
@@ -116,14 +151,21 @@
                                 <input type="hidden" name="internet_file" id="internet_file" value="<?= esc($webcheck['internet_file'] ?? '') ?>">
                             </div>
                             <div id="preview_internet_file" class="text-xs text-slate-500">
-                                <?php if (!empty($webcheck['internet_file'])): ?>
-                                    <a href="<?= base_url($webcheck['internet_file']) ?>" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
-                                        <span>📄 Bukti Terunggah: <?= basename($webcheck['internet_file']) ?></span>
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>
-                                <?php endif; ?>
+                                <?= $renderFilePreview($webcheck['internet_file'] ?? '') ?>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Referensi Berita Live Ditemukan AI (Tersinkronisasi dari AI Web Check) -->
+                    <div id="tab7_area_berita" class="hidden p-4 bg-blue-50/70 rounded-2xl border border-blue-200 space-y-2.5 shadow-2xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                                <span>📰 Referensi Berita & Liputan Media Ditemukan AI:</span>
+                            </span>
+                            <span class="text-[10px] text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-semibold">Tersinkronisasi dari AI Web Check</span>
+                        </div>
+                        <div id="tab7_list_berita" class="space-y-1.5">
+                            <!-- Diisi dinamis -->
                         </div>
                     </div>
 
@@ -170,13 +212,7 @@
                                 <input type="hidden" name="watchlist_file" id="watchlist_file" value="<?= esc($webcheck['watchlist_file'] ?? '') ?>">
                             </div>
                             <div id="preview_watchlist_file" class="text-xs text-slate-500">
-                                <?php if (!empty($webcheck['watchlist_file'])): ?>
-                                    <a href="<?= base_url($webcheck['watchlist_file']) ?>" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
-                                        <span>📄 Bukti Terunggah: <?= basename($webcheck['watchlist_file']) ?></span>
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>
-                                <?php endif; ?>
+                                <?= $renderFilePreview($webcheck['watchlist_file'] ?? '') ?>
                             </div>
                         </div>
                     </div>
@@ -224,13 +260,7 @@
                                 <input type="hidden" name="lelang_file" id="lelang_file" value="<?= esc($webcheck['lelang_file'] ?? '') ?>">
                             </div>
                             <div id="preview_lelang_file" class="text-xs text-slate-500">
-                                <?php if (!empty($webcheck['lelang_file'])): ?>
-                                    <a href="<?= base_url($webcheck['lelang_file']) ?>" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
-                                        <span>📄 Bukti Terunggah: <?= basename($webcheck['lelang_file']) ?></span>
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>
-                                <?php endif; ?>
+                                <?= $renderFilePreview($webcheck['lelang_file'] ?? '') ?>
                             </div>
                         </div>
                     </div>
@@ -276,13 +306,7 @@
                                 <input type="hidden" name="negatif_file" id="negatif_file" value="<?= esc($webcheck['negatif_file'] ?? '') ?>">
                             </div>
                             <div id="preview_negatif_file" class="text-xs text-slate-500">
-                                <?php if (!empty($webcheck['negatif_file'])): ?>
-                                    <a href="<?= base_url($webcheck['negatif_file']) ?>" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
-                                        <span>📄 Bukti Terunggah: <?= basename($webcheck['negatif_file']) ?></span>
-                                    </a>
-                                <?php else: ?>
-                                    <span class="text-[11px] text-slate-400 italic">Belum ada file bukti yang diunggah</span>
-                                <?php endif; ?>
+                                <?= $renderFilePreview($webcheck['negatif_file'] ?? '') ?>
                             </div>
                         </div>
                     </div>

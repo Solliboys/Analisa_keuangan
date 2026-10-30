@@ -324,6 +324,7 @@ class GeminiAiService
             'negatif_keterangan'   => $parsed['negatif_keterangan'] ?? 'Kroscek lingkungan usaha dan domisili mencatat debitur memiliki reputasi sosial baik, hubungan harmonis dengan rekanan kerja, serta tidak ada keluhan ingkar janji.',
             'ringkasan_risiko'     => $parsed['ringkasan_risiko'] ?? 'Profil reputasi calon debitur berada dalam kategori LOW RISK dan memenuhi kepatuhan legalitas pembiayaan.',
             'tingkat_risiko'       => $parsed['tingkat_risiko'] ?? 'LOW',
+            'berita_terkait'       => $beritaList,
             'sumber'               => 'Gemini AI Legal Web Check Assistant'
         ];
     }
@@ -346,6 +347,7 @@ class GeminiAiService
             'negatif_keterangan'   => "Konfirmasi lingkungan sekitar domisili & operasional usaha: Debitur dikenal kooperatif, berintegritas, serta dipercaya oleh komunitas setempat.",
             'ringkasan_risiko'     => "Hasil audit reputasi digital & kepatuhan menunjukkan status BERSIH (Clean Record). Layak diproses ke komite pembiayaan.",
             'tingkat_risiko'       => 'LOW',
+            'berita_terkait'       => [],
             'sumber'               => 'Sistem Evaluasi Web Check Terintegrasi (Fallback: ' . $keterangan . ')'
         ];
     }
@@ -392,9 +394,11 @@ class GeminiAiService
                 $xml = simplexml_load_string($res);
                 if ($xml && isset($xml->channel->item)) {
                     foreach ($xml->channel->item as $item) {
-                        $title = trim((string)$item->title);
+                        $title   = trim((string)$item->title);
                         $pubDate = trim((string)$item->pubDate);
-                        $desc = trim(strip_tags((string)$item->description));
+                        $link    = trim((string)$item->link);
+                        $source  = trim((string)$item->source);
+                        $desc    = trim(strip_tags((string)$item->description));
 
                         $titleKey = strtolower(preg_replace('/[^a-z0-9]/', '', $title));
                         if (!empty($titleKey) && !isset($seenTitles[$titleKey])) {
@@ -402,6 +406,8 @@ class GeminiAiService
                             $foundArticles[] = [
                                 'title'   => $title,
                                 'date'    => $pubDate,
+                                'link'    => $link,
+                                'source'  => $source,
                                 'snippet' => $desc
                             ];
                             if (count($foundArticles) >= 10) break 2;

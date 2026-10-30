@@ -517,6 +517,19 @@
                         </div>
                     </div>
 
+                    <!-- Area Bukti & Referensi Berita Online Ditemukan (Bisa Diklik Langsung) -->
+                    <div id="modal_wc_area_berita" class="hidden p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2 shadow-2xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                                <span>📰 Bukti Berita & Jejak Digital Ditemukan (Real-Time):</span>
+                            </span>
+                            <span class="text-[10px] text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-semibold">Live Google News</span>
+                        </div>
+                        <div id="modal_wc_list_berita" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                            <!-- Diisi dinamis via JS -->
+                        </div>
+                    </div>
+
                     <!-- 5 Aspek Preview Cards -->
                     <div class="space-y-3">
                         <!-- 1. SIPP -->
