@@ -2283,6 +2283,13 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             }
         }
 
+        window.jalankanAiWebcheck = jalankanAiWebcheck;
+        window.bukaModalAiWebcheck = bukaModalAiWebcheck;
+        window.tutupModalAiWebcheck = tutupModalAiWebcheck;
+        window.eksekusiAiWebcheckModal = eksekusiAiWebcheckModal;
+        window.terapkanSemuaHasilWebcheck = terapkanSemuaHasilWebcheck;
+        window.uploadBuktiWebcheck = uploadBuktiWebcheck;
+
         /* =========================================================================
          * FITUR BANTUAN NARASI (CAM & OPINI KREDIT)
          * ========================================================================= */

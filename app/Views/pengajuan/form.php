@@ -310,10 +310,13 @@
                 <button type="button" onclick="tutupModalCekMa()" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 transition cursor-pointer">
                     Tutup
                 </button>
-                <button type="button" id="btnTerapkanMa" onclick="terapkanHasilMaKeForm()" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
+                <button type="button" id="btnTerapkanMa" onclick="terapkanHasilMaKeForm()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
                     <span>✅ Terapkan Hasil ke Kolom SIPP</span>
                 </button>
             </div>
+        </div>
+    </div>
+
     <!-- Modal Interaktif: AI Web Check & Background Screening (5 Aspek) -->
     <div id="modalAiWebcheck" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full overflow-hidden flex flex-col my-auto animate-in fade-in zoom-in-95 duration-150 max-h-[92vh]">

@@ -27,10 +27,6 @@
                                 <span class="text-[11px] text-slate-400 block sm:inline sm:ml-2">PN / PA / PTUN / Pengadilan Niaga</span>
                             </div>
                             <div class="flex items-center gap-2 self-end sm:self-auto">
-                                <button type="button" onclick="bukaModalCekMa()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg transition shadow-2xs cursor-pointer">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                                    <span>🔍 Cek Perkara MA (Popup)</span>
-                                </button>
                                 <!-- Dropdown Bantuan Narasi -->
                                 <div class="relative inline-block text-left dropdown-narasi-container">
                                     <button type="button" onclick="toggleDropdownNarasi('menu_narasi_sipp')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 text-[11px] font-bold rounded-lg border border-slate-200 transition shadow-2xs cursor-pointer">
@@ -86,10 +82,6 @@
                             </div>
                             <!-- Dropdown Bantuan Narasi -->
                             <div class="flex items-center gap-2 self-end sm:self-auto">
-                                <button type="button" onclick="bukaGoogleNews()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg transition shadow-2xs cursor-pointer" title="Cari berita debitur di Google News">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
-                                    <span>🌐 Cek Google Berita</span>
-                                </button>
                                 <div class="relative inline-block text-left dropdown-narasi-container">
                                     <button type="button" onclick="toggleDropdownNarasi('menu_narasi_internet')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 text-[11px] font-bold rounded-lg border border-slate-200 transition shadow-2xs cursor-pointer">
                                         <span>ℹ️ Bantuan Narasi</span>
@@ -144,10 +136,6 @@
                             </div>
                             <!-- Dropdown Bantuan Narasi -->
                             <div class="flex items-center gap-2 self-end sm:self-auto">
-                                <button type="button" onclick="bukaPortalDttot()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg transition shadow-2xs cursor-pointer" title="Cek Daftar Terduga Teroris DTTOT PPATK">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                                    <span>🛡️ Warta DTTOT PPATK</span>
-                                </button>
                                 <div class="relative inline-block text-left dropdown-narasi-container">
                                     <button type="button" onclick="toggleDropdownNarasi('menu_narasi_watchlist')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 text-[11px] font-bold rounded-lg border border-slate-200 transition shadow-2xs cursor-pointer">
                                         <span>ℹ️ Bantuan Narasi</span>
@@ -202,10 +190,6 @@
                             </div>
                             <!-- Dropdown Bantuan Narasi -->
                             <div class="flex items-center gap-2 self-end sm:self-auto">
-                                <button type="button" onclick="bukaPortalLelang()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg transition shadow-2xs cursor-pointer" title="Cari pengumuman lelang agunan di lelang.go.id">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                    <span>🏛️ Cek lelang.go.id</span>
-                                </button>
                                 <div class="relative inline-block text-left dropdown-narasi-container">
                                     <button type="button" onclick="toggleDropdownNarasi('menu_narasi_lelang')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-slate-100 text-blue-700 text-[11px] font-bold rounded-lg border border-slate-200 transition shadow-2xs cursor-pointer">
                                         <span>ℹ️ Bantuan Narasi</span>
