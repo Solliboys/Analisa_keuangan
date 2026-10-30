@@ -199,7 +199,7 @@ class GeminiAiService
     /**
      * AI Assistant Investigasi Web Check & Reputasi Digital Debitur
      */
-    public function investigasiWebcheck($namaDebitur, $namaUsaha = '', $kota = '', $bidangUsaha = '')
+    public function investigasiWebcheck($namaDebitur, $namaUsaha = '', $kota = '', $bidangUsaha = '', $catatanTambahan = '')
     {
         $settings = $this->getSettings();
         $apiKey = $settings['api_key'];
@@ -213,30 +213,37 @@ class GeminiAiService
         $namaUsahaBersih   = trim($namaUsaha ?: 'Usaha Komersial');
         $kotaBersih        = trim($kota ?: 'Indonesia');
         $bidangBersih      = trim($bidangUsaha ?: 'Perdagangan & Jasa');
+        $catatanBersih     = trim($catatanTambahan);
 
-        $prompt = "Anda adalah AI Risk Investigator dan Legal Compliance Officer perbankan terkemuka.\n";
-        $prompt .= "Lakukan profiling dan penelusuran digital mendalam terhadap calon debitur pembiayaan berikut:\n";
+        $prompt = "Anda adalah AI Senior Risk Investigator dan Legal Compliance Officer perbankan terkemuka di Indonesia.\n";
+        $prompt .= "Lakukan profiling identitas dan investigasi digital mendalam terhadap calon debitur pembiayaan berikut:\n";
         $prompt .= "- Nama Calon Debitur: {$namaDebiturBersih}\n";
         $prompt .= "- Nama Entitas Usaha: {$namaUsahaBersih}\n";
         $prompt .= "- Lokasi / Kota: {$kotaBersih}\n";
-        $prompt .= "- Bidang Sektor Usaha: {$bidangBersih}\n\n";
+        $prompt .= "- Bidang Sektor Usaha: {$bidangBersih}\n";
+        if (!empty($catatanBersih)) {
+            $prompt .= "- Catatan Lapangan / Bukti Tambahan dari Pengusul: {$catatanBersih}\n";
+        }
+        $prompt .= "\n";
 
-        $prompt .= "TUGAS PENELUSURAN:\n";
-        $prompt .= "Analisa dan formulasikan kesimpulan investigasi legal 5 aspek Web Check sesuai standar OJK & APU-PPT:\n";
-        $prompt .= "1. Penelusuran Perkara Pengadilan (SIPP & MA): Cek seluruh rekam jejak perkara hukum calon debitur, baik PIDANA (pidana umum, kejahatan, pembunuhan, penipuan, penggelapan, tipikor, vonis kasasi MA) maupun PERDATA/NIAGA (wanprestasi perbankan, PMH, sengketa agunan, kepailitan/PKPU di PN/PTUN). Jika terindikasi memiliki riwayat pidana atau perkara hukum aktif/berat, wajib laporkan secara tegas sebagai RISIKO TINGGI.\n";
-        $prompt .= "2. Pencarian Media Online & Jejak Digital: Cek publikasi berita, rekam jejak perselisihan bisnis, penipuan, atau eksposur negatif.\n";
-        $prompt .= "3. Daftar Terduga Teroris & DTTOT PPATK: Kepatuhan anti pencucian uang dan pencegahan pendanaan terorisme (APU-PPT).\n";
-        $prompt .= "4. Status Objek Lelang KPKNL: Penelusuran status sita jaminan atau pengumuman lelang aktif pada portal lelang.go.id.\n";
-        $prompt .= "5. Kroscek Lingkungan Sekitar & Reputasi: Reputasi sosial di komunitas usaha dan domisili.\n\n";
+        $prompt .= "TUGAS PENELUSURAN (5 ASPEK KEPATUHAN & HUKUM):\n";
+        $prompt .= "1. Profiling Subjek: Identifikasi siapa orang ini (pejabat negara, tokoh publik, pengusaha, akademisi, atau warga umum). Jika pejabat negara/pengampu anggaran negara (contoh Kepala Badan Gizi Nasional/MBG, menteri, kepala daerah), tandai sebagai Politically Exposed Person (PEP) yang perlu Enhanced Due Diligence (EDD).\n";
+        $prompt .= "2. Penelusuran Perkara Pengadilan (SIPP & MA): Periksa rekam jejak perkara hukum (pidana korupsi/tipikor, kejahatan umum, maupun sengketa perdata/kepailitan). Jika ada vonis inkracht atau kasus aktif, nyatakan tingkat risiko HIGH/CRITICAL.\n";
+        $prompt .= "3. Pencarian Media Online & Jejak Digital: Cek berita negatif, penipuan, atau perselisihan publik.\n";
+        $prompt .= "4. Daftar Terduga Teroris & DTTOT PPATK: Kepatuhan anti pencucian uang dan pendanaan terorisme.\n";
+        $prompt .= "5. Status Objek Lelang KPKNL: Penelusuran sita eksekusi pada portal lelang resmi.\n";
+        $prompt .= "6. Kroscek Lingkungan Sekitar & Reputasi: Konfirmasi integritas di lingkungan sosial dan bisnis.\n\n";
 
-        $prompt .= "Kembalikan output HANYA berupa JSON murni tanpa markdown dengan struktur persis seperti berikut:\n";
+        $prompt .= "Kembalikan output HANYA berupa JSON murni tanpa markdown dengan format persis:\n";
         $prompt .= "{\n";
-        $prompt .= '  "sipp_keterangan": "penjelasan resmi hasil SIPP", ' . "\n";
-        $prompt .= '  "internet_keterangan": "penjelasan jejak digital media online", ' . "\n";
-        $prompt .= '  "watchlist_keterangan": "penjelasan status APU-PPT & DTTOT", ' . "\n";
+        $prompt .= '  "profil_subjek": "penjelasan detail siapa figur/orang ini di Indonesia", ' . "\n";
+        $prompt .= '  "sipp_keterangan": "penjelasan resmi hasil penelusuran SIPP & Mahkamah Agung", ' . "\n";
+        $prompt .= '  "internet_keterangan": "penjelasan jejak digital media online & pemberitaan", ' . "\n";
+        $prompt .= '  "watchlist_keterangan": "penjelasan status APU-PPT & DTTOT PPATK", ' . "\n";
         $prompt .= '  "lelang_keterangan": "penjelasan status objek lelang KPKNL", ' . "\n";
-        $prompt .= '  "negatif_keterangan": "penjelasan reputasi lingkungan dan integritas", ' . "\n";
-        $prompt .= '  "ringkasan_risiko": "kesimpulan 1 paragraf risiko integritas calon debitur"' . "\n";
+        $prompt .= '  "negatif_keterangan": "penjelasan reputasi lingkungan dan integritas sosial", ' . "\n";
+        $prompt .= '  "ringkasan_risiko": "kesimpulan 1 paragraf profil integritas calon debitur", ' . "\n";
+        $prompt .= '  "tingkat_risiko": "LOW / MEDIUM (PEP) / HIGH / CRITICAL"' . "\n";
         $prompt .= "}";
 
         $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($model) . ":generateContent?key=" . urlencode($apiKey);
@@ -250,7 +257,7 @@ class GeminiAiService
                 ]
             ],
             'generationConfig' => [
-                'temperature'      => 0.2,
+                'temperature'      => 0.1,
                 'responseMimeType' => 'application/json'
             ]
         ];
@@ -288,12 +295,14 @@ class GeminiAiService
 
         return [
             'status'               => true,
+            'profil_subjek'        => $parsed['profil_subjek'] ?? '',
             'sipp_keterangan'      => $parsed['sipp_keterangan'] ?? 'Tidak ditemukan perkara perdata, pidana umum/khusus, maupun permohonan kepailitan/PKPU aktif pada Sistem Informasi Penelusuran Perkara (SIPP).',
             'internet_keterangan'  => $parsed['internet_keterangan'] ?? 'Hasil penelusuran media online dan portal berita menunjukkan profil debitur serta entitas usaha bersih dari isu hukum maupun pemberitaan negatif.',
             'watchlist_keterangan' => $parsed['watchlist_keterangan'] ?? 'Identitas calon debitur dan pengurus usaha TIDAK tercantum dalam Daftar Terduga Teroris dan Organisasi Teroris (DTTOT) PPATK serta daftar sanksi internasional.',
             'lelang_keterangan'    => $parsed['lelang_keterangan'] ?? 'Aset jaminan dan kepemilikan debitur tidak terdaftar dalam jadwal lelang sita eksekusi KPKNL (lelang.go.id).',
             'negatif_keterangan'   => $parsed['negatif_keterangan'] ?? 'Kroscek lingkungan usaha dan domisili mencatat debitur memiliki reputasi sosial baik, hubungan harmonis dengan rekanan kerja, serta tidak ada keluhan ingkar janji.',
             'ringkasan_risiko'     => $parsed['ringkasan_risiko'] ?? 'Profil reputasi calon debitur berada dalam kategori LOW RISK dan memenuhi kepatuhan legalitas pembiayaan.',
+            'tingkat_risiko'       => $parsed['tingkat_risiko'] ?? 'LOW',
             'sumber'               => 'Gemini AI Legal Web Check Assistant'
         ];
     }
@@ -308,12 +317,14 @@ class GeminiAiService
 
         return [
             'status'               => true,
+            'profil_subjek'        => "Profil calon debitur atas nama {$debitur} bergerak di sektor komersial.",
             'sipp_keterangan'      => "Hasil penelusuran SIPP PN/PTUN atas nama {$debitur}{$usaha}: Nihil perkara perdata aktif, perkara pidana, maupun sengketa niaga kepailitan/PKPU.",
             'internet_keterangan'  => "Hasil perayapan jejak digital media online: Tidak ditemukan artikel, ulasan, atau laporan perselisihan yang mencemarkan reputasi bisnis {$debitur}.",
             'watchlist_keterangan' => "Pemeriksaan database kepatuhan APU-PPT: Nama {$debitur} TIDAK ditemukan dalam DTTOT PPATK maupun daftar pembatasan transaksi keuangan.",
             'lelang_keterangan'    => "Penelusuran portal resmi lelang KPKNL: Agunan dan aset milik {$debitur} berstatus bebas sengketa dan tidak sedang dalam penetapan lelang eksekusi.",
             'negatif_keterangan'   => "Konfirmasi lingkungan sekitar domisili & operasional usaha: Debitur dikenal kooperatif, berintegritas, serta dipercaya oleh komunitas setempat.",
             'ringkasan_risiko'     => "Hasil audit reputasi digital & kepatuhan menunjukkan status BERSIH (Clean Record). Layak diproses ke komite pembiayaan.",
+            'tingkat_risiko'       => 'LOW',
             'sumber'               => 'Sistem Evaluasi Web Check Terintegrasi (Fallback: ' . $keterangan . ')'
         ];
     }

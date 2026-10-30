@@ -2068,6 +2068,220 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             }
         }
 
+        /* =========================================================================
+         * FITUR MODAL AI WEB CHECK (5 ASPEK BACKGROUND SCREENING)
+         * ========================================================================= */
+
+        function jalankanAiWebcheck() {
+            bukaModalAiWebcheck();
+        }
+
+        function bukaModalAiWebcheck() {
+            const debtorName = document.getElementById('nama_debitur')?.value || document.getElementById('nama_debitur_tab2')?.value || '';
+            const businessName = document.querySelector('input[name="nama_usaha"]')?.value || '';
+            const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('input[name="alamat_usaha"]')?.value || '';
+            const bidang = document.querySelector('input[name="bidang_usaha"]')?.value || document.querySelector('input[name="sektor_ekonomi"]')?.value || '';
+
+            // Ekstrak kota jika ada di alamat KTP / Usaha
+            let kota = '';
+            if (alamat) {
+                const parts = alamat.split(/[,.-]/);
+                for (let part of parts) {
+                    part = part.trim();
+                    if (/kota|kabupaten|kab\b|jakarta|surabaya|bandung|semarang|medan|malang|solo|yogya/i.test(part)) {
+                        kota = part;
+                        break;
+                    }
+                }
+                if (!kota && parts.length > 1) kota = parts[parts.length - 1].trim();
+            }
+
+            document.getElementById('modal_wc_nama').value = debtorName;
+            document.getElementById('modal_wc_usaha').value = businessName;
+            document.getElementById('modal_wc_kota').value = kota;
+            document.getElementById('modal_wc_bidang').value = bidang;
+            document.getElementById('modal_wc_catatan').value = '';
+
+            // Reset area hasil & loading
+            document.getElementById('modal_wc_loading').classList.add('hidden');
+            document.getElementById('modal_wc_area_hasil').classList.add('hidden');
+            const areaProfil = document.getElementById('modal_wc_area_profil');
+            if (areaProfil) areaProfil.classList.add('hidden');
+            document.getElementById('btnTerapkanSemuaWebcheck').disabled = true;
+
+            document.getElementById('modalAiWebcheck').classList.remove('hidden');
+        }
+
+        function tutupModalAiWebcheck() {
+            document.getElementById('modalAiWebcheck').classList.add('hidden');
+        }
+
+        async function eksekusiAiWebcheckModal() {
+            const btn = document.getElementById('btnMulaiScanWebcheck');
+            const nama = document.getElementById('modal_wc_nama').value.trim();
+            const usaha = document.getElementById('modal_wc_usaha').value.trim();
+            const kota = document.getElementById('modal_wc_kota').value.trim();
+            const bidang = document.getElementById('modal_wc_bidang').value.trim();
+            const catatan = document.getElementById('modal_wc_catatan').value.trim();
+
+            if (!nama) {
+                showToast('Nama Calon Debitur wajib diisi!', 'error');
+                return;
+            }
+
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> <span>Memindai 5 Aspek...</span>`;
+
+            const loadingBox = document.getElementById('modal_wc_loading');
+            const hasilBox = document.getElementById('modal_wc_area_hasil');
+            loadingBox.classList.remove('hidden');
+            hasilBox.classList.add('hidden');
+
+            try {
+                const formData = new FormData();
+                formData.append('nama_debitur', nama);
+                formData.append('nama_usaha', usaha);
+                formData.append('kota', kota);
+                formData.append('bidang_usaha', bidang);
+                formData.append('catatan_tambahan', catatan);
+
+                const res = await fetch(getBaseUrl() + '/pengajuan/ai-webcheck', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.status) {
+                    loadingBox.classList.add('hidden');
+                    hasilBox.classList.remove('hidden');
+
+                    // Profil subjek jika ada
+                    const areaProfil = document.getElementById('modal_wc_area_profil');
+                    const teksProfil = document.getElementById('modal_wc_profil_teks');
+                    if (areaProfil && teksProfil) {
+                        if (data.profil_subjek) {
+                            teksProfil.innerText = data.profil_subjek;
+                            areaProfil.classList.remove('hidden');
+                        } else {
+                            areaProfil.classList.add('hidden');
+                        }
+                    }
+
+                    // Kesimpulan risiko & badge
+                    const summaryEl = document.getElementById('modal_wc_ringkasan_risiko');
+                    if (summaryEl) {
+                        summaryEl.innerText = data.ringkasan_risiko || 'Pemeriksaan integritas dan rekam jejak debitur telah selesai dipetakan.';
+                    }
+
+                    const badge = document.getElementById('modal_wc_badge_risiko');
+                    if (badge) {
+                        const risiko = (data.tingkat_risiko || 'LOW').toUpperCase();
+                        if (risiko.includes('CRITICAL') || risiko.includes('HIGH')) {
+                            badge.className = 'self-start sm:self-auto px-3 py-1.5 rounded-full text-xs font-extrabold shrink-0 bg-rose-100 text-rose-800 border border-rose-200';
+                            badge.innerHTML = '🔴 ' + risiko + ' RISK';
+                        } else if (risiko.includes('PEP') || risiko.includes('MEDIUM')) {
+                            badge.className = 'self-start sm:self-auto px-3 py-1.5 rounded-full text-xs font-extrabold shrink-0 bg-amber-100 text-amber-800 border border-amber-200';
+                            badge.innerHTML = '🟡 ' + (risiko.includes('PEP') ? 'TERIDENTIFIKASI PEP' : 'MEDIUM RISK');
+                        } else {
+                            badge.className = 'self-start sm:self-auto px-3 py-1.5 rounded-full text-xs font-extrabold shrink-0 bg-emerald-100 text-emerald-800 border border-emerald-200';
+                            badge.innerHTML = '🟢 LOW RISK / BERSIH';
+                        }
+                    }
+
+                    // Masukkan ke 5 textarea modal
+                    const setVal = (id, val) => {
+                        const el = document.getElementById(id);
+                        if (el) el.value = val || '';
+                    };
+                    setVal('modal_wc_res_sipp', data.sipp_keterangan);
+                    setVal('modal_wc_res_internet', data.internet_keterangan);
+                    setVal('modal_wc_res_watchlist', data.watchlist_keterangan);
+                    setVal('modal_wc_res_lelang', data.lelang_keterangan);
+                    setVal('modal_wc_res_negatif', data.negatif_keterangan);
+
+                    // Enable tombol terapkan
+                    document.getElementById('btnTerapkanSemuaWebcheck').disabled = false;
+                    showToast('Investigasi 5 aspek Web Check selesai!', 'success');
+                } else {
+                    loadingBox.classList.add('hidden');
+                    showToast(data.message || 'Gagal memproses investigasi Web Check', 'error');
+                }
+            } catch (err) {
+                loadingBox.classList.add('hidden');
+                showToast('Koneksi terganggu saat memproses investigasi', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
+
+        function terapkanSemuaHasilWebcheck() {
+            const sipp = document.getElementById('modal_wc_res_sipp')?.value?.trim();
+            const internet = document.getElementById('modal_wc_res_internet')?.value?.trim();
+            const watchlist = document.getElementById('modal_wc_res_watchlist')?.value?.trim();
+            const lelang = document.getElementById('modal_wc_res_lelang')?.value?.trim();
+            const negatif = document.getElementById('modal_wc_res_negatif')?.value?.trim();
+
+            if (document.getElementById('sipp_keterangan') && sipp) {
+                document.getElementById('sipp_keterangan').value = sipp;
+            }
+            if (document.getElementById('internet_keterangan') && internet) {
+                document.getElementById('internet_keterangan').value = internet;
+            }
+            if (document.getElementById('watchlist_keterangan') && watchlist) {
+                document.getElementById('watchlist_keterangan').value = watchlist;
+            }
+            if (document.getElementById('lelang_keterangan') && lelang) {
+                document.getElementById('lelang_keterangan').value = lelang;
+            }
+            if (document.getElementById('negatif_keterangan') && negatif) {
+                document.getElementById('negatif_keterangan').value = negatif;
+            }
+
+            tutupModalAiWebcheck();
+            showToast('Semua 5 aspek hasil verifikasi berhasil disalin ke form Tab 7!', 'success');
+        }
+
+        async function uploadBuktiWebcheck(inputEl, fieldName) {
+            if (!inputEl.files || !inputEl.files[0]) return;
+            const file = inputEl.files[0];
+            const previewEl = document.getElementById('preview_' + fieldName);
+            const hiddenEl = document.getElementById(fieldName);
+
+            if (previewEl) {
+                previewEl.innerHTML = `<span class="text-xs text-blue-600 animate-pulse">Mengunggah file ${file.name}...</span>`;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('field', fieldName);
+
+            try {
+                const res = await fetch(getBaseUrl() + '/pengajuan/upload-bukti-webcheck', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status) {
+                    if (hiddenEl) hiddenEl.value = data.path;
+                    if (previewEl) {
+                        previewEl.innerHTML = `
+                            <a href="${data.url}" target="_blank" class="text-blue-600 underline font-semibold flex items-center gap-1">
+                                <span>📄 Bukti Terunggah: ${data.nama_file}</span>
+                            </a>
+                        `;
+                    }
+                    showToast('Bukti file berhasil diunggah!', 'success');
+                } else {
+                    showToast(data.message || 'Gagal mengunggah file bukti', 'error');
+                    if (previewEl) previewEl.innerHTML = `<span class="text-[11px] text-rose-500 italic">Gagal upload</span>`;
+                }
+            } catch (err) {
+                showToast('Koneksi terganggu saat upload file', 'error');
+                if (previewEl) previewEl.innerHTML = `<span class="text-[11px] text-rose-500 italic">Gagal upload</span>`;
+            }
+        }
 
         /* =========================================================================
          * FITUR BANTUAN NARASI (CAM & OPINI KREDIT)

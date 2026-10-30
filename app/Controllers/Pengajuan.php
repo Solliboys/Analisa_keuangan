@@ -1123,15 +1123,48 @@ class Pengajuan extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
         }
 
-        $namaDebitur = $this->request->getPost('nama_debitur') ?? '';
-        $namaUsaha   = $this->request->getPost('nama_usaha') ?? '';
-        $kota        = $this->request->getPost('kota') ?? '';
-        $bidangUsaha = $this->request->getPost('bidang_usaha') ?? '';
+        $namaDebitur     = $this->request->getPost('nama_debitur') ?? '';
+        $namaUsaha       = $this->request->getPost('nama_usaha') ?? '';
+        $kota            = $this->request->getPost('kota') ?? '';
+        $bidangUsaha     = $this->request->getPost('bidang_usaha') ?? '';
+        $catatanTambahan = $this->request->getPost('catatan_tambahan') ?? '';
 
         $service = new GeminiAiService();
-        $hasil = $service->investigasiWebcheck($namaDebitur, $namaUsaha, $kota, $bidangUsaha);
+        $hasil = $service->investigasiWebcheck($namaDebitur, $namaUsaha, $kota, $bidangUsaha, $catatanTambahan);
 
         return $this->response->setJSON($hasil);
+    }
+
+    public function uploadBuktiWebcheck()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $field = trim($this->request->getPost('field') ?? '');
+        $file  = $this->request->getFile('file');
+
+        if (!$file || !$file->isValid()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'File bukti tidak valid atau tidak terbaca.']);
+        }
+
+        $folder = FCPATH . 'uploads/webcheck/';
+        if (!is_dir($folder)) {
+            mkdir($folder, 0777, true);
+        }
+
+        $newName = $file->getRandomName();
+        $file->move($folder, $newName);
+
+        $pathRelatif = 'uploads/webcheck/' . $newName;
+
+        return $this->response->setJSON([
+            'status'    => true,
+            'field'     => $field,
+            'nama_file' => $file->getClientName(),
+            'path'      => $pathRelatif,
+            'url'       => base_url($pathRelatif)
+        ]);
     }
 
     public function cekPerkaraMa()

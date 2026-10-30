@@ -42,6 +42,7 @@ $routes->group('pengajuan', static function ($routes) {
     $routes->post('ai-webcheck', 'Pengajuan::aiWebCheck');
     $routes->post('cek-perkara-ma', 'Pengajuan::cekPerkaraMa');
     $routes->post('upload-bukti-pendapatan-lain', 'Pengajuan::uploadBuktiPendapatanLain');
+    $routes->post('upload-bukti-webcheck', 'Pengajuan::uploadBuktiWebcheck');
     $routes->post('upload-pdf-slik', 'Pengajuan::uploadPdfSlik');
     $routes->post('upload-hasil-slik', 'Pengajuan::uploadHasilSlik');
     $routes->get('cetak/(:num)', 'Pengajuan::cetak/$1');
