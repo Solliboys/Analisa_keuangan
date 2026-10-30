@@ -79,11 +79,9 @@
                                         Jenis Debitur
                                     </label>
                                     <select name="jenis_debitur" id="jenis_debitur" onchange="if(typeof ubahJenisDebitur === 'function') ubahJenisDebitur(this.value)" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                                        <?php $jd = $kredit['jenis_debitur'] ?? 'Individu'; ?>
-                                        <option value="Individu" <?= $jd === 'Individu' ? 'selected' : '' ?>>Individu / Perorangan</option>
-                                        <option value="Badan Usaha (PT)" <?= $jd === 'Badan Usaha (PT)' ? 'selected' : '' ?>>Badan Usaha (PT)</option>
-                                        <option value="Badan Usaha (CV)" <?= $jd === 'Badan Usaha (CV)' ? 'selected' : '' ?>>Badan Usaha (CV)</option>
-                                        <option value="Koperasi / Yayasan" <?= $jd === 'Koperasi / Yayasan' ? 'selected' : '' ?>>Koperasi / Yayasan</option>
+                                        <?php $jd = $kredit['jenis_debitur'] ?? 'Perorangan'; ?>
+                                        <option value="Perorangan" <?= ($jd === 'Perorangan' || $jd === 'Individu') ? 'selected' : '' ?>>Perorangan</option>
+                                        <option value="Badan Usaha" <?= (strpos($jd, 'Badan') !== false || $jd === 'Badan Usaha') ? 'selected' : '' ?>>Badan Usaha</option>
                                     </select>
                                 </div>
 
@@ -135,11 +133,13 @@
                                         <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
                                         Jaminan
                                     </label>
-                                    <select name="jenis_jaminan" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                                        <?php $jj = $kredit['jenis_jaminan'] ?? 'On Hand'; ?>
-                                        <option value="On Hand" <?= $jj === 'On Hand' ? 'selected' : '' ?>>On Hand (SHM / SHGB / BPKB)</option>
-                                        <option value="Take Over" <?= $jj === 'Take Over' ? 'selected' : '' ?>>Take Over Bank Lain</option>
-                                        <option value="Pari Passu" <?= $jj === 'Pari Passu' ? 'selected' : '' ?>>Pari Passu</option>
+                                    <select name="jenis_jaminan" id="jenis_jaminan" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                                        <?php $jj = $kredit['jenis_jaminan'] ?? 'SHM'; ?>
+                                        <option value="SHM" <?= ($jj === 'SHM' || $jj === 'On Hand') ? 'selected' : '' ?>>SHM (Sertifikat Hak Milik)</option>
+                                        <option value="SHGB" <?= $jj === 'SHGB' ? 'selected' : '' ?>>SHGB (Hak Guna Bangunan)</option>
+                                        <option value="SHM Sarusun" <?= $jj === 'SHM Sarusun' ? 'selected' : '' ?>>SHM Sarusun (Apartemen)</option>
+                                        <option value="BPKB Mobil" <?= ($jj === 'BPKB Mobil' || $jj === 'BPKB') ? 'selected' : '' ?>>BPKB Kendaraan Roda 4</option>
+                                        <option value="Bilyet Deposito" <?= $jj === 'Bilyet Deposito' ? 'selected' : '' ?>>Bilyet Deposito</option>
                                         <option value="Tanpa Jaminan" <?= $jj === 'Tanpa Jaminan' ? 'selected' : '' ?>>Tanpa Jaminan</option>
                                     </select>
                                 </div>

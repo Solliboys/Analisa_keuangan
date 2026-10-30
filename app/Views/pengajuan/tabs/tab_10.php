@@ -1,215 +1,134 @@
 <div id="tab-10" class="tab-panel bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
-                <!-- Section Header -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
-                            10
-                        </div>
-                        <div>
-                            <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">ANALISA LABA RUGI KOMPARATIF</h3>
-                            <p class="text-[11px] text-slate-500">Verifikasi dual track profitabilitas debitur berdasarkan bukti rekening koran bank vs hasil wawancara</p>
-                        </div>
-                    </div>
-                    <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 shadow-2xs self-start sm:self-auto">
-                        Dual Track Verification
-                    </span>
-                </div>
+    <!-- Section Header -->
+    <div class="flex items-center justify-between pb-5 border-b border-slate-100 mb-6">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
+                10
+            </div>
+            <div>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">OPINI PENGUSUL</h3>
+                <p class="text-[11px] text-slate-500">Evaluasi kualitatif dan pertimbangan pengusul terkait kelayakan usaha, kondisi agunan, dan kebutuhan pembiayaan nasabah</p>
+            </div>
+        </div>
+        <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 shadow-2xs">
+            Opini Pengusul
+        </span>
+    </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Stream 1: Berdasarkan Rekening Koran -->
-                    <div class="p-6 bg-blue-50/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between shadow-2xs hover:border-blue-300 transition">
-                        <div>
-                            <div class="flex items-center justify-between pb-3 mb-5 border-b border-blue-100">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-extrabold text-xs shadow-xs">
-                                        1
-                                    </div>
-                                    <div>
-                                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Jalur Rekening Koran</h3>
-                                        <span class="text-[11px] text-slate-400 font-medium">Validasi bukti mutasi bank</span>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold text-blue-700 bg-blue-100/70 border border-blue-200">
-                                    Data Riil Bank
-                                </span>
-                            </div>
-
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Pendapatan / Omset Bulanan (Rp)</label>
-                                    <input type="text" name="pendapatan_rk" id="pendapatan_rk" 
-                                           value="<?= number_format((float)($keuangan['pendapatan_rk'] ?? 150000000), 0, ',', '.') ?>" 
-                                           class="w-full text-sm font-bold text-blue-700 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[42px]"
-                                           oninput="formatRupiah(this); hitungLabaRugi();">
-                                </div>
-
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div class="col-span-1">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">HPP (%)</label>
-                                        <input type="number" step="0.1" name="hpp_persen_rk" id="hpp_persen_rk" 
-                                               value="<?= esc($keuangan['hpp_persen_rk'] ?? 60) ?>" 
-                                               class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
-                                               oninput="hitungLabaRugi();">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal HPP</label>
-                                        <div class="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
-                                            <span id="nomHppRK" class="font-bold text-slate-800">Rp 0</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="p-3.5 bg-blue-50/80 border border-blue-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
-                                    <span class="font-bold text-blue-900">Laba Kotor (Gross Profit):</span>
-                                    <span id="grossRK" class="text-sm font-black text-blue-700">Rp 0</span>
-                                </div>
-
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div class="col-span-1">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Biaya Hidup (%)</label>
-                                        <input type="number" step="0.1" name="biaya_hidup_persen_rk" id="biaya_hidup_persen_rk" 
-                                               value="<?= esc($keuangan['biaya_hidup_persen_rk'] ?? 10) ?>" 
-                                               class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
-                                               oninput="hitungLabaRugi();">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Biaya Hidup</label>
-                                        <div class="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
-                                            <span id="nomBiayaHidupRK" class="font-bold text-slate-800">Rp 0</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div class="col-span-1">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Beban Lain (%)</label>
-                                        <input type="number" step="0.1" name="beban_lainnya_persen_rk" id="beban_lainnya_persen_rk" 
-                                               value="<?= esc($keuangan['beban_lainnya_persen_rk'] ?? 10) ?>" 
-                                               class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
-                                               oninput="hitungLabaRugi();">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Beban Lain</label>
-                                        <div class="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
-                                            <span id="nomBebanLainRK" class="font-bold text-slate-800">Rp 0</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 p-4 bg-blue-600 text-white rounded-2xl flex items-center justify-between gap-4 shadow-xs">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </div>
-                                <div class="min-w-0">
-                                    <div class="text-[10px] font-bold uppercase tracking-wider text-blue-200 truncate">Laba Bersih Operasional</div>
-                                    <div class="text-xs font-extrabold text-white truncate">Rekening Koran</div>
-                                </div>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <span id="nettRK" class="text-lg sm:text-xl font-black text-white tracking-tight whitespace-nowrap block">Rp 0</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Stream 2: Berdasarkan Hasil Wawancara (Warna Biru Senada) -->
-                    <div class="p-6 bg-blue-50/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between shadow-2xs hover:border-blue-300 transition">
-                        <div>
-                            <div class="flex items-center justify-between pb-3 mb-5 border-b border-blue-100">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-extrabold text-xs shadow-xs">
-                                        2
-                                    </div>
-                                    <div>
-                                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Jalur Hasil Wawancara</h3>
-                                        <span class="text-[11px] text-slate-400 font-medium">Klaim usaha lapangan / OTS</span>
-                                    </div>
-                                </div>
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold text-blue-700 bg-blue-100/70 border border-blue-200">
-                                    Data Wawancara
-                                </span>
-                            </div>
-
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Pendapatan / Omset Bulanan (Rp)</label>
-                                    <input type="text" name="pendapatan_iv" id="pendapatan_iv" 
-                                           value="<?= number_format((float)($keuangan['pendapatan_iv'] ?? 160000000), 0, ',', '.') ?>" 
-                                           class="w-full text-sm font-bold text-blue-700 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[42px]"
-                                           oninput="formatRupiah(this); hitungLabaRugi();">
-                                </div>
-
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div class="col-span-1">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">HPP (%)</label>
-                                        <input type="number" step="0.1" name="hpp_persen_iv" id="hpp_persen_iv" 
-                                               value="<?= esc($keuangan['hpp_persen_iv'] ?? 60) ?>" 
-                                               class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
-                                               oninput="hitungLabaRugi();">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal HPP</label>
-                                        <div class="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
-                                            <span id="nomHppIV" class="font-bold text-slate-800">Rp 0</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="p-3.5 bg-blue-50/80 border border-blue-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
-                                    <span class="font-bold text-blue-900">Laba Kotor (Gross Profit):</span>
-                                    <span id="grossIV" class="text-sm font-black text-blue-700">Rp 0</span>
-                                </div>
-
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div class="col-span-1">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Biaya Hidup (%)</label>
-                                        <input type="number" step="0.1" name="biaya_hidup_persen_iv" id="biaya_hidup_persen_iv" 
-                                               value="<?= esc($keuangan['biaya_hidup_persen_iv'] ?? 10) ?>" 
-                                               class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
-                                               oninput="hitungLabaRugi();">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Biaya Hidup</label>
-                                        <div class="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
-                                            <span id="nomBiayaHidupIV" class="font-bold text-slate-800">Rp 0</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-3 gap-3">
-                                    <div class="col-span-1">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Beban Lain (%)</label>
-                                        <input type="number" step="0.1" name="beban_lainnya_persen_iv" id="beban_lainnya_persen_iv" 
-                                               value="<?= esc($keuangan['beban_lainnya_persen_iv'] ?? 10) ?>" 
-                                               class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
-                                               oninput="hitungLabaRugi();">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Beban Lain</label>
-                                        <div class="w-full text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
-                                            <span id="nomBebanLainIV" class="font-bold text-slate-800">Rp 0</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 p-4 bg-blue-600 text-white rounded-2xl flex items-center justify-between gap-4 shadow-xs">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                </div>
-                                <div class="min-w-0">
-                                    <div class="text-[10px] font-bold uppercase tracking-wider text-blue-200 truncate">Laba Bersih Operasional</div>
-                                    <div class="text-xs font-extrabold text-white truncate">Hasil Wawancara</div>
-                                </div>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <span id="nettIV" class="text-lg sm:text-xl font-black text-white tracking-tight whitespace-nowrap block">Rp 0</span>
-                            </div>
-                        </div>
+    <div class="space-y-6">
+        <!-- Analisa Agunan -->
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Analisa Kualitas & Marketability Jaminan</label>
+                <div class="relative inline-block text-left dropdown-narasi-container">
+                    <button type="button" onclick="toggleDropdownNarasi('menu_narasi_jaminan')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs cursor-pointer">
+                        <span>ℹ️ Bantuan Narasi</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="menu_narasi_jaminan" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                        <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi Agunan:</div>
+                        <button type="button" onclick="terapkanNarasi('analisa_jaminan', 'analisa_jaminan', 'positif'); toggleDropdownNarasi('menu_narasi_jaminan')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Strategis / Aman)
+                        </button>
+                        <button type="button" onclick="terapkanNarasi('analisa_jaminan', 'analisa_jaminan', 'netral'); toggleDropdownNarasi('menu_narasi_jaminan')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                            <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Cukup Terawat)
+                        </button>
+                        <button type="button" onclick="terapkanNarasi('analisa_jaminan', 'analisa_jaminan', 'negatif'); toggleDropdownNarasi('menu_narasi_jaminan')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Akses Sempit / Berisiko)
+                        </button>
                     </div>
                 </div>
             </div>
+            <textarea id="analisa_jaminan" name="analisa_jaminan" rows="3" placeholder="Lokasi strategis, akses jalan, kondisi fisik bangunan, dan kemudahan penjualan kembali..."
+                      class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs leading-relaxed"><?= esc($analisa['analisa_jaminan'] ?? '') ?></textarea>
+        </div>
+
+        <!-- Business Review -->
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Business Review & Prospek Pasar Usaha</label>
+                <div class="relative inline-block text-left dropdown-narasi-container">
+                    <button type="button" onclick="toggleDropdownNarasi('menu_narasi_review')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs cursor-pointer">
+                        <span>ℹ️ Bantuan Narasi</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div id="menu_narasi_review" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                        <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi Usaha:</div>
+                        <button type="button" onclick="terapkanNarasi('business_review', 'business_review', 'positif'); toggleDropdownNarasi('menu_narasi_review')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Pangsa Pasar Stabil)
+                        </button>
+                        <button type="button" onclick="terapkanNarasi('business_review', 'business_review', 'netral'); toggleDropdownNarasi('menu_narasi_review')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                            <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Potensial & Kompetitif)
+                        </button>
+                        <button type="button" onclick="terapkanNarasi('business_review', 'business_review', 'negatif'); toggleDropdownNarasi('menu_narasi_review')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                            <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Persaingan Ketat)
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <textarea id="business_review" name="business_review" rows="3" placeholder="Model bisnis, segmen pelanggan, daya saing kompetitor, stabilitas pasokan bahan baku..."
+                      class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs leading-relaxed"><?= esc($analisa['business_review'] ?? '') ?></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Catatan OTS -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Catatan Kunjungan / OTS</label>
+                    <div class="relative inline-block text-left dropdown-narasi-container">
+                        <button type="button" onclick="toggleDropdownNarasi('menu_narasi_ots')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs cursor-pointer">
+                            <span>ℹ️ Bantuan Narasi</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div id="menu_narasi_ots" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                            <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi OTS:</div>
+                            <button type="button" onclick="terapkanNarasi('business_catatan', 'business_catatan', 'positif'); toggleDropdownNarasi('menu_narasi_ots')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Operasional Ramai)
+                            </button>
+                            <button type="button" onclick="terapkanNarasi('business_catatan', 'business_catatan', 'netral'); toggleDropdownNarasi('menu_narasi_ots')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Berjalan Normal)
+                            </button>
+                            <button type="button" onclick="terapkanNarasi('business_catatan', 'business_catatan', 'negatif'); toggleDropdownNarasi('menu_narasi_ots')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Aktivitas Sepi)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <textarea id="business_catatan" name="business_catatan" rows="3" placeholder="Hasil observasi fisik di lokasi usaha nasabah..."
+                          class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs leading-relaxed"><?= esc($analisa['business_catatan'] ?? '') ?></textarea>
+            </div>
+            <!-- Rincian Modal Kerja -->
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Rincian Kebutuhan Modal Kerja</label>
+                    <div class="relative inline-block text-left dropdown-narasi-container">
+                        <button type="button" onclick="toggleDropdownNarasi('menu_narasi_kebutuhan')" class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shadow-2xs cursor-pointer">
+                            <span>ℹ️ Bantuan Narasi</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div id="menu_narasi_kebutuhan" class="dropdown-narasi-menu hidden absolute right-0 z-30 mt-1 w-64 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 text-xs text-slate-700">
+                            <div class="px-3 py-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">Pilih Contoh Narasi Kebutuhan:</div>
+                            <button type="button" onclick="terapkanNarasi('detail_kebutuhan', 'detail_kebutuhan', 'positif'); toggleDropdownNarasi('menu_narasi_kebutuhan')" class="w-full text-left px-3 py-2 hover:bg-emerald-50 text-emerald-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span> 🟢 Contoh Positif (Pengadaan Bahan Baku)
+                            </button>
+                            <button type="button" onclick="terapkanNarasi('detail_kebutuhan', 'detail_kebutuhan', 'netral'); toggleDropdownNarasi('menu_narasi_kebutuhan')" class="w-full text-left px-3 py-2 hover:bg-amber-50 text-amber-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span> 🟡 Contoh Netral (Perkuatan Kas)
+                            </button>
+                            <button type="button" onclick="terapkanNarasi('detail_kebutuhan', 'detail_kebutuhan', 'negatif'); toggleDropdownNarasi('menu_narasi_kebutuhan')" class="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-800 font-semibold flex items-center gap-2 cursor-pointer">
+                                <span class="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span> 🔴 Contoh Negatif (Rincian Belum Rinci)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <textarea id="detail_kebutuhan" name="detail_kebutuhan" rows="3" placeholder="Alokasi dana pinjaman yang diajukan..."
+                          class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs leading-relaxed"><?= esc($analisa['detail_kebutuhan'] ?? '') ?></textarea>
+            </div>
+        </div>
+
+        <!-- Hidden fields untuk menjaga konsistensi data scoring & rekomendasi -->
+        <input type="hidden" name="skor_kelayakan_ai" id="skor_kelayakan_ai" value="<?= esc($analisa['skor_kelayakan_ai'] ?? 82) ?>">
+        <input type="hidden" name="rekomendasi_keputusan_ai" id="rekomendasi_keputusan_ai" value="<?= esc($analisa['rekomendasi_keputusan_ai'] ?? 'Disetujui Penuh') ?>">
+        <input type="hidden" name="rekomendasi_plafon_ai" id="rekomendasi_plafon_ai" value="<?= esc($analisa['rekomendasi_plafon_ai'] ?? 500000000) ?>">
+        <input type="hidden" name="analisis_risiko_ai" id="analisis_risiko_ai" value="<?= esc($analisa['analisis_risiko_ai'] ?? '') ?>">
+    </div>
+</div>

@@ -274,7 +274,7 @@ class Slik extends BaseController
 
         return $this->response->setJSON([
             'status'  => true,
-            'message' => 'Persetujuan verifikasi SLIK berhasil dikirim ke meja kerja Petugas SLIK!'
+            'message' => 'Permohonan pengecekan SLIK berhasil diajukan ke meja kerja Petugas SLIK!'
         ]);
     }
 

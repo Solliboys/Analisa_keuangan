@@ -15,6 +15,8 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             hitungRataRataRekening();
             hitungLabaRugi();
             hitungDisbursement();
+            initDaftarBuktiPendapatanLain();
+            initDaftarBebanLain();
 
             const boxHasil = document.getElementById('boxHasilEksekusiAnalisa');
             if (boxHasil && !boxHasil.classList.contains('hidden')) {
@@ -37,9 +39,9 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             { title: '5. Dokumen', sub: 'Sedang dikerjakan', defaultSub: 'Unggah berkas', mainTitle: 'Langkah 5: Unggah Dokumen Berkas', desc: 'Unggah berkas pendukung KTP, KK, NPWP, NIB, dan agunan.' },
             { title: '6. SLIK / CLIK', sub: 'Sedang dikerjakan', defaultSub: 'Cek riwayat kredit', mainTitle: 'Langkah 6: Cek SLIK OJK & Riwayat', desc: 'Riwayat kolektibilitas kredit pada bank atau lembaga keuangan lain.' },
             { title: '7. Web Check', sub: 'Sedang dikerjakan', defaultSub: 'Verifikasi online', mainTitle: 'Langkah 7: Verifikasi Web & Legal Check', desc: 'Pengecekan profiling web, kepatuhan hukum, dan reputasi usaha.' },
-            { title: '8. Analisa Kredit', sub: 'Sedang dikerjakan', defaultSub: 'Scoring kelayakan', mainTitle: 'Langkah 8: Analisa Kelayakan 5C & AI', desc: 'Evaluasi prinsip 5C dan rekomendasi skor risiko cerdas dari AI.' },
-            { title: '9. Rekening Koran', sub: 'Sedang dikerjakan', defaultSub: 'Analisis mutasi', mainTitle: 'Langkah 9: Analisis Mutasi Rekening', desc: 'Pencatatan saldo rata-rata dan total mutasi kredit debet rekening koran.' },
-            { title: '10. Laba Rugi', sub: 'Sedang dikerjakan', defaultSub: 'Proyeksi keuangan', mainTitle: 'Langkah 10: Analisis Laba Rugi Usaha', desc: 'Perhitungan omset pendapatan, HPP pengeluaran, dan laba bersih riil.' },
+            { title: '8. Rekening Koran', sub: 'Sedang dikerjakan', defaultSub: 'Analisis mutasi', mainTitle: 'Langkah 8: Rekapitulasi Mutasi Rekening Koran', desc: 'Pencatatan arus kas masuk (kredit) dan keluar (debit) untuk validasi omzet usaha riil.' },
+            { title: '9. Laba Rugi', sub: 'Sedang dikerjakan', defaultSub: 'Proyeksi keuangan', mainTitle: 'Langkah 9: Analisis Laba Rugi & Pendapatan', desc: 'Perhitungan omset pendapatan, HPP pengeluaran, laba bersih riil, dan ekstra cashflow.' },
+            { title: '10. Opini Pengusul', sub: 'Sedang dikerjakan', defaultSub: 'Catatan kualitatif', mainTitle: 'Langkah 10: Opini & Pertimbangan Pengusul', desc: 'Evaluasi kualitatif dan pertimbangan pengusul terkait kelayakan usaha, kondisi agunan, dan kebutuhan pembiayaan nasabah.' },
             { title: '11. Disbursement', sub: 'Sedang dikerjakan', defaultSub: 'Jadwal pencairan', mainTitle: 'Langkah 11: Simulasi Biaya & Pencairan (Disbursement)', desc: 'Rincian seluruh komponen biaya potong muka dan estimasi dana riil yang diterima debitur saat akad.' },
             { title: '12. Repayment', sub: 'Sedang dikerjakan', defaultSub: 'Kemampuan angsur', mainTitle: 'Langkah 12: Kemampuan Angsur & DSC (Tahap Akhir Pengusul)', desc: 'Pengujian kemampuan bayar debitur terhadap angsuran pinjaman (Standar aman DSC >= 1.30x).' }
         ];
@@ -54,6 +56,9 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             // Tampilkan tab terpilih
             const target = document.getElementById('tab-' + tabIndex);
             if (target) target.classList.add('active');
+            if (tabIndex === 6 && typeof sinkronisasiDataDebiturKeSlik === 'function') {
+                sinkronisasiDataDebiturKeSlik();
+            }
 
             // Update Header Judul & Deskripsi
             const meta = stepsMetadata[tabIndex - 1];
@@ -292,22 +297,22 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <!-- Alamat Lengkap Objek Jaminan (md:col-span-2) -->
-                        <div class="md:col-span-2">
+                        <div class="md:col-span-2 wrap-alamat-agunan">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                Alamat Lengkap Objek Jaminan
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                <span class="lbl-text">Alamat Lengkap Objek Jaminan</span>
                             </label>
                             <input type="text" name="agunan[${count}][alamat_agunan]" placeholder="Alamat lokasi aset jaminan"
                                    class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
                         <!-- Jenis Dokumen Agunan -->
-                        <div>
+                        <div class="wrap-jenis-agunan">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                Jenis Dokumen Agunan
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <span class="lbl-text">Jenis Dokumen Agunan</span>
                             </label>
-                            <select name="agunan[${count}][jenis_agunan]" class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs cursor-pointer">
+                            <select name="agunan[${count}][jenis_agunan]" onchange="sesuaikanFormAgunan(this.closest('.agunan-item'))" class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs cursor-pointer">
                                 <option value="SHM">SHM (Sertifikat Hak Milik)</option>
                                 <option value="SHGB">SHGB (Hak Guna Bangunan)</option>
                                 <option value="SHM Sarusun">SHM Sarusun (Apartemen)</option>
@@ -317,30 +322,30 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                         </div>
 
                         <!-- Nomor Sertifikat / BPKB -->
-                        <div>
+                        <div class="wrap-nomor-sertifikat">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
-                                Nomor Sertifikat / BPKB
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
+                                <span class="lbl-text">Nomor Sertifikat / BPKB</span>
                             </label>
                             <input type="text" name="agunan[${count}][nomor_sertifikat]" placeholder="No. Sertifikat / BPKB"
                                    class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
                         <!-- Nama Pemilik Agunan -->
-                        <div>
+                        <div class="wrap-pemilik-agunan">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                Nama Pemilik Agunan
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                <span class="lbl-text">Nama Pemilik Agunan</span>
                             </label>
                             <input type="text" name="agunan[${count}][pemilik_agunan]" placeholder="Sesuai nama di sertifikat"
                                    class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
                         <!-- Hubungan Kepemilikan -->
-                        <div>
+                        <div class="wrap-hubungan-kepemilikan">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                Hubungan Kepemilikan
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                <span class="lbl-text">Hubungan Kepemilikan</span>
                             </label>
                             <select name="agunan[${count}][hubungan_kepemilikan]" class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs cursor-pointer">
                                 <option value="Milik Sendiri">Milik Sendiri</option>
@@ -351,10 +356,10 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                         </div>
 
                         <!-- Status IMB / PBG -->
-                        <div>
+                        <div class="wrap-status-imb">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Status IMB / PBG
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="lbl-text">Status IMB / PBG</span>
                             </label>
                             <select name="agunan[${count}][status_imb]" class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs cursor-pointer">
                                 <option value="Ada">Ada</option>
@@ -364,40 +369,40 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                         </div>
 
                         <!-- Lama Kepemilikan -->
-                        <div>
+                        <div class="wrap-lama-kepemilikan">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Lama Kepemilikan
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="lbl-text">Lama Kepemilikan</span>
                             </label>
                             <input type="text" name="agunan[${count}][lama_kepemilikan]" placeholder="Contoh: 8 Tahun"
                                    class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
                         <!-- Luas Tanah (m²) -->
-                        <div>
+                        <div class="wrap-luas-tanah">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-                                Luas Tanah (m²)
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                <span class="lbl-text">Luas Tanah (m²)</span>
                             </label>
                             <input type="number" name="agunan[${count}][luas_tanah_m2]" placeholder="Contoh: 120"
                                    class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
                         <!-- Luas Bangunan (m²) -->
-                        <div>
+                        <div class="wrap-luas-bangunan">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                Luas Bangunan (m²)
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                <span class="lbl-text">Luas Bangunan (m²)</span>
                             </label>
                             <input type="number" name="agunan[${count}][luas_bangunan_m2]" placeholder="Contoh: 85"
                                    class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
                         <!-- Nilai Pasar / MV (Rp) -->
-                        <div>
+                        <div class="wrap-nilai-mv">
                             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                Nilai Pasar / MV (Rp)
+                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="lbl-text">Nilai Pasar / MV (Rp)</span>
                             </label>
                             <input type="text" name="agunan[${count}][nilai_pasar_mv]" placeholder="0"
                                    class="w-full text-xs font-bold text-blue-700 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input agunan-mv"
@@ -405,10 +410,10 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                         </div>
 
                         <!-- Likuidasi (% & Nominal Nilai LV) -->
-                        <div>
+                        <div class="wrap-likuidasi">
                             <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                                Likuidasi (% / Nilai LV)
+                                <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                <span class="lbl-text">Likuidasi (% / Nilai LV)</span>
                             </label>
                             <div class="flex items-center gap-2">
                                 <div class="relative w-16 shrink-0">
@@ -426,6 +431,10 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                 </div>
             `;
             container.insertAdjacentHTML('beforeend', html);
+            const newItem = container.lastElementChild;
+            if (typeof sesuaikanFormAgunan === 'function') {
+                sesuaikanFormAgunan(newItem);
+            }
             hitungCoverageAgunan();
         }
 
@@ -535,7 +544,7 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                 document.getElementById('pendapatan_rk').value = formatRupiahString(totalAvgKredit);
                 hitungLabaRugi();
                 showToast('Omzet rata-rata rekening koran berhasil disalin ke Tab Laba Rugi', 'success');
-                goToTab(10);
+                goToTab(9);
             } else {
                 showToast('Isi mutasi kredit rekening koran terlebih dahulu', 'error');
             }
@@ -621,19 +630,48 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             const nomHppRK = Math.round(pRK * (hppPctRK / 100));
             const grossRK = pRK - nomHppRK;
 
-            const bhPctRK = parseFloat(document.getElementById('biaya_hidup_persen_rk')?.value || 10);
-            const nomBhRK = Math.round(pRK * (bhPctRK / 100));
+            // Biaya Hidup (langsung nominal rupiah tanpa %)
+            const nomBhRK = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 0);
+            if (pRK > 0 && document.getElementById('biaya_hidup_persen_rk')) {
+                document.getElementById('biaya_hidup_persen_rk').value = (Math.round((nomBhRK / pRK) * 1000) / 10);
+            }
 
-            const blPctRK = parseFloat(document.getElementById('beban_lainnya_persen_rk')?.value || 10);
-            const nomBlRK = Math.round(pRK * (blPctRK / 100));
+            // Beban Lain (dihitung dari total rincian beban)
+            let totalBebanLain = 0;
+            if (Array.isArray(daftarBebanLain) && daftarBebanLain.length > 0) {
+                daftarBebanLain.forEach(item => {
+                    totalBebanLain += parseNominal(item.nominal || 0);
+                });
+            } else {
+                totalBebanLain = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
+            }
+
+            if (document.getElementById('beban_lainnya_nominal_rk')) {
+                document.getElementById('beban_lainnya_nominal_rk').value = totalBebanLain;
+            }
+            if (pRK > 0 && document.getElementById('beban_lainnya_persen_rk')) {
+                document.getElementById('beban_lainnya_persen_rk').value = (Math.round((totalBebanLain / pRK) * 1000) / 10);
+            }
+            const nomBlRK = totalBebanLain;
 
             const nettRK = grossRK - nomBhRK - nomBlRK;
 
-            document.getElementById('nomHppRK').innerText = formatRupiahString(nomHppRK);
-            document.getElementById('grossRK').innerText = formatRupiahString(grossRK);
-            document.getElementById('nomBiayaHidupRK').innerText = formatRupiahString(nomBhRK);
-            document.getElementById('nomBebanLainRK').innerText = formatRupiahString(nomBlRK);
-            document.getElementById('nettRK').innerText = formatRupiahString(nettRK);
+            // Pendapatan Lain-lain
+            const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
+            const pLainRK = isAdaLain ? parseNominal(document.getElementById('pendapatan_lain_rk')?.value || 0) : 0;
+            const totalCashflow = nettRK + pLainRK;
+
+            if (document.getElementById('nomHppRK')) document.getElementById('nomHppRK').innerText = formatRupiahString(nomHppRK);
+            if (document.getElementById('grossRK')) document.getElementById('grossRK').innerText = formatRupiahString(grossRK);
+            if (document.getElementById('nomBiayaHidupRK')) document.getElementById('nomBiayaHidupRK').innerText = formatRupiahString(nomBhRK);
+            if (document.getElementById('nomBebanLainRK')) document.getElementById('nomBebanLainRK').innerText = formatRupiahString(nomBlRK);
+            if (document.getElementById('nettRK')) document.getElementById('nettRK').innerText = formatRupiahString(nettRK);
+            if (document.getElementById('labelTotalPendapatanLain')) {
+                document.getElementById('labelTotalPendapatanLain').innerText = formatRupiahString(pLainRK);
+            }
+            if (document.getElementById('totalCashflowBersih')) {
+                document.getElementById('totalCashflowBersih').innerText = formatRupiahString(totalCashflow);
+            }
 
             // Track 2: IV
             const pIV = parseNominal(document.getElementById('pendapatan_iv')?.value || 0);
@@ -649,14 +687,379 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
 
             const nettIV = grossIV - nomBhIV - nomBlIV;
 
-            document.getElementById('nomHppIV').innerText = formatRupiahString(nomHppIV);
-            document.getElementById('grossIV').innerText = formatRupiahString(grossIV);
-            document.getElementById('nomBiayaHidupIV').innerText = formatRupiahString(nomBhIV);
-            document.getElementById('nomBebanLainIV').innerText = formatRupiahString(nomBlIV);
-            document.getElementById('nettIV').innerText = formatRupiahString(nettIV);
+            if (document.getElementById('nomHppIV')) document.getElementById('nomHppIV').innerText = formatRupiahString(nomHppIV);
+            if (document.getElementById('grossIV')) document.getElementById('grossIV').innerText = formatRupiahString(grossIV);
+            if (document.getElementById('nomBiayaHidupIV')) document.getElementById('nomBiayaHidupIV').innerText = formatRupiahString(nomBhIV);
+            if (document.getElementById('nomBebanLainIV')) document.getElementById('nomBebanLainIV').innerText = formatRupiahString(nomBlIV);
+            if (document.getElementById('nettIV')) document.getElementById('nettIV').innerText = formatRupiahString(nettIV);
 
             hitungRasioDSC();
         }
+
+        
+        // Inisialisasi & Manajemen Rincian Beban Lain-Lain (Dinamis: Tambah/Hapus)
+        let daftarBebanLain = [];
+
+        function initDaftarBebanLain() {
+            const raw = document.getElementById('detail_beban_lainnya_rk')?.value;
+            daftarBebanLain = [];
+            if (raw && raw !== '[]' && raw !== '') {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        daftarBebanLain = parsed;
+                    }
+                } catch (e) {
+                    console.error('Error parse detail_beban_lainnya_rk', e);
+                }
+            }
+
+            if (daftarBebanLain.length === 0) {
+                const nomLama = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
+                if (nomLama > 0) {
+                    daftarBebanLain = [{ nama: 'Beban Lain-Lain', nominal: nomLama }];
+                }
+            }
+
+            renderListBebanLain();
+        }
+        window.initDaftarBebanLain = initDaftarBebanLain;
+
+        function renderListBebanLain() {
+            const container = document.getElementById('containerBebanLain');
+            if (!container) return;
+
+            if (daftarBebanLain.length === 0) {
+                container.innerHTML = `
+                    <div class="p-3 text-center border border-dashed border-slate-200 rounded-xl text-slate-400 text-xs bg-slate-50/50">
+                        Belum ada rincian beban lain. Klik <strong class="text-blue-600 font-semibold cursor-pointer hover:underline" onclick="tambahBebanLain()">+ Tambah Beban</strong> (cth: Biaya Sekolah, dll).
+                    </div>
+                `;
+            } else {
+                let html = '';
+                daftarBebanLain.forEach((item, index) => {
+                    const safeNama = (item.nama || '').replace(/"/g, '&quot;');
+                    const nomVal = parseInt(item.nominal, 10) || 0;
+                    const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+                    html += `
+                        <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
+                            <div class="flex-1 min-w-0">
+                                <input type="text" value="${safeNama}" 
+                                       placeholder="Nama beban (cth: Biaya Sekolah)" 
+                                       class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                                       oninput="updateItemBebanLain(${index}, 'nama', this.value)">
+                            </div>
+                            <div class="w-32 sm:w-40 shrink-0">
+                                <div class="relative flex items-center">
+                                    <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                                    <input type="text" value="${nomStr}" 
+                                           placeholder="0" 
+                                           class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
+                                           oninput="formatRupiah(this); updateItemBebanLain(${index}, 'nominal', this.value)">
+                                </div>
+                            </div>
+                            <button type="button" onclick="hapusBebanLain(${index})" title="Hapus beban ini" 
+                                    class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+
+            const hiddenDetail = document.getElementById('detail_beban_lainnya_rk');
+            if (hiddenDetail) {
+                hiddenDetail.value = JSON.stringify(daftarBebanLain);
+            }
+
+            hitungLabaRugi();
+        }
+        window.renderListBebanLain = renderListBebanLain;
+
+        function tambahBebanLain(nama = '', nominal = 0) {
+            daftarBebanLain.push({
+                nama: nama,
+                nominal: nominal
+            });
+            renderListBebanLain();
+        }
+        window.tambahBebanLain = tambahBebanLain;
+
+        function hapusBebanLain(index) {
+            if (index >= 0 && index < daftarBebanLain.length) {
+                daftarBebanLain.splice(index, 1);
+                renderListBebanLain();
+            }
+        }
+        window.hapusBebanLain = hapusBebanLain;
+
+        function updateItemBebanLain(index, field, val) {
+            if (!daftarBebanLain[index]) return;
+            if (field === 'nominal') {
+                daftarBebanLain[index].nominal = parseNominal(val);
+            } else {
+                daftarBebanLain[index].nama = val;
+            }
+
+            const hiddenDetail = document.getElementById('detail_beban_lainnya_rk');
+            if (hiddenDetail) {
+                hiddenDetail.value = JSON.stringify(daftarBebanLain);
+            }
+
+            hitungLabaRugi();
+        }
+        window.updateItemBebanLain = updateItemBebanLain;
+
+        // Toggle Tampilan Form Pendapatan Lain-Lain
+        function togglePendapatanLain(checked) {
+            const sec = document.getElementById('sectionPendapatanLain');
+            const info = document.getElementById('infoBelumCentang');
+            const box = document.getElementById('boxTogglePendapatanLain');
+            if (checked) {
+                if (sec) sec.classList.remove('hidden');
+                if (info) info.classList.add('hidden');
+                if (box) {
+                    box.className = 'p-4 rounded-xl border transition mb-5 bg-blue-50/80 border-blue-300 ring-1 ring-blue-200';
+                }
+            } else {
+                if (sec) sec.classList.add('hidden');
+                if (info) info.classList.remove('hidden');
+                if (box) {
+                    box.className = 'p-4 rounded-xl border transition mb-5 bg-white border-slate-200 hover:border-slate-300';
+                }
+            }
+            hitungLabaRugi();
+        }
+        window.togglePendapatanLain = togglePendapatanLain;
+
+        // Inisialisasi Daftar Bukti Pendapatan Lain-Lain (Multiple & Delete)
+        let daftarBuktiPendapatanLain = [];
+
+        function initDaftarBuktiPendapatanLain() {
+            const raw = document.getElementById('bukti_pendapatan_lain_rk')?.value;
+            daftarBuktiPendapatanLain = [];
+            if (raw && raw !== '[]') {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        daftarBuktiPendapatanLain = parsed;
+                    } else if (typeof parsed === 'string') {
+                        daftarBuktiPendapatanLain = [{ name: parsed.split('/').pop(), path: parsed }];
+                    }
+                } catch (e) {
+                    daftarBuktiPendapatanLain = [{ name: raw.split('/').pop(), path: raw }];
+                }
+            }
+            renderListBuktiPendapatanLain();
+        }
+        window.initDaftarBuktiPendapatanLain = initDaftarBuktiPendapatanLain;
+
+        let debounceSaveCatatanBukti = null;
+        function updateCatatanBuktiLain(index, val) {
+            if (daftarBuktiPendapatanLain[index]) {
+                daftarBuktiPendapatanLain[index].desc = val;
+                const hiddenInput = document.getElementById('bukti_pendapatan_lain_rk');
+                if (hiddenInput) {
+                    hiddenInput.value = JSON.stringify(daftarBuktiPendapatanLain);
+                }
+                clearTimeout(debounceSaveCatatanBukti);
+                debounceSaveCatatanBukti = setTimeout(() => {
+                    if (typeof simpanForm === 'function') {
+                        simpanForm(false, false);
+                    }
+                }, 800);
+            }
+        }
+        window.updateCatatanBuktiLain = updateCatatanBuktiLain;
+
+        function renderListBuktiPendapatanLain() {
+            const container = document.getElementById('containerListBuktiLain');
+            if (!container) return;
+
+            if (daftarBuktiPendapatanLain.length === 0) {
+                container.innerHTML = `
+                    <div class="py-3 px-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/60 text-center">
+                        <span class="text-xs text-slate-400 font-medium">Belum ada bukti yang diunggah (Opsional)</span>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            daftarBuktiPendapatanLain.forEach((item, index) => {
+                const name = item.name || (item.path ? item.path.split('/').pop() : 'Berkas Bukti');
+                const ext = name.split('.').pop().toUpperCase() || 'DOC';
+                const sizeText = item.size || 'Baru saja diunggah • 30.3 KB';
+                const descText = item.desc || '';
+                const fullUrl = item.path.startsWith('http') ? item.path : (getBaseUrl() + '/' + item.path);
+                const safeName = name.replace(/["'<>]/g, '');
+                const safeDesc = descText.replace(/["'<>]/g, '');
+
+                html += `
+                    <div class="p-3 bg-white border border-slate-200/90 rounded-2xl flex flex-col gap-2.5 text-xs hover:border-blue-300 hover:shadow-xs transition" id="buktiRow_${index}">
+                        <!-- Baris Atas: Info File & Tombol Aksi (Hapus di sebelah kiri Lihat File) -->
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start gap-2.5 min-w-0">
+                                <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-[11px] shrink-0 border border-blue-100 mt-0.5">
+                                    ${ext}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-slate-800 text-xs sm:text-sm leading-snug truncate" title="${safeName}">
+                                        ${safeName}
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-2 mt-0.5">
+                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 inline-flex items-center gap-1">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                            ${sizeText}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Aksi: Hapus (Tempat Sampah di sebelah kiri) & Lihat File -->
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <!-- Tombol Hapus (Tempat Sampah di sebelah kiri Lihat File) -->
+                                <button type="button" onclick="hapusBuktiPendapatanLain(${index})" class="inline-flex items-center justify-center p-1.5 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition shadow-2xs cursor-pointer" title="Hapus Berkas Dokumen">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+
+                                <!-- Tombol Lihat File -->
+                                <a href="${fullUrl}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-[11px] border border-blue-200 rounded-lg hover:bg-blue-50 transition shadow-2xs">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span>Lihat File</span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Text Area Kecil untuk Keterangan Dokumen -->
+                        <div class="pt-1.5 border-t border-slate-100">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                    <svg class="w-2.5 h-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    Keterangan Dokumen
+                                </label>
+                            </div>
+                            <textarea rows="1" 
+                                      placeholder="Tulis keterangan dokumen (misal: KTP Istri, KTP Pribadi, Sertifikat Rumah No. 123, dll)..." 
+                                      oninput="updateCatatanBuktiLain(${index}, this.value)"
+                                      class="w-full text-[11px] font-normal text-slate-700 bg-slate-50/70 hover:bg-white focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 rounded-lg py-1.5 px-2.5 transition resize-y min-h-[30px] max-h-[80px] placeholder:text-[10px] placeholder:text-slate-400 leading-normal">${safeDesc}</textarea>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+        window.renderListBuktiPendapatanLain = renderListBuktiPendapatanLain;
+
+        // Handler Hapus Bukti Pendapatan Lain
+        async function hapusBuktiPendapatanLain(index) {
+            if (index < 0 || index >= daftarBuktiPendapatanLain.length) return;
+            const item = daftarBuktiPendapatanLain[index];
+            const nama = item.name || 'berkas bukti';
+
+            let yakin = true;
+            if (typeof Swal !== 'undefined') {
+                const res = await Swal.fire({
+                    title: 'Hapus Bukti Ini?',
+                    text: `Apakah Anda yakin ingin menghapus "${nama}"?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#e11d48',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Ya, Hapus',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                });
+                yakin = res.isConfirmed;
+            } else {
+                yakin = confirm(`Apakah Anda yakin ingin menghapus "${nama}"?`);
+            }
+
+            if (yakin) {
+                daftarBuktiPendapatanLain.splice(index, 1);
+                const hiddenInput = document.getElementById('bukti_pendapatan_lain_rk');
+                if (hiddenInput) {
+                    hiddenInput.value = daftarBuktiPendapatanLain.length > 0 ? JSON.stringify(daftarBuktiPendapatanLain) : '';
+                }
+                renderListBuktiPendapatanLain();
+                showToast('Berkas bukti berhasil dihapus', 'info');
+                
+                // Simpan otomatis ke backend
+                if (typeof simpanForm === 'function') {
+                    simpanForm(false, false);
+                }
+            }
+        }
+        window.hapusBuktiPendapatanLain = hapusBuktiPendapatanLain;
+
+        // Handler Upload Bukti Pendapatan Lain via AJAX (Support Multiple Files)
+        async function handlePilihBuktiLain(input) {
+            if (!input.files || input.files.length === 0) return;
+            const files = Array.from(input.files);
+            
+            showToast(`Mengunggah ${files.length} berkas bukti...`, 'info');
+
+            const formData = new FormData();
+            files.forEach(f => formData.append('files[]', f));
+            const kId = document.getElementById('kredit_id')?.value;
+            if (kId) formData.append('kredit_id', kId);
+
+            try {
+                const res = await fetch(getBaseUrl() + '/pengajuan/upload-bukti-pendapatan-lain', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.status) {
+                    if (data.files && Array.isArray(data.files)) {
+                        data.files.forEach((f, i) => {
+                            const orig = files[i];
+                            const sz = orig ? ((orig.size / 1024).toFixed(1) + ' KB') : '30.3 KB';
+                            daftarBuktiPendapatanLain.push({
+                                name: f.nama_file,
+                                path: f.path_file,
+                                size: 'Baru saja diunggah • ' + sz,
+                                desc: ''
+                            });
+                        });
+                    } else if (data.path_file) {
+                        const orig = files[0];
+                        const sz = orig ? ((orig.size / 1024).toFixed(1) + ' KB') : '30.3 KB';
+                        daftarBuktiPendapatanLain.push({
+                            name: data.nama_file || 'Berkas Bukti',
+                            path: data.path_file,
+                            size: 'Baru saja diunggah • ' + sz,
+                            desc: ''
+                        });
+                    }
+
+                    const hiddenInput = document.getElementById('bukti_pendapatan_lain_rk');
+                    if (hiddenInput) {
+                        hiddenInput.value = JSON.stringify(daftarBuktiPendapatanLain);
+                    }
+                    renderListBuktiPendapatanLain();
+                    showToast(data.message || 'Bukti pendapatan lain berhasil diunggah!', 'success');
+
+                    // Simpan otomatis
+                    if (typeof simpanForm === 'function') {
+                        simpanForm(false, false);
+                    }
+                } else {
+                    showToast(data.message || 'Gagal mengunggah bukti', 'error');
+                }
+            } catch (err) {
+                console.error('Error upload bukti lain:', err);
+                showToast('Koneksi terganggu saat mengunggah file bukti', 'error');
+            } finally {
+                input.value = '';
+            }
+        }
+        window.handlePilihBuktiLain = handlePilihBuktiLain;
 
         // Kalkulasi Rasio DSC
         function hitungRasioDSC() {
@@ -669,6 +1072,11 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             const blPctRK = parseFloat(document.getElementById('beban_lainnya_persen_rk')?.value || 10);
             const nettRK = pRK - (pRK * (hppPctRK/100)) - (pRK * (bhPctRK/100)) - (pRK * (blPctRK/100));
 
+            // Tambahan pendapatan lain jika aktif
+            const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
+            const pLainRK = isAdaLain ? parseNominal(document.getElementById('pendapatan_lain_rk')?.value || 0) : 0;
+            const totalNettRK = nettRK + pLainRK;
+
             // Nett IV
             const pIV = parseNominal(document.getElementById('pendapatan_iv')?.value || 0);
             const hppPctIV = parseFloat(document.getElementById('hpp_persen_iv')?.value || 60);
@@ -676,7 +1084,7 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             const blPctIV = parseFloat(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
             const nettIV = pIV - (pIV * (hppPctIV/100)) - (pIV * (bhPctIV/100)) - (pIV * (blPctIV/100));
 
-            const dscRK = angsuran > 0 ? (nettRK / angsuran).toFixed(2) : 0;
+            const dscRK = angsuran > 0 ? (totalNettRK / angsuran).toFixed(2) : 0;
             const dscIV = angsuran > 0 ? (nettIV / angsuran).toFixed(2) : 0;
 
             document.getElementById('labelRasioDSCRK').innerText = dscRK + 'x';
@@ -861,6 +1269,8 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             formData.append('file', finalFile);
             formData.append('kredit_id', activeKreditId);
             formData.append('kategori', document.getElementById('kategoriUpload').value);
+            const catatan = document.getElementById('catatanDokumenUpload')?.value || '';
+            formData.append('catatan', catatan);
 
             try {
                 const res = await fetch(getBaseUrl() + '/pengajuan/upload-dokumen', {
@@ -890,9 +1300,7 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                                 <div>
                                     <div class="font-bold text-slate-800 text-sm leading-snug">${data.nama_file}</div>
                                     <div class="flex flex-wrap items-center gap-2 mt-1">
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
-                                            <svg class="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                                            <span class="text-indigo-400 font-semibold">Kategori:</span>
+                                        <input type="hidden" id="kategoriDokumen_${data.dokumen_id}" value="${kategoriLabel}">
                                             <select onchange="ubahKategoriDokumen(${data.dokumen_id}, this.value)" class="bg-transparent font-extrabold text-indigo-800 focus:outline-none cursor-pointer">
                                                 <option value="KTP & NPWP" ${kategoriLabel.includes('KTP') ? 'selected' : ''}>KTP & NPWP</option>
                                                 <option value="Sertifikat Agunan" ${kategoriLabel.includes('Agunan') || kategoriLabel.includes('Sertifikat') ? 'selected' : ''}>Sertifikat Agunan</option>
@@ -910,6 +1318,9 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                                 </div>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
+                                <button type="button" onclick="hapusDokumen(${data.dokumen_id})" class="inline-flex items-center justify-center p-2 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition shadow-2xs cursor-pointer" title="Hapus Berkas Dokumen">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
                                 <a href="${data.path}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-200 rounded-xl hover:bg-blue-50 transition shadow-2xs">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     <span>Lihat File</span>
@@ -1010,7 +1421,7 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                     if (data.kredit_id) {
                         document.getElementById('kredit_id').value = data.kredit_id;
                     }
-                    if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Tersimpan di database';
+                    if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500"></span> Tersimpan di database';
 
                     if (showNotification) {
                         showToast(data.message || 'Data berhasil disimpan', 'success');
@@ -1435,7 +1846,7 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                     });
                     const data = await res.json();
                     if (data.status) {
-                        showToast('Berhasil! Permintaan verifikasi SLIK resmi masuk ke antrean Petugas SLIK.', 'success');
+                        showToast('Berhasil! Pengajuan pengecekan SLIK resmi dikirim ke antrean Petugas SLIK.', 'success');
                         
                         // Perbarui tampilan box status menjadi hijau
                         const box = document.getElementById('boxStatusSlik');
@@ -1445,9 +1856,9 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                                 <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3 shadow-2xs">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
-                                <h4 class="text-sm font-extrabold text-emerald-900 uppercase tracking-wide">Persetujuan Verifikasi SLIK Telah Dikirim</h4>
+                                <h4 class="text-sm font-extrabold text-emerald-900 uppercase tracking-wide">Pengajuan Pemeriksaan SLIK OJK Telah Dikirim</h4>
                                 <p class="text-xs text-emerald-800 mt-1.5 max-w-lg mx-auto leading-relaxed">
-                                    Permohonan pemeriksaan riwayat fasilitas pinjaman (SLIK OJK) telah disetujui dan <strong>resmi masuk ke tabel antrean kerja Petugas SLIK</strong>. Anda dapat langsung melanjutkan ke tahapan berikutnya.
+                                    Permohonan pemeriksaan riwayat fasilitas pinjaman (SLIK OJK) telah diajukan dan <strong>resmi masuk ke tabel antrean kerja Petugas SLIK</strong>. Anda dapat langsung melanjutkan ke tahapan berikutnya.
                                 </p>
                                 <div class="mt-4 flex items-center justify-center gap-3">
                                     <button type="button" onclick="goToTab(7)" class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
@@ -1628,3 +2039,287 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                 showToast('Hasil verifikasi Mahkamah Agung berhasil disalin ke form SIPP!', 'success');
             }
         }
+
+
+        /* =========================================================================
+         * FITUR BANTUAN NARASI (CAM & OPINI KREDIT)
+         * ========================================================================= */
+
+        /**
+         * Toggle dropdown bantuan narasi
+         */
+        function toggleDropdownNarasi(menuId) {
+            const targetMenu = document.getElementById(menuId);
+            if (!targetMenu) return;
+
+            const isCurrentlyHidden = targetMenu.classList.contains('hidden');
+
+            // Tutup semua menu dropdown narasi yang sedang terbuka
+            document.querySelectorAll('.dropdown-narasi-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+
+            if (isCurrentlyHidden) {
+                targetMenu.classList.remove('hidden');
+            }
+        }
+        window.toggleDropdownNarasi = toggleDropdownNarasi;
+
+        // Tutup dropdown jika klik di luar container
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown-narasi-container')) {
+                document.querySelectorAll('.dropdown-narasi-menu').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+            }
+        });
+
+        /**
+         * Terapkan template narasi ke field target form
+         */
+        function terapkanNarasi(targetId, kategori, tipe) {
+            const el = document.getElementById(targetId);
+            if (!el) {
+                console.warn('Target textarea tidak ditemukan:', targetId);
+                return;
+            }
+
+            if (el.readOnly || el.disabled) {
+                showToast('Kolom narasi ini sedang terkunci atau berstatus hanya baca (read-only).', 'error');
+                return;
+            }
+
+            // Ambil data debitur & usaha dinamis untuk konteks narasi yang relevan
+            const namaDebitur = document.getElementById('nama_debitur')?.value?.trim() ||
+                                document.getElementById('nama_debitur_tab2')?.value?.trim() ||
+                                'calon debitur';
+            const namaUsaha = document.querySelector('input[name*="[nama_usaha]"]')?.value?.trim() ||
+                              document.getElementById('nama_usaha')?.value?.trim() ||
+                              'usaha calon debitur';
+
+            const narasi = getTemplateNarasi(kategori, tipe, namaDebitur, namaUsaha);
+
+            if (narasi) {
+                el.value = narasi;
+
+                // Trigger event agar form mengetahui ada perubahan data (dirty/autosave)
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+
+                // Efek visual highlight pada textarea
+                el.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50/40');
+                setTimeout(() => {
+                    el.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50/40');
+                }, 900);
+
+                const labelTipe = tipe === 'positif' ? 'Positif (Aman/Lancar)' : (tipe === 'netral' ? 'Netral (Catatan Khusus)' : 'Negatif (Perlu Mitigasi)');
+                showToast(`Bantuan narasi ${labelTipe} berhasil diterapkan!`, 'success');
+            }
+
+            // Tutup semua dropdown setelah memilih narasi
+            document.querySelectorAll('.dropdown-narasi-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+        window.terapkanNarasi = terapkanNarasi;
+
+        /**
+         * Koleksi kamus template narasi perbankan/analisa kredit resmi
+         */
+        function getTemplateNarasi(kategori, tipe, namaDebitur, namaUsaha) {
+            let kat = String(kategori || '').toLowerCase().trim();
+            const tip = String(tipe || '').toLowerCase().trim();
+
+            if (kat === 'negatif_keterangan') kat = 'lingkungan';
+
+            const kamus = {
+                // 1. SLIK OJK (Tab 6)
+                ringkasan_slik: {
+                    positif: `Berdasarkan hasil penelusuran sistem SLIK OJK per tanggal penarikan, calon debitur (${namaDebitur}) memiliki riwayat fasilitas kredit dengan track record lancar (Kolektibilitas 1) di seluruh lembaga perbankan maupun lembaga pembiayaan lainnya. Tidak ditemukan catatan tunggakan pokok maupun bunga dalam 12 bulan terakhir. Karakter pembayaran debitur dinilai sangat disiplin, bertanggung jawab, dan memenuhi kriteria kelayakan pembiayaan.`,
+                    netral: `Hasil verifikasi data historis SLIK OJK menunjukkan fasilitas kredit aktif calon debitur (${namaDebitur}) saat ini berstatus lancar (Kol 1). Terdapat catatan historis keterlambatan pembayaran dalam batas wajar (DPK Kol 2) dengan hari tunggakan maksimal 15 hari yang disebabkan oleh kendala teknis pencairan piutang mitra dagang, namun seluruh kewajiban telah diselesaikan secara tertib tanpa ada indikasi itikad buruk.`,
+                    negatif: `Berdasarkan data SLIK OJK, teridentifikasi adanya fasilitas pinjaman aktif dengan status Dalam Perhatian Khusus / Kurang Lancar (Kol 2 / Kol 3) pada bank/lembaga pembiayaan lain dengan sisa kewajiban tertunggak. Calon debitur berkomitmen untuk melakukan take-over dan pelunasan penuh atas kewajiban tersebut melalui alokasi dana pembiayaan ini guna membersihkan status kolektibilitas.`
+                },
+
+                // 2. SIPP MA / Pengadilan (Tab 7)
+                sipp: {
+                    positif: `Berdasarkan penelusuran pada Sistem Informasi Penelusuran Perkara (SIPP) Pengadilan Negeri, Pengadilan Agama, PTUN, dan Pengadilan Niaga wilayah domisili dan usaha, TIDAK DITEMUKAN adanya riwayat perkara perdata, gugatan wanprestasi, perkara pidana, maupun sengketa kepailitan aktif atas nama calon debitur (${namaDebitur}) maupun badan usahanya. Calon debitur dinyatakan bersih dari risiko sengketa hukum.`,
+                    netral: `Hasil penelusuran SIPP mengidentifikasi adanya riwayat perkara perdata di masa lalu, namun status perkara telah berkekuatan hukum tetap (Inkracht van Gewijsde) dan seluruh amar putusan telah diselesaikan tuntas tanpa meninggalkan beban kewajiban finansial atau sita eksekusi jaminan.`,
+                    negatif: `Ditemukan catatan perkara perdata/gugatan hukum aktif di Pengadilan Negeri setempat yang melibatkan calon debitur terkait sengketa transaksi komersial. Diperlukan klarifikasi aspek hukum lebih lanjut dan penetapan mitigasi risiko legal sebelum proses kredit dilanjutkan ke tahap keputusan.`
+                },
+
+                // 3. Media Berita & Internet (Tab 7)
+                internet: {
+                    positif: `Hasil penelusuran mesin pencari daring, portal media berita terverifikasi, dan jejaring publik menunjukkan reputasi calon debitur (${namaDebitur}) dan unit usaha (${namaUsaha}) bersih dari pemberitaan negatif, tindak pidana komersial, sengketa ketenagakerjaan, maupun penipuan. Citra usaha di mata masyarakat dan mitra dagang tergolong baik dan terpercaya.`,
+                    netral: `Penelusuran media daring dan informasi publik tidak menemukan adanya eksposur berita negatif yang signifikan. Jejak digital debitur menunjukkan aktivitas komersial dan promosi usaha yang wajar tanpa adanya catatan rekam jejak yang merugikan reputasi bisnis.`,
+                    negatif: `Ditemukan beberapa artikel/keluhan konsumen pada media daring terkait keterlambatan pengiriman barang dagangan dan komplain layanan usaha. Pengusul telah memverifikasi langsung ke lapangan untuk memastikan status penyelesaian permasalahan tersebut telah diatasi secara kekeluargaan.`
+                },
+
+                // 4. Daftar Teroris DTTOT / Watchlist (Tab 7)
+                watchlist: {
+                    positif: `Pengecekan silang terhadap database Daftar Terduga Teroris dan Organisasi Teroris (DTTOT), Proliferasi Senjata Pemusnah Massal, serta Daftar Larangan/Sanksi TPPU-PTDI menyatakan calon debitur (${namaDebitur}) NIHIL dan tidak tercantum dalam daftar pengawasan khusus regulator atau penegak hukum.`,
+                    netral: `Terdapat kesamaan nama (similarity match) pada daftar pengawasan publik, namun setelah diverifikasi kecocokan nomor NIK KTP, tanggal lahir, dan alamat domisili, dipastikan calon debitur BUKAN merupakan subjek yang terdaftar dalam database DTTOT (false positive).`,
+                    negatif: `Teridentifikasi kemiripan profil identitas yang memerlukan verifikasi dokumen kependudukan mendalam (Enhanced Due Diligence - EDD) serta konfirmasi kepada pihak berwenang guna memastikan kepatuhan regulasi Anti Pencucian Uang dan Pencegahan Pendanaan Terorisme (APUPPT).`
+                },
+
+                // 5. Cek Lelang Jaminan DJKN (Tab 7)
+                lelang: {
+                    positif: `Hasil penelusuran pada portal resmi lelang DJKN (lelang.go.id) dan sistem lelang pengadilan mengonfirmasi bahwa aset yang diajukan sebagai agunan TIDAK SEDANG dalam proses pendaftaran lelang, sita eksekusi pengadilan, maupun eksekusi hak tanggungan oleh pihak perbankan/kreditur manapun.`,
+                    netral: `Aset agunan sebelumnya pernah terdaftar dalam rencana lelang karena restrukturisasi fasilitas lama, namun lelang telah resmi dibatalkan dan bukti sertifikat kepemilikan telah berada kembali dalam penguasaan penuh calon debitur dengan surat keterangan lunas/roya sah.`,
+                    negatif: `Aset agunan terindikasi berada dalam daftar sita jaminan atau pengumuman lelang aktif oleh kreditur terdahulu. Persetujuan pembiayaan ini mensyaratkan skema pelunasan langsung (take-over antar bank) untuk penebusan dan pengalihan sertifikat jaminan secara aman.`
+                },
+
+                // 6. Cek Lingkungan & Reputasi Karakter Sosial (Tab 7)
+                lingkungan: {
+                    positif: `Hasil konfirmasi dan wawancara informal dengan pengurus lingkungan RT/RW setempat serta tetangga sekitar tempat tinggal menyatakan bahwa calon debitur (${namaDebitur}) dikenal baik, bertutur kata sopan, tidak memiliki riwayat kebiasaan buruk (perjudian/minuman keras), dan memiliki hubungan sosial kemasyarakatan yang sangat harmonis.`,
+                    netral: `Berdasarkan keterangan warga lingkungan sekitar, calon debitur tergolong warga yang sibuk beraktivitas di luar rumah untuk mengurus kegiatan usaha, namun tetap tertib dalam membayar iuran lingkungan dan tidak pernah terlibat dalam perselisihan antar warga.`,
+                    negatif: `Terdapat catatan keluhan dari warga sekitar terkait aktivitas lalu lintas bongkar muat kendaraan usaha di sekitar kediaman/gudang debitur. Calon debitur telah membuat kesepakatan tertulis pengaturan jam bongkar muat demi menjaga kenyamanan lingkungan bersama.`
+                },
+
+                // 7. Analisa Kualitas & Marketability Jaminan (Tab 10)
+                analisa_jaminan: {
+                    positif: `Agunan memiliki lokasi sangat strategis di kawasan yang berkembang dengan akses jalan aspal lebar (> 6 meter) yang dapat dilalui dua kendaraan roda empat. Legalitas kepemilikan jelas dan sah (SHM/SHGB atas nama debitur/keluarga inti), bebas dari sengketa kepemilikan, tidak berada di jalur hijau/SUTET/bantaran sungai, dan memiliki tingkat likuiditas penjualan (marketability) yang tinggi dengan nilai appraisal yang meng-cover plafon pinjaman secara aman.`,
+                    netral: `Aset jaminan berupa tanah dan bangunan berada di kawasan pemukiman padat dengan akses jalan aspal 4-5 meter. Kondisi fisik bangunan terawat baik dengan fasilitas utilitas lengkap (listrik dan air bersih). Nilai likuidasi dinilai wajar dan agunan marketable dalam rentang waktu standar penjualan properti (3-6 bulan).`,
+                    negatif: `Lokasi agunan berada di dalam gang dengan akses jalan terbatas (< 3 meter) atau berdekatan dengan fasilitas umum yang dapat memengaruhi minat pembeli (seperti dekat TPU/jalur kereta api). Tingkat marketability dinilai lambat sehingga disarankan penerapan potongan nilai likuidasi (haircut) yang lebih konservatif.`
+                },
+
+                // 8. Business Review & Prospek Pasar Usaha (Tab 10)
+                business_review: {
+                    positif: `Unit usaha (${namaUsaha}) telah beroperasi secara konsisten selama lebih dari 3 tahun dengan tren pendapatan yang stabil dan menunjukkan tren pertumbuhan positif. Debitur memiliki basis pelanggan tetap yang loyal baik di segmen grosir maupun ritel, marjin laba yang sehat, serta hubungan kemitraan yang solid dengan pemasok utama sehingga risiko gangguan operasional tergolong minimal.`,
+                    netral: `Usaha bergerak di bidang perdagangan kebutuhan masyarakat dengan persaingan usaha yang cukup dinamis di wilayah operasionalnya. Namun berbekal lokasi usaha yang strategis, harga yang kompetitif, dan pelayanan yang prima, usaha mampu mempertahankan omzet penjualan dan menghasilkan arus kas bersih bulanan yang cukup stabil.`,
+                    negatif: `Usaha menghadapi tantangan fluktuasi harga bahan baku serta tekanan kompetisi dari pelaku usaha sejenis skala besar di sekitarnya. Diperlukan pengawasan terhadap efisiensi biaya operasional dan inovasi saluran pemasaran agar margin keuntungan bersih tetap terjaga optimal.`
+                },
+
+                // 9. Catatan Kunjungan OTS (Tab 10)
+                business_catatan: {
+                    positif: `Berdasarkan hasil On The Spot (OTS) di lokasi usaha pada jam operasional kerja, terlihat aktivitas transaksi perdagangan sangat ramai dan dinamis. Perputaran inventaris barang berjalan cepat, gudang penyimpanan tertata rapi dengan stok barang memadai, pencatatan kas harian tertib, dan karyawan bekerja secara produktif melayani pelanggan.`,
+                    netral: `Kunjungan langsung (OTS) mengonfirmasi keberadaan fisik lokasi usaha, operasional, dan inventaris barang sesuai dengan data berkas permohonan. Aktivitas usaha berlangsung secara wajar dengan stok barang dagangan yang mencukupi untuk memenuhi permintaan rutin pelanggan harian.`,
+                    negatif: `Hasil observasi kunjungan fisik menunjukkan aktivitas perputaran stok barang di lokasi toko/gudang relatif lambat saat jam kunjungan. Calon debitur memberikan klarifikasi bahwa mayoritas transaksi saat ini beralih ke sistem pre-order online dan pengiriman langsung dari supplier mitra.`
+                },
+
+                // 10. Rincian Kebutuhan Modal Kerja (Tab 10)
+                detail_kebutuhan: {
+                    positif: `Fasilitas kredit yang diajukan direncanakan seluruhnya untuk tambahan modal kerja usaha, yaitu pembelian stok persediaan barang dagangan/bahan baku dalam volume partai besar guna memperoleh potongan harga kuantitas (cash discount) dari distributor utama, sehingga diproyeksikan mampu meningkatkan omzet penjualan dan profit margin usaha.`,
+                    netral: `Alokasi dana pembiayaan ditujukan untuk memperkuat cadangan modal kerja operasional harian serta mengantisipasi peningkatan piutang usaha seiring perluasan jangka waktu kredit termin kepada pelanggan langganan (tenor 14-30 hari).`,
+                    negatif: `Pemanfaatan dana pinjaman dialokasikan untuk perputaran kas umum operasional dan penyelesaian kewajiban dagang jangka pendek yang segera jatuh tempo. Diperlukan monitoring berkala atas realisasi penggunaan rekening dan perputaran arus kas usaha debitur.`
+                }
+            };
+
+            if (kamus[kat] && kamus[kat][tip]) {
+                return kamus[kat][tip];
+            }
+
+            return null;
+        }
+        window.getTemplateNarasi = getTemplateNarasi;
+
+        // Fungsi Penyesuaian Field Agunan Sesuai Jenis Jaminan
+        function sesuaikanFormAgunan(item) {
+            if (!item) return;
+            const jenisSel = item.querySelector('select[name$="[jenis_agunan]"]');
+            if (!jenisSel) return;
+            const val = jenisSel.value;
+
+            const wrapAlamat = item.querySelector('.wrap-alamat-agunan');
+            const wrapNomor = item.querySelector('.wrap-nomor-sertifikat');
+            const wrapPemilik = item.querySelector('.wrap-pemilik-agunan');
+            const wrapImb = item.querySelector('.wrap-status-imb');
+            const wrapLama = item.querySelector('.wrap-lama-kepemilikan');
+            const wrapTanah = item.querySelector('.wrap-luas-tanah');
+            const wrapBangunan = item.querySelector('.wrap-luas-bangunan');
+            const wrapMv = item.querySelector('.wrap-nilai-mv');
+            const inputLvPct = item.querySelector('.agunan-lv-pct');
+
+            const setField = (wrap, labelText, placeholderText, isHidden) => {
+                if (!wrap) return;
+                if (isHidden) {
+                    wrap.classList.add('hidden');
+                } else {
+                    wrap.classList.remove('hidden');
+                }
+                const lbl = wrap.querySelector('.lbl-text');
+                if (lbl && labelText) lbl.innerText = labelText;
+                const inp = wrap.querySelector('input, textarea');
+                if (inp && placeholderText !== undefined && placeholderText !== '') inp.placeholder = placeholderText;
+            };
+
+            if (val === 'BPKB Mobil') {
+                setField(wrapAlamat, 'Merk / Tipe Kendaraan & Plat Nomor', 'Contoh: Toyota Avanza 1.5 Veloz AT 2022 (Plat B 1234 CD)', false);
+                setField(wrapNomor, 'Nomor BPKB / No. Rangka Mesin', 'No. BPKB & No. Rangka Mesin', false);
+                setField(wrapPemilik, 'Nama Pemilik di BPKB / STNK', 'Sesuai nama tercatat di BPKB/STNK', false);
+                setField(wrapLama, 'Tahun Pembuatan Kendaraan', 'Contoh: Th. 2022 / 3 Tahun', false);
+                setField(wrapMv, 'Nilai Pasar Kendaraan / MV (Rp)', '0', false);
+                setField(wrapImb, '', '', true);
+                setField(wrapTanah, '', '', true);
+                setField(wrapBangunan, '', '', true);
+                if (inputLvPct && (inputLvPct.value === '60' || inputLvPct.value === '100' || !inputLvPct.value)) {
+                    inputLvPct.value = '50';
+                    if (typeof hitungCoverageAgunan === 'function') hitungCoverageAgunan();
+                }
+            } else if (val === 'Bilyet Deposito') {
+                setField(wrapAlamat, 'Bank Penerbit & Kantor Cabang', 'Contoh: Bank BPR SA / Bank Mandiri KC Bandung', false);
+                setField(wrapNomor, 'Nomor Bilyet Deposito & No. Rekening', 'No. Seri Bilyet Deposito & No. Rekening', false);
+                setField(wrapPemilik, 'Nama Pemilik Rekening Bilyet', 'Sesuai nama di Bilyet Deposito / KTP', false);
+                setField(wrapLama, 'Tenor & Tanggal Jatuh Tempo', 'Contoh: 12 Bulan / Jatuh Tempo 15 Nov 2027', false);
+                setField(wrapMv, 'Nominal Pokok Deposito (Rp)', '0', false);
+                setField(wrapImb, '', '', true);
+                setField(wrapTanah, '', '', true);
+                setField(wrapBangunan, '', '', true);
+                if (inputLvPct && (inputLvPct.value === '60' || inputLvPct.value === '50' || !inputLvPct.value)) {
+                    inputLvPct.value = '100';
+                    if (typeof hitungCoverageAgunan === 'function') hitungCoverageAgunan();
+                }
+            } else if (val === 'SHM Sarusun') {
+                setField(wrapAlamat, 'Nama Apartemen, Tower, Unit & Alamat', 'Nama Apartemen, Tower, No. Lantai/Unit, Alamat Lengkap', false);
+                setField(wrapNomor, 'Nomor SHM Sarusun', 'No. Sertifikat Hak Milik Sarusun', false);
+                setField(wrapPemilik, 'Nama Pemilik di Sertifikat', 'Sesuai nama di sertifikat', false);
+                setField(wrapLama, 'Lama Kepemilikan Unit', 'Contoh: 5 Tahun', false);
+                setField(wrapMv, 'Nilai Pasar / MV (Rp)', '0', false);
+                setField(wrapImb, 'Status Sertifikat Laik Fungsi (SLF)', '', false);
+                setField(wrapTanah, '', '', true);
+                setField(wrapBangunan, 'Luas Unit Sarusun (m²)', 'Contoh: 45', false);
+            } else {
+                // SHM / SHGB / Default Properti
+                setField(wrapAlamat, 'Alamat Lengkap Objek Jaminan', 'Alamat lokasi aset jaminan', false);
+                setField(wrapNomor, 'Nomor Sertifikat / BPKB', 'No. Sertifikat / BPKB', false);
+                setField(wrapPemilik, 'Nama Pemilik Agunan', 'Sesuai nama di sertifikat', false);
+                setField(wrapLama, 'Lama Kepemilikan', 'Contoh: 8 Tahun', false);
+                setField(wrapMv, 'Nilai Pasar / MV (Rp)', '0', false);
+                setField(wrapImb, 'Status IMB / PBG', '', false);
+                setField(wrapTanah, 'Luas Tanah (m²)', 'Contoh: 120', false);
+                setField(wrapBangunan, 'Luas Bangunan (m²)', 'Contoh: 85', false);
+            }
+        }
+        window.sesuaikanFormAgunan = sesuaikanFormAgunan;
+
+        // Sinkronisasi otomatis Jenis Jaminan (Tab 1) dengan Jenis Dokumen Agunan (Tab 4) & Inisialisasi Form Agunan
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inisialisasi tampilan seluruh kartu agunan
+            document.querySelectorAll('.agunan-item').forEach(item => {
+                sesuaikanFormAgunan(item);
+            });
+            const selJaminan = document.getElementById('jenis_jaminan');
+            const getFirstAgunan = () => document.querySelector('select[name="agunan[0][jenis_agunan]"]');
+
+            if (selJaminan) {
+                selJaminan.addEventListener('change', () => {
+                    const firstAgunanSel = getFirstAgunan();
+                    if (!firstAgunanSel) return;
+                    const val = selJaminan.value;
+                    const hasOpt = Array.from(firstAgunanSel.options).some(opt => opt.value === val);
+                    if (hasOpt) {
+                        firstAgunanSel.value = val;
+                    }
+                });
+
+                const firstAgunanSel = getFirstAgunan();
+                if (firstAgunanSel) {
+                    firstAgunanSel.addEventListener('change', () => {
+                        const val = firstAgunanSel.value;
+                        const hasOpt = Array.from(selJaminan.options).some(opt => opt.value === val);
+                        if (hasOpt) {
+                            selJaminan.value = val;
+                        }
+                    });
+                }
+            }
+        });

@@ -18,6 +18,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'Workspace Account Officer') ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
@@ -114,6 +115,20 @@
 
     <main class="w-full px-4 sm:px-6 lg:px-8 py-6 flex-1">
         
+        <!-- Notifikasi Flash Message -->
+        <?php if (session()->getFlashdata('success')): ?>
+            <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center gap-3 text-sm font-semibold shadow-xs">
+                <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span><?= session()->getFlashdata('success') ?></span>
+            </div>
+        <?php endif; ?>
+        <?php if (session()->getFlashdata('error')): ?>
+            <div class="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl flex items-center gap-3 text-sm font-semibold shadow-xs">
+                <svg class="w-5 h-5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span><?= session()->getFlashdata('error') ?></span>
+            </div>
+        <?php endif; ?>
+
         <!-- Welcome Hero Banner -->
         <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-6 sm:p-8 text-white shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
@@ -265,7 +280,7 @@
                                     <td class="py-3.5 px-4 text-xs text-slate-500 whitespace-nowrap">
                                         <?= date('d M Y', strtotime($row['created_at'])) ?>
                                     </td>
-                                    <!-- Aksi (Hasil Review, Edit Form) -->
+                                    <!-- Aksi (Hasil Review, Edit Form, Hapus) -->
                                     <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                         <div class="inline-flex items-center gap-1.5">
                                             <!-- Tombol Hasil Review / Keputusan Reviewer -->
@@ -285,6 +300,14 @@
                                                title="Buka / Edit Analisa">
                                                 Edit Form
                                             </a>
+
+                                            <!-- Tombol Hapus (AJAX Cepat) -->
+                                            <button type="button" 
+                                                    onclick="hapusPengajuan(<?= $row['kredit_id'] ?>, '<?= esc($row['nomor_aplikasi']) ?>')"
+                                                    class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" 
+                                                    title="Hapus Pengajuan">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -645,6 +668,62 @@
         function tutupModalProfil() {
             const m = document.getElementById('modalProfil');
             if (m) m.classList.add('hidden');
+        }
+
+        function hapusPengajuan(id, nomor) {
+            Swal.fire({
+                title: 'Hapus Berkas Pengajuan?',
+                html: `Apakah Anda yakin ingin menghapus berkas nomor <b>${nomor}</b>?<br><small class="text-slate-400">Data yang dihapus tidak dapat dipulihkan kembali.</small>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Hapus Sekarang',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const tr = document.getElementById(`row-kredit-${id}`);
+                    if (tr) tr.style.opacity = '0.5';
+
+                    fetch(`<?= base_url('pengajuan/hapus') ?>/${id}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            if (tr) {
+                                tr.style.transition = 'all 0.3s ease';
+                                tr.style.opacity = '0';
+                                tr.style.transform = 'scale(0.95)';
+                                setTimeout(() => {
+                                    tr.remove();
+                                    const tbody = document.querySelector('#tabelPengajuan tbody');
+                                    if (tbody && tbody.querySelectorAll('tr[id^="row-kredit-"]').length === 0) {
+                                        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-slate-400"><p class="font-medium text-slate-600">Anda belum memiliki berkas pengajuan kredit.</p></td></tr>`;
+                                    }
+                                }, 300);
+                            }
+                            Swal.fire({
+                                title: 'Berhasil Dihapus',
+                                text: data.message,
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            if (tr) tr.style.opacity = '1';
+                            Swal.fire('Gagal!', data.message || 'Terjadi kesalahan saat menghapus.', 'error');
+                        }
+                    })
+                    .catch(err => {
+                        if (tr) tr.style.opacity = '1';
+                        Swal.fire('Error!', 'Koneksi terputus atau terjadi kesalahan.', 'error');
+                    });
+                }
+            });
         }
     </script>
 </body>

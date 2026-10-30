@@ -96,8 +96,8 @@
                           class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"><?= esc($kredit['alamat_domisili'] ?? '') ?></textarea>
             </div>
 
-            <!-- Kepemilikan Rumah Domisili (Hanya muncul jika Perorangan) -->
-            <div id="wrapper_kepemilikan_rumah" class="<?= $isBadanUsaha ? 'hidden' : '' ?>">
+            <!-- Kepemilikan Rumah Domisili (Tampil untuk Perorangan & Badan Usaha) -->
+            <div id="wrapper_kepemilikan_rumah">
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     Kepemilikan Rumah Domisili
@@ -109,18 +109,7 @@
                     <option value="Sewa / Kontrak" <?= $kd === 'Sewa / Kontrak' ? 'selected' : '' ?>>Sewa / Kontrak</option>
                     <option value="Rumah Dinas" <?= $kd === 'Rumah Dinas' ? 'selected' : '' ?>>Rumah Dinas</option>
                 </select>
-            </div>
-
-            <!-- Bidang Usaha (Muncul untuk PT / CV menggantikan Kepemilikan Rumah) -->
-            <div id="wrapper_bidang_usaha" class="<?= $isBadanUsaha ? '' : 'hidden' ?>">
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    Bidang Usaha <span class="text-rose-500 font-extrabold">*</span>
-                </label>
-                <input type="text" name="jenis_usaha" id="jenis_usaha" 
-                       value="<?= esc($kredit['jenis_usaha'] ?? '') ?>" 
-                       placeholder="Contoh: Perdagangan Umum / Kontraktor / Jasa / Manufaktur"
-                       class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                <input type="hidden" name="jenis_usaha" id="jenis_usaha" value="<?= esc($kredit['jenis_usaha'] ?? '') ?>">
             </div>
 
             <!-- Nomor HP / WhatsApp Aktif -->
@@ -319,16 +308,10 @@ function ubahJenisDebitur(val) {
     }
     const isBadan = (val.includes('PT') || val.includes('CV') || val.includes('Badan Usaha'));
 
-    // 1. Toggle field Kepemilikan Rumah vs Bidang Usaha di Tab 2
+    // 1. Field Kepemilikan Rumah Domisili selalu tampil di Tab 2
     const wrapRumah = document.getElementById('wrapper_kepemilikan_rumah');
-    const wrapUsaha = document.getElementById('wrapper_bidang_usaha');
     if (wrapRumah) {
-        if (isBadan) wrapRumah.classList.add('hidden');
-        else wrapRumah.classList.remove('hidden');
-    }
-    if (wrapUsaha) {
-        if (isBadan) wrapUsaha.classList.remove('hidden');
-        else wrapUsaha.classList.add('hidden');
+        wrapRumah.classList.remove('hidden');
     }
 
     // 2. Update semua kartu usaha di Tab 3

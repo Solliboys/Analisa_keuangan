@@ -13,6 +13,7 @@ use App\Models\KreditRekeningModel;
 use App\Models\KreditKeuanganDscModel;
 use App\Models\KreditDisbursementModel;
 use App\Models\KomiteModel;
+use App\Models\LogAktivitasModel;
 use App\Services\GeminiAiService;
 
 class Pengajuan extends BaseController
@@ -85,22 +86,26 @@ class Pengajuan extends BaseController
             $daftarKredit = $this->kreditModel->where('user_id', $userId)->orderBy('created_at', 'DESC')->findAll();
         }
 
-        $semuaAnalisa = $this->analisaModel->findAll();
-        $mapAnalisa   = [];
-        foreach ($semuaAnalisa as $a) {
-            $mapAnalisa[$a['kredit_id']] = $a;
-        }
+        $kreditIds = !empty($daftarKredit) ? array_column($daftarKredit, 'kredit_id') : [];
+        $mapAnalisa = [];
+        $mapKomite  = [];
 
-        $semuaKomite = $this->komiteModel->orderBy('komite_id', 'DESC')->findAll();
-        $mapKomite   = [];
-        foreach ($semuaKomite as $km) {
-            if (!isset($mapKomite[$km['kredit_id']]) && !empty($km['catatan_approval'])) {
-                $mapKomite[$km['kredit_id']] = $km;
+        if (!empty($kreditIds)) {
+            $semuaAnalisa = $this->analisaModel->whereIn('kredit_id', $kreditIds)->findAll();
+            foreach ($semuaAnalisa as $a) {
+                $mapAnalisa[$a['kredit_id']] = $a;
             }
-        }
-        foreach ($semuaKomite as $km) {
-            if (!isset($mapKomite[$km['kredit_id']])) {
-                $mapKomite[$km['kredit_id']] = $km;
+
+            $semuaKomite = $this->komiteModel->whereIn('kredit_id', $kreditIds)->orderBy('komite_id', 'DESC')->findAll();
+            foreach ($semuaKomite as $km) {
+                if (!isset($mapKomite[$km['kredit_id']]) && !empty($km['catatan_approval'])) {
+                    $mapKomite[$km['kredit_id']] = $km;
+                }
+            }
+            foreach ($semuaKomite as $km) {
+                if (!isset($mapKomite[$km['kredit_id']])) {
+                    $mapKomite[$km['kredit_id']] = $km;
+                }
             }
         }
 
@@ -407,6 +412,18 @@ class Pengajuan extends BaseController
                 $dataKredit['hasil_slik'] = 'Menunggu Pengecekan Petugas SLIK';
             }
         }
+        if (!empty($input['hasil_slik'])) {
+            $dataKredit['hasil_slik'] = $input['hasil_slik'];
+        }
+        if (isset($input['berkas_slik_pdf'])) {
+            $dataKredit['berkas_slik_pdf'] = $input['berkas_slik_pdf'];
+        }
+        if (isset($input['berkas_slik_txt'])) {
+            $dataKredit['berkas_slik_txt'] = $input['berkas_slik_txt'];
+        }
+        if (!empty($input['slik_permohonan_nik'])) {
+            $dataKredit['slik_permohonan_nik'] = $input['slik_permohonan_nik'];
+        }
 
         if ($kreditId) {
             $this->kreditModel->update($kreditId, $dataKredit);
@@ -653,10 +670,26 @@ class Pengajuan extends BaseController
         $hppPctRK = (float)($input['hpp_persen_rk'] ?? 60);
         $hppNomRK = $pRK * ($hppPctRK / 100);
         $grossRK  = $pRK - $hppNomRK;
-        $bhPctRK  = (float)($input['biaya_hidup_persen_rk'] ?? 10);
-        $bhNomRK  = $pRK * ($bhPctRK / 100);
-        $blPctRK  = (float)($input['beban_lainnya_persen_rk'] ?? 10);
-        $blNomRK  = $pRK * ($blPctRK / 100);
+        // Biaya hidup nominal langsung & persentase
+        $bhNomRK = isset($input['biaya_hidup_nominal_rk']) ? $this->cleanNumber($input['biaya_hidup_nominal_rk']) : 0;
+        if ($bhNomRK == 0 && !empty($input['biaya_hidup_persen_rk']) && $pRK > 0) {
+            $bhPctRK = (float)$input['biaya_hidup_persen_rk'];
+            $bhNomRK = $pRK * ($bhPctRK / 100);
+        } else {
+            $bhPctRK = $pRK > 0 ? round(($bhNomRK / $pRK) * 100, 2) : (float)($input['biaya_hidup_persen_rk'] ?? 0);
+        }
+
+        // Beban lain nominal langsung & rincian beban lainnya
+        $blNomRK = isset($input['beban_lainnya_nominal_rk']) ? $this->cleanNumber($input['beban_lainnya_nominal_rk']) : 0;
+        if ($blNomRK == 0 && !empty($input['beban_lainnya_persen_rk']) && $pRK > 0) {
+            $blPctRK = (float)$input['beban_lainnya_persen_rk'];
+            $blNomRK = $pRK * ($blPctRK / 100);
+        } else {
+            $blPctRK = $pRK > 0 ? round(($blNomRK / $pRK) * 100, 2) : (float)($input['beban_lainnya_persen_rk'] ?? 0);
+        }
+        $detailBebanRK = !empty($input['detail_beban_lainnya_rk']) ? $input['detail_beban_lainnya_rk'] : null;
+        if ($detailBebanRK === '[]') $detailBebanRK = null;
+
         $nettRK   = $grossRK - $bhNomRK - $blNomRK;
 
         $pIV   = $this->cleanNumber($input['pendapatan_iv'] ?? 0);
@@ -669,40 +702,55 @@ class Pengajuan extends BaseController
         $blNomIV  = $pIV * ($blPctIV / 100);
         $nettIV   = $grossIV - $bhNomIV - $blNomIV;
 
+        // Tambahan Pendapatan Lain-lain
+        $adaPendapatanLain = !empty($input['ada_bukti_pendapatan_lain_rk']) ? 1 : 0;
+        $pLainRK           = $adaPendapatanLain ? $this->cleanNumber($input['pendapatan_lain_rk'] ?? 0) : 0;
+        $ketLainRK         = $adaPendapatanLain ? trim($input['keterangan_pendapatan_lain_rk'] ?? '') : null;
+        
+        // Cek file upload bukti pendapatan lain (JSON atau single path)
+        $pathBukti = !empty($input['bukti_pendapatan_lain_rk']) ? $input['bukti_pendapatan_lain_rk'] : null;
+        if ($pathBukti === '[]') $pathBukti = null;
+
+        $totalNettRK = $nettRK + $pLainRK;
         $angsuran = $this->cleanNumber($input['angsuran_dipilih'] ?? 0);
-        $dscRK = $angsuran > 0 ? round($nettRK / $angsuran, 2) : 0;
+        $dscRK = $angsuran > 0 ? round($totalNettRK / $angsuran, 2) : 0;
         $dscIV = $angsuran > 0 ? round($nettIV / $angsuran, 2) : 0;
 
         $statusRK = $dscRK >= 1.3 ? 'Aman' : ($dscRK >= 1.0 ? 'Hati-hati' : 'Berisiko');
         $statusIV = $dscIV >= 1.3 ? 'Aman' : ($dscIV >= 1.0 ? 'Hati-hati' : 'Berisiko');
 
         $dataKeu = [
-            'kredit_id'                 => $kreditId,
-            'pendapatan_rk'             => $pRK,
-            'hpp_persen_rk'             => $hppPctRK,
-            'hpp_nominal_rk'            => $hppNomRK,
-            'laba_kotor_rk'             => $grossRK,
-            'biaya_hidup_persen_rk'     => $bhPctRK,
-            'biaya_hidup_nominal_rk'     => $bhNomRK,
-            'beban_lainnya_persen_rk'   => $blPctRK,
-            'beban_lainnya_nominal_rk'  => $blNomRK,
-            'laba_bersih_rk'            => $nettRK,
-            'pendapatan_iv'             => $pIV,
-            'hpp_persen_iv'             => $hppPctIV,
-            'hpp_nominal_iv'            => $hppNomIV,
-            'laba_kotor_iv'             => $grossIV,
-            'biaya_hidup_persen_iv'     => $bhPctIV,
-            'biaya_hidup_nominal_iv'    => $bhNomIV,
-            'beban_lainnya_persen_iv'   => $blPctIV,
-            'beban_lainnya_nominal_iv'  => $blNomIV,
-            'laba_bersih_iv'            => $nettIV,
-            'angsuran_balloon'          => $this->cleanNumber($input['angsuran_balloon'] ?? 0),
-            'angsuran_installment'      => $this->cleanNumber($input['angsuran_installment'] ?? 0),
-            'angsuran_dipilih'          => $angsuran,
-            'rasio_dsc_rk'              => $dscRK,
-            'rasio_dsc_iv'              => $dscIV,
-            'status_dsc_rk'             => $statusRK,
-            'status_dsc_iv'             => $statusIV
+            'kredit_id'                     => $kreditId,
+            'pendapatan_rk'                 => $pRK,
+            'pendapatan_lain_rk'            => $pLainRK,
+            'keterangan_pendapatan_lain_rk' => $ketLainRK,
+            'ada_bukti_pendapatan_lain_rk'  => $adaPendapatanLain,
+            'bukti_pendapatan_lain_rk'      => $pathBukti,
+            'hpp_persen_rk'                 => $hppPctRK,
+            'hpp_nominal_rk'                => $hppNomRK,
+            'laba_kotor_rk'                 => $grossRK,
+            'biaya_hidup_persen_rk'         => $bhPctRK,
+            'biaya_hidup_nominal_rk'        => $bhNomRK,
+            'beban_lainnya_persen_rk'       => $blPctRK,
+            'beban_lainnya_nominal_rk'      => $blNomRK,
+            'detail_beban_lainnya_rk'       => $detailBebanRK,
+            'laba_bersih_rk'                => $nettRK,
+            'pendapatan_iv'                 => $pIV,
+            'hpp_persen_iv'                 => $hppPctIV,
+            'hpp_nominal_iv'                => $hppNomIV,
+            'laba_kotor_iv'                 => $grossIV,
+            'biaya_hidup_persen_iv'         => $bhPctIV,
+            'biaya_hidup_nominal_iv'        => $bhNomIV,
+            'beban_lainnya_persen_iv'       => $blPctIV,
+            'beban_lainnya_nominal_iv'      => $blNomIV,
+            'laba_bersih_iv'                => $nettIV,
+            'angsuran_balloon'              => $this->cleanNumber($input['angsuran_balloon'] ?? 0),
+            'angsuran_installment'          => $this->cleanNumber($input['angsuran_installment'] ?? 0),
+            'angsuran_dipilih'              => $angsuran,
+            'rasio_dsc_rk'                  => $dscRK,
+            'rasio_dsc_iv'                  => $dscIV,
+            'status_dsc_rk'                 => $statusRK,
+            'status_dsc_iv'                 => $statusIV
         ];
 
         $cek = $this->keuanganModel->where('kredit_id', $kreditId)->first();
@@ -711,6 +759,56 @@ class Pengajuan extends BaseController
         } else {
             $this->keuanganModel->insert($dataKeu);
         }
+    }
+
+    public function uploadBuktiPendapatanLain()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $folder = FCPATH . 'uploads/keuangan/';
+        if (!is_dir($folder)) {
+            mkdir($folder, 0777, true);
+        }
+
+        $uploaded = [];
+
+        // Cek jika dikirim multiple files via files[]
+        $filesObj = $this->request->getFiles();
+        if (isset($filesObj['files']) && is_array($filesObj['files'])) {
+            foreach ($filesObj['files'] as $f) {
+                if ($f && $f->isValid() && !$f->hasMoved()) {
+                    $newName = $f->getRandomName();
+                    $f->move($folder, $newName);
+                    $uploaded[] = [
+                        'nama_file' => $f->getClientName(),
+                        'path_file' => 'uploads/keuangan/' . $newName
+                    ];
+                }
+            }
+        } elseif ($f = $this->request->getFile('file')) {
+            if ($f && $f->isValid() && !$f->hasMoved()) {
+                $newName = $f->getRandomName();
+                $f->move($folder, $newName);
+                $uploaded[] = [
+                    'nama_file' => $f->getClientName(),
+                    'path_file' => 'uploads/keuangan/' . $newName
+                ];
+            }
+        }
+
+        if (empty($uploaded)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'File tidak valid atau tidak ditemukan']);
+        }
+
+        return $this->response->setJSON([
+            'status'    => true,
+            'message'   => count($uploaded) . ' berkas berhasil diunggah',
+            'files'     => $uploaded,
+            'path_file' => $uploaded[0]['path_file'],
+            'nama_file' => $uploaded[0]['nama_file']
+        ]);
     }
 
     private function simpanDisbursement($kreditId, $input)
@@ -836,13 +934,15 @@ class Pengajuan extends BaseController
             }
         }
 
+        $catatan = trim($this->request->getPost('catatan') ?? '');
         $docId = $this->dokumenModel->insert([
             'kredit_id'        => $kreditId,
             'kategori_dokumen' => $kategori,
             'nama_file_asli'   => $file->getClientName(),
             'path_file'        => 'uploads/dokumen/' . $newName,
             'ukuran_file_bytes'=> file_exists($destPath) ? filesize($destPath) : $file->getSize(),
-            'tipe_file'        => $file->getClientMimeType()
+            'tipe_file'        => $file->getClientMimeType(),
+            'catatan_dokumen'  => $catatan ?: $kategori
         ]);
 
         return $this->response->setJSON([
@@ -850,8 +950,37 @@ class Pengajuan extends BaseController
             'dokumen_id' => $docId,
             'nama_file'  => $file->getClientName(),
             'kategori'   => $kategori,
+            'catatan'    => $catatan ?: $kategori,
             'ukuran_kb'  => number_format($file->getSize() / 1024, 1),
             'path'       => base_url('uploads/dokumen/' . $newName)
+        ]);
+    }
+
+    public function hapusDokumen()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $docId = (int)($this->request->getPost('dokumen_id') ?? $this->request->getGet('dokumen_id') ?? 0);
+        $doc = $this->dokumenModel->find($docId);
+        if (!$doc) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Dokumen tidak ditemukan']);
+        }
+
+        // Hapus file fisik jika ada
+        if (!empty($doc['path_file'])) {
+            $filePath = FCPATH . $doc['path_file'];
+            if (file_exists($filePath) && is_file($filePath)) {
+                @unlink($filePath);
+            }
+        }
+
+        $this->dokumenModel->delete($docId);
+
+        return $this->response->setJSON([
+            'status'  => true,
+            'message' => 'Dokumen berhasil dihapus'
         ]);
     }
 
@@ -863,39 +992,96 @@ class Pengajuan extends BaseController
 
         $docId    = (int)$this->request->getPost('dokumen_id');
         $kategori = trim($this->request->getPost('kategori') ?? '');
-        if (empty($kategori)) {
-            $kategori = 'KTP & NPWP';
-        }
+        $catatan  = $this->request->getPost('catatan');
 
         $doc = $this->dokumenModel->find($docId);
         if (!$doc) {
             return $this->response->setJSON(['status' => false, 'message' => 'Dokumen tidak ditemukan']);
         }
 
-        $this->dokumenModel->update($docId, [
-            'kategori_dokumen' => $kategori
-        ]);
+        $updateData = [];
+        if (!empty($kategori)) {
+            $updateData['kategori_dokumen'] = $kategori;
+        }
+        if ($catatan !== null) {
+            $updateData['catatan_dokumen'] = trim($catatan);
+        }
+
+        if (!empty($updateData)) {
+            $this->dokumenModel->update($docId, $updateData);
+        }
 
         return $this->response->setJSON([
             'status'   => true,
-            'message'  => 'Kategori berhasil diperbarui',
-            'kategori' => $kategori
+            'message'  => 'Keterangan / kategori dokumen berhasil diperbarui',
+            'kategori' => $kategori ?: ($doc['kategori_dokumen'] ?? ''),
+            'catatan'  => $catatan !== null ? trim($catatan) : ($doc['catatan_dokumen'] ?? '')
         ]);
     }
 
     public function hapus($id = null)
     {
-        if ($redirect = $this->cekAuth()) return $redirect;
+        $isAjax = $this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest';
 
-        $userRole = strtolower(trim(session()->get('jabatan') ?? ''));
-        $canDelete = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false || $userRole === 'superadmin' || $userRole === 'admin');
-
-        if (!$canDelete) {
-            return redirect()->to('/pengajuan')->with('error', 'Akses ditolak: Hanya CEO / Direksi yang berhak menghapus data pengajuan kredit.');
+        if ($redirect = $this->cekAuth()) {
+            if ($isAjax) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Sesi login telah habis.']);
+            }
+            return $redirect;
         }
 
+        $kredit = $this->kreditModel->find($id);
+        if (!$kredit) {
+            $msg = 'Data berkas pengajuan kredit tidak ditemukan.';
+            if ($isAjax) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
+            }
+            return redirect()->back()->with('error', $msg);
+        }
+
+        $userId   = (int)session()->get('user_id');
+        $userRole = strtolower(trim(session()->get('jabatan') ?? ''));
+        $isExecutiveOrAdmin = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false || $userRole === 'superadmin' || $userRole === 'admin');
+        $isPengusul = ($userRole === 'pengusul' || strpos($userRole, 'pengusul') !== false || strpos($userRole, 'ao') !== false || strpos($userRole, 'officer') !== false);
+
+        // Pengusul dapat menghapus berkas pengajuan miliknya
+        $isOwner = (!empty($kredit['user_id']) && (int)$kredit['user_id'] === $userId) || empty($kredit['user_id']);
+
+        if (!$isExecutiveOrAdmin && !($isPengusul && $isOwner)) {
+            $msg = 'Akses ditolak: Anda tidak memiliki izin untuk menghapus berkas pengajuan ini.';
+            if ($isAjax) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
+            }
+            return redirect()->back()->with('error', $msg);
+        }
+
+        $nomorAplikasi = $kredit['nomor_aplikasi'] ?? ('ID #' . $id);
         $this->kreditModel->delete($id);
-        return redirect()->to('/pengajuan')->with('success', 'Data pengajuan berhasil dihapus.');
+
+        try {
+            LogAktivitasModel::catat(
+                'Menghapus berkas pengajuan kredit ' . $nomorAplikasi,
+                'KREDIT',
+                'WARNING',
+                [
+                    'kredit_id'       => $id,
+                    'nomor_aplikasi'  => $nomorAplikasi,
+                    'nama_debitur'    => $kredit['nama_debitur'] ?? '-',
+                    'plafon_pengajuan'=> $kredit['plafon_pengajuan'] ?? 0
+                ]
+            );
+        } catch (\Throwable $e) {
+            // Abaikan jika log aktivitas gagal
+        }
+
+        if ($isAjax) {
+            return $this->response->setJSON([
+                'status'  => 'success',
+                'message' => 'Berkas pengajuan ' . esc($nomorAplikasi) . ' berhasil dihapus.'
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Berkas pengajuan ' . esc($nomorAplikasi) . ' berhasil dihapus.');
     }
 
     public function cetak($id = null)
@@ -997,9 +1183,9 @@ class Pengajuan extends BaseController
         $omzet = $this->cleanNumber($input['pendapatan_rk'] ?? ($input['pendapatan_iv'] ?? 0));
         $angsuran = $this->cleanNumber($input['angsuran_dipilih'] ?? 0);
         $hppPct = (float)($input['hpp_persen_rk'] ?? 60);
-        $bhPct  = (float)($input['biaya_hidup_persen_rk'] ?? 10);
-        $blPct  = (float)($input['beban_lainnya_persen_rk'] ?? 10);
-        $labaBersih = $omzet - ($omzet * $hppPct/100) - ($omzet * $bhPct/100) - ($omzet * $blPct/100);
+        $bhNom  = isset($input['biaya_hidup_nominal_rk']) ? $this->cleanNumber($input['biaya_hidup_nominal_rk']) : ($omzet * ((float)($input['biaya_hidup_persen_rk'] ?? 10) / 100));
+        $blNom  = isset($input['beban_lainnya_nominal_rk']) ? $this->cleanNumber($input['beban_lainnya_nominal_rk']) : ($omzet * ((float)($input['beban_lainnya_persen_rk'] ?? 10) / 100));
+        $labaBersih = $omzet - ($omzet * $hppPct/100) - $bhNom - $blNom;
         $dsc = $angsuran > 0 ? round($labaBersih / $angsuran, 2) : 0;
 
         $service = new GeminiAiService();
@@ -1023,6 +1209,98 @@ class Pengajuan extends BaseController
         ]);
 
         return $this->response->setJSON($hasil);
+    }
+
+    public function uploadPdfSlik()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $file = $this->request->getFile('file_pdf');
+        $kreditId = $this->request->getPost('kredit_id');
+
+        if (!$file || !$file->isValid()) {
+            return $this->response->setJSON(['status' => false, 'message' => 'File PDF tidak valid atau gagal diunggah']);
+        }
+
+        $newName = $file->getRandomName();
+        $targetDir = FCPATH . 'uploads/slik';
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
+        $file->move($targetDir, $newName);
+        $filePath = 'uploads/slik/' . $newName;
+
+        if ($kreditId) {
+            $this->kreditModel->update($kreditId, [
+                'berkas_slik_pdf' => $filePath
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'status'   => true,
+            'message'  => 'Berkas PDF SLIK iDeb berhasil diunggah',
+            'filepath' => $filePath,
+            'url'      => base_url($filePath),
+            'filename' => $file->getClientName()
+        ]);
+    }
+
+    public function uploadHasilSlik()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $kreditId = $this->request->getPost('kredit_id');
+        $hasilSlik = $this->request->getPost('hasil_slik') ?? 'Lancar';
+        $statusSlik = 'Telah Terbit';
+
+        $filePdf = $this->request->getFile('file_pdf');
+        $fileTxt = $this->request->getFile('file_txt');
+
+        $updateData = [
+            'status_slik'      => $statusSlik,
+            'hasil_slik'       => $hasilSlik,
+            'slik_verified_at' => date('Y-m-d H:i:s'),
+            'slik_verified_by' => session()->get('nama_lengkap') ?: 'Staff Pengusul Kredit'
+        ];
+
+        $targetDir = FCPATH . 'uploads/slik';
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
+
+        $pdfPath = null;
+        if ($filePdf && $filePdf->isValid()) {
+            $newNamePdf = $filePdf->getRandomName();
+            $filePdf->move($targetDir, $newNamePdf);
+            $pdfPath = 'uploads/slik/' . $newNamePdf;
+            $updateData['berkas_slik_pdf'] = $pdfPath;
+        }
+
+        $txtPath = null;
+        if ($fileTxt && $fileTxt->isValid()) {
+            $newNameTxt = $fileTxt->getRandomName();
+            $fileTxt->move($targetDir, $newNameTxt);
+            $txtPath = 'uploads/slik/' . $newNameTxt;
+            $updateData['berkas_slik_txt'] = $txtPath;
+        }
+
+        if ($kreditId) {
+            $this->kreditModel->update($kreditId, $updateData);
+        }
+
+        return $this->response->setJSON([
+            'status'     => true,
+            'message'    => 'Hasil SLIK berhasil disimpan dan diterbitkan!',
+            'hasil_slik' => $hasilSlik,
+            'status_slik'=> $statusSlik,
+            'pdf_path'   => $pdfPath,
+            'pdf_url'    => $pdfPath ? base_url($pdfPath) : null,
+            'txt_path'   => $txtPath
+        ]);
     }
 
     private function cleanNumber($val)

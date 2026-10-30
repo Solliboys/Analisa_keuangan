@@ -505,6 +505,30 @@
                             <td class="font-bold text-blue-700">Rp <?= number_format((float)($keuangan['laba_bersih_iv'] ?? 0), 0, ',', '.') ?></td>
                             <td>Memadai</td>
                         </tr>
+                        <?php if (!empty($keuangan['ada_bukti_pendapatan_lain_rk']) || ((float)($keuangan['pendapatan_lain_rk'] ?? 0) > 0)): ?>
+                        <?php 
+                            $bRaw = $keuangan['bukti_pendapatan_lain_rk'] ?? '';
+                            $bCount = 0;
+                            if (!empty($bRaw)) {
+                                $dec = json_decode($bRaw, true);
+                                $bCount = is_array($dec) ? count($dec) : 1;
+                            }
+                        ?>
+                        <tr>
+                            <td>Pendapatan Lain-Lain <?= !empty($keuangan['keterangan_pendapatan_lain_rk']) ? '('.esc($keuangan['keterangan_pendapatan_lain_rk']).')' : '' ?></td>
+                            <td>Penghasilan tambahan</td>
+                            <td class="font-bold text-emerald-700">Rp <?= number_format((float)($keuangan['pendapatan_lain_rk'] ?? 0), 0, ',', '.') ?></td>
+                            <td>-</td>
+                            <td><?= $bCount > 0 ? ($bCount > 1 ? "Ada Bukti ($bCount berkas)" : "Ada Bukti") : "Tambahan" ?></td>
+                        </tr>
+                        <tr>
+                            <td>Total Kapasitas Cashflow</td>
+                            <td>Laba Bersih + Pend. Lain</td>
+                            <td class="font-extrabold text-blue-900">Rp <?= number_format((float)($keuangan['laba_bersih_rk'] ?? 0) + (float)($keuangan['pendapatan_lain_rk'] ?? 0), 0, ',', '.') ?></td>
+                            <td class="font-extrabold text-blue-900">Rp <?= number_format((float)($keuangan['laba_bersih_iv'] ?? 0), 0, ',', '.') ?></td>
+                            <td>Total Cashflow</td>
+                        </tr>
+                        <?php endif; ?>
                         <tr>
                             <td>Angsuran Kredit Acuan</td>
                             <td>Plafon x Bunga/Tenor</td>

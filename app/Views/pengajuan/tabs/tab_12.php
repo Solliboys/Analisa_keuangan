@@ -78,22 +78,6 @@
         </div>
     </div>
 
-    <!-- Status & Finalisasi Pengajuan Pengusul (Tahap Akhir Pengusul) -->
-    <div class="mt-8 p-6 bg-slate-50/80 border border-slate-200/90 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-            <div class="flex items-center gap-2 mb-1">
-                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Status Dokumen & Pengajuan</label>
-                <span class="px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 rounded-md">Tahap Akhir Pengusul</span>
-            </div>
-            <p class="text-xs text-slate-500">Pilih status pengajuan untuk disimpan sebagai draf atau diajukan langsung ke tahap sidang komite pembiayaan.</p>
-        </div>
-        <div class="w-full sm:w-64">
-            <select name="status_pengajuan" id="status_pengajuan" class="w-full text-xs font-bold border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                <?php $stp = $kredit['status_pengajuan'] ?? 'Draft'; ?>
-                <option value="Draft" <?= $stp === 'Draft' ? 'selected' : '' ?>>Draft (Belum Selesai)</option>
-                <option value="Diajukan" <?= $stp === 'Diajukan' ? 'selected' : '' ?>>Diajukan ke Komite</option>
-            </select>
-        </div>
-    </div>
+    <!-- Hidden input status_pengajuan untuk menjaga konsistensi data -->
+    <input type="hidden" name="status_pengajuan" id="status_pengajuan" value="<?= esc($kredit['status_pengajuan'] ?? 'Draft') ?>">
 </div>

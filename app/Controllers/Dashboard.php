@@ -104,23 +104,26 @@ class Dashboard extends BaseController
             $analisaModel = new \App\Models\KreditAnalisaModel();
             $komiteModel  = new \App\Models\KomiteModel();
 
-            $semuaAnalisa = $analisaModel->findAll();
-            $mapAnalisa   = [];
-            foreach ($semuaAnalisa as $a) {
-                $mapAnalisa[$a['kredit_id']] = $a;
-            }
+            $kreditIds = !empty($kreditSaya) ? array_column($kreditSaya, 'kredit_id') : [];
+            $mapAnalisa = [];
+            $mapKomite  = [];
 
-            // Ambil keputusan & catatan reviewer dari tabel komite
-            $semuaKomite = $komiteModel->orderBy('komite_id', 'DESC')->findAll();
-            $mapKomite   = [];
-            foreach ($semuaKomite as $km) {
-                if (!isset($mapKomite[$km['kredit_id']]) && !empty($km['catatan_approval'])) {
-                    $mapKomite[$km['kredit_id']] = $km;
+            if (!empty($kreditIds)) {
+                $daftarAnalisa = $analisaModel->whereIn('kredit_id', $kreditIds)->findAll();
+                foreach ($daftarAnalisa as $a) {
+                    $mapAnalisa[$a['kredit_id']] = $a;
                 }
-            }
-            foreach ($semuaKomite as $km) {
-                if (!isset($mapKomite[$km['kredit_id']])) {
-                    $mapKomite[$km['kredit_id']] = $km;
+
+                $daftarKomite = $komiteModel->whereIn('kredit_id', $kreditIds)->orderBy('komite_id', 'DESC')->findAll();
+                foreach ($daftarKomite as $km) {
+                    if (!isset($mapKomite[$km['kredit_id']]) && !empty($km['catatan_approval'])) {
+                        $mapKomite[$km['kredit_id']] = $km;
+                    }
+                }
+                foreach ($daftarKomite as $km) {
+                    if (!isset($mapKomite[$km['kredit_id']])) {
+                        $mapKomite[$km['kredit_id']] = $km;
+                    }
                 }
             }
 

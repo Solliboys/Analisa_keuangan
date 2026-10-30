@@ -7,7 +7,25 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="<?= base_url('css/pengajuan-form.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/pengajuan-form.css?v=' . time()) ?>">
+    <style>
+        /* Posisi tanda panah dropdown (chevron) agar rapi & tidak terlalu kepinggir */
+        select:not([multiple]):not([size]) {
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+            background-position: right 1.25rem center !important;
+            background-repeat: no-repeat !important;
+            background-size: 1.15rem 1.15rem !important;
+            padding-right: 3rem !important;
+            cursor: pointer;
+        }
+        select:not([multiple]):not([size]):disabled {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col pb-24">
 
@@ -69,9 +87,9 @@
                     5  => ['title' => '5. Dokumen',        'sub' => 'Unggah berkas'],
                     6  => ['title' => '6. SLIK / CLIK',    'sub' => 'Cek riwayat kredit'],
                     7  => ['title' => '7. Web Check',      'sub' => 'Verifikasi online'],
-                    8  => ['title' => '8. Analisa Kredit', 'sub' => 'Scoring kelayakan'],
-                    9  => ['title' => '9. Rekening Koran', 'sub' => 'Analisis mutasi'],
-                    10 => ['title' => '10. Laba Rugi',     'sub' => 'Proyeksi keuangan'],
+                    8  => ['title' => '8. Rekening Koran', 'sub' => 'Analisis mutasi'],
+                    9  => ['title' => '9. Laba Rugi',      'sub' => 'Proyeksi keuangan'],
+                    10 => ['title' => '10. Opini Pengusul','sub' => 'Catatan kualitatif'],
                     11 => ['title' => '11. Disbursement',  'sub' => 'Jadwal pencairan'],
                     12 => ['title' => '12. Repayment',     'sub' => 'Kemampuan angsur'],
                 ];
@@ -188,7 +206,7 @@
     <script>
         window.BASE_URL = '<?= rtrim(base_url(), '/') ?>';
     </script>
-    <script src="<?= base_url('js/pengajuan-form.js') ?>"></script>
+    <script src="<?= base_url('js/pengajuan-form.js?v=' . time()) ?>"></script>
 
     <!-- Modal Interaktif: Penelusuran Perkara Mahkamah Agung RI -->
     <div id="modalCekPerkaraMa" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
@@ -245,7 +263,7 @@
 
                 <!-- Tombol Aksi Penelusuran -->
                 <div class="flex flex-wrap items-center gap-2.5">
-                    <button type="button" id="btnJalankanScanMa" onclick="jalankanScanPerkaraMa()" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer">
+                    <button type="button" id="btnJalankanScanMa" onclick="jalankanScanPerkaraMa()" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                         <span>⚡ Scan Otomatis (AI Legal Assistant)</span>
                     </button>
