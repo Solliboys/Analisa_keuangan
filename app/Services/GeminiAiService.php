@@ -215,6 +215,23 @@ class GeminiAiService
         $bidangBersih      = trim($bidangUsaha ?: 'Perdagangan & Jasa');
         $catatanBersih     = trim($catatanTambahan);
 
+        // Lakukan pencarian live berita online & rekam jejak kepolisian secara real-time
+        $beritaList = $this->cariBeritaOnline($namaDebiturBersih, $kotaBersih, $namaUsahaBersih);
+        $beritaPrompt = "";
+        if (!empty($beritaList)) {
+            $beritaPrompt .= "TEMUAN HASIL PENCARIAN BERITA LIVE (MEDIA ONLINE REAL-TIME):\n";
+            foreach ($beritaList as $idx => $b) {
+                $beritaPrompt .= ($idx + 1) . ". Judul: {$b['title']}\n";
+                $beritaPrompt .= "   Sumber/Waktu: {$b['date']}\n";
+                if (!empty($b['snippet'])) {
+                    $beritaPrompt .= "   Cuplikan: {$b['snippet']}\n";
+                }
+            }
+            $beritaPrompt .= "\n";
+        } else {
+            $beritaPrompt .= "TEMUAN HASIL PENCARIAN BERITA LIVE (MEDIA ONLINE REAL-TIME): Tidak ditemukan artikel berita kriminal atau perselisihan publik arus utama atas nama ini.\n\n";
+        }
+
         $prompt = "Anda adalah AI Senior Risk Investigator dan Legal Compliance Officer perbankan terkemuka di Indonesia.\n";
         $prompt .= "Lakukan profiling identitas dan investigasi digital mendalam terhadap calon debitur pembiayaan berikut:\n";
         $prompt .= "- Nama Calon Debitur: {$namaDebiturBersih}\n";
@@ -225,23 +242,27 @@ class GeminiAiService
             $prompt .= "- Catatan Lapangan / Bukti Tambahan dari Pengusul: {$catatanBersih}\n";
         }
         $prompt .= "\n";
-
+        $prompt .= $beritaPrompt;
         $prompt .= "TUGAS PENELUSURAN (5 ASPEK KEPATUHAN & HUKUM):\n";
-        $prompt .= "1. Profiling Subjek: Identifikasi siapa orang ini (pejabat negara, tokoh publik, pengusaha, akademisi, atau warga umum). Jika pejabat negara/pengampu anggaran negara (contoh Kepala Badan Gizi Nasional/MBG, menteri, kepala daerah), tandai sebagai Politically Exposed Person (PEP) yang perlu Enhanced Due Diligence (EDD).\n";
-        $prompt .= "2. Penelusuran Perkara Pengadilan (SIPP & MA): Periksa rekam jejak perkara hukum (pidana korupsi/tipikor, kejahatan umum, maupun sengketa perdata/kepailitan). Jika ada vonis inkracht atau kasus aktif, nyatakan tingkat risiko HIGH/CRITICAL.\n";
-        $prompt .= "3. Pencarian Media Online & Jejak Digital: Cek berita negatif, penipuan, atau perselisihan publik.\n";
-        $prompt .= "4. Daftar Terduga Teroris & DTTOT PPATK: Kepatuhan anti pencucian uang dan pendanaan terorisme.\n";
-        $prompt .= "5. Status Objek Lelang KPKNL: Penelusuran sita eksekusi pada portal lelang resmi.\n";
-        $prompt .= "6. Kroscek Lingkungan Sekitar & Reputasi: Konfirmasi integritas di lingkungan sosial dan bisnis.\n\n";
+        $prompt .= "1. Profiling Subjek: Identifikasi siapa orang ini secara spesifik (tokoh publik, pejabat negara/pengampu MBG, pengusaha, aparat penegak hukum, atau warga umum). Jika nama subjek terkait kasus penangkapan polisi / tindak pidana, jelaskan kasusnya secara gamblang!\n";
+        $prompt .= "2. Penelusuran Perkara Pengadilan & Kepolisian: Periksa rekam jejak perkara hukum (pidana umum, penistaan agama, korupsi/tipikor, penipuan, judi, narkoba, penggelapan, maupun perdata/kepailitan). Jika ada catatan penangkapan oleh kepolisian/Polres atau vonis peradilan, jelaskan secara transparan.\n";
+        $prompt .= "3. Pencarian Media Online & Jejak Digital: Paparkan fakta liputan media nasional maupun lokal yang ditemukan pada hasil berita live.\n";
+        $prompt .= "4. Daftar Terduga Teroris & DTTOT PPATK: Evaluasi kepatuhan APU-PPT serta potensi risiko pencucian uang/pendanaan terorisme.\n";
+        $prompt .= "5. Status Objek Lelang KPKNL: Penelusuran kepemilikan aset pada portal lelang resmi sita eksekusi negara.\n";
+        $prompt .= "6. Kroscek Lingkungan Sekitar & Reputasi: Konfirmasi dampak sosial, kemarahan publik, atau reputasi moral di lingkungan setempat.\n\n";
+        $prompt .= "PEDOMAN PENILAIAN TINGKAT RISIKO:\n";
+        $prompt .= "- 'CRITICAL' atau 'HIGH': Jika subjek pernah/sedang ditangkap polisi/Polres, berstatus tersangka kasus pidana (seperti penistaan agama, penipuan, korupsi, judi, narkoba), masuk daftar buronan/DPO, atau memiliki putusan pidana inkrah. WAJIB rekomendasikan penolakan kredit karena risiko reputasi dan hukum yang berat!\n";
+        $prompt .= "- 'MEDIUM (PEP)': Jika subjek adalah pejabat negara / penyelenggara negara / pengampu anggaran (PEP) tanpa catatan pidana, memerlukan Enhanced Due Diligence (EDD).\n";
+        $prompt .= "- 'LOW': Jika nama subjek bersih dari rekam jejak kriminal, tidak ada pemberitaan negatif di media, bukan PEP bermasalah, dan memiliki reputasi baik.\n\n";
 
         $prompt .= "Kembalikan output HANYA berupa JSON murni tanpa markdown dengan format persis:\n";
         $prompt .= "{\n";
-        $prompt .= '  "profil_subjek": "penjelasan detail siapa figur/orang ini di Indonesia", ' . "\n";
-        $prompt .= '  "sipp_keterangan": "penjelasan resmi hasil penelusuran SIPP & Mahkamah Agung", ' . "\n";
-        $prompt .= '  "internet_keterangan": "penjelasan jejak digital media online & pemberitaan", ' . "\n";
+        $prompt .= '  "profil_subjek": "penjelasan detail siapa figur/orang ini di Indonesia dan kasus hukumnya jika ada", ' . "\n";
+        $prompt .= '  "sipp_keterangan": "penjelasan resmi hasil penelusuran perkara kepolisian & SIPP/Mahkamah Agung", ' . "\n";
+        $prompt .= '  "internet_keterangan": "penjelasan detail jejak digital media online & pemberitaan", ' . "\n";
         $prompt .= '  "watchlist_keterangan": "penjelasan status APU-PPT & DTTOT PPATK", ' . "\n";
         $prompt .= '  "lelang_keterangan": "penjelasan status objek lelang KPKNL", ' . "\n";
-        $prompt .= '  "negatif_keterangan": "penjelasan reputasi lingkungan dan integritas sosial", ' . "\n";
+        $prompt .= '  "negatif_keterangan": "penjelasan reputasi lingkungan dan dampak sosial/moral", ' . "\n";
         $prompt .= '  "ringkasan_risiko": "kesimpulan 1 paragraf profil integritas calon debitur", ' . "\n";
         $prompt .= '  "tingkat_risiko": "LOW / MEDIUM (PEP) / HIGH / CRITICAL"' . "\n";
         $prompt .= "}";
@@ -330,6 +351,70 @@ class GeminiAiService
     }
 
     /**
+     * Mesin pencarian live Google News RSS untuk deteksi perkara, penangkapan polisi, dan adverse news
+     */
+    protected function cariBeritaOnline($namaDebitur, $kota = '', $namaUsaha = '')
+    {
+        $queries = [];
+        $rawNama = trim($namaDebitur);
+        if (!empty($rawNama)) {
+            $queries[] = $rawNama;
+            // Jika ada format "alias" (contoh: Affan Sulheh alias Affan bin Yakub)
+            if (stripos($rawNama, ' alias ') !== false) {
+                $parts = preg_split('/\s+alias\s+/i', $rawNama);
+                foreach ($parts as $p) {
+                    $p = trim($p);
+                    if (!empty($p) && !in_array($p, $queries)) {
+                        $queries[] = $p;
+                    }
+                }
+            }
+        }
+        if (!empty($namaUsaha) && !in_array(strtolower($namaUsaha), ['toko', 'warung', 'usaha komersial', '-'])) {
+            $queries[] = trim($namaUsaha);
+        }
+
+        $foundArticles = [];
+        $seenTitles = [];
+
+        foreach (array_slice($queries, 0, 3) as $q) {
+            $url = "https://news.google.com/rss/search?q=" . urlencode($q) . "&hl=id&gl=ID&ceid=ID:id";
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+            $res = curl_exec($ch);
+            curl_close($ch);
+
+            if ($res) {
+                libxml_use_internal_errors(true);
+                $xml = simplexml_load_string($res);
+                if ($xml && isset($xml->channel->item)) {
+                    foreach ($xml->channel->item as $item) {
+                        $title = trim((string)$item->title);
+                        $pubDate = trim((string)$item->pubDate);
+                        $desc = trim(strip_tags((string)$item->description));
+
+                        $titleKey = strtolower(preg_replace('/[^a-z0-9]/', '', $title));
+                        if (!empty($titleKey) && !isset($seenTitles[$titleKey])) {
+                            $seenTitles[$titleKey] = true;
+                            $foundArticles[] = [
+                                'title'   => $title,
+                                'date'    => $pubDate,
+                                'snippet' => $desc
+                            ];
+                            if (count($foundArticles) >= 10) break 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $foundArticles;
+    }
+
+    /**
      * AI Legal Assistant: Penelusuran Perkara Pengadilan & Direktori Putusan MA
      */
     public function cekPerkaraPengadilan($namaDebitur, $kota = '', $namaUsaha = '')
@@ -354,17 +439,31 @@ class GeminiAiService
             ];
         }
 
+        // Lakukan pencarian live berita online & kepolisian
+        $beritaList = $this->cariBeritaOnline($namaDebiturBersih, $kotaBersih, $usahaBersih);
+        $beritaPrompt = "";
+        if (!empty($beritaList)) {
+            $beritaPrompt .= "HASIL PENCARIAN BERITA LIVE TERKINI (MEDIA ONLINE & KEPOLISIAN):\n";
+            foreach ($beritaList as $idx => $b) {
+                $beritaPrompt .= ($idx + 1) . ". {$b['title']} ({$b['date']})\n";
+            }
+            $beritaPrompt .= "\n";
+        }
+
         $prompt = "Anda adalah Panitera Muda Pengadilan & Senior Legal Compliance Officer Perbankan untuk uji tuntas (legal due diligence) dan verifikasi perkara hukum Mahkamah Agung, SIPP, dan Profiling Calon Debitur.\n";
         $prompt .= "Lakukan profiling identitas mendalam dan pemeriksaan rekam jejak hukum calon debitur berikut:\n";
         $prompt .= "- Nama Calon Debitur: {$namaDebiturBersih}\n";
         $prompt .= "- Kota / Domisili Hukum: {$kotaBersih}\n";
         $prompt .= "- Entitas Usaha: {$usahaBersih}\n\n";
+        if (!empty($beritaPrompt)) {
+            $prompt .= $beritaPrompt;
+        }
         $prompt .= "INSTRUKSI KHUSUS & PROFILING:\n";
-        $prompt .= "1. PROFILING SIAPA ORANGNYA: Identifikasi secara spesifik siapa figur/subjek hukum ini di Indonesia (misal: apakah figur publik, pejabat negara/menteri/kepala lembaga seperti Badan Gizi Nasional/MBG, guru besar/akademisi, pengusaha, aparat penegak hukum, atau warga sipil biasa). Jelaskan profilnya secara detail pada field 'profil_subjek'!\n";
-        $prompt .= "2. VERIFIKASI STATUS PERKARA & KORUPSI: Periksa apakah nama ini tercatat memiliki vonis bersalah, perkara korupsi/tipikor, perkara pidana umum, atau sengketa wanprestasi perdata di Mahkamah Agung & SIPP. Jelaskan secara gamblang fakta hukumnya (apakah ada vonis/perkara korupsi atau tidak ada sama sekali).\n";
+        $prompt .= "1. PROFILING SIAPA ORANGNYA: Identifikasi secara spesifik siapa figur/subjek hukum ini di Indonesia (misal: apakah figur publik, pejabat negara/menteri/kepala lembaga seperti Badan Gizi Nasional/MBG, guru besar/akademisi, pengusaha, aparat penegak hukum, atau warga sipil biasa). Jika nama ini terkait kasus pidana kepolisian atau penangkapan oleh aparat, jelaskan secara gamblang!\n";
+        $prompt .= "2. VERIFIKASI STATUS PERKARA & KORUPSI: Periksa apakah nama ini tercatat memiliki vonis bersalah, perkara pidana umum (seperti penistaan agama, penipuan, judi, narkoba), perkara korupsi/tipikor, atau sengketa wanprestasi perdata. Jika ada penangkapan polisi atau status tersangka, nyatakan status_perkara sebagai 'ada_perkara' dengan tingkat_risiko 'HIGH' atau 'CRITICAL'!\n";
         $prompt .= "3. STATUS KEPATUHAN PERBANKAN (PEP / APU-PPT): Jika yang bersangkutan adalah pejabat negara/lembaga pengelola anggaran negara, nyatakan statusnya sebagai Politically Exposed Person (PEP) yang memerlukan Enhanced Due Diligence (EDD) meskipun tidak ada catatan pidana.\n";
         $prompt .= "4. KRITERIA STATUS PERKARA:\n";
-        $prompt .= "   - 'ada_perkara': Jika terbukti memiliki vonis pidana, kasus korupsi inkracht, atau sengketa hukum aktif bermasalah (Tingkat Risiko: CRITICAL / HIGH). Buatkan narasi penolakan/mitigasi mutlak!\n";
+        $prompt .= "   - 'ada_perkara': Jika terbukti memiliki vonis pidana, kasus korupsi inkracht, atau penangkapan polisi/kasus pidana aktif bermasalah (Tingkat Risiko: CRITICAL / HIGH). Buatkan narasi penolakan/mitigasi mutlak!\n";
         $prompt .= "   - 'nihil': Jika tidak ada catatan vonis pidana/korupsi/perdata aktif di pengadilan. Jika profilnya adalah pejabat negara/PEP tanpa catatan vonis, nyatakan status 'nihil' dengan catatan mitigasi PEP (Tingkat Risiko: MEDIUM (PEP) atau LOW).\n\n";
         $prompt .= "Kembalikan output HANYA berupa JSON valid dengan format persis berikut:\n";
         $prompt .= "{\n";
