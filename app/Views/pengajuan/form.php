@@ -281,6 +281,23 @@
                             🟢 NIHIL PERKARA / BERSIH
                         </span>
                     </div>
+
+                    <!-- Profil Subjek Teridentifikasi -->
+                    <div id="modal_ma_area_profil" class="hidden p-3 bg-blue-50/80 border border-blue-200 rounded-xl text-xs text-blue-950 space-y-1">
+                        <div class="font-bold flex items-center gap-1.5 text-blue-900">
+                            <span>👤 Profil Subjek / Figur Teridentifikasi:</span>
+                        </div>
+                        <p id="modal_ma_profil_teks" class="text-[11px] text-blue-900/90 leading-relaxed"></p>
+                    </div>
+
+                    <!-- Ringkasan Temuan Hukum & SIPP -->
+                    <div id="modal_ma_area_ringkasan" class="hidden p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-800 space-y-1">
+                        <div class="font-bold flex items-center gap-1.5 text-slate-700">
+                            <span>⚖️ Temuan Riwayat Hukum & SIPP:</span>
+                        </div>
+                        <p id="modal_ma_ringkasan_teks" class="text-[11px] text-slate-600 leading-relaxed"></p>
+                    </div>
+
                     <div>
                         <label class="block text-[11px] font-semibold text-slate-600 mb-1">Rekomendasi Narasi (Siap Diterapkan ke Form CAM SIPP):</label>
                         <textarea id="modal_ma_hasil_narasi" rows="3" class="w-full text-xs font-medium text-slate-800 border border-slate-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 leading-relaxed"></textarea>

@@ -2004,12 +2004,40 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
 
                     areaHasil.classList.remove('hidden');
 
+                    const risiko = (data.tingkat_risiko || '').toUpperCase();
                     if (data.status_perkara === 'ada_perkara') {
                         badge.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800 border border-rose-200';
-                        badge.innerHTML = '🔴 DITEMUKAN CATATAN PERKARA';
+                        badge.innerHTML = '🔴 DITEMUKAN CATATAN PERKARA (' + (risiko || 'HIGH RISK') + ')';
+                    } else if (risiko.includes('PEP')) {
+                        badge.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-200';
+                        badge.innerHTML = '🟡 NIHIL PERKARA (TERIDENTIFIKASI PEP)';
                     } else {
                         badge.className = 'px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
                         badge.innerHTML = '🟢 NIHIL PERKARA / BERSIH';
+                    }
+
+                    // Tampilkan Profil Subjek jika teridentifikasi
+                    const areaProfil = document.getElementById('modal_ma_area_profil');
+                    const profilTeks = document.getElementById('modal_ma_profil_teks');
+                    if (areaProfil && profilTeks) {
+                        if (data.profil_subjek) {
+                            profilTeks.innerText = data.profil_subjek;
+                            areaProfil.classList.remove('hidden');
+                        } else {
+                            areaProfil.classList.add('hidden');
+                        }
+                    }
+
+                    // Tampilkan Temuan Riwayat Hukum & SIPP jika ada
+                    const areaRingkasan = document.getElementById('modal_ma_area_ringkasan');
+                    const ringkasanTeks = document.getElementById('modal_ma_ringkasan_teks');
+                    if (areaRingkasan && ringkasanTeks) {
+                        if (data.ringkasan) {
+                            ringkasanTeks.innerText = data.ringkasan;
+                            areaRingkasan.classList.remove('hidden');
+                        } else {
+                            areaRingkasan.classList.add('hidden');
+                        }
                     }
 
                     narasi.value = data.rekomendasi_narasi || '';

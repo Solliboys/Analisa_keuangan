@@ -343,24 +343,25 @@ class GeminiAiService
             ];
         }
 
-        $prompt = "Anda adalah Panitera Muda Pengadilan & Senior Legal Compliance Officer Perbankan untuk uji tuntas (legal due diligence) dan verifikasi perkara hukum Mahkamah Agung & SIPP.\n";
-        $prompt .= "Lakukan pemeriksaan dan evaluasi rekam jejak hukum calon debitur berikut:\n";
+        $prompt = "Anda adalah Panitera Muda Pengadilan & Senior Legal Compliance Officer Perbankan untuk uji tuntas (legal due diligence) dan verifikasi perkara hukum Mahkamah Agung, SIPP, dan Profiling Calon Debitur.\n";
+        $prompt .= "Lakukan profiling identitas mendalam dan pemeriksaan rekam jejak hukum calon debitur berikut:\n";
         $prompt .= "- Nama Calon Debitur: {$namaDebiturBersih}\n";
         $prompt .= "- Kota / Domisili Hukum: {$kotaBersih}\n";
         $prompt .= "- Entitas Usaha: {$usahaBersih}\n\n";
-        $prompt .= "INSTRUKSI PENILAIAN HUKUM:\n";
-        $prompt .= "1. Periksa seluruh rekam jejak perkara hukum calon debitur pada basis data peradilan Indonesia & direktori putusan Mahkamah Agung, mencakup:\n";
-        $prompt .= "   a. Perkara PIDANA: Vonis pengadilan negeri/tinggi/kasasi MA, tindak pidana umum (pembunuhan, kejahatan, penipuan, penggelapan), pidana khusus, maupun tipikor.\n";
-        $prompt .= "   b. Perkara PERDATA & NIAGA: Gugatan wanprestasi perbankan, perbuatan melawan hukum (PMH), kepailitan & PKPU di Pengadilan Niaga, serta sengketa agunan / sita eksekusi.\n";
-        $prompt .= "2. KRITERIA STATUS PERKARA:\n";
-        $prompt .= "   - Jika calon debitur terindikasi memiliki catatan perkara pidana berat, terpidana, vonis bersalah Mahkamah Agung, atau sengketa wanprestasi perdata aktif: status_perkara WAJIB dinyatakan 'ada_perkara' dengan tingkat_risiko 'CRITICAL' atau 'HIGH', dan buatkan narasi penolakan/mitigasi ketat!\n";
-        $prompt .= "   - Jika calon debitur bersih dari catatan perkara pidana maupun perdata: status_perkara dinyatakan 'nihil' dengan tingkat_risiko 'LOW'.\n\n";
+        $prompt .= "INSTRUKSI KHUSUS & PROFILING:\n";
+        $prompt .= "1. PROFILING SIAPA ORANGNYA: Identifikasi secara spesifik siapa figur/subjek hukum ini di Indonesia (misal: apakah figur publik, pejabat negara/menteri/kepala lembaga seperti Badan Gizi Nasional/MBG, guru besar/akademisi, pengusaha, aparat penegak hukum, atau warga sipil biasa). Jelaskan profilnya secara detail pada field 'profil_subjek'!\n";
+        $prompt .= "2. VERIFIKASI STATUS PERKARA & KORUPSI: Periksa apakah nama ini tercatat memiliki vonis bersalah, perkara korupsi/tipikor, perkara pidana umum, atau sengketa wanprestasi perdata di Mahkamah Agung & SIPP. Jelaskan secara gamblang fakta hukumnya (apakah ada vonis/perkara korupsi atau tidak ada sama sekali).\n";
+        $prompt .= "3. STATUS KEPATUHAN PERBANKAN (PEP / APU-PPT): Jika yang bersangkutan adalah pejabat negara/lembaga pengelola anggaran negara, nyatakan statusnya sebagai Politically Exposed Person (PEP) yang memerlukan Enhanced Due Diligence (EDD) meskipun tidak ada catatan pidana.\n";
+        $prompt .= "4. KRITERIA STATUS PERKARA:\n";
+        $prompt .= "   - 'ada_perkara': Jika terbukti memiliki vonis pidana, kasus korupsi inkracht, atau sengketa hukum aktif bermasalah (Tingkat Risiko: CRITICAL / HIGH). Buatkan narasi penolakan/mitigasi mutlak!\n";
+        $prompt .= "   - 'nihil': Jika tidak ada catatan vonis pidana/korupsi/perdata aktif di pengadilan. Jika profilnya adalah pejabat negara/PEP tanpa catatan vonis, nyatakan status 'nihil' dengan catatan mitigasi PEP (Tingkat Risiko: MEDIUM (PEP) atau LOW).\n\n";
         $prompt .= "Kembalikan output HANYA berupa JSON valid dengan format persis berikut:\n";
         $prompt .= "{\n";
         $prompt .= '  "status_perkara": "ada_perkara / nihil", ' . "\n";
-        $prompt .= '  "ringkasan": "penjelasan detail temuan perkara hukum calon debitur", ' . "\n";
-        $prompt .= '  "rekomendasi_narasi": "kalimat formal standar perbankan untuk lembar CAM SIPP", ' . "\n";
-        $prompt .= '  "tingkat_risiko": "LOW / MEDIUM / HIGH / CRITICAL"' . "\n";
+        $prompt .= '  "profil_subjek": "penjelasan detail siapa figur/orang ini di Indonesia", ' . "\n";
+        $prompt .= '  "ringkasan": "penjelasan detail temuan perkara hukum calon debitur dan status PEP", ' . "\n";
+        $prompt .= '  "rekomendasi_narasi": "kalimat formal standar perbankan untuk lembar CAM SIPP (menyebutkan profil orangnya dan hasil verifikasi hukum)", ' . "\n";
+        $prompt .= '  "tingkat_risiko": "LOW / MEDIUM (PEP) / HIGH / CRITICAL"' . "\n";
         $prompt .= "}";
 
         $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($model) . ":generateContent?key=" . urlencode($apiKey);
@@ -370,7 +371,7 @@ class GeminiAiService
                 ['parts' => [['text' => $prompt]]]
             ],
             'generationConfig' => [
-                'temperature'      => 0.2,
+                'temperature'      => 0.1,
                 'responseMimeType' => 'application/json'
             ]
         ];
@@ -397,6 +398,7 @@ class GeminiAiService
                 return [
                     'status'             => true,
                     'status_perkara'     => $parsed['status_perkara'] ?? 'nihil',
+                    'profil_subjek'      => $parsed['profil_subjek'] ?? '',
                     'ringkasan'          => $parsed['ringkasan'] ?? 'Tidak ditemukan perkara perdata aktif.',
                     'rekomendasi_narasi' => $parsed['rekomendasi_narasi'],
                     'tingkat_risiko'     => $parsed['tingkat_risiko'] ?? 'LOW',
