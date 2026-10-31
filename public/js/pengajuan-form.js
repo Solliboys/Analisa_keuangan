@@ -1829,6 +1829,9 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
 
             const form = document.getElementById('camForm');
             const formData = new FormData(form);
+            if (isComplete) {
+                formData.set('status_pengajuan', 'Diajukan');
+            }
 
             // Update save indicator
             const ind = document.getElementById('saveStatusIndicator');
@@ -1848,13 +1851,13 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
                     if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500"></span> Tersimpan di database';
 
                     if (showNotification) {
-                        showToast(data.message || 'Data berhasil disimpan', 'success');
+                        showToast(data.message || (isComplete ? 'Pengajuan berhasil diajukan ke Reviewer!' : 'Data berhasil disimpan'), 'success');
                     }
 
                     if (isComplete) {
                         setTimeout(() => {
-                            window.location.href = getBaseUrl() + '/dashboard';
-                        }, 1000);
+                            window.location.href = getBaseUrl() + '/pengajuan';
+                        }, 1200);
                     }
                 } else {
                     if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Gagal menyimpan';

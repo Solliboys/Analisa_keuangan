@@ -466,7 +466,7 @@ class Pengajuan extends BaseController
 
         return $this->response->setJSON([
             'status'    => true,
-            'message'   => 'Data berhasil disimpan',
+            'message'   => ($statusPengajuan === 'Diajukan') ? 'Pengajuan berhasil diajukan ke Reviewer / Komite Kredit!' : 'Data berhasil disimpan',
             'kredit_id' => $kreditId
         ]);
     }
