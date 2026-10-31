@@ -79,6 +79,11 @@ $daftarPermohonan[] = [
     'pengusul'       => $pengusulVal,
     'is_utama'       => true
 ];
+
+$isSuperadmin = (strtolower(session()->get('jabatan') ?? '') === 'superadmin');
+$isPetugasSlikRole = (strpos(strtolower(session()->get('jabatan') ?? ''), 'slik') !== false);
+$petugasSlikAktif = (int)($pengaturan_sistem['petugas_slik_aktif'] ?? (($pengaturan_sistem['ijin_pengusul_isi_slik'] ?? 1) == 0 ? 1 : 0));
+$canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0));
 ?>
 <div id="tab-6" class="tab-panel bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
     <!-- Hidden sync inputs for form submission -->
@@ -107,6 +112,31 @@ $daftarPermohonan[] = [
             </button>
         </div>
     </div>
+
+    <!-- Alert Khusus Bila Fitur Petugas SLIK Terpisah Aktif -->
+    <?php if (!$canEditSlik): ?>
+        <div class="mb-5 p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-amber-950 flex items-start gap-3 shadow-2xs">
+            <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 text-sm shadow-xs">
+                🔒
+            </div>
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                    <h4 class="font-bold text-xs uppercase tracking-wide text-amber-900">Fitur Petugas SLIK Terpisah Sedang Aktif</h4>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900">Verifikator Resmi</span>
+                </div>
+                <p class="text-[11px] text-amber-800 mt-1 leading-relaxed">
+                    Pemeriksaan riwayat fasilitas kredit debitur ditangani langsung oleh <strong>Petugas SLIK OJK</strong> terpusat. Sebagai pengusul, Anda dapat mengunduh berkas TXT permohonan di atas, dan <strong>dapat langsung melanjutkan ke Tahap 7 tanpa diblokir oleh verifikasi SLIK</strong>.
+                </p>
+            </div>
+        </div>
+    <?php else: ?>
+        <div class="mb-5 p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-950 flex items-center gap-2.5 shadow-2xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <p class="text-xs text-emerald-900 font-semibold">
+                <strong>Mode Pengusul Langsung:</strong> Anda memiliki wewenang untuk mengisi hasil SLIK iDeb dan mengunggah dokumen PDF hasil pemeriksaan di tombol <strong>Proses</strong> pada tabel di bawah.
+            </p>
+        </div>
+    <?php endif; ?>
 
     <!-- Tabel SLIK iDeb (Tanpa Kolom Pilih) -->
     <div class="overflow-x-auto border-t border-b border-slate-100 my-2">
@@ -214,16 +244,24 @@ $daftarPermohonan[] = [
                             <?= esc($item['pengusul']) ?>
                         </td>
 
-                        <!-- AKSI (Navy Button "Proses ∨") -->
+                        <!-- AKSI (Navy Button "Proses ∨" atau Kunci Khusus Petugas SLIK) -->
                         <td class="py-3.5 px-3 text-center whitespace-nowrap">
                             <div class="inline-flex items-center justify-center">
-                                <button type="button" onclick="bukaModalUploadHasilSlik(<?= $item['index'] ?>)" 
-                                        class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0a0082] hover:bg-[#07005e] text-white rounded-md text-xs font-bold transition shadow-xs cursor-pointer">
-                                    <span>Proses</span>
-                                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </button>
+                                <?php if ($canEditSlik): ?>
+                                    <button type="button" onclick="bukaModalUploadHasilSlik(<?= $item['index'] ?>)" 
+                                            class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0a0082] hover:bg-[#07005e] text-white rounded-md text-xs font-bold transition shadow-xs cursor-pointer">
+                                        <span>Proses</span>
+                                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" onclick="pesanPetugasSlikAktif()" 
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-md text-xs font-semibold transition cursor-pointer border border-slate-200" title="Verifikasi SLIK OJK ditangani oleh Petugas SLIK resmi">
+                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                        <span>Petugas SLIK</span>
+                                    </button>
+                                <?php endif; ?>
                             </div>
                         </td>
                     </tr>
@@ -534,6 +572,22 @@ $daftarPermohonan[] = [
 
 
 <script>
+window.CAN_EDIT_SLIK = <?= $canEditSlik ? 'true' : 'false' ?>;
+window.PETUGAS_SLIK_AKTIF = <?= $petugasSlikAktif ?>;
+
+function pesanPetugasSlikAktif() {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'info',
+            title: 'Fitur Petugas SLIK Terpisah Aktif',
+            text: 'Pengisian dan verifikasi hasil SLIK dilakukan secara resmi oleh Petugas SLIK OJK. Anda dapat melanjutkan ke tahap berikutnya tanpa mengisi hasil SLIK.',
+            confirmButtonColor: '#2563eb'
+        });
+    } else {
+        alert('Pengisian hasil SLIK dilakukan oleh Petugas SLIK OJK resmi. Anda dapat melanjutkan ke tahap berikutnya.');
+    }
+}
+window.pesanPetugasSlikAktif = pesanPetugasSlikAktif;
 
 // ========================================================
 // SINKRONISASI OTOMATIS DATA DEBITUR DARI TAB SEBELUMNYA

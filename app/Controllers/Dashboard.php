@@ -609,6 +609,14 @@ class Dashboard extends BaseController
             $updateData['logo_aplikasi'] = '';
         }
 
+        // Pengaturan Fitur Petugas SLIK Terpisah
+        if ($this->request->getPost('petugas_slik_aktif') !== null) {
+            $petugasSlik = (int)$this->request->getPost('petugas_slik_aktif');
+            $updateData['petugas_slik_aktif']     = $petugasSlik;
+            // Jika Petugas SLIK aktif (1), maka ijin pengusul isi slik = 0 (khusus petugas). Jika off (0), ijin = 1 (pengusul bisa isi).
+            $updateData['ijin_pengusul_isi_slik'] = ($petugasSlik === 1) ? 0 : 1;
+        }
+
         // Sinkronisasi field AI hanya jika dikirim dari form (opsional)
         $aiUpdate = [];
         if ($this->request->getPost('api_key') !== null) {

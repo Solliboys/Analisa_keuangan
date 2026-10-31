@@ -291,6 +291,69 @@
 
                 </div>
 
+                <!-- CARD 3: WORKFLOW & OTORITAS INPUT SLIK OJK (PETUGAS SLIK) -->
+                <?php 
+                    $isPetugasSlikAktif = (int)($pengaturan_sistem['petugas_slik_aktif'] ?? (($pengaturan_sistem['ijin_pengusul_isi_slik'] ?? 1) == 0 ? 1 : 0));
+                ?>
+                <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-2xs w-full">
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                                🛡️
+                            </div>
+                            <div>
+                                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                    Alur Kerja &amp; Fitur Petugas SLIK OJK
+                                </h2>
+                                <p class="text-[11px] text-slate-400">Pengaturan pemisahan tugas pengusul kredit vs petugas verifikator SLIK iDeb resmi</p>
+                            </div>
+                        </div>
+                        <span id="badgeStatusSlikSetting" class="text-[11px] font-bold px-2.5 py-1 rounded-md border <?= $isPetugasSlikAktif === 1 ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-slate-600 bg-slate-100 border-slate-200' ?>">
+                            <?= $isPetugasSlikAktif === 1 ? '🟢 Petugas SLIK Aktif' : '⚪ Petugas SLIK Nonaktif' ?>
+                        </span>
+                    </div>
+
+                    <div class="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="max-w-2xl space-y-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-extrabold text-slate-900 tracking-tight">Pemisahan Peran Petugas SLIK Terpisah</span>
+                                <span id="labelModeSlik" class="text-[10px] font-bold px-2 py-0.5 rounded-full <?= $isPetugasSlikAktif === 1 ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-700' ?>">
+                                    <?= $isPetugasSlikAktif === 1 ? 'Mode Standar (SOP Ketat)' : 'Mode Fleksibel (Single AO)' ?>
+                                </span>
+                            </div>
+                            <p id="deskripsiSlikSetting" class="text-xs text-slate-600 leading-relaxed">
+                                <?= $isPetugasSlikAktif === 1 
+                                    ? '<b>Petugas SLIK Khusus Diaktifkan:</b> Pengusul (AO) <b>tidak bisa</b> langsung menginput atau mengunggah berkas hasil SLIK di formulir pengajuan (Tab 6 terkunci). Hasil verifikasi fasilitas kredit wajib diinput oleh Petugas SLIK terpisah. Pengusul tetap dapat melanjutkan pengisian tahap formulir berikutnya.' 
+                                    : '<b>Petugas SLIK Nonaktif / Bebas:</b> Pengusul (AO) <b>bisa langsung</b> menginput hasil kolektibilitas, ringkasan, serta mengunggah PDF SLIK sendiri di Tab 6 formulir pengajuan kredit.' 
+                                ?>
+                            </p>
+                            <div class="flex items-center gap-2 pt-1 text-[11px] text-slate-400">
+                                <span class="w-1.5 h-1.5 rounded-full <?= $isPetugasSlikAktif === 1 ? 'bg-emerald-500' : 'bg-amber-500' ?>"></span>
+                                <span id="hintSlikSetting"><?= $isPetugasSlikAktif === 1 ? 'Pengusul dibatasi hanya dapat membuat permohonan TXT dan membaca hasil.' : 'Pengusul memiliki wewenang penuh mengisi formulir SLIK.' ?></span>
+                            </div>
+                        </div>
+
+                        <!-- Toggle Switch Button -->
+                        <div class="shrink-0 flex flex-col items-end gap-2">
+                            <input type="hidden" name="petugas_slik_aktif" id="inputPetugasSlikAktif" value="<?= $isPetugasSlikAktif ?>">
+                            <button type="button" 
+                                    id="btnTogglePetugasSlik" 
+                                    onclick="toggleSettingPetugasSlik()"
+                                    class="relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none <?= $isPetugasSlikAktif === 1 ? 'bg-blue-600' : 'bg-slate-300' ?>" 
+                                    role="switch" 
+                                    aria-checked="<?= $isPetugasSlikAktif === 1 ? 'true' : 'false' ?>">
+                                <span class="sr-only">Aktifkan Petugas SLIK</span>
+                                <span id="toggleKnobPetugasSlik" 
+                                      class="pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out <?= $isPetugasSlikAktif === 1 ? 'translate-x-8' : 'translate-x-0' ?>">
+                                </span>
+                            </button>
+                            <span id="toggleTextPetugasSlik" class="text-[11px] font-bold text-slate-600">
+                                <?= $isPetugasSlikAktif === 1 ? 'Status: AKTIF' : 'Status: NONAKTIF' ?>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- BOTTOM ACTION BAR -->
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs w-full">
                     <button type="button" 
@@ -354,6 +417,45 @@
                     });
                 }
             });
+        function toggleSettingPetugasSlik() {
+            const input = document.getElementById('inputPetugasSlikAktif');
+            const btn = document.getElementById('btnTogglePetugasSlik');
+            const knob = document.getElementById('toggleKnobPetugasSlik');
+            const badge = document.getElementById('badgeStatusSlikSetting');
+            const text = document.getElementById('toggleTextPetugasSlik');
+            const labelMode = document.getElementById('labelModeSlik');
+            const desc = document.getElementById('deskripsiSlikSetting');
+            const hint = document.getElementById('hintSlikSetting');
+
+            const current = parseInt(input.value) || 0;
+            const next = current === 1 ? 0 : 1;
+            input.value = next;
+
+            if (next === 1) {
+                // Aktif
+                btn.className = 'relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-blue-600';
+                btn.setAttribute('aria-checked', 'true');
+                knob.className = 'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-8';
+                badge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md border text-emerald-700 bg-emerald-50 border-emerald-200';
+                badge.innerText = '🟢 Petugas SLIK Aktif';
+                text.innerText = 'Status: AKTIF';
+                labelMode.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700';
+                labelMode.innerText = 'Mode Standar (SOP Ketat)';
+                desc.innerHTML = '<b>Petugas SLIK Khusus Diaktifkan:</b> Pengusul (AO) <b>tidak bisa</b> langsung menginput atau mengunggah berkas hasil SLIK di formulir pengajuan (Tab 6 terkunci). Hasil verifikasi fasilitas kredit wajib diinput oleh Petugas SLIK terpisah. Pengusul tetap dapat melanjutkan pengisian tahap formulir berikutnya.';
+                hint.innerText = 'Pengusul dibatasi hanya dapat membuat permohonan TXT dan membaca hasil.';
+            } else {
+                // Nonaktif
+                btn.className = 'relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-slate-300';
+                btn.setAttribute('aria-checked', 'false');
+                knob.className = 'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-0';
+                badge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md border text-slate-600 bg-slate-100 border-slate-200';
+                badge.innerText = '⚪ Petugas SLIK Nonaktif';
+                text.innerText = 'Status: NONAKTIF';
+                labelMode.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700';
+                labelMode.innerText = 'Mode Fleksibel (Single AO)';
+                desc.innerHTML = '<b>Petugas SLIK Nonaktif / Bebas:</b> Pengusul (AO) <b>bisa langsung</b> menginput hasil kolektibilitas, ringkasan, serta mengunggah PDF SLIK sendiri di Tab 6 formulir pengajuan kredit.';
+                hint.innerText = 'Pengusul memiliki wewenang penuh mengisi formulir SLIK.';
+            }
         }
     </script>
 </body>

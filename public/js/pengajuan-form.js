@@ -29,6 +29,20 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             if (initialTab && initialTab >= 1 && initialTab <= totalTabs) {
                 goToTab(initialTab);
             }
+
+            // Inisialisasi status langkah yang sudah terisi jika dalam mode edit
+            setTimeout(() => {
+                const kid = document.getElementById('kredit_id')?.value;
+                if (kid) {
+                    for (let t = 1; t <= totalTabs; t++) {
+                        const val = validateTabSilent(t);
+                        if (val.valid) {
+                            tabValidationStatus[t] = true;
+                        }
+                    }
+                    updateStepperVisuals();
+                }
+            }, 300);
         });
 
         const stepsMetadata = [
@@ -46,7 +60,389 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             { title: '12. Repayment', sub: 'Sedang dikerjakan', defaultSub: 'Kemampuan angsur', mainTitle: 'Langkah 12: Kemampuan Angsur & DSC (Tahap Akhir Pengusul)', desc: 'Pengujian kemampuan bayar debitur terhadap angsuran pinjaman (Standar aman DSC >= 1.30x).' }
         ];
 
-        // Tab Navigation
+        // Status validasi tiap tahap (1 - 12):
+        // true = Valid (Selesai ✓)
+        // false = Belum lengkap / ada isian kosong (🔴 Peringatan)
+        // null / undefined = Belum dikerjakan
+        const tabValidationStatus = {};
+
+        // Helper untuk menyorot field yang tidak valid
+        function highlightFieldError(inputEl, message) {
+            if (!inputEl || window.isSilentValidation) return;
+            inputEl.classList.add('border-rose-500', 'ring-2', 'ring-rose-200', 'bg-rose-50/20');
+            inputEl.classList.remove('border-slate-200');
+
+            // Cek apakah helper pesan error sudah ada
+            const parent = inputEl.parentElement;
+            if (parent) {
+                let existingMsg = parent.querySelector('.field-error-msg');
+                if (!existingMsg) {
+                    existingMsg = document.createElement('div');
+                    existingMsg.className = 'field-error-msg text-[11px] text-rose-600 font-semibold mt-1 flex items-center gap-1 animate-in fade-in duration-150';
+                    existingMsg.innerHTML = `<svg class="w-3.5 h-3.5 text-rose-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg> <span>${message}</span>`;
+                    parent.appendChild(existingMsg);
+                } else {
+                    const span = existingMsg.querySelector('span');
+                    if (span) span.innerText = message;
+                }
+            }
+
+            // Hapus highlight error saat pengguna mulai mengetik / mengganti isi
+            const clearOnInput = () => {
+                clearFieldError(inputEl);
+                inputEl.removeEventListener('input', clearOnInput);
+                inputEl.removeEventListener('change', clearOnInput);
+            };
+            inputEl.addEventListener('input', clearOnInput);
+            inputEl.addEventListener('change', clearOnInput);
+        }
+
+        function clearFieldError(inputEl) {
+            if (!inputEl) return;
+            inputEl.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200', 'bg-rose-50/20');
+            inputEl.classList.add('border-slate-200');
+            const parent = inputEl.parentElement;
+            if (parent) {
+                const msg = parent.querySelector('.field-error-msg');
+                if (msg) msg.remove();
+            }
+        }
+
+        function clearAllFieldErrorsInTab(tabNum) {
+            const panel = document.getElementById('tab-' + tabNum);
+            if (!panel) return;
+            panel.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+            panel.querySelectorAll('.border-rose-500').forEach(el => {
+                el.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200', 'bg-rose-50/20');
+                el.classList.add('border-slate-200');
+            });
+        }
+
+        // Jalankan validasi tanpa memunculkan UI highlight error (untuk initial check)
+        function validateTabSilent(tabNum) {
+            window.isSilentValidation = true;
+            const res = validateTab(tabNum);
+            window.isSilentValidation = false;
+            return res;
+        }
+
+        // Mesin Validasi Tiap Tahap (Tahap 1 s.d. 12)
+        function validateTab(tabNum) {
+            const errors = [];
+            let firstEl = null;
+
+            const addError = (el, msg) => {
+                if (!el) return;
+                highlightFieldError(el, msg);
+                errors.push({ element: el, message: msg });
+                if (!firstEl) firstEl = el;
+            };
+
+            if (tabNum === 1) {
+                // Tab 1: Aplikasi & Plafon
+                const nama = document.getElementById('nama_debitur');
+                if (!nama || !nama.value.trim() || nama.value.trim().length < 2) {
+                    addError(nama, 'Nama debitur wajib diisi minimal 2 karakter');
+                }
+
+                const plafon = document.getElementById('plafon_pengajuan');
+                if (!plafon || parseNominal(plafon.value) <= 0) {
+                    addError(plafon, 'Plafond pengajuan wajib diisi lebih dari 0');
+                }
+
+                const tenor = document.getElementById('tenor_bulan');
+                if (!tenor || !tenor.value || parseInt(tenor.value) <= 0) {
+                    addError(tenor, 'Tenor pinjaman wajib dipilih');
+                }
+
+                const jaminan = document.getElementById('jenis_jaminan');
+                if (!jaminan || !jaminan.value) {
+                    addError(jaminan, 'Jenis jaminan wajib dipilih');
+                }
+
+                const skema = document.getElementById('skema_pembayaran');
+                if (!skema || !skema.value) {
+                    addError(skema, 'Skema pembayaran wajib dipilih');
+                }
+
+                const bunga = document.getElementById('bunga_per_tahun');
+                if (!bunga || parseFloat(bunga.value) <= 0) {
+                    addError(bunga, 'Suku bunga wajib diisi lebih dari 0');
+                }
+            } else if (tabNum === 2) {
+                // Tab 2: Informasi Pribadi
+                const nama2 = document.getElementById('nama_debitur_tab2') || document.getElementById('nama_debitur');
+                if (!nama2 || !nama2.value.trim()) {
+                    addError(nama2, 'Nama lengkap debitur wajib diisi sesuai KTP');
+                }
+
+                const nik = document.getElementById('npwp_pribadi');
+                if (!nik || !nik.value.trim()) {
+                    addError(nik, 'NIK KTP debitur wajib diisi');
+                } else if (nik.value.replace(/[^0-9]/g, '').length < 16) {
+                    addError(nik, 'NIK KTP harus terdiri dari 16 digit angka');
+                }
+
+                const tpt = document.getElementById('tempat_lahir');
+                if (!tpt || !tpt.value.trim()) {
+                    addError(tpt, 'Tempat lahir debitur wajib diisi');
+                }
+
+                const tgl = document.getElementById('tanggal_lahir');
+                if (!tgl || !tgl.value.trim()) {
+                    addError(tgl, 'Tanggal lahir debitur wajib diisi');
+                }
+
+                const alamat = document.querySelector('textarea[name="alamat_ktp"]');
+                if (!alamat || !alamat.value.trim() || alamat.value.trim().length < 5) {
+                    addError(alamat, 'Alamat lengkap KTP wajib diisi');
+                }
+
+                const hp = document.getElementById('nomor_hp');
+                if (!hp || !hp.value.trim() || hp.value.replace(/[^0-9]/g, '').length < 9) {
+                    addError(hp, 'Nomor HP/WhatsApp aktif wajib diisi minimal 9 digit angka');
+                }
+            } else if (tabNum === 3) {
+                // Tab 3: Profil Usaha
+                const namaUsaha = document.querySelector('input[name="usaha[0][nama_usaha]"]') || document.querySelector('.inp-nama-usaha');
+                if (!namaUsaha || !namaUsaha.value.trim()) {
+                    addError(namaUsaha, 'Nama usaha / pekerjaan debitur wajib diisi');
+                }
+
+                const bidangUsaha = document.querySelector('input[name="usaha[0][bidang_usaha]"]') || document.querySelector('.inp-bidang-usaha');
+                if (!bidangUsaha || !bidangUsaha.value.trim()) {
+                    addError(bidangUsaha, 'Bidang usaha debitur wajib diisi');
+                }
+
+                const lamaUsaha = document.querySelector('input[name="usaha[0][lama_usaha]"]') || document.querySelector('.inp-lama-usaha');
+                if (!lamaUsaha || !lamaUsaha.value.trim()) {
+                    addError(lamaUsaha, 'Lama usaha / masa kerja wajib diisi');
+                }
+
+                const alamatUsaha = document.querySelector('textarea[name="usaha[0][alamat_usaha]"]') || document.querySelector('.inp-alamat-usaha');
+                if (!alamatUsaha || !alamatUsaha.value.trim()) {
+                    addError(alamatUsaha, 'Alamat lokasi tempat usaha / kantor operasional wajib diisi');
+                }
+            } else if (tabNum === 4) {
+                // Tab 4: Agunan & Jaminan
+                const jenisJaminan = document.getElementById('jenis_jaminan')?.value || '';
+                if (jenisJaminan !== 'Tanpa Jaminan') {
+                    const agunanItems = document.querySelectorAll('.agunan-item');
+                    if (agunanItems.length === 0) {
+                        const btnTambah = document.querySelector('#tab-4 button[onclick="tambahBarisAgunan()"]');
+                        addError(btnTambah, 'Wajib menambahkan minimal 1 data agunan jaminan');
+                    } else {
+                        const firstAgunan = agunanItems[0];
+                        const mvInput = firstAgunan.querySelector('.agunan-mv');
+                        if (!mvInput || parseNominal(mvInput.value) <= 0) {
+                            addError(mvInput, 'Nilai pasar wajar jaminan (Market Value) wajib diisi lebih dari 0');
+                        }
+
+                        const alamatAgunan = firstAgunan.querySelector('.inp-alamat-agunan') || firstAgunan.querySelector('textarea, input[type="text"]');
+                        if (alamatAgunan && !alamatAgunan.value.trim()) {
+                            addError(alamatAgunan, 'Keterangan/alamat objek jaminan wajib diisi');
+                        }
+                    }
+                }
+            } else if (tabNum === 5) {
+                // Tab 5: Berkas Dokumen
+                const docRows = document.querySelectorAll('#listDokumenTerunggah .p-3');
+                if (docRows.length === 0) {
+                    const uploadZone = document.querySelector('#tab-5 [onclick*="fileUploadInput"]');
+                    addError(uploadZone, 'Harap unggah minimal 1 berkas persyaratan (KTP, legalitas, atau agunan)');
+                }
+            } else if (tabNum === 6) {
+                // Tab 6: SLIK OJK
+                // ATURAN SLIK: Jika Petugas SLIK terpisah AKTIF, pengusul TIDAK DIBLOKIR karena verifikasi diisi petugas SLIK
+                const isPetugasSlikAktif = (window.PETUGAS_SLIK_AKTIF === 1);
+                const userRole = (window.USER_ROLE || 'pengusul').toLowerCase();
+                const isSlikOfficerOrAdmin = (userRole === 'superadmin' || userRole.includes('slik'));
+
+                if (!isPetugasSlikAktif || isSlikOfficerOrAdmin) {
+                    // Petugas SLIK nonaktif: Pengusul wajib mengisi / proses SLIK
+                    const hasilSlik = document.getElementById('hidden_hasil_slik')?.value || '';
+                    const statusSlik = document.getElementById('hidden_status_slik')?.value || '';
+                    if (statusSlik === 'Belum Terbit' && (!hasilSlik || hasilSlik.trim() === '')) {
+                        const prosesBtn = document.querySelector('#bodySlikIdeb button[onclick*="bukaModalUploadHasilSlik"]');
+                        addError(prosesBtn, 'Harap lakukan proses upload / input hasil verifikasi SLIK');
+                    }
+                }
+            } else if (tabNum === 7) {
+                // Tab 7: Web Check & Legal
+                const sipp = document.getElementById('sipp_keterangan');
+                const internet = document.getElementById('internet_keterangan');
+                const dhn = document.getElementById('dhn_bi_keterangan');
+                const hasFilled = (sipp && sipp.value.trim()) || (internet && internet.value.trim()) || (dhn && dhn.value.trim());
+                if (!hasFilled) {
+                    const btnAi = document.getElementById('btnAiWebcheck');
+                    addError(btnAi, 'Harap jalankan verifikasi Web Check (Klik "1-Klik AI Scan" atau isi keterangan penelusuran)');
+                }
+            } else if (tabNum === 8) {
+                // Tab 8: Rekening Koran
+                const namaBank = document.querySelector('input[name="rekening[0][nama_bank]"]');
+                if (!namaBank || !namaBank.value.trim()) {
+                    addError(namaBank, 'Nama bank rekening koran wajib diisi');
+                }
+
+                const noRek = document.querySelector('input[name="rekening[0][nomor_rekening]"]');
+                if (!noRek || !noRek.value.trim()) {
+                    addError(noRek, 'Nomor rekening koran wajib diisi');
+                }
+
+                const avgKredit = document.querySelector('input[name="rekening[0][rata_rata_kredit]"]');
+                if (!avgKredit || parseNominal(avgKredit.value) <= 0) {
+                    addError(avgKredit, 'Rata-rata mutasi kredit (omzet bulanan) wajib diisi lebih dari 0');
+                }
+            } else if (tabNum === 9) {
+                // Tab 9: Laba Rugi
+                const pendapatan = document.getElementById('pendapatan_rk');
+                if (!pendapatan || parseNominal(pendapatan.value) <= 0) {
+                    addError(pendapatan, 'Pendapatan/Omset bulanan riil wajib diisi lebih dari 0');
+                }
+
+                const hpp = document.getElementById('hpp_persen_rk');
+                if (!hpp || parseFloat(hpp.value) <= 0) {
+                    addError(hpp, 'Estimasi persentase HPP (%) wajib diisi lebih dari 0');
+                }
+            } else if (tabNum === 10) {
+                // Tab 10: Opini Pengusul
+                const narasiJaminan = document.getElementById('analisa_jaminan');
+                if (!narasiJaminan || !narasiJaminan.value.trim() || narasiJaminan.value.trim().length < 5) {
+                    addError(narasiJaminan, 'Evaluasi kualitas jaminan wajib diisi (gunakan bantuan narasi jika perlu)');
+                }
+
+                const narasiReview = document.getElementById('business_review');
+                if (!narasiReview || !narasiReview.value.trim() || narasiReview.value.trim().length < 5) {
+                    addError(narasiReview, 'Business review prospek usaha debitur wajib diisi');
+                }
+            } else if (tabNum === 11) {
+                // Tab 11: Disbursement
+                const plafon = parseNominal(document.getElementById('plafon_pengajuan')?.value || 0);
+                if (plafon <= 0) {
+                    const disbPlafonEl = document.getElementById('disbPlafon');
+                    addError(disbPlafonEl, 'Parameter plafon pinjaman belum terhitung valid');
+                }
+            } else if (tabNum === 12) {
+                // Tab 12: Repayment
+                const angsuranPilih = document.getElementById('angsuran_dipilih');
+                if (!angsuranPilih || parseNominal(angsuranPilih.value) <= 0) {
+                    addError(angsuranPilih, 'Angsuran acuan repayment wajib diisi lebih dari 0');
+                }
+            }
+
+            return {
+                valid: errors.length === 0,
+                errors: errors,
+                firstEl: firstEl
+            };
+        }
+
+        // Sinkronisasi status visual seluruh item di Sidebar Stepper
+        function updateStepperVisuals() {
+            for (let i = 1; i <= totalTabs; i++) {
+                const item = document.getElementById('step-item-' + i);
+                const circle = document.getElementById('step-circle-' + i);
+                const title = document.getElementById('step-title-' + i);
+                const sub = document.getElementById('step-sub-' + i);
+                const warnBadge = document.getElementById('step-warn-badge-' + i);
+                const stepMeta = stepsMetadata[i - 1];
+
+                if (!item || !circle || !title || !sub) continue;
+
+                const status = tabValidationStatus[i];
+
+                if (i === currentTab) {
+                    // LANGKAH AKTIF SAAT INI
+                    if (status === false) {
+                        // Sedang aktif tapi ada error / isian belum lengkap
+                        item.className = 'w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 bg-rose-50/90 border border-rose-300 shadow-2xs';
+                        circle.className = 'w-7 h-7 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0';
+                        circle.innerHTML = i;
+                        title.className = 'text-xs font-bold text-rose-950 truncate';
+                        sub.className = 'text-[11px] text-rose-600 font-semibold truncate';
+                        sub.innerText = '⚠️ Ada isian belum lengkap';
+                        if (warnBadge) warnBadge.classList.remove('hidden');
+                    } else {
+                        item.className = 'w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 bg-blue-50/80 border border-blue-200/80 shadow-2xs';
+                        circle.className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0';
+                        circle.innerHTML = i;
+                        title.className = 'text-xs font-bold text-blue-900 truncate';
+                        sub.className = 'text-[11px] text-blue-600 font-semibold truncate';
+                        sub.innerText = 'Sedang dikerjakan';
+                        if (warnBadge) warnBadge.classList.add('hidden');
+                    }
+                } else if (status === false) {
+                    // LANGKAH LAIN YANG MEMILIKI KESALAHAN / BELUM LENGKAP (MERAH 🔴)
+                    item.className = 'w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 bg-rose-50/50 hover:bg-rose-50/80 border border-rose-200/80 shadow-2xs';
+                    circle.className = 'w-7 h-7 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-xs font-extrabold shrink-0 border border-rose-300';
+                    circle.innerHTML = '!';
+                    title.className = 'text-xs font-bold text-rose-900 truncate';
+                    sub.className = 'text-[11px] text-rose-600 font-semibold truncate';
+                    sub.innerText = 'Belum lengkap (!)';
+                    if (warnBadge) warnBadge.classList.remove('hidden');
+                } else if (status === true) {
+                    // LANGKAH YANG SUDAH VALID & SELESAI (HIJAU ✓)
+                    item.className = 'w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent';
+                    circle.className = 'w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0 border border-emerald-300';
+                    circle.innerHTML = '&check;';
+                    title.className = 'text-xs font-bold text-slate-800 truncate';
+                    sub.className = 'text-[11px] text-emerald-600 font-medium truncate';
+                    sub.innerText = 'Selesai';
+                    if (warnBadge) warnBadge.classList.add('hidden');
+                } else {
+                    // LANGKAH BELUM DIKERJAKAN (NETRAL)
+                    item.className = 'w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent';
+                    circle.className = 'w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0';
+                    circle.innerHTML = i;
+                    title.className = 'text-xs font-bold text-slate-700 truncate';
+                    sub.className = 'text-[11px] text-slate-400 truncate';
+                    sub.innerText = stepMeta.defaultSub;
+                    if (warnBadge) warnBadge.classList.add('hidden');
+                }
+            }
+        }
+
+        // Handler saat user mengklik item langkah di sidebar stepper
+        function handleStepperClick(targetTab) {
+            if (targetTab === currentTab) return;
+
+            // Jika navigasi mundur (kembali ke tahap sebelumnya), selalu diizinkan
+            if (targetTab < currentTab) {
+                goToTab(targetTab);
+                return;
+            }
+
+            // Jika melompat ke tahap berikutnya, validasi tahap aktif saat ini
+            const validation = validateTab(currentTab);
+            if (!validation.valid) {
+                tabValidationStatus[currentTab] = false;
+                updateStepperVisuals();
+
+                if (validation.firstEl) {
+                    validation.firstEl.focus();
+                    validation.firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Tahap Belum Selesai',
+                        text: `Harap lengkapi semua data wajib pada tahap ${currentTab} sebelum berpindah ke langkah selanjutnya!`,
+                        confirmButtonColor: '#2563eb'
+                    });
+                } else {
+                    alert('Harap lengkapi data pada tahap ini terlebih dahulu.');
+                }
+                return;
+            }
+
+            tabValidationStatus[currentTab] = true;
+            clearAllFieldErrorsInTab(currentTab);
+            goToTab(targetTab);
+        }
+        window.handleStepperClick = handleStepperClick;
+
+        // Navigasi Tab
         function goToTab(tabIndex) {
             if (tabIndex < 1 || tabIndex > totalTabs) return;
             currentTab = tabIndex;
@@ -77,39 +473,8 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             if (bad) bad.innerText = tabIndex + '/' + totalTabs;
             if (prog) prog.style.width = ((tabIndex / totalTabs) * 100).toFixed(1) + '%';
 
-            // Update Vertical Stepper List (1-12)
-            for (let i = 1; i <= totalTabs; i++) {
-                const item = document.getElementById('step-item-' + i);
-                const circle = document.getElementById('step-circle-' + i);
-                const title = document.getElementById('step-title-' + i);
-                const sub = document.getElementById('step-sub-' + i);
-                const stepMeta = stepsMetadata[i - 1];
-
-                if (!item || !circle || !title || !sub) continue;
-
-                if (i === tabIndex) {
-                    item.className = 'w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 bg-blue-50/80 border border-blue-200/80 shadow-2xs';
-                    circle.className = 'w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0';
-                    circle.innerHTML = i;
-                    title.className = 'text-xs font-bold text-blue-900 truncate';
-                    sub.className = 'text-[11px] text-blue-600 font-semibold truncate';
-                    sub.innerText = 'Sedang dikerjakan';
-                } else if (i < tabIndex) {
-                    item.className = 'w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent';
-                    circle.className = 'w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold shrink-0 border border-blue-200';
-                    circle.innerHTML = '&check;';
-                    title.className = 'text-xs font-bold text-slate-800 truncate';
-                    sub.className = 'text-[11px] text-emerald-600 font-medium truncate';
-                    sub.innerText = 'Selesai';
-                } else {
-                    item.className = 'w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 hover:bg-slate-50 border border-transparent';
-                    circle.className = 'w-7 h-7 rounded-full bg-white border border-slate-300 text-slate-500 flex items-center justify-center text-xs font-bold shrink-0';
-                    circle.innerHTML = i;
-                    title.className = 'text-xs font-bold text-slate-700 truncate';
-                    sub.className = 'text-[11px] text-slate-400 truncate';
-                    sub.innerText = stepMeta.defaultSub;
-                }
-            }
+            // Sinkronisasi status visual seluruh stepper
+            updateStepperVisuals();
 
             // Update Label & Button Prev/Next
             const lbl = document.getElementById('tabStepLabel');
@@ -119,15 +484,15 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             const nxt = document.getElementById('btnNext');
             if (nxt) {
                 if (tabIndex === totalTabs) {
-                    nxt.className = 'px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5';
+                    nxt.className = 'px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 cursor-pointer';
                     nxt.innerHTML = 'Simpan & Selesai Pengajuan &check;';
                 } else {
-                    nxt.className = 'px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5';
+                    nxt.className = 'px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 cursor-pointer';
                     nxt.innerHTML = 'Selanjutnya &rarr;';
                 }
             }
 
-            // Animasi scroll stepper sidebar agar tidak terpotong dan responsif terhadap pergantian tahap
+            // Animasi scroll stepper sidebar agar selalu terlihat
             scrollStepperList(tabIndex);
 
             // Scroll ke atas halaman form
@@ -140,7 +505,6 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             if (!list) return;
 
             if (tabIndex === 1) {
-                // Saat kembali ke langkah 1, scroll ke posisi paling atas
                 list.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             }
@@ -149,12 +513,10 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             const item12 = document.getElementById('step-item-12');
 
             if (tabIndex === 2 && item12) {
-                // Ketika pencet langkah 2, geser ke bawah secara halus agar langkah 12 muncul dan langkah 1 bergeser ke atas
                 const item12Bottom = item12.offsetTop + item12.offsetHeight;
                 const targetScroll = Math.max(0, item12Bottom - list.clientHeight + 8);
                 list.scrollTo({ top: targetScroll, behavior: 'smooth' });
             } else if (activeItem) {
-                // Jaga agar langkah aktif lainnya selalu berada di area pandang
                 const itemTop = activeItem.offsetTop;
                 const itemBottom = itemTop + activeItem.offsetHeight;
                 const viewTop = list.scrollTop;
@@ -168,9 +530,71 @@ const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') 
             }
         }
 
+        // Navigasi Tombol "Selanjutnya" / "Sebelumnya"
         function tabNav(delta) {
+            if (delta > 0) {
+                // Pengguna menekan tombol "Selanjutnya": WAJIB VALIDASI TAHAP INI!
+                const validation = validateTab(currentTab);
+                if (!validation.valid) {
+                    // Tandai tahap aktif dengan status FALSE (MERAH 🔴)
+                    tabValidationStatus[currentTab] = false;
+                    updateStepperVisuals();
+
+                    // Fokus & scroll ke isian pertama yang bermasalah
+                    if (validation.firstEl) {
+                        validation.firstEl.focus();
+                        validation.firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Data Belum Lengkap',
+                            text: `Terdapat ${validation.errors.length} kolom wajib pada ${stepsMetadata[currentTab - 1].title} yang belum diisi. Harap lengkapi terlebih dahulu untuk melanjutkan!`,
+                            confirmButtonColor: '#2563eb'
+                        });
+                    } else {
+                        alert(`Harap lengkapi isian wajib pada tahap ini sebelum melanjutkan!`);
+                    }
+                    return; // BLOKIR JALAN KE TAHAP BERIKUTNYA!
+                }
+
+                // Jika tahap ini valid: tandai Selesai (HIJAU ✓)
+                tabValidationStatus[currentTab] = true;
+                clearAllFieldErrorsInTab(currentTab);
+            }
+
             const next = currentTab + delta;
             if (next > totalTabs) {
+                // Validasi seluruh tahap (1 s.d. 12) sebelum submit pengajuan akhir
+                let firstInvalidTab = null;
+                for (let t = 1; t <= totalTabs; t++) {
+                    const val = validateTab(t);
+                    tabValidationStatus[t] = val.valid;
+                    if (!val.valid && !firstInvalidTab) {
+                        firstInvalidTab = t;
+                    }
+                }
+                updateStepperVisuals();
+
+                if (firstInvalidTab) {
+                    goToTab(firstInvalidTab);
+                    const val = validateTab(firstInvalidTab);
+                    if (val.firstEl) {
+                        val.firstEl.focus();
+                        val.firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Pengajuan Belum Lengkap',
+                            text: `Ada isian wajib yang terlewat pada ${stepsMetadata[firstInvalidTab - 1].title}. Silakan periksa dan lengkapi sebelum menyelesaikan pengajuan.`,
+                            confirmButtonColor: '#2563eb'
+                        });
+                    }
+                    return;
+                }
+
                 simpanForm(true);
             } else if (next >= 1) {
                 // Auto simpan progress saat berganti langkah

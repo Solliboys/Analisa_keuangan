@@ -109,13 +109,20 @@
                             $subClass = $isActive ? 'text-blue-600 font-semibold' : 'text-slate-400';
                             $subText = $isActive ? 'Sedang dikerjakan' : $step['sub'];
                         ?>
-                        <button type="button" onclick="goToTab(<?= $stepNum ?>)" id="step-item-<?= $stepNum ?>" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 border <?= $btnClass ?>">
+                        <button type="button" onclick="handleStepperClick(<?= $stepNum ?>)" id="step-item-<?= $stepNum ?>" class="w-full text-left p-2.5 rounded-2xl transition flex items-center gap-3 border <?= $btnClass ?>">
                             <span id="step-circle-<?= $stepNum ?>" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 <?= $circleClass ?>">
                                 <?= $stepNum ?>
                             </span>
-                            <div class="min-w-0">
-                                <div id="step-title-<?= $stepNum ?>" class="text-xs font-bold truncate <?= $titleClass ?>">
-                                    <?= esc($step['title']) ?>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between gap-1.5">
+                                    <div id="step-title-<?= $stepNum ?>" class="text-xs font-bold truncate <?= $titleClass ?>">
+                                        <?= esc($step['title']) ?>
+                                    </div>
+                                    <!-- Red Warning Badge for Incomplete Step -->
+                                    <span id="step-warn-badge-<?= $stepNum ?>" class="hidden shrink-0 inline-flex items-center gap-1 text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded-full" title="Ada isian wajib yang belum lengkap">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                        <span>!</span>
+                                    </span>
                                 </div>
                                 <div id="step-sub-<?= $stepNum ?>" class="text-[11px] truncate <?= $subClass ?>">
                                     <?= esc($subText) ?>
@@ -205,6 +212,8 @@
     <!-- Script Application Logic -->
     <script>
         window.BASE_URL = '<?= rtrim(base_url(), '/') ?>';
+        window.PETUGAS_SLIK_AKTIF = <?= (int)($pengaturan_sistem['petugas_slik_aktif'] ?? (($pengaturan_sistem['ijin_pengusul_isi_slik'] ?? 1) == 0 ? 1 : 0)) ?>;
+        window.USER_ROLE = '<?= esc(strtolower(session()->get('jabatan') ?? 'pengusul')) ?>';
     </script>
     <script src="<?= base_url('js/pengajuan-form.js?v=' . time()) ?>"></script>
 
