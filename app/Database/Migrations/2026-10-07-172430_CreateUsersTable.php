@@ -29,9 +29,9 @@ class CreateUsersTable extends Migration
                 'constraint' => '100',
             ],
             'jabatan' => [
-                'type'       => 'ENUM',
-                'constraint' => ['Admin', 'Analis', 'SPV'],
-                'default'    => 'Analis',
+                'type'       => 'VARCHAR',
+                'constraint' => '50',
+                'default'    => 'Pengusul',
             ],
             'status' => [
                 'type'       => 'TINYINT',

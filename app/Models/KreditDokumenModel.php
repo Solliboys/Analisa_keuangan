@@ -18,6 +18,7 @@ class KreditDokumenModel extends Model
         'path_file',
         'ukuran_file_bytes',
         'tipe_file',
+        'catatan_dokumen',
     ];
 
     protected $useTimestamps = false;

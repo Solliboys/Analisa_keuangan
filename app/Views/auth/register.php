@@ -90,7 +90,9 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password *</label>
-                        <input type="password" name="password" placeholder="Min. 6 karakter" required
+                        <input type="password" id="regPassword" name="password" placeholder="Min. 8 karakter berkarakter" required
+                               pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$"
+                               title="Minimal 8 karakter, wajib kombinasi huruf besar (A-Z), huruf kecil (a-z), angka (0-9), dan simbol (!@#$%^&*)"
                                class="w-full text-xs border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
                     <div>
@@ -98,6 +100,16 @@
                         <input type="password" name="konfirmasi_password" placeholder="Ketik ulang password" required
                                class="w-full text-xs border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
                     </div>
+                </div>
+
+                <div class="p-3 bg-blue-50/60 border border-blue-200/80 rounded-xl text-[11px] text-slate-700">
+                    <span class="font-bold text-blue-900 block mb-1">🔒 Syarat Keamanan Password (Standar Perbankan):</span>
+                    <ul class="grid grid-cols-2 gap-1 list-disc list-inside text-[10px] text-slate-600">
+                        <li>Minimal 8 karakter</li>
+                        <li>Mengandung huruf besar (A-Z)</li>
+                        <li>Mengandung huruf kecil (a-z)</li>
+                        <li>Kombinasi angka & simbol (!@#$)</li>
+                    </ul>
                 </div>
 
                 <div class="pt-2">
