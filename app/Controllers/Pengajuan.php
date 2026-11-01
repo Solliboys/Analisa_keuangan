@@ -18,6 +18,7 @@ use App\Services\GeminiAiService;
 
 class Pengajuan extends BaseController
 {
+    protected $db;
     protected $kreditModel;
     protected $usahaModel;
     protected $agunanModel;
@@ -32,6 +33,7 @@ class Pengajuan extends BaseController
 
     public function __construct()
     {
+        $this->db                = \Config\Database::connect();
         $this->kreditModel       = new KreditModel();
         $this->usahaModel        = new KreditUsahaModel();
         $this->agunanModel       = new AgunanModel();
