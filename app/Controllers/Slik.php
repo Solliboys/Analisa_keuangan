@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\KreditModel;
 use App\Models\SlikModel;
+use App\Models\LogAktivitasModel;
 
 class Slik extends BaseController
 {
@@ -219,6 +220,24 @@ class Slik extends BaseController
         // Update data kredit induk
         $this->kreditModel->update($kreditId, $updateKredit);
 
+        // Catat ke log aktivitas sistem
+        try {
+            $nomorApp = $kredit['nomor_aplikasi'] ?? ('ID #' . $kreditId);
+            $namaDeb  = $kredit['nama_debitur'] ?? '-';
+            LogAktivitasModel::catat(
+                'Petugas SLIK memverifikasi & menerbitkan hasil SLIK OJK berkas ' . $nomorApp . ' (' . $namaDeb . ' - ' . $hasilSlik . ')',
+                'SLIK',
+                ($adaTunggakan ? 'WARNING' : 'SUCCESS'),
+                [
+                    'kredit_id'        => $kreditId,
+                    'nomor_aplikasi'   => $nomorApp,
+                    'hasil_slik'       => $hasilSlik,
+                    'jumlah_fasilitas' => $jumlahFasilitas,
+                    'total_baki_debet' => $totalBakiDebet
+                ]
+            );
+        } catch (\Throwable $e) {}
+
         return $this->response->setJSON([
             'status'  => true,
             'message' => 'Data Verifikasi SLIK OJK berhasil disimpan dan diterbitkan!',
@@ -264,6 +283,18 @@ class Slik extends BaseController
             'slik_verified_at' => date('Y-m-d H:i:s'),
             'slik_verified_by' => session()->get('nama_lengkap')
         ]);
+
+        // Catat ke log aktivitas sistem
+        try {
+            $nomorApp = $kredit['nomor_aplikasi'] ?? ('ID #' . $kreditId);
+            $namaDeb  = $kredit['nama_debitur'] ?? '-';
+            LogAktivitasModel::catat(
+                'Petugas SLIK menyetujui seluruh usulan data SLIK pengusul pada berkas ' . $nomorApp . ' (' . $namaDeb . ' - ' . $hasilSlik . ')',
+                'SLIK',
+                'SUCCESS',
+                ['kredit_id' => $kreditId, 'hasil_slik' => $hasilSlik]
+            );
+        } catch (\Throwable $e) {}
 
         return $this->response->setJSON([
             'status'  => true,

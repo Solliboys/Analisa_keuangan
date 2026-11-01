@@ -443,13 +443,6 @@
                     </tbody>
                 </table>
             </div>
-
-            <div class="px-5 py-3.5 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-2">
-                <span class="text-xs text-slate-500 font-medium">Menampilkan riwayat aktivitas sistem terkini</span>
-                <a href="<?= base_url('log') ?>" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1.5 hover:underline">
-                    <span>Lihat Semua &rarr;</span>
-                </a>
-            </div>
         </div>
 
     </main>

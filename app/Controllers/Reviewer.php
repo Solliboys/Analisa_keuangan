@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\KreditModel;
 use App\Models\KomiteModel;
+use App\Models\LogAktivitasModel;
 
 class Reviewer extends BaseController
 {
@@ -209,6 +210,25 @@ class Reviewer extends BaseController
         } else {
             $this->komiteModel->insert($dataKomite);
         }
+
+        // Catat ke log aktivitas sistem
+        try {
+            $nomorApp = $kredit['nomor_aplikasi'] ?? ('ID #' . $kreditId);
+            $namaDeb  = $kredit['nama_debitur'] ?? '-';
+            $logStatus = ($statusSave === 'Ditolak') ? 'DANGER' : (($statusSave === 'Revisi') ? 'WARNING' : 'SUCCESS');
+            LogAktivitasModel::catat(
+                'Menetapkan keputusan komite: ' . strtoupper($statusSave) . ' pada pengajuan ' . $nomorApp . ' (' . $namaDeb . ')',
+                'KOMITE',
+                $logStatus,
+                [
+                    'kredit_id'       => $kreditId,
+                    'nomor_aplikasi'  => $nomorApp,
+                    'nama_debitur'    => $namaDeb,
+                    'status_approval' => $statusSave,
+                    'catatan'         => $catatan
+                ]
+            );
+        } catch (\Throwable $e) {}
 
         $messageSukses = ($statusSave === 'Revisi')
             ? 'Pengajuan berhasil dikembalikan ke Staf Pengusul (AO) untuk dilakukan perbaikan / revisi.'

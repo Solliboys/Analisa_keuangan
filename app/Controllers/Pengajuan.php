@@ -466,6 +466,39 @@ class Pengajuan extends BaseController
             $this->simpanKomite($kreditId, $input);
         }
 
+        // Catat ke log aktivitas sistem
+        try {
+            $nomorApp = $nomorAplikasi ?? ('ID #' . $kreditId);
+            $namaDeb  = $input['nama_debitur'] ?? '-';
+            if ($statusPengajuan === 'Diajukan') {
+                LogAktivitasModel::catat(
+                    'Mengajukan berkas pengajuan kredit ' . $nomorApp . ' (' . $namaDeb . ') ke Komite Kredit',
+                    'PENGAJUAN',
+                    'SUCCESS',
+                    [
+                        'kredit_id'       => $kreditId,
+                        'nomor_aplikasi'  => $nomorApp,
+                        'nama_debitur'    => $namaDeb,
+                        'status'          => 'Diajukan',
+                        'plafon'          => $input['plafon_pengajuan'] ?? 0
+                    ]
+                );
+            } else {
+                LogAktivitasModel::catat(
+                    'Menyimpan draf / pembaruan berkas pengajuan kredit ' . $nomorApp . ' (' . $namaDeb . ')',
+                    'PENGAJUAN',
+                    'SUCCESS',
+                    [
+                        'kredit_id'       => $kreditId,
+                        'nomor_aplikasi'  => $nomorApp,
+                        'nama_debitur'    => $namaDeb,
+                        'status'          => $statusPengajuan,
+                        'plafon'          => $input['plafon_pengajuan'] ?? 0
+                    ]
+                );
+            }
+        } catch (\Throwable $e) {}
+
         return $this->response->setJSON([
             'status'    => true,
             'message'   => ($statusPengajuan === 'Diajukan') ? 'Pengajuan berhasil diajukan ke Reviewer / Komite Kredit!' : 'Data berhasil disimpan',

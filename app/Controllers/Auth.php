@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
+use App\Models\LogAktivitasModel;
 
 class Auth extends BaseController
 {
@@ -51,18 +52,61 @@ class Auth extends BaseController
                         'terakhir_login' => date('Y-m-d H:i:s')
                     ]);
 
+                    // Catat ke log aktivitas sistem
+                    try {
+                        LogAktivitasModel::catat(
+                            'Pengguna @' . $user['username'] . ' (' . $user['nama_lengkap'] . ') berhasil login sebagai ' . $user['jabatan'],
+                            'AUTH',
+                            'SUCCESS',
+                            ['username' => $user['username'], 'jabatan' => $user['jabatan']],
+                            (int)$user['id'],
+                            $user['nama_lengkap'],
+                            $user['jabatan']
+                        );
+                    } catch (\Throwable $e) {}
+
                     return redirect()->to('/dashboard');
                 } else {
                     // Status 0: Tidak Aktif / Dinonaktifkan
+                    try {
+                        LogAktivitasModel::catat(
+                            'Login ditolak: Akun @' . $user['username'] . ' berstatus TIDAK AKTIF',
+                            'AUTH',
+                            'WARNING',
+                            ['username' => $user['username']]
+                        );
+                    } catch (\Throwable $e) {}
+
                     session()->remove(['user_id', 'username', 'nama_lengkap', 'jabatan', 'logged_in']);
                     session()->setFlashdata('error', '⛔ Akun Anda (@' . esc($user['username']) . ') berstatus TIDAK AKTIF atau dinonaktifkan oleh administrator.');
                     return redirect()->to('/auth');
                 }
             } else {
+                try {
+                    LogAktivitasModel::catat(
+                        'Percobaan login gagal (password salah) untuk username: ' . $username,
+                        'AUTH',
+                        'WARNING',
+                        ['username' => $username]
+                    );
+                } catch (\Throwable $e) {}
+
                 session()->setFlashdata('error', 'Password yang Anda masukkan salah.');
                 return redirect()->to('/auth');
             }
         } else {
+            try {
+                LogAktivitasModel::catat(
+                    'Percobaan login gagal (username tidak ditemukan): ' . $username,
+                    'AUTH',
+                    'WARNING',
+                    ['username' => $username]
+                );
+            } catch (\Throwable $e) {}
+
+            session()->setFlashdata('error', 'Username "' . esc($username) . '" tidak terdaftar di sistem.');
+            return redirect()->to('/auth');
+        }
             session()->setFlashdata('error', 'Username "' . esc($username) . '" tidak terdaftar di sistem.');
             return redirect()->to('/auth');
         }
@@ -138,6 +182,23 @@ class Auth extends BaseController
 
     public function logout()
     {
+        $uId   = session()->get('user_id');
+        $uName = session()->get('nama_lengkap') ?? session()->get('username');
+        $uRole = session()->get('jabatan');
+        if ($uName) {
+            try {
+                LogAktivitasModel::catat(
+                    'Pengguna ' . $uName . ' keluar (logout) dari sistem',
+                    'AUTH',
+                    'INFO',
+                    null,
+                    $uId ? (int)$uId : null,
+                    $uName,
+                    $uRole
+                );
+            } catch (\Throwable $e) {}
+        }
+
         session()->destroy();
         return redirect()->to('/login');
     }
