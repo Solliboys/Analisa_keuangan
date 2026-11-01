@@ -237,6 +237,7 @@ class Slik extends BaseController
 
         $this->db->table('pengaturan_sistem')->where('id', 1)->update([
             'ijin_pengusul_isi_slik' => $newVal,
+            'petugas_slik_aktif'     => ($newVal === 1 ? 0 : 1),
             'updated_at'             => date('Y-m-d H:i:s')
         ]);
 
