@@ -339,10 +339,10 @@ class Pengajuan extends BaseController
                 $statusPengajuan = $existing['status_pengajuan'];
             } else {
                 $reqStatus = $input['status_pengajuan'] ?? $existing['status_pengajuan'] ?? 'Draft';
-                if (!$isReviewer && !in_array(strtolower($reqStatus), ['draft', 'diajukan'])) {
+                if (!$isReviewer && !in_array(strtolower($reqStatus), ['draft', 'diajukan', 'revisi'])) {
                     $reqStatus = 'Draft';
                 }
-                $statusPengajuan = $reqStatus;
+                $statusPengajuan = (strtolower($reqStatus) === 'revisi') ? 'Revisi' : $reqStatus;
             }
         } else {
             $userIdPembuat = $userId;

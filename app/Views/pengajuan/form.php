@@ -148,6 +148,57 @@
                     <input type="hidden" name="nomor_aplikasi" id="nomor_aplikasi" value="<?= esc($nomor_aplikasi) ?>">
                     <input type="hidden" name="status_slik" id="inputStatusSlik" value="<?= esc($kredit['status_slik'] ?? 'Belum Terbit') ?>">
 
+                    <?php
+                        $isRevisi = (strtolower($kredit['status_pengajuan'] ?? '') === 'revisi');
+                        $catatanRevisi = '';
+                        $namaReviewerRevisi = 'Senior Credit Reviewer';
+                        $tglReviewerRevisi = '';
+                        if ($isRevisi && !empty($komite)) {
+                            foreach ($komite as $km) {
+                                if (($km['status_approval'] ?? '') === 'Revisi' || !empty($km['catatan_approval'])) {
+                                    $catatanRevisi = $km['catatan_approval'];
+                                    $namaReviewerRevisi = $km['nama_approver'] ?? $namaReviewerRevisi;
+                                    $tglReviewerRevisi = !empty($km['tanggal_approval']) ? date('d F Y', strtotime($km['tanggal_approval'])) : '';
+                                }
+                            }
+                        }
+                    ?>
+                    <?php if ($isRevisi): ?>
+                        <!-- Banner Peringatan Revisi Berkas dari Reviewer -->
+                        <div class="mb-6 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-purple-50 via-purple-50/80 to-indigo-50 border-2 border-purple-300 shadow-sm transition">
+                            <div class="flex items-start gap-4">
+                                <div class="w-11 h-11 rounded-2xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-3 py-1 rounded-full text-xs font-black bg-purple-600 text-white tracking-wider uppercase shadow-2xs">
+                                                Perlu Revisi (Dikembalikan ke AO)
+                                            </span>
+                                            <?php if ($tglReviewerRevisi): ?>
+                                                <span class="text-xs text-purple-700 font-semibold">&bull; Ditetapkan pada <?= esc($tglReviewerRevisi) ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <span class="text-xs font-bold text-purple-900 bg-purple-100/80 px-2.5 py-1 rounded-xl border border-purple-200">
+                                            Ditinjau oleh: <?= esc($namaReviewerRevisi) ?>
+                                        </span>
+                                    </div>
+                                    <h4 class="text-sm font-extrabold text-purple-950 mt-2.5">
+                                        Instruksi Perbaikan & Catatan Reviewer:
+                                    </h4>
+                                    <div class="mt-1.5 p-4 bg-white/95 rounded-2xl border border-purple-200 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium shadow-2xs">
+                                        <?= nl2br(esc($catatanRevisi ?: 'Harap periksa dan perbaiki kelengkapan data atau dokumen berkas pengajuan kredit ini.')) ?>
+                                    </div>
+                                    <p class="text-xs text-purple-800 mt-2.5 flex items-center gap-1.5 font-medium">
+                                        <svg class="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span>Silakan perbaiki isian pada langkah terkait di bawah. Setelah selesai, buka <strong>Langkah 12 (Repayment)</strong> lalu klik <strong>"Simpan & Selesai Pengajuan"</strong> untuk mengirim ulang ke Reviewer.</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
                     <!-- ==========================================
                          TAB 1: APLIKASI & PLAFON PINJAMAN
                     =========================================== -->

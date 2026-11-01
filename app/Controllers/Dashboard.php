@@ -289,6 +289,7 @@ class Dashboard extends BaseController
             $totalDiajukan  = 0;
             $totalDisetujui = 0;
             $totalDitolak   = 0;
+            $totalRevisi    = 0;
 
             foreach ($semuaKredit as &$k) {
                 $totalPlafon += (float)($k['plafon_pengajuan'] ?? 0);
@@ -308,6 +309,7 @@ class Dashboard extends BaseController
                 elseif ($st === 'diajukan') $totalDiajukan++;
                 elseif (strpos($st, 'setuju') !== false || strpos($st, 'bersyarat') !== false) $totalDisetujui++;
                 elseif (strpos($st, 'tolak') !== false) $totalDitolak++;
+                elseif (strpos($st, 'revisi') !== false) $totalRevisi++;
 
                 // Hubungkan data analisa AI jika ada
                 $k['analisa'] = $mapAnalisa[$k['kredit_id']] ?? null;
@@ -351,6 +353,7 @@ class Dashboard extends BaseController
                 'total_menunggu'      => $totalDiajukan,
                 'total_disetujui'     => $totalDisetujui,
                 'total_ditolak'       => $totalDitolak,
+                'total_revisi'        => $totalRevisi,
                 'total_draft'         => $totalDraft,
                 'daftar_pengajuan'    => $semuaKredit,
                 'pengaturan_sistem'   => $pengaturanSistem
@@ -393,6 +396,7 @@ class Dashboard extends BaseController
             $totalDiajukan  = 0;
             $totalDisetujui = 0;
             $totalDitolak   = 0;
+            $totalRevisi    = 0;
 
             foreach ($semuaKredit as &$k) {
                 $totalPlafon += (float)($k['plafon_pengajuan'] ?? 0);
@@ -410,6 +414,7 @@ class Dashboard extends BaseController
                 elseif ($st === 'diajukan') $totalDiajukan++;
                 elseif (strpos($st, 'setuju') !== false || strpos($st, 'bersyarat') !== false) $totalDisetujui++;
                 elseif (strpos($st, 'tolak') !== false) $totalDitolak++;
+                elseif (strpos($st, 'revisi') !== false) $totalRevisi++;
 
                 $k['analisa'] = $mapAnalisa[$k['kredit_id']] ?? null;
 
@@ -458,6 +463,7 @@ class Dashboard extends BaseController
                 'total_menunggu'      => $totalDiajukan,
                 'total_disetujui'     => $totalDisetujui,
                 'total_ditolak'       => $totalDitolak,
+                'total_revisi'        => $totalRevisi,
                 'total_draft'         => $totalDraft,
                 'daftar_pengajuan'    => $semuaKredit,
                 'recent_logs'         => $recentLogs,

@@ -304,6 +304,10 @@
                                                 $badgeClass = 'bg-rose-50 text-rose-700 border-rose-300 ring-1 ring-rose-200/50';
                                                 $dotClass   = 'bg-rose-500';
                                                 $statusLabel= 'Ditolak';
+                                            } elseif ($st === 'revisi' || strpos($st, 'revisi') !== false) {
+                                                $badgeClass = 'bg-purple-50 text-purple-700 border-purple-300 ring-1 ring-purple-200/50';
+                                                $dotClass   = 'bg-purple-600';
+                                                $statusLabel= 'Perlu Revisi';
                                             } elseif ($st === 'diajukan') {
                                                 $badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
                                                 $dotClass   = 'bg-blue-500';
@@ -690,6 +694,13 @@
                 panduanBox.className = 'p-3.5 rounded-2xl border text-xs bg-rose-50/60 border-rose-200 text-rose-900';
                 panduanTitle.innerText = 'Tindak Lanjut Pengusul:';
                 panduanDesc.innerText = 'Pengajuan ditolak berdasarkan mitigasi risiko di atas. Sampaikan penjelasan resmi kepada nasabah secara profesional.';
+            } else if (st.includes('revisi')) {
+                banner.className = 'p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-1.5 bg-purple-50 text-purple-900 border-purple-300 ring-1 ring-purple-200/50';
+                badge.innerText = 'PERLU REVISI (DIKEMBALIKAN KE AO)';
+                sub.innerText = 'Berkas dikembalikan oleh Reviewer untuk perbaikan data / dokumen pendukung';
+                panduanBox.className = 'p-3.5 rounded-2xl border text-xs bg-purple-50/60 border-purple-200 text-purple-900';
+                panduanTitle.innerText = 'Instruksi Tindak Lanjut AO:';
+                panduanDesc.innerText = 'Periksa catatan perbaikan Reviewer di atas. Buka tombol "Edit Form" untuk merevisi isian atau dokumen yang diminta, kemudian ajukan ulang pada Tab 12.';
             } else if (st === 'diajukan') {
                 banner.className = 'p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-1.5 bg-blue-50 text-blue-900 border-blue-200';
                 badge.innerText = 'SEDANG DIAJUKAN';

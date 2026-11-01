@@ -147,13 +147,13 @@ class Reviewer extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'ID Pengajuan tidak valid.']);
         }
 
-        $allowedKeputusan = ['Disetujui', 'Bersyarat', 'Disetujui Bersyarat', 'Ditolak'];
+        $allowedKeputusan = ['Disetujui', 'Bersyarat', 'Disetujui Bersyarat', 'Ditolak', 'Revisi', 'Kembalikan untuk Revisi'];
         if (!in_array($keputusan, $allowedKeputusan)) {
-            return $this->response->setJSON(['status' => false, 'message' => 'Silakan pilih keputusan: Setuju, Bersyarat, atau Tolak.']);
+            return $this->response->setJSON(['status' => false, 'message' => 'Silakan pilih keputusan: Setuju, Bersyarat, Revisi, atau Tolak.']);
         }
 
-        if ($keputusan === 'Ditolak' && empty($catatan)) {
-            return $this->response->setJSON(['status' => false, 'message' => 'Alasan penolakan wajib diisi pada catatan keputusan!']);
+        if (($keputusan === 'Ditolak' || $keputusan === 'Revisi' || $keputusan === 'Kembalikan untuk Revisi') && empty($catatan)) {
+            return $this->response->setJSON(['status' => false, 'message' => ($keputusan === 'Ditolak') ? 'Alasan penolakan wajib diisi pada catatan keputusan!' : 'Instruksi perbaikan berkas wajib diisi pada catatan keputusan untuk Staf Pengusul (AO)!']);
         }
 
         if (($keputusan === 'Bersyarat' || $keputusan === 'Disetujui Bersyarat') && empty($catatan)) {
@@ -172,7 +172,13 @@ class Reviewer extends BaseController
         }
 
         // Normalisasi nama status
-        $statusSave = ($keputusan === 'Bersyarat' || $keputusan === 'Disetujui Bersyarat') ? 'Disetujui Bersyarat' : $keputusan;
+        if ($keputusan === 'Bersyarat' || $keputusan === 'Disetujui Bersyarat') {
+            $statusSave = 'Disetujui Bersyarat';
+        } elseif ($keputusan === 'Revisi' || $keputusan === 'Kembalikan untuk Revisi') {
+            $statusSave = 'Revisi';
+        } else {
+            $statusSave = $keputusan;
+        }
 
         // 1. Update status_pengajuan di tabel kredit
         $this->kreditModel->update($kreditId, [
@@ -204,9 +210,13 @@ class Reviewer extends BaseController
             $this->komiteModel->insert($dataKomite);
         }
 
+        $messageSukses = ($statusSave === 'Revisi')
+            ? 'Pengajuan berhasil dikembalikan ke Staf Pengusul (AO) untuk dilakukan perbaikan / revisi.'
+            : 'Keputusan Reviewer berhasil disimpan: Pengajuan telah di-' . strtoupper($statusSave) . '.';
+
         return $this->response->setJSON([
             'status'       => true,
-            'message'      => 'Keputusan Reviewer berhasil disimpan: Pengajuan telah di-' . strtoupper($keputusan) . '.',
+            'message'      => $messageSukses,
             'redirect_url' => base_url('dashboard')
         ]);
     }

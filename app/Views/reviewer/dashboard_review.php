@@ -265,6 +265,10 @@
                                                 $badgeClass = 'bg-rose-50 text-rose-700 border-rose-300';
                                                 $dotClass   = 'bg-rose-500';
                                                 $statusLabel= 'Ditolak';
+                                            } elseif ($st === 'revisi' || strpos($st, 'revisi') !== false) {
+                                                $badgeClass = 'bg-purple-50 text-purple-700 border-purple-300 ring-1 ring-purple-200/50';
+                                                $dotClass   = 'bg-purple-600';
+                                                $statusLabel= 'Perlu Revisi';
                                             } elseif ($st === 'diajukan') {
                                                 $badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
                                                 $dotClass   = 'bg-blue-500';
