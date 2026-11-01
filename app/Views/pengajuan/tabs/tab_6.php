@@ -402,10 +402,10 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                             <?php foreach ($slik as $i => $row): ?>
                                 <tr class="hover:bg-slate-50/80 transition">
                                     <td class="py-2 px-3 border-r border-slate-100 text-center font-bold"><?= $i + 1 ?></td>
-                                    <td class="py-2 px-3 border-r border-slate-100 font-bold"><?= esc($row['nama_debitur'] ?: $namaDebiturVal) ?></td>
-                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['bank_lembaga'] ?: '-') ?></td>
-                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['keterangan'] ?: ($row['jenis_fasilitas'] ?: 'Modal Kerja')) ?></td>
-                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['jenis_fasilitas'] ?: 'Kredit Usaha') ?></td>
+                                    <td class="py-2 px-3 border-r border-slate-100 font-bold"><?= esc(!empty($row['nama_debitur']) ? $row['nama_debitur'] : ($namaDebiturVal ?? '-')) ?></td>
+                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc(!empty($row['bank_lembaga']) ? $row['bank_lembaga'] : '-') ?></td>
+                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc(!empty($row['keterangan']) ? $row['keterangan'] : (!empty($row['jenis_fasilitas']) ? $row['jenis_fasilitas'] : 'Modal Kerja')) ?></td>
+                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc(!empty($row['jenis_fasilitas']) ? $row['jenis_fasilitas'] : (!empty($row['keterangan']) ? $row['keterangan'] : 'Kredit Usaha')) ?></td>
                                     <td class="py-2 px-3 border-r border-slate-100 font-semibold">Rp <?= number_format((float)($row['plafon'] ?? 0), 0, ',', '.') ?></td>
                                     <td class="py-2 px-3 border-r border-slate-100 font-bold text-blue-700">Rp <?= number_format((float)($row['outstanding'] ?? 0), 0, ',', '.') ?></td>
                                     <td class="py-2 px-3 border-r border-slate-100">-</td>
