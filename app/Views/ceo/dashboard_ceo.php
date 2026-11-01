@@ -146,7 +146,7 @@
         </div>
 
         <!-- Metric Performance Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Berkas Masuk</span>
                 <div class="text-2xl font-extrabold text-slate-900 mt-1"><?= number_format($total_pengajuan ?? 0) ?></div>
@@ -161,6 +161,11 @@
                 <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Pengajuan Disetujui</span>
                 <div class="text-2xl font-extrabold text-emerald-700 mt-1"><?= number_format($total_disetujui ?? 0) ?></div>
                 <div class="text-xs text-slate-400 mt-1">Disetujui oleh Reviewer / Komite</div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <span class="text-xs font-bold text-purple-600 uppercase tracking-wider">Perlu Revisi</span>
+                <div class="text-2xl font-extrabold text-purple-700 mt-1"><?= number_format($total_revisi ?? 0) ?></div>
+                <div class="text-xs text-slate-400 mt-1">Dikembalikan ke staf untuk perbaikan</div>
             </div>
             <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Pengajuan Ditolak</span>
