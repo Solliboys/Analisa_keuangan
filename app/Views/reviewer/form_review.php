@@ -179,9 +179,16 @@
 
                             <!-- 3. SLIK OJK -->
                             <div class="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/80 flex flex-col justify-between min-h-[145px]">
-                                <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center gap-1.5">
-                                    <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">3</span>
-                                    <span>SLIK OJK (Ideb)</span>
+                                <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center justify-between">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">3</span>
+                                        <span>SLIK OJK (Ideb)</span>
+                                    </div>
+                                    <?php if (!empty($kredit['berkas_slik_pdf'])): ?>
+                                        <a href="<?= base_url($kredit['berkas_slik_pdf']) ?>" target="_blank" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline flex items-center gap-0.5" title="Lihat Laporan iDeb Resmi PDF">
+                                            <span>PDF iDeb ↗</span>
+                                        </a>
+                                    <?php endif; ?>
                                 </span>
                                 <div class="space-y-1 my-1.5 text-xs flex-1">
                                     <div class="flex items-center justify-between">
@@ -194,9 +201,11 @@
                                         <?= esc($kredit['ringkasan_slik'] ?: 'Riwayat pembayaran lancar, tidak ada catatan tunggakan fasilitas kredit aktif.') ?>
                                     </p>
                                 </div>
-                                <div class="text-[11px] text-slate-500 pt-1 border-t border-slate-200/50 flex justify-between">
-                                    <span>Kolektibilitas: Lancar</span>
-                                    <span class="text-emerald-700 font-semibold">Kol 1</span>
+                                <div class="text-[11px] text-slate-500 pt-1 border-t border-slate-200/50 flex justify-between items-center">
+                                    <span>Hasil:</span>
+                                    <span class="font-bold <?= stripos($kredit['hasil_slik'] ?? '', 'tunggakan') !== false || stripos($kredit['hasil_slik'] ?? '', 'kol 2') !== false || stripos($kredit['hasil_slik'] ?? '', 'kol 3') !== false ? 'text-rose-600' : 'text-emerald-700' ?>">
+                                        <?= esc($kredit['hasil_slik'] ?? 'Kol 1 (Lancar)') ?>
+                                    </span>
                                 </div>
                             </div>
 

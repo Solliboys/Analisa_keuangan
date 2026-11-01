@@ -435,6 +435,28 @@
             </h2>
 
             <!-- A. Character -->
+            <?php
+                $totalBakiDebetSlikRiil = 0;
+                $totalPlafonSlikRiil = 0;
+                $adaTunggakanSlik = false;
+                $kolTerburukSlik = 'Kol 1 (Lancar)';
+                $kolWeight = ['Lancar' => 1, 'DPK' => 2, 'Kurang Lancar' => 3, 'Diragukan' => 4, 'Macet' => 5];
+                $maxWeight = 1;
+                if (!empty($slik) && is_array($slik)) {
+                    foreach ($slik as $sRow) {
+                        $totalBakiDebetSlikRiil += (float)($sRow['outstanding'] ?? 0);
+                        $totalPlafonSlikRiil += (float)($sRow['plafon'] ?? 0);
+                        $kName = $sRow['kelancaran'] ?? 'Lancar';
+                        $w = $kolWeight[$kName] ?? 1;
+                        if ($w > $maxWeight) {
+                            $maxWeight = $w;
+                            $kolTerburukSlik = $kName;
+                        }
+                        if ($w > 1) $adaTunggakanSlik = true;
+                    }
+                }
+                $hasilSlikTampil = !empty($kredit['hasil_slik']) ? $kredit['hasil_slik'] : $kolTerburukSlik;
+            ?>
             <div class="mb-4">
                 <div class="font-bold text-xs text-blue-900 mb-1">
                     A. Analisis Character (Karakter & Integritas) - Bobot: 20% | Skor: <?= $sChar ?>/100
@@ -453,26 +475,72 @@
                         <tr>
                             <td>Jumlah Fasilitas Aktif</td>
                             <td>Penjumlahan</td>
-                            <td><?= count($slik) ?> fasilitas</td>
-                            <td><?= count($slik) ?> fasilitas</td>
+                            <td><?= count($slik ?? []) ?> fasilitas</td>
+                            <td><?= count($slik ?? []) ?> fasilitas</td>
                             <td>Valid Sesuai</td>
                         </tr>
                         <tr>
                             <td>Total Baki Debet Riil</td>
                             <td>Outstanding berjalan</td>
-                            <td>Rp <?= number_format((float)($disbursement['baki_debet'] ?? 0), 0, ',', '.') ?></td>
-                            <td>Rp <?= number_format((float)($disbursement['baki_debet'] ?? 0), 0, ',', '.') ?></td>
+                            <td>Rp <?= number_format($totalBakiDebetSlikRiil, 0, ',', '.') ?></td>
+                            <td>Rp <?= number_format($totalBakiDebetSlikRiil, 0, ',', '.') ?></td>
                             <td>Terverifikasi</td>
                         </tr>
                         <tr>
                             <td>Kolektibilitas & DPD</td>
                             <td>Kualitas SLIK</td>
-                            <td>Lancar (Kol 1)</td>
-                            <td>Kol 1 / DPD 0</td>
-                            <td class="font-bold text-emerald-700">Sangat Bersih</td>
+                            <td><?= esc($hasilSlikTampil) ?></td>
+                            <td><?= esc($hasilSlikTampil) ?></td>
+                            <td class="font-bold <?= $adaTunggakanSlik ? 'text-rose-700' : 'text-emerald-700' ?>">
+                                <?= $adaTunggakanSlik ? 'Perlu Mitigasi' : 'Sangat Bersih' ?>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
+
+                <?php if (!empty($slik) && is_array($slik)): ?>
+                    <!-- Tabel Rincian Fasilitas Kredit SLIK OJK -->
+                    <div class="font-bold text-[11px] text-slate-800 mt-2 mb-1">
+                        Rincian Fasilitas Kredit Bank Lain (SLIK OJK / iDeb):
+                    </div>
+                    <table class="mb-2 text-[10px]">
+                        <thead>
+                            <tr class="bg-slate-100">
+                                <th style="width: 20%;">Debitur / Pemilik</th>
+                                <th style="width: 25%;">Bank / Lembaga</th>
+                                <th style="width: 15%;">Plafon</th>
+                                <th style="width: 15%;">Baki Debet</th>
+                                <th style="width: 12%;">Kolektibilitas</th>
+                                <th style="width: 13%;">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($slik as $sRow): ?>
+                                <tr>
+                                    <td><?= esc($sRow['nama_debitur'] ?: ($kredit['nama_debitur'] ?: '-')) ?></td>
+                                    <td class="font-bold"><?= esc($sRow['bank_lembaga'] ?: '-') ?></td>
+                                    <td>Rp <?= number_format((float)($sRow['plafon'] ?? 0), 0, ',', '.') ?></td>
+                                    <td class="font-bold text-blue-900">Rp <?= number_format((float)($sRow['outstanding'] ?? 0), 0, ',', '.') ?></td>
+                                    <td class="font-semibold <?= strtolower($sRow['kelancaran'] ?? '') === 'lancar' ? 'text-emerald-700' : 'text-rose-700' ?>">
+                                        <?= esc($sRow['kelancaran'] ?: 'Lancar') ?>
+                                    </td>
+                                    <td><?= esc($sRow['keterangan'] ?: '-') ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+
+                <?php if (!empty($kredit['slik_verified_by']) || !empty($kredit['ringkasan_slik'])): ?>
+                    <!-- Catatan Resmi Verifikasi Petugas SLIK -->
+                    <div class="border border-blue-200 bg-blue-50/40 p-2.5 rounded text-[10px] text-slate-700 mb-2">
+                        <div class="flex justify-between items-center font-bold text-blue-950 mb-0.5">
+                            <span>Verifikasi Petugas SLIK OJK (Status: <?= esc($kredit['status_slik'] ?? 'Terbit') ?>)</span>
+                            <span>Oleh: <?= esc($kredit['slik_verified_by'] ?? 'Petugas SLIK') ?> (<?= !empty($kredit['slik_verified_at']) ? date('d M Y H:i', strtotime($kredit['slik_verified_at'])) : date('d M Y') ?>)</span>
+                        </div>
+                        <p class="italic text-slate-700 mt-0.5">"<?= esc($kredit['ringkasan_slik'] ?: 'Riwayat fasilitas pembiayaan debitur terverifikasi lancar tanpa tunggakan.') ?>"</p>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- B. Capacity -->

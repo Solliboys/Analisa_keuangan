@@ -216,15 +216,18 @@ class Dashboard extends BaseController
                 $k['ada_tunggakan_slik']    = $adaTunggakan;
                 
                 // Status Terbit SLIK (Belum Terbit / Menunggu Pengecekan / Terbit) & Hasil SLIK
-                if (count($slikRows) > 0 || !empty($k['ringkasan_slik']) || ($k['status_slik'] ?? '') === 'Terbit') {
+                $isTerbit = (($k['status_slik'] ?? '') === 'Terbit' || !empty($k['slik_verified_at']));
+                if ($isTerbit) {
                     $totalSlikChecked++;
                     $k['status_slik'] = 'Terbit';
-                    if ($adaTunggakan) {
+                    if (!empty($k['hasil_slik'])) {
+                        // Pertahankan hasil resmi dari petugas slik
+                    } elseif ($adaTunggakan) {
                         $k['hasil_slik'] = 'Kolektibilitas 2-5 (Ada Tunggakan)';
                     } else {
                         $k['hasil_slik'] = 'Kol 1 (Lancar / Bersih)';
                     }
-                } elseif (($k['status_slik'] ?? '') === 'Menunggu Pengecekan') {
+                } elseif (($k['status_slik'] ?? '') === 'Menunggu Pengecekan' || strtolower($k['status_pengajuan'] ?? '') !== 'draft') {
                     $k['status_slik'] = 'Menunggu Pengecekan';
                     $k['hasil_slik']  = 'Menunggu Pengecekan Petugas SLIK';
                 } else {
@@ -325,9 +328,13 @@ class Dashboard extends BaseController
                 $k['ada_tunggakan_slik']    = $adaTunggakan;
                 
                 // Status Terbit SLIK
-                if (count($slikRows) > 0 || !empty($k['ringkasan_slik']) || ($k['status_slik'] ?? '') === 'Terbit') {
+                $isTerbit = (($k['status_slik'] ?? '') === 'Terbit' || !empty($k['slik_verified_at']));
+                if ($isTerbit) {
                     $k['status_slik'] = 'Terbit';
-                    $k['hasil_slik']  = $adaTunggakan ? 'Kolektibilitas 2-5' : 'Kol 1 (Lancar)';
+                    $k['hasil_slik']  = !empty($k['hasil_slik']) ? $k['hasil_slik'] : ($adaTunggakan ? 'Kolektibilitas 2-5' : 'Kol 1 (Lancar)');
+                } elseif (($k['status_slik'] ?? '') === 'Menunggu Pengecekan' || strtolower($k['status_pengajuan'] ?? '') !== 'draft') {
+                    $k['status_slik'] = 'Menunggu Pengecekan';
+                    $k['hasil_slik']  = 'Menunggu Pengecekan';
                 } else {
                     $k['status_slik'] = 'Belum Terbit';
                     $k['hasil_slik']  = 'Menunggu Pengecekan';
@@ -420,9 +427,13 @@ class Dashboard extends BaseController
                 $k['total_baki_debet_slik'] = $totalBakiDebet;
                 $k['ada_tunggakan_slik']    = $adaTunggakan;
                 
-                if (count($slikRows) > 0 || !empty($k['ringkasan_slik']) || ($k['status_slik'] ?? '') === 'Terbit') {
+                $isTerbit = (($k['status_slik'] ?? '') === 'Terbit' || !empty($k['slik_verified_at']));
+                if ($isTerbit) {
                     $k['status_slik'] = 'Terbit';
-                    $k['hasil_slik']  = $adaTunggakan ? 'Kolektibilitas 2-5' : 'Kol 1 (Lancar)';
+                    $k['hasil_slik']  = !empty($k['hasil_slik']) ? $k['hasil_slik'] : ($adaTunggakan ? 'Kolektibilitas 2-5' : 'Kol 1 (Lancar)');
+                } elseif (($k['status_slik'] ?? '') === 'Menunggu Pengecekan' || strtolower($k['status_pengajuan'] ?? '') !== 'draft') {
+                    $k['status_slik'] = 'Menunggu Pengecekan';
+                    $k['hasil_slik']  = 'Menunggu Pengecekan';
                 } else {
                     $k['status_slik'] = 'Belum Terbit';
                     $k['hasil_slik']  = 'Menunggu Pengecekan';
