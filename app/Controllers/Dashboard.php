@@ -183,19 +183,8 @@ class Dashboard extends BaseController
             $ijinSlikPengusul = (int)($pengaturanSistem['ijin_pengusul_isi_slik'] ?? 1);
             $slikModel   = new \App\Models\SlikModel();
 
-            if ($ijinSlikPengusul === 0) {
-                // Jika fitur upload sendiri ditutup:
-                // Masuk ketika pengusul memencet tombol setuju di slik (status_slik = 'Menunggu Pengecekan' / 'Terbit')
-                // ATAU berkas sudah resmi diajukan (status_pengajuan != 'Draft')
-                $semuaKredit = $kreditModel->groupStart()
-                                           ->whereIn('status_slik', ['Menunggu Pengecekan', 'Terbit'])
-                                           ->orWhere('status_pengajuan !=', 'Draft')
-                                           ->groupEnd()
-                                           ->orderBy('created_at', 'DESC')
-                                           ->findAll();
-            } else {
-                $semuaKredit = $kreditModel->orderBy('created_at', 'DESC')->findAll();
-            }
+            // Tampilkan seluruh berkas pengajuan kredit yang masuk untuk antrean verifikasi SLIK
+            $semuaKredit = $kreditModel->orderBy('created_at', 'DESC')->findAll();
             
             $totalPengajuan = count($semuaKredit);
             $totalPlafon    = 0;

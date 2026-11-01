@@ -62,6 +62,25 @@ class Slik extends BaseController
         // Jika belum ada data resmi tapi ada usulan, atau sebaliknya
         $daftarSlik = !empty($slikResmi) ? $slikResmi : $usulanPengusul;
 
+        // Ambil data berkas dokumen nasabah dari Tab 5 (terutama KTP)
+        $dokumenModel = new \App\Models\KreditDokumenModel();
+        $daftarDokumen = $dokumenModel->where('kredit_id', $kreditId)->findAll();
+        $ktpDokumen = null;
+        foreach ($daftarDokumen as $doc) {
+            $kat = strtolower($doc['kategori_dokumen'] ?? '');
+            $nm  = strtolower($doc['nama_dokumen'] ?? '');
+            if (strpos($kat, 'ktp') !== false || strpos($nm, 'ktp') !== false) {
+                $ktpDokumen = $doc;
+                break;
+            }
+        }
+
+        // Format No Reff IDEB OJK Baku
+        $tglTimestamp = !empty($kredit['created_at']) ? strtotime($kredit['created_at']) : time();
+        $entitas = (isset($kredit['jenis_debitur']) && (stripos($kredit['jenis_debitur'], 'badan') !== false || stripos($kredit['jenis_debitur'], 'usaha') !== false || stripos($kredit['jenis_debitur'], 'pt') !== false || stripos($kredit['jenis_debitur'], 'cv') !== false)) ? 'B' : 'I';
+        $noIdVal = !empty($kredit['slik_permohonan_nik']) ? $kredit['slik_permohonan_nik'] : (!empty($kredit['npwp_pribadi']) ? $kredit['npwp_pribadi'] : (!empty($kredit['nik']) ? $kredit['nik'] : ''));
+        $noReffSlik = $kreditId . '/BPR-SA/IDEB/' . date('Y', $tglTimestamp) . '|01|' . $entitas . '|' . ($noIdVal ?: '-');
+
         // Ambil pengaturan sistem
         $pengaturanSistem = $this->db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
 
@@ -75,7 +94,11 @@ class Slik extends BaseController
             'slik'              => $daftarSlik,
             'usulan_pengusul'   => $usulanPengusul,
             'has_usulan'        => (!empty($usulanPengusul) && empty($slikResmi)),
-            'pengaturan_sistem' => $pengaturanSistem
+            'pengaturan_sistem' => $pengaturanSistem,
+            'daftar_dokumen'    => $daftarDokumen,
+            'ktp_dokumen'       => $ktpDokumen,
+            'no_reff_slik'      => $noReffSlik,
+            'no_id_val'         => $noIdVal
         ];
 
         return view('petugas_slik/form_verifikasi_slik', $data);
@@ -108,6 +131,7 @@ class Slik extends BaseController
 
         $slikInputs = $input['slik'] ?? [];
         $totalBakiDebet = 0;
+        $totalPlafonSlik = 0;
         $adaTunggakan = false;
         $jumlahFasilitas = 0;
 
@@ -123,8 +147,9 @@ class Slik extends BaseController
 
                 $plafon      = $this->cleanNumber($row['plafon'] ?? 0);
                 $outstanding = $this->cleanNumber($row['outstanding'] ?? 0);
-                $kelancaran  = $row['kelancaran'] ?? 'Lancar';
+                $kelancaran  = trim($row['kelancaran'] ?? 'Lancar');
 
+                $totalPlafonSlik += $plafon;
                 $totalBakiDebet += $outstanding;
                 $jumlahFasilitas++;
 
@@ -163,14 +188,36 @@ class Slik extends BaseController
             $hasilSlik  = 'Menunggu Pengecekan';
         }
 
-        // Update data kredit induk
-        $this->kreditModel->update($kreditId, [
+        // Handle Berkas Upload Hasil SLIK (PDF & TXT)
+        $updateKredit = [
             'ringkasan_slik'   => $ringkasanSlik,
             'status_slik'      => $statusSlik,
             'hasil_slik'       => $hasilSlik,
             'slik_verified_at' => date('Y-m-d H:i:s'),
             'slik_verified_by' => session()->get('nama_lengkap')
-        ]);
+        ];
+
+        $targetDir = FCPATH . 'uploads/slik';
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
+
+        $filePdf = $this->request->getFile('file_pdf');
+        if ($filePdf && $filePdf->isValid() && !$filePdf->hasMoved()) {
+            $newNamePdf = $filePdf->getRandomName();
+            $filePdf->move($targetDir, $newNamePdf);
+            $updateKredit['berkas_slik_pdf'] = 'uploads/slik/' . $newNamePdf;
+        }
+
+        $fileTxt = $this->request->getFile('file_txt');
+        if ($fileTxt && $fileTxt->isValid() && !$fileTxt->hasMoved()) {
+            $newNameTxt = $fileTxt->getRandomName();
+            $fileTxt->move($targetDir, $newNameTxt);
+            $updateKredit['berkas_slik_txt'] = 'uploads/slik/' . $newNameTxt;
+        }
+
+        // Update data kredit induk
+        $this->kreditModel->update($kreditId, $updateKredit);
 
         return $this->response->setJSON([
             'status'  => true,

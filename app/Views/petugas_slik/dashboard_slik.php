@@ -285,22 +285,20 @@
                                         <?php endif; ?>
                                     </td>
 
-                                    <!-- 7. Aksi (Edit Form, PDF, Hapus) -->
+                                    <!-- 7. Aksi (Verifikasi SLIK & Cetak CAM PDF) -->
                                     <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                         <div class="inline-flex items-center gap-1.5">
                                             <a href="<?= base_url('slik/verifikasi/' . $row['kredit_id']) ?>" 
-                                               class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold rounded-lg transition" title="Buka Formulir Verifikasi SLIK OJK">
-                                                Edit Form
+                                               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs" 
+                                               title="Buka Formulir Verifikasi SLIK OJK">
+                                                <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                                                <span>Verifikasi SLIK</span>
                                             </a>
                                             <a href="<?= base_url('pengajuan/cetak/' . $row['kredit_id']) ?>" target="_blank"
-                                               class="px-2.5 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs font-bold rounded-lg transition" title="Cetak CAM PDF">
-                                                PDF
+                                               class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" 
+                                               title="Lihat / Cetak CAM PDF">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                             </a>
-                                            <button type="button" 
-                                                    onclick="hapusPengajuan(<?= $row['kredit_id'] ?>, '<?= esc($row['nomor_aplikasi']) ?>')"
-                                                    class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" title="Hapus">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -451,58 +449,6 @@
             .catch(err => {
                 btn.disabled = false;
                 Swal.fire('Error', 'Gagal menghubungi server.', 'error');
-            });
-        }
-
-        function hapusPengajuan(id, nomor) {
-            Swal.fire({
-                title: 'Hapus Berkas Pengajuan?',
-                html: `Apakah Anda yakin ingin menghapus berkas nomor <b>${nomor}</b>?<br><small class="text-slate-400">Data yang dihapus tidak dapat dipulihkan kembali.</small>`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e11d48',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Ya, Hapus Sekarang',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const tr = document.getElementById(`row-kredit-${id}`);
-                    if (tr) tr.style.opacity = '0.5';
-
-                    fetch(`<?= base_url('pengajuan/hapus') ?>/${id}`, {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            if (tr) {
-                                tr.style.transition = 'all 0.3s ease';
-                                tr.style.opacity = '0';
-                                tr.style.transform = 'scale(0.95)';
-                                setTimeout(() => {
-                                    tr.remove();
-                                }, 300);
-                            }
-                            Swal.fire({
-                                title: 'Berhasil Dihapus',
-                                text: data.message,
-                                icon: 'success',
-                                timer: 1500,
-                                showConfirmButton: false
-                            });
-                        } else {
-                            if (tr) tr.style.opacity = '1';
-                            Swal.fire('Gagal!', data.message || 'Terjadi kesalahan saat menghapus.', 'error');
-                        }
-                    })
-                    .catch(err => {
-                        if (tr) tr.style.opacity = '1';
-                        Swal.fire('Error!', 'Koneksi terputus atau terjadi kesalahan.', 'error');
-                    });
-                }
             });
         }
     </script>
