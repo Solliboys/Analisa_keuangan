@@ -18,6 +18,7 @@ class UserModel extends Model
         'nama_lengkap',
         'email',
         'nomor_hp',
+        'foto',
         'jabatan',
         'status',
         'terakhir_login'

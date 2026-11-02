@@ -14,6 +14,10 @@ class KreditKeuanganDscModel extends Model
     protected $allowedFields    = [
         'kredit_id',
         'pendapatan_rk',
+        'pendapatan_lain_rk',
+        'keterangan_pendapatan_lain_rk',
+        'ada_bukti_pendapatan_lain_rk',
+        'bukti_pendapatan_lain_rk',
         'hpp_persen_rk',
         'hpp_nominal_rk',
         'laba_kotor_rk',
@@ -21,6 +25,7 @@ class KreditKeuanganDscModel extends Model
         'biaya_hidup_nominal_rk',
         'beban_lainnya_persen_rk',
         'beban_lainnya_nominal_rk',
+        'detail_beban_lainnya_rk',
         'laba_bersih_rk',
         'pendapatan_iv',
         'hpp_persen_iv',

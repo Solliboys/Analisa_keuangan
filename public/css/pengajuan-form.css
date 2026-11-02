@@ -1,0 +1,58 @@
+body { 
+    font-family: 'Plus Jakarta Sans', sans-serif; 
+}
+.step-tab.active {
+    background-color: #4f46e5;
+    color: #ffffff;
+    font-weight: 600;
+}
+.step-tab.completed {
+    border-color: #6366f1;
+    color: #4338ca;
+}
+.tab-panel { 
+    display: none; 
+}
+.tab-panel.active { 
+    display: block; 
+}
+
+/* Custom sleek scrollbar for verticalStepperList */
+#verticalStepperList {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+#verticalStepperList::-webkit-scrollbar {
+    width: 4px;
+}
+#verticalStepperList::-webkit-scrollbar-track {
+    background: transparent;
+}
+#verticalStepperList::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 9999px;
+}
+#verticalStepperList::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}
+
+/* ========================================================
+   STYLING DROPDOWN SELECT: PANAH / CHEVRON LEBIH KE TENGAH
+   ======================================================== */
+select:not([multiple]):not([size]) {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 1.25rem center !important;
+    background-repeat: no-repeat !important;
+    background-size: 1.15rem 1.15rem !important;
+    padding-right: 3rem !important;
+    cursor: pointer;
+}
+
+select:not([multiple]):not([size]):disabled {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    cursor: not-allowed;
+}
+

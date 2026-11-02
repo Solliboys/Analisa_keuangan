@@ -39,8 +39,6 @@ $RECYCLE.BIN/
 #-------------------------
 # Environment Files
 #-------------------------
-# These should never be under version control,
-# as it poses a security risk.
 .env
 .vagrant
 Vagrantfile
@@ -77,8 +75,6 @@ php_errors.log
 # Test Files
 #-------------------------
 /tests/coverage*
-
-# Don't save phpunit under version control.
 /phpunit
 
 #-------------------------
@@ -89,18 +85,10 @@ vendor/
 #-------------------------
 # IDE / Development Files
 #-------------------------
-
-# Modules Testing
 _modules/*
-
-# phpenv local config
 .php-version
-
-# Jetbrains editors (PHPStorm, etc)
 .idea/
 *.iml
-
-# NetBeans
 /nbproject/
 /build/
 /nbbuild/
@@ -109,8 +97,6 @@ _modules/*
 /nbactions.xml
 /nb-configuration.xml
 /.nb-gradle/
-
-# Sublime Text
 *.tmlanguage.cache
 *.tmPreferences.cache
 *.stTheme.cache
@@ -118,13 +104,13 @@ _modules/*
 *.sublime-project
 .phpintel
 /api/
-
-# Visual Studio Code
 .vscode/
-
 /results/
 /phpunit.xml
 
 # Public Uploads
 /public/uploads/*/*
 !/public/uploads/*/.gitkeep
+
+# Database dumps
+*.sql

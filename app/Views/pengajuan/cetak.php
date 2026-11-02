@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Analisa Kelayakan Kredit - <?= esc($kredit['nomor_aplikasi']) ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
+    <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; line-height: 1.5; color: #1e293b; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
@@ -16,15 +16,28 @@
             .page-break { page-break-before: always; break-before: page; padding-top: 15mm; }
             @page { size: A4; margin: 12mm 15mm; }
         }
+        html.is-modal .no-print-toolbar,
+        .is-modal .no-print-toolbar { display: none !important; }
+        html.is-modal body,
+        .is-modal body { padding: 1rem !important; }
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #cbd5e1; padding: 5px 8px; vertical-align: top; }
         th { background-color: #f8fafc; font-weight: 700; text-transform: uppercase; font-size: 10px; color: #334155; }
     </style>
+    <script>
+        if (window.self !== window.top || window.location.search.includes('modal=1')) {
+            document.documentElement.classList.add('is-modal');
+        }
+    </script>
 </head>
 <body class="bg-slate-100 p-4 sm:p-8 antialiased">
 
+    <?php 
+    $isModalView = !empty($_GET['modal']) || isset($_GET['preview']) || isset($_GET['popup']);
+    if (!$isModalView): 
+    ?>
     <!-- Top Action Toolbar (No-Print) -->
-    <div class="max-w-4xl mx-auto mb-6 flex items-center justify-between no-print">
+    <div id="topActionToolbar" class="max-w-4xl mx-auto mb-6 flex items-center justify-between no-print no-print-toolbar">
         <a href="<?= base_url('pengajuan/edit/' . $kredit['kredit_id']) ?>" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition flex items-center gap-1.5 shadow-sm">
             &larr; Kembali ke Form
         </a>
@@ -36,23 +49,78 @@
             </button>
         </div>
     </div>
+    <script>
+        if (window.self !== window.top) {
+            const tb = document.getElementById('topActionToolbar');
+            if (tb) tb.style.display = 'none';
+        }
+    </script>
+    <?php endif; ?>
 
     <!-- Paper Container (Matches result.pdf layout exactly) -->
     <div class="page-sheet max-w-4xl mx-auto bg-white border border-slate-200 rounded-xl p-8 sm:p-12 shadow-sm">
 
-        <!-- Top Blue Header Banner -->
-        <div class="bg-[#0284c7] text-white p-6 rounded-xl mb-3 shadow-xs">
-            <h1 class="text-lg sm:text-xl font-extrabold uppercase tracking-wide leading-tight">
-                LAPORAN ANALISA KELAYAKAN KREDIT DAN REKOMENDASI KOMITE KREDIT
-            </h1>
-            <p class="text-xs text-sky-100 font-medium mt-1">
-                Draft Review Independen Berbasis Metode 5C dan Credit Scoring | STATUS: <?= strtoupper(esc($kredit['status_pengajuan'] ?? 'DRAFT - RAHASIA')) ?>
-            </p>
+        <!-- ============================================================== -->
+        <!-- KOP SURAT RESMI PERBANKAN / LEMBAGA KEUANGAN                   -->
+        <!-- ============================================================== -->
+        <div class="mb-5 pb-2">
+            <div class="flex items-center justify-between gap-5 pb-3">
+                <!-- Logo Lembaga di Kiri -->
+                <div class="shrink-0 flex items-center justify-center">
+                    <?php if (!empty($pengaturan_sistem['logo_aplikasi'])): ?>
+                        <img src="<?= base_url('uploads/logo/' . $pengaturan_sistem['logo_aplikasi']) ?>" alt="Logo" class="h-16 w-auto max-w-[120px] object-contain">
+                    <?php else: ?>
+                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-900 to-blue-900 text-white flex flex-col items-center justify-center shadow-sm border border-slate-700">
+                            <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                            <span class="text-[8px] font-extrabold uppercase tracking-widest text-slate-200 mt-0.5">CREDIT</span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Teks Kop Surat di Tengah -->
+                <div class="flex-1 text-center px-2">
+                    <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase leading-snug">
+                        <?= esc($pengaturan_sistem['nama_lembaga'] ?: 'PT BANK PEREKONOMIAN RAKYAT / LEMBAGA PEMBIAYAAN OTW') ?>
+                    </h2>
+                    <h3 class="text-xs font-bold text-blue-800 uppercase tracking-widest mt-0.5">
+                        KOMITE KREDIT & DIVISI MANAJEMEN RISIKO PEMBIAYAAN
+                    </h3>
+                    <p class="text-[10px] text-slate-600 mt-1 leading-relaxed">
+                        Gedung Graha Finansial Lt. 5, Jl. Jenderal Sudirman Kav. 45-46 &bull; Telp: (021) 5290-8800 (Hunting) &bull; Fax: (021) 5290-8801<br>
+                        Email: <span class="text-blue-700 underline">komite.kredit@bank-otw.co.id</span> &bull; Website: www.credit-engine.co.id
+                    </p>
+                </div>
+
+                <!-- QR / Seal Verifikasi di Kanan -->
+                <div class="shrink-0 text-right hidden sm:block">
+                    <div class="border border-slate-300 rounded-lg p-2 text-center bg-slate-50">
+                        <div class="text-[8px] font-bold text-slate-500 uppercase tracking-wider">STATUS DOKUMEN</div>
+                        <div class="text-[10px] font-extrabold <?= ($kredit['status_pengajuan'] ?? '') === 'Disetujui' ? 'text-emerald-700' : 'text-blue-700' ?> mt-0.5">
+                            <?= strtoupper(esc($kredit['status_pengajuan'] ?? 'DRAFT')) ?>
+                        </div>
+                        <div class="text-[8px] font-mono text-slate-400 mt-0.5"><?= esc($kredit['nomor_aplikasi']) ?></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Garis Ganda Standar Kop Surat Resmi (Garis Tebal + Garis Tipis) -->
+            <div class="w-full border-t-2 border-slate-900 mt-1"></div>
+            <div class="w-full border-t border-slate-900 mt-[2px]"></div>
         </div>
 
-        <!-- Confirmation Input Strip -->
-        <div class="text-[10px] text-slate-500 font-mono mb-4 px-1">
-            KONFIRMASI INPUT: Unsur terbaca: 5 dari 5; sistem penilaian: Sistem Analisa Kredit & Gemini Underwriting; kode: <?= substr(md5($kredit['nomor_aplikasi']), 0, 6) ?>
+        <!-- Judul Resmi Dokumen CAM -->
+        <div class="text-center my-4">
+            <h1 class="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wide underline underline-offset-4 decoration-2">
+                CREDIT APPLICATION & MEMORANDUM (CAM)
+            </h1>
+            <p class="text-[11px] font-bold text-slate-700 mt-1 uppercase tracking-wider">
+                LAPORAN ANALISA KELAYAKAN FASILITAS KREDIT & RISALAH KEPUTUSAN KOMITE
+            </p>
+            <p class="text-[10px] text-slate-500 mt-0.5">
+                Nomor: CAM/<?= date('Y/m', strtotime($kredit['created_at'])) ?>/<?= esc($kredit['nomor_aplikasi']) ?> &bull; Sifat: RAHASIA / CONFIDENTIAL
+            </p>
         </div>
 
         <!-- Metadata Box Grid -->
@@ -367,6 +435,28 @@
             </h2>
 
             <!-- A. Character -->
+            <?php
+                $totalBakiDebetSlikRiil = 0;
+                $totalPlafonSlikRiil = 0;
+                $adaTunggakanSlik = false;
+                $kolTerburukSlik = 'Kol 1 (Lancar)';
+                $kolWeight = ['Lancar' => 1, 'DPK' => 2, 'Kurang Lancar' => 3, 'Diragukan' => 4, 'Macet' => 5];
+                $maxWeight = 1;
+                if (!empty($slik) && is_array($slik)) {
+                    foreach ($slik as $sRow) {
+                        $totalBakiDebetSlikRiil += (float)($sRow['outstanding'] ?? 0);
+                        $totalPlafonSlikRiil += (float)($sRow['plafon'] ?? 0);
+                        $kName = $sRow['kelancaran'] ?? 'Lancar';
+                        $w = $kolWeight[$kName] ?? 1;
+                        if ($w > $maxWeight) {
+                            $maxWeight = $w;
+                            $kolTerburukSlik = $kName;
+                        }
+                        if ($w > 1) $adaTunggakanSlik = true;
+                    }
+                }
+                $hasilSlikTampil = !empty($kredit['hasil_slik']) ? $kredit['hasil_slik'] : $kolTerburukSlik;
+            ?>
             <div class="mb-4">
                 <div class="font-bold text-xs text-blue-900 mb-1">
                     A. Analisis Character (Karakter & Integritas) - Bobot: 20% | Skor: <?= $sChar ?>/100
@@ -385,26 +475,72 @@
                         <tr>
                             <td>Jumlah Fasilitas Aktif</td>
                             <td>Penjumlahan</td>
-                            <td><?= count($slik) ?> fasilitas</td>
-                            <td><?= count($slik) ?> fasilitas</td>
+                            <td><?= count($slik ?? []) ?> fasilitas</td>
+                            <td><?= count($slik ?? []) ?> fasilitas</td>
                             <td>Valid Sesuai</td>
                         </tr>
                         <tr>
                             <td>Total Baki Debet Riil</td>
                             <td>Outstanding berjalan</td>
-                            <td>Rp <?= number_format((float)($disbursement['baki_debet'] ?? 0), 0, ',', '.') ?></td>
-                            <td>Rp <?= number_format((float)($disbursement['baki_debet'] ?? 0), 0, ',', '.') ?></td>
+                            <td>Rp <?= number_format($totalBakiDebetSlikRiil, 0, ',', '.') ?></td>
+                            <td>Rp <?= number_format($totalBakiDebetSlikRiil, 0, ',', '.') ?></td>
                             <td>Terverifikasi</td>
                         </tr>
                         <tr>
                             <td>Kolektibilitas & DPD</td>
                             <td>Kualitas SLIK</td>
-                            <td>Lancar (Kol 1)</td>
-                            <td>Kol 1 / DPD 0</td>
-                            <td class="font-bold text-emerald-700">Sangat Bersih</td>
+                            <td><?= esc($hasilSlikTampil) ?></td>
+                            <td><?= esc($hasilSlikTampil) ?></td>
+                            <td class="font-bold <?= $adaTunggakanSlik ? 'text-rose-700' : 'text-emerald-700' ?>">
+                                <?= $adaTunggakanSlik ? 'Perlu Mitigasi' : 'Sangat Bersih' ?>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
+
+                <?php if (!empty($slik) && is_array($slik)): ?>
+                    <!-- Tabel Rincian Fasilitas Kredit SLIK OJK -->
+                    <div class="font-bold text-[11px] text-slate-800 mt-2 mb-1">
+                        Rincian Fasilitas Kredit Bank Lain (SLIK OJK / iDeb):
+                    </div>
+                    <table class="mb-2 text-[10px]">
+                        <thead>
+                            <tr class="bg-slate-100">
+                                <th style="width: 20%;">Debitur / Pemilik</th>
+                                <th style="width: 25%;">Bank / Lembaga</th>
+                                <th style="width: 15%;">Plafon</th>
+                                <th style="width: 15%;">Baki Debet</th>
+                                <th style="width: 12%;">Kolektibilitas</th>
+                                <th style="width: 13%;">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($slik as $sRow): ?>
+                                <tr>
+                                    <td><?= esc($sRow['nama_debitur'] ?: ($kredit['nama_debitur'] ?: '-')) ?></td>
+                                    <td class="font-bold"><?= esc($sRow['bank_lembaga'] ?: '-') ?></td>
+                                    <td>Rp <?= number_format((float)($sRow['plafon'] ?? 0), 0, ',', '.') ?></td>
+                                    <td class="font-bold text-blue-900">Rp <?= number_format((float)($sRow['outstanding'] ?? 0), 0, ',', '.') ?></td>
+                                    <td class="font-semibold <?= strtolower($sRow['kelancaran'] ?? '') === 'lancar' ? 'text-emerald-700' : 'text-rose-700' ?>">
+                                        <?= esc($sRow['kelancaran'] ?: 'Lancar') ?>
+                                    </td>
+                                    <td><?= esc($sRow['keterangan'] ?: '-') ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endif; ?>
+
+                <?php if (!empty($kredit['slik_verified_by']) || !empty($kredit['ringkasan_slik'])): ?>
+                    <!-- Catatan Resmi Verifikasi Petugas SLIK -->
+                    <div class="border border-blue-200 bg-blue-50/40 p-2.5 rounded text-[10px] text-slate-700 mb-2">
+                        <div class="flex justify-between items-center font-bold text-blue-950 mb-0.5">
+                            <span>Verifikasi Petugas SLIK OJK (Status: <?= esc($kredit['status_slik'] ?? 'Terbit') ?>)</span>
+                            <span>Oleh: <?= esc($kredit['slik_verified_by'] ?? 'Petugas SLIK') ?> (<?= !empty($kredit['slik_verified_at']) ? date('d M Y H:i', strtotime($kredit['slik_verified_at'])) : date('d M Y') ?>)</span>
+                        </div>
+                        <p class="italic text-slate-700 mt-0.5">"<?= esc($kredit['ringkasan_slik'] ?: 'Riwayat fasilitas pembiayaan debitur terverifikasi lancar tanpa tunggakan.') ?>"</p>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- B. Capacity -->
@@ -437,6 +573,30 @@
                             <td class="font-bold text-blue-700">Rp <?= number_format((float)($keuangan['laba_bersih_iv'] ?? 0), 0, ',', '.') ?></td>
                             <td>Memadai</td>
                         </tr>
+                        <?php if (!empty($keuangan['ada_bukti_pendapatan_lain_rk']) || ((float)($keuangan['pendapatan_lain_rk'] ?? 0) > 0)): ?>
+                        <?php 
+                            $bRaw = $keuangan['bukti_pendapatan_lain_rk'] ?? '';
+                            $bCount = 0;
+                            if (!empty($bRaw)) {
+                                $dec = json_decode($bRaw, true);
+                                $bCount = is_array($dec) ? count($dec) : 1;
+                            }
+                        ?>
+                        <tr>
+                            <td>Pendapatan Lain-Lain <?= !empty($keuangan['keterangan_pendapatan_lain_rk']) ? '('.esc($keuangan['keterangan_pendapatan_lain_rk']).')' : '' ?></td>
+                            <td>Penghasilan tambahan</td>
+                            <td class="font-bold text-emerald-700">Rp <?= number_format((float)($keuangan['pendapatan_lain_rk'] ?? 0), 0, ',', '.') ?></td>
+                            <td>-</td>
+                            <td><?= $bCount > 0 ? ($bCount > 1 ? "Ada Bukti ($bCount berkas)" : "Ada Bukti") : "Tambahan" ?></td>
+                        </tr>
+                        <tr>
+                            <td>Total Kapasitas Cashflow</td>
+                            <td>Laba Bersih + Pend. Lain</td>
+                            <td class="font-extrabold text-blue-900">Rp <?= number_format((float)($keuangan['laba_bersih_rk'] ?? 0) + (float)($keuangan['pendapatan_lain_rk'] ?? 0), 0, ',', '.') ?></td>
+                            <td class="font-extrabold text-blue-900">Rp <?= number_format((float)($keuangan['laba_bersih_iv'] ?? 0), 0, ',', '.') ?></td>
+                            <td>Total Cashflow</td>
+                        </tr>
+                        <?php endif; ?>
                         <tr>
                             <td>Angsuran Kredit Acuan</td>
                             <td>Plafon x Bunga/Tenor</td>
