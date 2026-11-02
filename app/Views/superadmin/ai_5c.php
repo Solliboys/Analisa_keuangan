@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'Konfigurasi Parameter Analisis 5C | OTW Kredit') ?></title>
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <!-- SweetAlert2 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
+    <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <style>
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
@@ -100,115 +99,7 @@
                 </div>
             </div>
 
-            <!-- Card Utama: KONFIGURASI API & LINK GATEWAY MODEL AI (Diletakkan di Atas Nomor Pilar) -->
-            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 mb-6 shadow-2xs">
-                
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100 mb-5">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
-                                KONFIGURASI API &amp; LINK GATEWAY MODEL AI
-                            </h2>
-                            <p class="text-[11px] text-slate-400">Pilih model LLM terintegrasi dan atur URL gateway endpoint komunikasi AI</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Gateway Terhubung
-                        </span>
-                    </div>
-                </div>
-
-                <?php
-                    $currentModel = $pengaturan_sistem['model_ai'] ?? $pengaturan_ai['model_ai'] ?? 'gemini-2.5-flash';
-                    $currentEndpoint = $pengaturan_sistem['api_endpoint'] ?? 'https://generativelanguage.googleapis.com/v1beta/models';
-                    $currentKey = $pengaturan_sistem['api_key'] ?? $pengaturan_ai['api_key'] ?? '';
-                ?>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    
-                    <!-- Col 1: API Pemilihan Model -->
-                    <div class="space-y-1.5">
-                        <div class="flex items-center justify-between">
-                            <label class="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                                <span>API Pemilihan Model</span>
-                                <span class="text-rose-500">*</span>
-                            </label>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">Engine Core</span>
-                        </div>
-                        <div class="relative">
-                            <select id="selectModelAi" class="w-full px-3.5 py-2.5 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition appearance-none pr-8 cursor-pointer shadow-2xs">
-                                <option value="gemini-2.5-flash" <?= $currentModel === 'gemini-2.5-flash' ? 'selected' : '' ?>>Google Gemini 2.5 Flash (Recommended)</option>
-                                <option value="gemini-1.5-pro" <?= $currentModel === 'gemini-1.5-pro' ? 'selected' : '' ?>>Google Gemini 1.5 Pro (Deep Multimodal)</option>
-                                <option value="gemini-1.5-flash" <?= $currentModel === 'gemini-1.5-flash' ? 'selected' : '' ?>>Google Gemini 1.5 Flash (Lightweight)</option>
-                                <option value="gemini-2.0-flash" <?= $currentModel === 'gemini-2.0-flash' ? 'selected' : '' ?>>Google Gemini 2.0 Flash (Next-Gen)</option>
-                                <option value="gpt-4o" <?= $currentModel === 'gpt-4o' ? 'selected' : '' ?>>OpenAI GPT-4o (Omni Intelligence)</option>
-                                <option value="gpt-4o-mini" <?= $currentModel === 'gpt-4o-mini' ? 'selected' : '' ?>>OpenAI GPT-4o Mini (Cost Efficient)</option>
-                                <option value="claude-3-5-sonnet" <?= $currentModel === 'claude-3-5-sonnet' ? 'selected' : '' ?>>Anthropic Claude 3.5 Sonnet</option>
-                                <option value="deepseek-chat" <?= $currentModel === 'deepseek-chat' ? 'selected' : '' ?>>DeepSeek V3 / R1</option>
-                                <option value="custom" <?= !in_array($currentModel, ['gemini-2.5-flash','gemini-1.5-pro','gemini-1.5-flash','gemini-2.0-flash','gpt-4o','gpt-4o-mini','claude-3-5-sonnet','deepseek-chat']) ? 'selected' : '' ?>>Model Kustom / Self-Hosted</option>
-                            </select>
-                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                            </div>
-                        </div>
-                        <p class="text-[11px] text-slate-400">Pilih model LLM untuk pipeline penilaian 5C</p>
-                    </div>
-
-                    <!-- Col 2: Link Gateway API (Opsional) -->
-                    <div class="space-y-1.5">
-                        <div class="flex items-center justify-between">
-                            <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                                <span>Link Gateway</span>
-                                <span class="text-[10px] text-slate-400 font-normal">(Opsional)</span>
-                            </label>
-                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">Opsional</span>
-                        </div>
-                        <div class="relative">
-                            <input type="url" 
-                                   id="inputApiEndpoint" 
-                                   value="<?= esc($currentEndpoint) ?>" 
-                                   placeholder="Default bawaan jika dikosongkan..." 
-                                   class="w-full px-3.5 py-2.5 text-xs font-mono text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition shadow-2xs" />
-                        </div>
-                        <p class="text-[11px] text-slate-400">Kosongkan jika menggunakan gateway resmi default bawaan model</p>
-                    </div>
-
-                    <!-- Col 3: API Key Otentikasi -->
-                    <div class="space-y-1.5">
-                        <div class="flex items-center justify-between">
-                            <label class="text-xs font-semibold text-slate-700">API Key / Token Gateway</label>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Tersimpan</span>
-                        </div>
-                        <div class="relative">
-                            <input type="password" 
-                                   id="inputApiKey" 
-                                   value="<?= esc($currentKey) ?>" 
-                                   placeholder="Masukkan API Key..." 
-                                   class="w-full pl-3.5 pr-10 py-2.5 text-xs font-mono text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition shadow-2xs" />
-                            <button type="button" 
-                                    onclick="toggleApiKeyVisibility()" 
-                                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition cursor-pointer" 
-                                    title="Tampilkan / Sembunyikan Key">
-                                <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
-                        </div>
-                        <p class="text-[11px] text-slate-400">Kredensial otentikasi API yang terenkripsi</p>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- Tab Navigation (Pill Tabs dengan Nomor 1 - 6) -->
+<!-- Tab Navigation (Pill Tabs dengan Nomor 1 - 6) -->
             <div class="bg-slate-100/80 p-1.5 rounded-2xl mb-6 overflow-x-auto">
                 <div class="flex items-center gap-1.5 min-w-max">
                     
@@ -632,9 +523,9 @@ System Execution Directives:
         }
 
         async function simpanKonfigurasiAi(actionType = 'draft') {
-            const modelAi = document.getElementById('selectModelAi').value;
-            const apiEndpoint = document.getElementById('inputApiEndpoint').value;
-            const apiKey = document.getElementById('inputApiKey').value;
+            const modelAi = document.getElementById('selectModelAi')?.value || '';
+            const apiEndpoint = document.getElementById('inputApiEndpoint')?.value || '';
+            const apiKey = document.getElementById('inputApiKey')?.value || '';
             const prompt = document.getElementById('promptEditor').value;
             const pillar = currentPillar;
 

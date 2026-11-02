@@ -33,7 +33,7 @@
 
         // Deteksi jenis debitur
         $rawJd = $kredit['jenis_debitur'] ?? 'Individu';
-        $isBadanUsaha = (stripos($rawJd, 'PT') !== false || stripos($rawJd, 'CV') !== false || stripos($rawJd, 'Badan Usaha') !== false);
+        $isBadanUsaha = (stripos($rawJd, 'PT') !== false || stripos($rawJd, 'CV') !== false || stripos($rawJd, 'Badan') !== false);
         ?>
 
         <!-- Grid Form Fields 2 Kolom Simetris -->
@@ -306,7 +306,7 @@ function ubahJenisDebitur(val) {
     if (!val) {
         val = document.getElementById('jenis_debitur')?.value || 'Individu';
     }
-    const isBadan = (val.includes('PT') || val.includes('CV') || val.includes('Badan Usaha'));
+    const isBadan = (val.toLowerCase().includes('pt') || val.toLowerCase().includes('cv') || val.toLowerCase().includes('badan'));
 
     // 1. Field Kepemilikan Rumah Domisili selalu tampil di Tab 2
     const wrapRumah = document.getElementById('wrapper_kepemilikan_rumah');

@@ -16,6 +16,8 @@ if (empty($active_menu)) {
         $active_menu = 'users';
     } elseif (str_contains($current_uri, 'log')) {
         $active_menu = 'log';
+    } elseif (str_contains($current_uri, 'referensi')) {
+        $active_menu = 'referensi';
     } elseif (str_contains($current_uri, 'pengaturan')) {
         $active_menu = 'pengaturan';
     } elseif (str_contains($current_uri, 'simulasi')) {
@@ -34,6 +36,8 @@ if (empty($active_menu)) {
             $active_menu = 'users';
         } elseif (str_contains($current_uri, 'log')) {
             $active_menu = 'log';
+        } elseif (str_contains($current_uri, 'referensi')) {
+            $active_menu = 'referensi';
         } elseif (str_contains($current_uri, 'pengaturan')) {
             $active_menu = 'pengaturan';
         } elseif (str_contains($current_uri, 'pengajuan')) {
@@ -158,6 +162,15 @@ if (empty($initials)) {
                     <span>Log Aktivitas</span>
                 </a>
 
+                <!-- Setting Referensi (superadmin/referensi) -->
+                <a href="<?= base_url('superadmin/referensi') ?>" 
+                   class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 <?= ($active_menu === 'referensi') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' ?>">
+                    <svg class="w-5 h-5 <?= ($active_menu === 'referensi') ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600' ?> transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                    <span>Setting Referensi</span>
+                </a>
+
                 <!-- Pengaturan -->
                 <a href="<?= base_url('superadmin/pengaturan') ?>" 
                    class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 <?= ($active_menu === 'pengaturan') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' ?>">
@@ -168,15 +181,7 @@ if (empty($initials)) {
                     <span>Pengaturan</span>
                 </a>
 
-                <!-- Laporan Audit QA & QC (PDF) -->
-                <a href="<?= base_url('audit/laporan') ?>" target="_blank" 
-                   class="group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100 border border-indigo-200/80 shadow-xs">
-                    <svg class="w-5 h-5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    <span>Audit QA & QC</span>
-                    <span class="ml-auto px-1.5 py-0.5 rounded text-[10px] font-black bg-indigo-600 text-white uppercase tracking-wider">PDF</span>
-                </a>
+
             </nav>
         </div>
     </div>

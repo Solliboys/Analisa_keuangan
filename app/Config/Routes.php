@@ -34,7 +34,7 @@ $routes->group('pengajuan', static function ($routes) {
     $routes->get('baru', 'Pengajuan::baru');
     $routes->get('edit/(:num)', 'Pengajuan::edit/$1');
     $routes->post('simpan', 'Pengajuan::simpan');
-    $routes->match(['get', 'post'], 'hapus/(:num)', 'Pengajuan::hapus/$1');
+    $routes->match(['GET', 'POST'], 'hapus/(:num)', 'Pengajuan::hapus/$1');
     $routes->post('upload-dokumen', 'Pengajuan::uploadDokumen');
     $routes->post('hapus-dokumen', 'Pengajuan::hapusDokumen');
     $routes->post('update-kategori-dokumen', 'Pengajuan::updateKategoriDokumen');
@@ -87,6 +87,13 @@ $routes->group('superadmin', static function ($routes) {
     $routes->get('log', 'Superadmin::log');
     $routes->get('log/download', 'Superadmin::downloadLog');
     $routes->get('log/detail/(:num)', 'Superadmin::detailLog/$1');
+    
+    // Setting Referensi
+    $routes->get('referensi', 'Superadmin::referensi');
+    $routes->post('referensi/simpan', 'Superadmin::simpanReferensi');
+    $routes->post('referensi/update/(:num)', 'Superadmin::updateReferensi/$1');
+    $routes->match(['GET', 'POST'], 'referensi/hapus/(:num)', 'Superadmin::hapusReferensi/$1');
+    $routes->get('referensi/detail/(:num)', 'Superadmin::getReferensiDetail/$1');
 });
 
 

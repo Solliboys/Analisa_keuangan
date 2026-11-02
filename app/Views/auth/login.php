@@ -1,11 +1,7 @@
 <?php
-// Ambil data konfigurasi sistem dari database jika belum diset
+// Data pengaturan_sistem diambil dari controller Auth::getPengaturanSistem()
 if (!isset($pengaturan_sistem)) {
-    try {
-        $pengaturan_sistem = \Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
-    } catch (\Throwable $e) {
-        $pengaturan_sistem = [];
-    }
+    $pengaturan_sistem = [];
 }
 
 $brandName    = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Kredit';
@@ -39,16 +35,14 @@ if ($jam >= 4 && $jam < 11) {
     <title><?= esc($brandName) ?> — Masuk ke Sistem</title>
     <meta name="description" content="Masuk ke portal <?= esc($brandName) ?> - <?= esc($brandSlogan) ?>">
     
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Fonts (Self-Hosted / Lokal) -->
+    <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     
     <!-- Favicon -->
     <link rel="shortcut icon" type="image/png" href="<?= !empty($brandLogo) ? base_url($brandLogo) : base_url('favicon.ico') ?>">
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS (Self-Hosted / Lokal) -->
+    <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -75,8 +69,9 @@ if ($jam >= 4 && $jam < 11) {
         }
     </script>
 
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- SweetAlert2 (Self-Hosted / Lokal) -->
+    <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
+    <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
 
     <style>
         body {

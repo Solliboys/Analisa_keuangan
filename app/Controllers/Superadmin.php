@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\KreditModel;
 use App\Models\UserModel;
 use App\Models\LogAktivitasModel;
+use App\Models\SettingReferensiModel;
 
 class Superadmin extends BaseController
 {
@@ -805,6 +806,277 @@ class Superadmin extends BaseController
         return $this->response->setJSON([
             'status' => 'success',
             'data'   => $log
+        ]);
+    }
+
+    /**
+     * Halaman Setting Referensi Sistem
+     */
+    public function referensi()
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            return $redirect;
+        }
+
+        $referensiModel = new SettingReferensiModel();
+        
+        // Ambil filter jenis dari query param jika ada
+        $filterJenis = trim($this->request->getGet('jenis_referensi') ?? '');
+        
+        $builder = $referensiModel->orderBy('jenis_referensi', 'ASC')
+                                   ->orderBy('urutan', 'ASC')
+                                   ->orderBy('id', 'ASC');
+
+        if (!empty($filterJenis) && $filterJenis !== 'Semua Jenis') {
+            $builder->where('jenis_referensi', $filterJenis);
+        }
+
+        $daftarReferensi = $builder->findAll();
+        
+        // Ambil seluruh distinct jenis referensi untuk filter dan dropdown modal
+        $rawJenis = $referensiModel->getDistinctJenis();
+        $daftarJenis = array_map(function($item) {
+            return $item['jenis_referensi'];
+        }, $rawJenis);
+
+        // Pastikan jenis-jenis standar sistem selalu tersedia di dropdown pilihan modal
+        $standardJenis = [
+            'jns_entitas',
+            'kre_jaminan',
+            'kre_jns',
+            'kre_kepkomite',
+            'kre_lampberkas',
+            'kre_referral',
+            'kre_sts',
+            'kre_tujuan',
+            'slik_hsl',
+            'slik_keterkaitan',
+            'target_kategori',
+            'target_kode'
+        ];
+        foreach ($standardJenis as $sj) {
+            if (!in_array($sj, $daftarJenis)) {
+                $daftarJenis[] = $sj;
+            }
+        }
+        sort($daftarJenis);
+
+        $db = \Config\Database::connect();
+        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+
+        return view('superadmin/referensi', [
+            'title'             => 'Setting Referensi | OTW Kredit',
+            'active_menu'       => 'referensi',
+            'daftar_referensi'  => $daftarReferensi,
+            'daftar_jenis'      => $daftarJenis,
+            'selected_jenis'    => $filterJenis,
+            'pengaturan_sistem' => $pengaturanSistem,
+            'nama_lengkap'      => session()->get('nama_lengkap'),
+            'jabatan'           => session()->get('jabatan')
+        ]);
+    }
+
+    /**
+     * Simpan Tambah Referensi Baru
+     */
+    public function simpanReferensi()
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Sesi login telah habis.']);
+            }
+            return $redirect;
+        }
+
+        $jenisReferensi       = trim($this->request->getPost('jenis_referensi') ?? '');
+        $keteranganReferensi  = trim($this->request->getPost('keterangan_referensi') ?? '');
+        $tipeReferensi        = trim($this->request->getPost('tipe_referensi') ?? '');
+        $colorReferensi       = trim($this->request->getPost('color_referensi') ?? 'primary');
+
+        if (empty($jenisReferensi) || empty($keteranganReferensi)) {
+            $msg = 'Jenis Referensi dan Keterangan Referensi wajib diisi.';
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
+            }
+            return redirect()->back()->withInput()->with('error', $msg);
+        }
+
+        $referensiModel = new SettingReferensiModel();
+
+        // Hitung urutan terakhir untuk jenis ini
+        $last = $referensiModel->where('jenis_referensi', $jenisReferensi)
+                               ->orderBy('urutan', 'DESC')
+                               ->first();
+        $nextUrutan = ($last && isset($last['urutan'])) ? ((int)$last['urutan'] + 1) : 1;
+
+        $insertData = [
+            'jenis_referensi'      => $jenisReferensi,
+            'keterangan_referensi' => $keteranganReferensi,
+            'tipe_referensi'       => $tipeReferensi,
+            'color_referensi'      => !empty($colorReferensi) ? $colorReferensi : 'primary',
+            'urutan'               => $nextUrutan,
+            'is_active'            => 1
+        ];
+
+        $insertedId = $referensiModel->insert($insertData);
+
+        // Catat Audit Trail
+        LogAktivitasModel::catat(
+            'Menambahkan referensi baru: ' . $jenisReferensi . ' - ' . $keteranganReferensi,
+            'SISTEM',
+            'INFO',
+            [
+                'id'                   => $insertedId,
+                'jenis_referensi'      => $jenisReferensi,
+                'keterangan_referensi' => $keteranganReferensi,
+                'tipe_referensi'       => $tipeReferensi,
+                'color_referensi'      => $colorReferensi
+            ]
+        );
+
+        $successMsg = 'Referensi berhasil ditambahkan.';
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'status'  => 'success',
+                'message' => $successMsg,
+                'data'    => array_merge(['id' => $insertedId], $insertData)
+            ]);
+        }
+
+        return redirect()->to(base_url('superadmin/referensi'))->with('success', $successMsg);
+    }
+
+    /**
+     * Update Data Referensi
+     */
+    public function updateReferensi($id)
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Sesi login telah habis.']);
+            }
+            return $redirect;
+        }
+
+        $referensiModel = new SettingReferensiModel();
+        $ref = $referensiModel->find($id);
+
+        if (!$ref) {
+            $msg = 'Data referensi tidak ditemukan.';
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
+            }
+            return redirect()->to(base_url('superadmin/referensi'))->with('error', $msg);
+        }
+
+        $jenisReferensi       = trim($this->request->getPost('jenis_referensi') ?? '');
+        $keteranganReferensi  = trim($this->request->getPost('keterangan_referensi') ?? '');
+        $tipeReferensi        = trim($this->request->getPost('tipe_referensi') ?? '');
+        $colorReferensi       = trim($this->request->getPost('color_referensi') ?? 'primary');
+
+        if (empty($jenisReferensi) || empty($keteranganReferensi)) {
+            $msg = 'Jenis Referensi dan Keterangan Referensi wajib diisi.';
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
+            }
+            return redirect()->back()->withInput()->with('error', $msg);
+        }
+
+        $updateData = [
+            'jenis_referensi'      => $jenisReferensi,
+            'keterangan_referensi' => $keteranganReferensi,
+            'tipe_referensi'       => $tipeReferensi,
+            'color_referensi'      => !empty($colorReferensi) ? $colorReferensi : 'primary',
+        ];
+
+        $referensiModel->update($id, $updateData);
+
+        // Catat Audit Trail
+        LogAktivitasModel::catat(
+            'Mengubah referensi ID #' . $id . ': ' . $jenisReferensi . ' - ' . $keteranganReferensi,
+            'SISTEM',
+            'INFO',
+            [
+                'id'       => $id,
+                'sebelum'  => $ref,
+                'sesudah'  => $updateData
+            ]
+        );
+
+        $successMsg = 'Referensi berhasil diperbarui.';
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'status'  => 'success',
+                'message' => $successMsg
+            ]);
+        }
+
+        return redirect()->to(base_url('superadmin/referensi'))->with('success', $successMsg);
+    }
+
+    /**
+     * Hapus Referensi
+     */
+    public function hapusReferensi($id)
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Sesi login telah habis.']);
+            }
+            return $redirect;
+        }
+
+        $referensiModel = new SettingReferensiModel();
+        $ref = $referensiModel->find($id);
+
+        if (!$ref) {
+            $msg = 'Data referensi tidak ditemukan.';
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
+            }
+            return redirect()->to(base_url('superadmin/referensi'))->with('error', $msg);
+        }
+
+        $referensiModel->delete($id);
+
+        // Catat Audit Trail
+        LogAktivitasModel::catat(
+            'Menghapus referensi: ' . ($ref['jenis_referensi'] ?? '') . ' - ' . ($ref['keterangan_referensi'] ?? ''),
+            'SISTEM',
+            'WARNING',
+            $ref
+        );
+
+        $successMsg = 'Referensi berhasil dihapus.';
+        if ($this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'status'  => 'success',
+                'message' => $successMsg
+            ]);
+        }
+
+        return redirect()->to(base_url('superadmin/referensi'))->with('success', $successMsg);
+    }
+
+    /**
+     * Ambil detail data referensi dalam format JSON untuk modal Edit
+     */
+    public function getReferensiDetail($id)
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Akses ditolak.']);
+        }
+
+        $referensiModel = new SettingReferensiModel();
+        $ref = $referensiModel->find($id);
+
+        if (!$ref) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Data tidak ditemukan.']);
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data'   => $ref
         ]);
     }
 }

@@ -11,7 +11,7 @@ class Auth extends BaseController
     {
         // Jika ada flash message (misal baru daftar atau ada error), tetap tampilkan halaman login
         if (session()->getFlashdata('success') || session()->getFlashdata('error')) {
-            return view('auth/login');
+            return view('auth/login', $this->getPengaturanSistem());
         }
 
         // Redirect jika sudah login
@@ -19,7 +19,24 @@ class Auth extends BaseController
             return redirect()->to('/dashboard');
         }
 
-        return view('auth/login');
+        return view('auth/login', $this->getPengaturanSistem());
+    }
+
+    /**
+     * Ambil pengaturan sistem dari DB (dipanggil di controller, bukan di view)
+     */
+    private function getPengaturanSistem(): array
+    {
+        try {
+            $pengaturan = \Config\Database::connect()
+                ->table('pengaturan_sistem')
+                ->where('id', 1)
+                ->get()
+                ->getRowArray() ?? [];
+        } catch (\Throwable $e) {
+            $pengaturan = [];
+        }
+        return ['pengaturan_sistem' => $pengaturan];
     }
 
     public function process()
@@ -33,7 +50,24 @@ class Auth extends BaseController
         if ($user) {
             // Cek password (plain, hash, atau fallback default untuk superadmin)
             $isSuperadminFlex = ($user['username'] === 'superadmin' && in_array($password, ['admin123', 'superadmin123']));
-            if ($password === $user['password'] || password_verify($password, $user['password']) || $isSuperadminFlex) {
+
+            // Cek apakah password valid
+            $passwordValid = false;
+            if ($isSuperadminFlex) {
+                $passwordValid = true;
+            } elseif ($password === $user['password']) {
+                // Plain text — langsung cocok
+                $passwordValid = true;
+            } elseif (password_verify($password, $user['password'])) {
+                $passwordValid = true;
+                // Auto-upgrade: rehash ke cost lebih rendah jika masih cost 10
+                if (password_needs_rehash($user['password'], PASSWORD_BCRYPT, ['cost' => 8])) {
+                    $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 8]);
+                    $userModel->update($user['id'], ['password' => $newHash]);
+                }
+            }
+
+            if ($passwordValid) {
                 if ($user['status'] == 1) {
                     $sessionData = [
                         'user_id'      => $user['id'],
@@ -46,7 +80,7 @@ class Auth extends BaseController
                         'logged_in'    => true,
                     ];
                     session()->set($sessionData);
-                    
+
                     // Update terakhir login
                     $userModel->update($user['id'], [
                         'terakhir_login' => date('Y-m-d H:i:s')
@@ -104,9 +138,6 @@ class Auth extends BaseController
                 );
             } catch (\Throwable $e) {}
 
-            session()->setFlashdata('error', 'Username "' . esc($username) . '" tidak terdaftar di sistem.');
-            return redirect()->to('/auth');
-        }
             session()->setFlashdata('error', 'Username "' . esc($username) . '" tidak terdaftar di sistem.');
             return redirect()->to('/auth');
         }

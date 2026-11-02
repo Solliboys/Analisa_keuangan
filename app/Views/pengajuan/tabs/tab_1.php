@@ -1,3 +1,16 @@
+<?php
+// Grouping referensi dinamis dari database setting_referensi
+$refByJenis = [];
+if (!empty($referensi) && is_array($referensi)) {
+    foreach ($referensi as $r) {
+        $refByJenis[$r['jenis_referensi']][] = $r;
+    }
+}
+$listEntitas = $refByJenis['jns_entitas'] ?? [];
+$listTipeApp = $refByJenis['kre_jns'] ?? [];
+$listTujuan  = $refByJenis['kre_tujuan'] ?? [];
+$listJaminan = $refByJenis['kre_jaminan'] ?? [];
+?>
 <div id="tab-1" class="tab-panel active space-y-6">
                         
                         <!-- Card: Data Aplikasi & Pemohon -->
@@ -64,11 +77,23 @@
                                         Tipe Aplikasi
                                     </label>
                                     <select name="tipe_aplikasi" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                                        <?php $ta = $kredit['tipe_aplikasi'] ?? 'Fasilitas Baru'; ?>
-                                        <option value="Fasilitas Baru" <?= $ta === 'Fasilitas Baru' ? 'selected' : '' ?>>Fasilitas Baru</option>
-                                        <option value="Perpanjangan" <?= $ta === 'Perpanjangan' ? 'selected' : '' ?>>Perpanjangan</option>
-                                        <option value="Top Up" <?= $ta === 'Top Up' ? 'selected' : '' ?>>Top Up</option>
-                                        <option value="Restrukturisasi" <?= $ta === 'Restrukturisasi' ? 'selected' : '' ?>>Restrukturisasi</option>
+                                        <?php 
+                                        $ta = $kredit['tipe_aplikasi'] ?? 'Fasilitas Baru'; 
+                                        if (!empty($listTipeApp)):
+                                            foreach ($listTipeApp as $opt):
+                                                $val = $opt['keterangan_referensi'];
+                                                $selected = ($ta === $val || $ta === ($opt['tipe_referensi'] ?? '')) ? 'selected' : '';
+                                        ?>
+                                            <option value="<?= esc($val) ?>" <?= $selected ?>><?= esc($val) ?></option>
+                                        <?php 
+                                            endforeach;
+                                        else: 
+                                        ?>
+                                            <option value="Fasilitas Baru" <?= $ta === 'Fasilitas Baru' ? 'selected' : '' ?>>Fasilitas Baru</option>
+                                            <option value="Perpanjangan" <?= $ta === 'Perpanjangan' ? 'selected' : '' ?>>Perpanjangan</option>
+                                            <option value="Top Up" <?= $ta === 'Top Up' ? 'selected' : '' ?>>Top Up</option>
+                                            <option value="Restrukturisasi" <?= $ta === 'Restrukturisasi' ? 'selected' : '' ?>>Restrukturisasi</option>
+                                        <?php endif; ?>
                                     </select>
                                 </div>
 
@@ -79,9 +104,21 @@
                                         Jenis Debitur
                                     </label>
                                     <select name="jenis_debitur" id="jenis_debitur" onchange="if(typeof ubahJenisDebitur === 'function') ubahJenisDebitur(this.value)" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                                        <?php $jd = $kredit['jenis_debitur'] ?? 'Perorangan'; ?>
-                                        <option value="Perorangan" <?= ($jd === 'Perorangan' || $jd === 'Individu') ? 'selected' : '' ?>>Perorangan</option>
-                                        <option value="Badan Usaha" <?= (strpos($jd, 'Badan') !== false || $jd === 'Badan Usaha') ? 'selected' : '' ?>>Badan Usaha</option>
+                                        <?php 
+                                        $jd = $kredit['jenis_debitur'] ?? 'Perorangan'; 
+                                        if (!empty($listEntitas)):
+                                            foreach ($listEntitas as $opt):
+                                                $val = $opt['keterangan_referensi'];
+                                                $selected = ($jd === $val || strcasecmp($jd, $val) === 0 || ($jd === 'Individu' && (strcasecmp($val, 'Perorangan') === 0 || strcasecmp($val, 'sendiri') === 0))) ? 'selected' : '';
+                                        ?>
+                                            <option value="<?= esc($val) ?>" <?= $selected ?>><?= esc($val) ?></option>
+                                        <?php 
+                                            endforeach;
+                                        else: 
+                                        ?>
+                                            <option value="Perorangan" <?= ($jd === 'Perorangan' || $jd === 'Individu') ? 'selected' : '' ?>>Perorangan</option>
+                                            <option value="Badan Usaha" <?= (strpos($jd, 'Badan') !== false || $jd === 'Badan Usaha') ? 'selected' : '' ?>>Badan Usaha</option>
+                                        <?php endif; ?>
                                     </select>
                                 </div>
 
@@ -134,13 +171,25 @@
                                         Jaminan
                                     </label>
                                     <select name="jenis_jaminan" id="jenis_jaminan" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                                        <?php $jj = $kredit['jenis_jaminan'] ?? 'SHM'; ?>
-                                        <option value="SHM" <?= ($jj === 'SHM' || $jj === 'On Hand') ? 'selected' : '' ?>>SHM (Sertifikat Hak Milik)</option>
-                                        <option value="SHGB" <?= $jj === 'SHGB' ? 'selected' : '' ?>>SHGB (Hak Guna Bangunan)</option>
-                                        <option value="SHM Sarusun" <?= $jj === 'SHM Sarusun' ? 'selected' : '' ?>>SHM Sarusun (Apartemen)</option>
-                                        <option value="BPKB Mobil" <?= ($jj === 'BPKB Mobil' || $jj === 'BPKB') ? 'selected' : '' ?>>BPKB Kendaraan Roda 4</option>
-                                        <option value="Bilyet Deposito" <?= $jj === 'Bilyet Deposito' ? 'selected' : '' ?>>Bilyet Deposito</option>
-                                        <option value="Tanpa Jaminan" <?= $jj === 'Tanpa Jaminan' ? 'selected' : '' ?>>Tanpa Jaminan</option>
+                                        <?php 
+                                        $jj = $kredit['jenis_jaminan'] ?? 'SHM'; 
+                                        if (!empty($listJaminan)):
+                                            foreach ($listJaminan as $opt):
+                                                $val = $opt['keterangan_referensi'];
+                                                $selected = ($jj === $val || (stripos($val, $jj) !== false && !empty($jj))) ? 'selected' : '';
+                                        ?>
+                                            <option value="<?= esc($val) ?>" <?= $selected ?>><?= esc($val) ?></option>
+                                        <?php 
+                                            endforeach;
+                                        else: 
+                                        ?>
+                                            <option value="SHM" <?= ($jj === 'SHM' || $jj === 'On Hand') ? 'selected' : '' ?>>SHM (Sertifikat Hak Milik)</option>
+                                            <option value="SHGB" <?= $jj === 'SHGB' ? 'selected' : '' ?>>SHGB (Hak Guna Bangunan)</option>
+                                            <option value="SHM Sarusun" <?= $jj === 'SHM Sarusun' ? 'selected' : '' ?>>SHM Sarusun (Apartemen)</option>
+                                            <option value="BPKB Mobil" <?= ($jj === 'BPKB Mobil' || $jj === 'BPKB') ? 'selected' : '' ?>>BPKB Kendaraan Roda 4</option>
+                                            <option value="Bilyet Deposito" <?= $jj === 'Bilyet Deposito' ? 'selected' : '' ?>>Bilyet Deposito</option>
+                                            <option value="Tanpa Jaminan" <?= $jj === 'Tanpa Jaminan' ? 'selected' : '' ?>>Tanpa Jaminan</option>
+                                        <?php endif; ?>
                                     </select>
                                 </div>
 
@@ -151,11 +200,23 @@
                                         Tujuan Pembiayaan
                                     </label>
                                     <select name="tujuan_pembiayaan" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                                        <?php $tp = $kredit['tujuan_pembiayaan'] ?? 'Multiguna'; ?>
-                                        <option value="Multiguna" <?= $tp === 'Multiguna' ? 'selected' : '' ?>>Multiguna</option>
-                                        <option value="Modal Kerja" <?= $tp === 'Modal Kerja' ? 'selected' : '' ?>>Modal Kerja</option>
-                                        <option value="Investasi" <?= $tp === 'Investasi' ? 'selected' : '' ?>>Investasi</option>
-                                        <option value="Take Over" <?= $tp === 'Take Over' ? 'selected' : '' ?>>Take Over</option>
+                                        <?php 
+                                        $tp = $kredit['tujuan_pembiayaan'] ?? 'Multiguna'; 
+                                        if (!empty($listTujuan)):
+                                            foreach ($listTujuan as $opt):
+                                                $val = $opt['keterangan_referensi'];
+                                                $selected = ($tp === $val || strcasecmp($tp, $val) === 0) ? 'selected' : '';
+                                        ?>
+                                            <option value="<?= esc($val) ?>" <?= $selected ?>><?= esc($val) ?></option>
+                                        <?php 
+                                            endforeach;
+                                        else: 
+                                        ?>
+                                            <option value="Multiguna" <?= $tp === 'Multiguna' ? 'selected' : '' ?>>Multiguna</option>
+                                            <option value="Modal Kerja" <?= $tp === 'Modal Kerja' ? 'selected' : '' ?>>Modal Kerja</option>
+                                            <option value="Investasi" <?= $tp === 'Investasi' ? 'selected' : '' ?>>Investasi</option>
+                                            <option value="Take Over" <?= $tp === 'Take Over' ? 'selected' : '' ?>>Take Over</option>
+                                        <?php endif; ?>
                                     </select>
                                 </div>
 

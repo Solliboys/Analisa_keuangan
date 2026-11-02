@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Analisa Kelayakan Kredit - <?= esc($kredit['nomor_aplikasi']) ?></title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
+    <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; line-height: 1.5; color: #1e293b; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }

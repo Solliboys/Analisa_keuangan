@@ -15,9 +15,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($namaWeb) ?> — <?= esc($sloganWeb) ?></title>
     <meta name="description" content="Platform Credit Engine dan Analisis CAM modern berbasis AI 5C terintegrasi SLIK OJK.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <link rel="shortcut icon" type="image/png" href="<?= !empty($logoWeb) ? base_url($logoWeb) : '/favicon.ico' ?>">
     
     <!-- EXTERNAL STYLESHEET -->

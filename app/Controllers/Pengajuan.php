@@ -14,6 +14,7 @@ use App\Models\KreditKeuanganDscModel;
 use App\Models\KreditDisbursementModel;
 use App\Models\KomiteModel;
 use App\Models\LogAktivitasModel;
+use App\Models\SettingReferensiModel;
 use App\Services\GeminiAiService;
 
 class Pengajuan extends BaseController
@@ -30,6 +31,7 @@ class Pengajuan extends BaseController
     protected $keuanganModel;
     protected $disbursementModel;
     protected $komiteModel;
+    protected $referensiModel;
 
     public function __construct()
     {
@@ -45,6 +47,7 @@ class Pengajuan extends BaseController
         $this->keuanganModel     = new KreditKeuanganDscModel();
         $this->disbursementModel = new KreditDisbursementModel();
         $this->komiteModel       = new KomiteModel();
+        $this->referensiModel     = new SettingReferensiModel();
     }
 
     private function cekAuth()
@@ -143,6 +146,7 @@ class Pengajuan extends BaseController
             'nama_lengkap'      => session()->get('nama_lengkap'),
             'jabatan'           => session()->get('jabatan'),
             'daftar_kredit'     => $daftarKredit,
+            'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
             'pengaturan_sistem' => $pengaturanSistem
         ];
 
@@ -256,6 +260,7 @@ class Pengajuan extends BaseController
             'disbursement'      => [],
             'dokumen'           => [],
             'komite'            => [],
+            'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
             'pengaturan_sistem' => $pengaturanSistem
         ];
 
@@ -304,6 +309,7 @@ class Pengajuan extends BaseController
             'disbursement'      => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
             'dokumen'           => $this->dokumenModel->where('kredit_id', $id)->findAll(),
             'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
+            'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
             'pengaturan_sistem' => $pengaturanSistem
         ];
 
@@ -1146,6 +1152,7 @@ class Pengajuan extends BaseController
             'keuangan'          => $this->keuanganModel->where('kredit_id', $id)->first() ?? [],
             'disbursement'      => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
             'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
+            'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
             'pengaturan_sistem' => $pengaturanSistem
         ];
 

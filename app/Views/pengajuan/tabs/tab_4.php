@@ -1,3 +1,14 @@
+<?php
+// Ambil referensi jaminan dari database
+$listAgunanRef = [];
+if (!empty($referensi) && is_array($referensi)) {
+    foreach ($referensi as $r) {
+        if ($r['jenis_referensi'] === 'kre_jaminan') {
+            $listAgunanRef[] = $r;
+        }
+    }
+}
+?>
 <?php
 if (!function_exists('getAgunanFieldConfig')) {
     function getAgunanFieldConfig($jenis) {
