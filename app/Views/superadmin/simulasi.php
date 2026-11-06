@@ -104,12 +104,12 @@
                     </button>
 
                     <!-- + Buat Pengajuan Baru -->
-                    <a href="<?= base_url('pengajuan/baru') ?>" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2 transition-colors shadow-xs shadow-blue-500/20 cursor-pointer">
+                    <button type="button" onclick="bukaModalPilihDebitur()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold inline-flex items-center gap-2 transition-colors shadow-xs shadow-blue-500/20 cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         <span>Tambah Pengajuan Baru</span>
-                    </a>
+                    </button>
                 </div>
             </div>
 
@@ -762,6 +762,66 @@
                 timer: 1500,
                 showConfirmButton: false
             });
+        }
+    </script>
+    <!-- Modal Pilihan Jenis Debitur (Perorangan vs Badan Usaha) -->
+    <div id="modalPilihDebitur" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-100 transform transition-all">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                        📋
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-800">Pilih Kategori Pengajuan</h3>
+                        <p class="text-[11px] text-slate-400">Pilih formulir sesuai kategori entitas calon debitur</p>
+                    </div>
+                </div>
+                <button type="button" onclick="tutupModalPilihDebitur()" class="text-slate-400 hover:text-slate-700 text-lg font-bold p-1 rounded-lg hover:bg-slate-100 transition">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+                <!-- Pilihan 1: Perorangan -->
+                <a href="<?= base_url('pengajuan/baru?tipe=perorangan') ?>" class="group p-5 rounded-2xl border-2 border-slate-200 hover:border-blue-600 hover:bg-blue-50/50 transition flex flex-col justify-between text-left shadow-2xs">
+                    <div>
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-900 group-hover:text-blue-700 mb-1">Perorangan / Individu</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">Untuk nasabah individu, karyawan, pemilik usaha mikro/perorangan.</p>
+                    </div>
+                    <span class="mt-4 inline-flex items-center text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform">
+                        Buka Form Perorangan &rarr;
+                    </span>
+                </a>
+
+                <!-- Pilihan 2: Badan Usaha -->
+                <a href="<?= base_url('pengajuan/baru?tipe=badan_usaha') ?>" class="group p-5 rounded-2xl border-2 border-slate-200 hover:border-indigo-600 hover:bg-indigo-50/50 transition flex flex-col justify-between text-left shadow-2xs">
+                    <div>
+                        <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-900 group-hover:text-indigo-700 mb-1">Badan Usaha</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">Untuk perseroan terbatas (PT), CV, Koperasi, Yayasan, atau Firma.</p>
+                    </div>
+                    <span class="mt-4 inline-flex items-center text-xs font-bold text-indigo-600 group-hover:translate-x-1 transition-transform">
+                        Buka Form Badan Usaha &rarr;
+                    </span>
+                </a>
+            </div>
+
+            <div class="text-center">
+                <button type="button" onclick="tutupModalPilihDebitur()" class="text-xs font-semibold text-slate-400 hover:text-slate-600 transition">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function bukaModalPilihDebitur() {
+            document.getElementById('modalPilihDebitur').classList.remove('hidden');
+        }
+        function tutupModalPilihDebitur() {
+            document.getElementById('modalPilihDebitur').classList.add('hidden');
         }
     </script>
 </body>

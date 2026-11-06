@@ -721,25 +721,48 @@
                         <td>- Rp <?= number_format((float)($disbursement['provisi_nominal'] ?? 0), 0, ',', '.') ?></td>
                     </tr>
                     <tr>
-                        <td>Agent / Broker Fee</td>
-                        <td><?= esc($disbursement['agent_persen'] ?? 1) ?>% dari Plafon</td>
-                        <td>- Rp <?= number_format((float)($disbursement['agent_nominal'] ?? 0), 0, ',', '.') ?></td>
-                    </tr>
-                    <tr>
                         <td>Biaya Administrasi Bank</td>
                         <td><?= esc($disbursement['admin_persen'] ?? 1) ?>% dari Plafon</td>
                         <td>- Rp <?= number_format((float)($disbursement['admin_nominal'] ?? 0), 0, ',', '.') ?></td>
                     </tr>
-                    <tr>
-                        <td>Hold Angsuran (Cadangan)</td>
-                        <td><?= esc($disbursement['hold_angsuran_bulan'] ?? 4) ?> Bulan Angsuran</td>
-                        <td>- Rp <?= number_format((float)($disbursement['hold_angsuran_nominal'] ?? 0), 0, ',', '.') ?></td>
-                    </tr>
-                    <tr>
-                        <td>Premi Asuransi Jiwa & Agunan</td>
-                        <td>Tarif Polis Asuransi</td>
-                        <td>- Rp <?= number_format((float)(($disbursement['asuransi_jiwa'] ?? 0) + ($disbursement['asuransi_kebakaran'] ?? 0)), 0, ',', '.') ?></td>
-                    </tr>
+                    <?php
+                    $biayaLainCetak = [];
+                    if (!empty($disbursement['rincian_biaya_lain'])) {
+                        $decCetak = json_decode($disbursement['rincian_biaya_lain'], true);
+                        if (is_array($decCetak)) $biayaLainCetak = $decCetak;
+                    }
+                    ?>
+                    <?php if (!empty($biayaLainCetak)): ?>
+                        <?php foreach ($biayaLainCetak as $bItem): ?>
+                            <tr>
+                                <td><?= esc($bItem['keterangan'] ?? 'Potongan Lain') ?></td>
+                                <td>Potongan Muka</td>
+                                <td>- Rp <?= number_format((float)($bItem['nominal'] ?? 0), 0, ',', '.') ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php if (!empty($disbursement['agent_nominal']) && (float)$disbursement['agent_nominal'] > 0): ?>
+                            <tr>
+                                <td>Agent / Broker Fee</td>
+                                <td><?= esc($disbursement['agent_persen'] ?? 1) ?>% dari Plafon</td>
+                                <td>- Rp <?= number_format((float)($disbursement['agent_nominal']), 0, ',', '.') ?></td>
+                            </tr>
+                        <?php endif; ?>
+                        <?php if (!empty($disbursement['hold_angsuran_nominal']) && (float)$disbursement['hold_angsuran_nominal'] > 0): ?>
+                            <tr>
+                                <td>Hold Angsuran (Cadangan)</td>
+                                <td><?= esc($disbursement['hold_angsuran_bulan'] ?? 4) ?> Bulan Angsuran</td>
+                                <td>- Rp <?= number_format((float)($disbursement['hold_angsuran_nominal']), 0, ',', '.') ?></td>
+                            </tr>
+                        <?php endif; ?>
+                        <?php if (!empty($disbursement['asuransi_jiwa']) || !empty($disbursement['asuransi_kebakaran'])): ?>
+                            <tr>
+                                <td>Premi Asuransi Jiwa & Agunan</td>
+                                <td>Tarif Polis Asuransi</td>
+                                <td>- Rp <?= number_format((float)(($disbursement['asuransi_jiwa'] ?? 0) + ($disbursement['asuransi_kebakaran'] ?? 0)), 0, ',', '.') ?></td>
+                            </tr>
+                        <?php endif; ?>
+                    <?php endif; ?>
                     <tr class="font-extrabold text-emerald-800 bg-emerald-50 text-xs">
                         <td>TOTAL DANA BERSIH YANG DITERIMA NASABAH</td>
                         <td>Nett Payout</td>

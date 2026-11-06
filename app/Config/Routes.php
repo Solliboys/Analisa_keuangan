@@ -45,6 +45,9 @@ $routes->group('pengajuan', static function ($routes) {
     $routes->post('upload-bukti-webcheck', 'Pengajuan::uploadBuktiWebcheck');
     $routes->post('upload-pdf-slik', 'Pengajuan::uploadPdfSlik');
     $routes->post('upload-hasil-slik', 'Pengajuan::uploadHasilSlik');
+    $routes->post('kirim-ke-petugas-slik', 'Pengajuan::kirimKePetugasSlik');
+    $routes->post('ambil-ringkasan-slik', 'Pengajuan::ambilRingkasanSlik');
+    $routes->post('upload-dokumen-slik', 'Pengajuan::uploadDokumenSlik');
     $routes->get('cetak/(:num)', 'Pengajuan::cetak/$1');
 });
 
@@ -82,6 +85,7 @@ $routes->group('superadmin', static function ($routes) {
     $routes->post('hapus-user/(:num)', 'Superadmin::hapusUser/$1');
     $routes->post('simpan-pengaturan-ai', 'Superadmin::simpanPengaturanAi');
     $routes->get('pengaturan', 'Superadmin::pengaturan');
+    $routes->post('toggle-petugas-slik', 'Superadmin::togglePetugasSlik');
     $routes->get('hapus-simulasi/(:num)', 'Superadmin::hapusSimulasi/$1');
     $routes->post('hapus-simulasi/(:num)', 'Superadmin::hapusSimulasi/$1');
     $routes->get('log', 'Superadmin::log');

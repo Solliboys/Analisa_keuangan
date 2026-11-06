@@ -44,8 +44,8 @@ $renderFilePreview = function($filePath) {
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-slate-100 mb-6 gap-4">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs shrink-0">
-                            7
-                        </div>
+                <?= (!empty($view_folder) && $view_folder === 'badan_usaha') ? '6' : '7' ?>
+            </div>
                         <div>
                             <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">VERIFIKASI LATAR BELAKANG & LEGAL CHECK</h3>
                             <p class="text-[11px] text-slate-500">Pemeriksaan profil reputasi debitur pada kanal publik, peradilan, dan daftar hitam kepatuhan</p>
@@ -54,7 +54,7 @@ $renderFilePreview = function($filePath) {
                     <div class="flex items-center gap-2.5 self-start sm:self-auto">
                         <button type="button" id="btnAiWebcheck" onclick="jalankanAiWebcheck()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-md hover:shadow-lg cursor-pointer">
                             <svg class="w-4 h-4 text-amber-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            <span>⚡ 1-Klik AI Scan 5 Aspek Web Check</span>
+                            <span>1-Klik AI Scan 5 Aspek Web Check</span>
                         </button>
                     </div>
                 </div>

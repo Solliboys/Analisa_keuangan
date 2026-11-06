@@ -58,15 +58,17 @@
                     <span class="font-bold text-slate-900 text-sm"><?= esc($cfg['nama_aplikasi'] ?? 'OTW Kredit') ?></span>
                 </div>
             </div>
-            <a href="<?= base_url('auth/logout') ?>" class="text-xs text-rose-600 font-semibold px-2.5 py-1.5 rounded-lg bg-rose-50 border border-rose-200">
-                Logout
+            <a href="<?= base_url('profil') ?>" class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                <?= strtoupper(substr(session()->get('nama_lengkap') ?? 'SA', 0, 2)) ?>
             </a>
         </header>
 
-        <!-- Desktop Topbar Full Width (Sesuai Gambar) -->
-        <div class="bg-white border-b border-slate-200/80 px-6 lg:px-8 py-3 hidden md:flex items-center justify-between sticky top-0 z-20 w-full">
-            <div class="flex items-center gap-2.5">
-                <span class="text-xs font-bold text-slate-900 uppercase tracking-wider">Super Administrator</span>
+        <!-- Top Header Navigation (Desktop) -->
+        <div class="hidden md:flex bg-white border-b border-slate-200 px-8 py-3.5 items-center justify-between sticky top-0 z-20 w-full">
+            <div class="flex items-center gap-3">
+                <a href="<?= base_url('superadmin/dashboard') ?>" class="text-xs font-semibold text-slate-400 hover:text-blue-600 transition">
+                    Dashboard
+                </a>
                 <span class="text-slate-300">/</span>
                 <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md">Setting Referensi</span>
             </div>
@@ -117,33 +119,69 @@
                 </div>
             <?php endif; ?>
 
-            <!-- Header Title Pill (Sesuai Persis Gambar 1) -->
-            <div class="mb-6">
+            <!-- Header Title Pill -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div class="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs">
-                    <!-- Icon Box Drawer -->
                     <svg class="w-5 h-5 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                     </svg>
-                    <span class="text-sm font-bold text-indigo-950 tracking-tight">Setting Referensi</span>
+                    <span class="text-sm font-bold text-indigo-950 tracking-tight">Setting Referensi Sistem & Formulir</span>
+                </div>
+
+                <!-- Info Guide Badges -->
+                <div class="flex flex-wrap items-center gap-2.5 text-xs">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold shadow-2xs">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <strong>Fleksibel:</strong> Tambah, Edit & Hapus Bebas
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-semibold shadow-2xs">
+                        <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        <strong>Sistem Terkunci:</strong> Bawaan Inti (Tidak Boleh Dihapus)
+                    </span>
                 </div>
             </div>
 
-            <!-- Filter & Action Row (Sesuai Persis Gambar 1) -->
+            <!-- Filter & Action Row -->
             <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
-                <!-- Filter Jenis Referensi Dropdown -->
-                <div class="w-full sm:w-64">
+                <!-- Filter Jenis Referensi Dropdown Terkelompok -->
+                <div class="w-full sm:w-96">
                     <label for="filterJenisReferensi" class="block text-xs font-semibold text-slate-700 mb-1.5">
                         Filter Jenis Referensi
                     </label>
                     <div class="relative">
                         <select id="filterJenisReferensi" onchange="handleFilterChange(this.value)" 
                                 class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs appearance-none cursor-pointer">
-                            <option value="">Semua Jenis</option>
-                            <?php foreach ($daftar_jenis as $j): ?>
-                                <option value="<?= esc($j) ?>" <?= ($selected_jenis === $j) ? 'selected' : '' ?>>
-                                    <?= esc($j) ?>
-                                </option>
-                            <?php endforeach; ?>
+                            <option value="">Semua Jenis (Tampilkan Semua Data)</option>
+                            
+                            <!-- Kelompok 1: Referensi Formulir Dinamis -->
+                            <optgroup label="📂 REFERENSI FORMULIR DINAMIS (Bisa Tambah / Edit / Hapus)">
+                                <?php foreach ($daftar_jenis as $j): ?>
+                                    <?php 
+                                        $cat = $map_metadata[$j]['kategori'] ?? 'fleksibel';
+                                        $lbl = $map_metadata[$j]['label'] ?? $j;
+                                        if ($cat === 'fleksibel'):
+                                    ?>
+                                        <option value="<?= esc($j) ?>" <?= ($selected_jenis === $j) ? 'selected' : '' ?>>
+                                            <?= esc($lbl) ?> (<?= esc($j) ?>)
+                                        </option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </optgroup>
+
+                            <!-- Kelompok 2: Referensi Inti Sistem -->
+                            <optgroup label="🔒 REFERENSI INTI SISTEM (Terkunci - Hanya Edit)">
+                                <?php foreach ($daftar_jenis as $j): ?>
+                                    <?php 
+                                        $cat = $map_metadata[$j]['kategori'] ?? 'fleksibel';
+                                        $lbl = $map_metadata[$j]['label'] ?? $j;
+                                        if ($cat === 'sistem'):
+                                    ?>
+                                        <option value="<?= esc($j) ?>" <?= ($selected_jenis === $j) ? 'selected' : '' ?>>
+                                            <?= esc($lbl) ?> (<?= esc($j) ?>)
+                                        </option>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </optgroup>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +191,7 @@
                     </div>
                 </div>
 
-                <!-- + Tambah Referensi Button (Green Sesuai Gambar 1) -->
+                <!-- + Tambah Referensi Button -->
                 <div>
                     <button type="button" onclick="bukaModalTambah()" 
                             class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-xs shadow-emerald-600/20 cursor-pointer">
@@ -165,7 +203,7 @@
                 </div>
             </div>
 
-            <!-- Table Card Container (Sesuai Gambar 1) -->
+            <!-- Table Card Container -->
             <div class="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
                 
                 <!-- Table Controls (Show entries & Search Cari Data) -->
@@ -184,10 +222,10 @@
                     </div>
 
                     <!-- Cari Data Input -->
-                    <div class="w-full sm:w-64">
+                    <div class="w-full sm:w-72">
                         <div class="relative">
                             <input type="text" id="cariDataInput" oninput="handleSearchTable(this.value)" 
-                                   placeholder="Cari Data" 
+                                   placeholder="Cari Data (nama, jenis, tipe...)" 
                                    class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-xl pl-3.5 pr-8 py-2 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:outline-none transition shadow-2xs">
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,30 +240,43 @@
                 <div class="overflow-x-auto table-scroll">
                     <table class="w-full text-left text-xs border-collapse">
                         <thead>
-                            <tr class="border-b border-slate-100 bg-white text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                            <tr class="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
                                 <th class="py-3.5 px-4 text-center w-12">NO</th>
-                                <th class="py-3.5 px-4">JENIS REFERENSI</th>
+                                <th class="py-3.5 px-4 w-60">JENIS REFERENSI</th>
                                 <th class="py-3.5 px-4">KETERANGAN REFERENSI</th>
                                 <th class="py-3.5 px-4">TIPE REFERENSI</th>
                                 <th class="py-3.5 px-4">COLOR REFERENSI</th>
+                                <th class="py-3.5 px-4 text-center w-36">SIFAT / AKSES</th>
                                 <th class="py-3.5 px-4 text-center w-28">AKSI</th>
                             </tr>
                         </thead>
                         <tbody id="referensiTableBody" class="divide-y divide-slate-100 text-slate-700">
                             <?php if (empty($daftar_referensi)): ?>
                                 <tr id="noDataRow">
-                                    <td colspan="6" class="py-10 text-center text-slate-400 italic">
+                                    <td colspan="7" class="py-10 text-center text-slate-400 italic">
                                         Belum ada data referensi yang tersimpan.
                                     </td>
                                 </tr>
                             <?php else: ?>
-                                <?php $no = 1; foreach ($daftar_referensi as $ref): ?>
+                                <?php 
+                                    $no = 1; 
+                                    foreach ($daftar_referensi as $ref): 
+                                        $jenisKey = $ref['jenis_referensi'];
+                                        $meta = $map_metadata[$jenisKey] ?? [
+                                            'label'     => $jenisKey,
+                                            'kategori'  => ((int)($ref['is_locked'] ?? 0) === 1 ? 'sistem' : 'fleksibel'),
+                                            'deskripsi' => ''
+                                        ];
+                                        $isLocked = (int)($ref['is_locked'] ?? 0);
+                                ?>
                                     <tr class="hover:bg-slate-50/70 transition-colors ref-row" 
                                         data-id="<?= esc($ref['id']) ?>"
                                         data-jenis="<?= esc($ref['jenis_referensi']) ?>"
                                         data-keterangan="<?= esc($ref['keterangan_referensi']) ?>"
                                         data-tipe="<?= esc($ref['tipe_referensi'] ?? '') ?>"
-                                        data-color="<?= esc($ref['color_referensi'] ?? 'primary') ?>">
+                                        data-color="<?= esc($ref['color_referensi'] ?? 'primary') ?>"
+                                        data-is-locked="<?= $isLocked ?>"
+                                        data-label="<?= esc($meta['label']) ?>">
                                         
                                         <!-- NO -->
                                         <td class="py-3.5 px-4 text-center font-medium text-slate-600 row-no">
@@ -233,12 +284,17 @@
                                         </td>
 
                                         <!-- JENIS REFERENSI -->
-                                        <td class="py-3.5 px-4 font-semibold text-slate-800">
-                                            <?= esc($ref['jenis_referensi']) ?>
+                                        <td class="py-3.5 px-4">
+                                            <div class="font-bold text-slate-800 text-xs">
+                                                <?= esc($meta['label']) ?>
+                                            </div>
+                                            <div class="text-[10px] font-mono text-slate-400 mt-0.5">
+                                                <?= esc($ref['jenis_referensi']) ?>
+                                            </div>
                                         </td>
 
                                         <!-- KETERANGAN REFERENSI -->
-                                        <td class="py-3.5 px-4 font-medium text-slate-800">
+                                        <td class="py-3.5 px-4 font-semibold text-slate-900">
                                             <?= esc($ref['keterangan_referensi']) ?>
                                         </td>
 
@@ -265,7 +321,22 @@
                                             </span>
                                         </td>
 
-                                        <!-- AKSI (Edit Amber & Hapus Rose persis gambar) -->
+                                        <!-- SIFAT / AKSES -->
+                                        <td class="py-3.5 px-4 text-center">
+                                            <?php if ($isLocked === 1): ?>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200" title="Data Inti Sistem: Tidak dapat dihapus karena dibutuhkan oleh alur logika aplikasi">
+                                                    <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                                    Sistem (Terkunci)
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200" title="Referensi Dinamis: Bebas ditambah, diedit, dan dihapus">
+                                                    <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                    Fleksibel
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- AKSI (Edit Amber & Hapus Rose atau Locked) -->
                                         <td class="py-3.5 px-4 text-center">
                                             <div class="inline-flex items-center gap-1.5 justify-center">
                                                 <button type="button" onclick="bukaModalEdit(<?= esc($ref['id']) ?>)" 
@@ -273,11 +344,21 @@
                                                         title="Edit Data">
                                                     Edit
                                                 </button>
-                                                <button type="button" onclick="konfirmasiHapus(<?= esc($ref['id']) ?>, '<?= esc(addslashes($ref['keterangan_referensi'])) ?>')" 
-                                                        class="px-2.5 py-1 bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white rounded text-[11px] font-semibold transition cursor-pointer shadow-2xs" 
-                                                        title="Hapus Data">
-                                                    Hapus
-                                                </button>
+                                                
+                                                <?php if ($isLocked === 1): ?>
+                                                    <button type="button" disabled
+                                                            class="px-2 py-1 bg-slate-100 text-slate-400 rounded text-[11px] font-semibold cursor-not-allowed border border-slate-200 inline-flex items-center gap-1 opacity-70" 
+                                                            title="Data referensi inti sistem ini tidak boleh dihapus agar alur aplikasi tidak error.">
+                                                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                                        Kunci
+                                                    </button>
+                                                <?php else: ?>
+                                                    <button type="button" onclick="konfirmasiHapus(<?= esc($ref['id']) ?>, '<?= esc(addslashes($ref['keterangan_referensi'])) ?>')" 
+                                                            class="px-2.5 py-1 bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white rounded text-[11px] font-semibold transition cursor-pointer shadow-2xs" 
+                                                            title="Hapus Data">
+                                                        Hapus
+                                                    </button>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
@@ -303,16 +384,19 @@
     </div>
 
     <!-- ============================================================== -->
-    <!-- MODAL FORM TAMBAH / EDIT REFERENSI (Persis Sesuai Gambar 2 & 3) -->
+    <!-- MODAL FORM TAMBAH / EDIT REFERENSI -->
     <!-- ============================================================== -->
     <div id="modalSettingReferensi" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl border border-slate-200 max-w-xl w-full p-6 sm:p-7 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
             
             <!-- Modal Header: Title & Close 'X' -->
             <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
-                <h3 id="modalTitle" class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                    Tambah Setting Referensi
-                </h3>
+                <div>
+                    <h3 id="modalTitle" class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                        Tambah Setting Referensi
+                    </h3>
+                    <p id="modalSubtitle" class="text-xs text-slate-500 mt-0.5">Kelola opsi formulir atau parameter sistem</p>
+                </div>
                 <button type="button" onclick="tutupModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -320,7 +404,13 @@
                 </button>
             </div>
 
-            <!-- Modal Form (Grid 2 Kolom Persis Gambar 2 & 3) -->
+            <!-- Notice Alert if editing locked system data -->
+            <div id="modalLockedNotice" class="hidden mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+                <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span><strong>Perhatian:</strong> Data ini adalah referensi sistem inti. Anda hanya disarankan mengubah label keterangan atau warna tampilan.</span>
+            </div>
+
+            <!-- Modal Form (Grid 2 Kolom) -->
             <form id="formReferensi" method="post" action="<?= base_url('superadmin/referensi/simpan') ?>">
                 <?= csrf_field() ?>
                 <input type="hidden" id="editReferensiId" name="id" value="">
@@ -337,9 +427,31 @@
                                     onchange="handleSelectJenisModal(this.value)"
                                     class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs appearance-none cursor-pointer">
                                 <option value="" disabled selected>Pilih Jenis Referensi</option>
-                                <?php foreach ($daftar_jenis as $j): ?>
-                                    <option value="<?= esc($j) ?>"><?= esc($j) ?></option>
-                                <?php endforeach; ?>
+                                
+                                <optgroup label="📂 Opsi Formulir Dinamis">
+                                    <?php foreach ($daftar_jenis as $j): ?>
+                                        <?php 
+                                            $cat = $map_metadata[$j]['kategori'] ?? 'fleksibel';
+                                            $lbl = $map_metadata[$j]['label'] ?? $j;
+                                            if ($cat === 'fleksibel'):
+                                        ?>
+                                            <option value="<?= esc($j) ?>"><?= esc($lbl) ?> (<?= esc($j) ?>)</option>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </optgroup>
+
+                                <optgroup label="🔒 Parameter Sistem Inti">
+                                    <?php foreach ($daftar_jenis as $j): ?>
+                                        <?php 
+                                            $cat = $map_metadata[$j]['kategori'] ?? 'fleksibel';
+                                            $lbl = $map_metadata[$j]['label'] ?? $j;
+                                            if ($cat === 'sistem'):
+                                        ?>
+                                            <option value="<?= esc($j) ?>"><?= esc($lbl) ?> (<?= esc($j) ?>)</option>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </optgroup>
+
                                 <option value="__NEW__" class="text-blue-600 font-bold">+ Input Jenis Baru...</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
@@ -350,7 +462,7 @@
                         </div>
                         <!-- Input Teks Tambahan jika memilih + Input Jenis Baru -->
                         <div id="wrapCustomJenis" class="hidden mt-2">
-                            <input type="text" id="customJenisInput" placeholder="Ketik nama jenis referensi baru..." 
+                            <input type="text" id="customJenisInput" placeholder="Ketik nama jenis referensi baru (misal: kre_sektor)..." 
                                    class="w-full text-xs font-semibold text-slate-800 border border-blue-300 rounded-xl px-3.5 py-2 bg-blue-50/30 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition">
                         </div>
                     </div>
@@ -361,27 +473,27 @@
                             Keterangan Referensi <span class="text-rose-500">*</span>
                         </label>
                         <input type="text" id="modalKeteranganInput" name="keterangan_referensi" required 
-                               placeholder="" 
+                               placeholder="Contoh: PT, Surat Kuasa, Lancar..." 
                                class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                     </div>
 
                     <!-- Kolom Kiri: 2. Tipe Referensi -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-800 mb-1.5">
-                            Tipe Referensi
+                            Tipe Referensi (Kode Teknis)
                         </label>
                         <input type="text" id="modalTipeInput" name="tipe_referensi" 
-                               placeholder="" 
-                               class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                               placeholder="Contoh: pt, movable_asset, 1..." 
+                               class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs font-mono">
                     </div>
 
                     <!-- Kolom Kanan: 2. Color Referensi -->
                     <div>
                         <label class="block text-xs font-semibold text-slate-800 mb-1.5">
-                            Color Referensi
+                            Color Referensi (Badge Warna)
                         </label>
                         <input type="text" id="modalColorInput" name="color_referensi" list="colorSuggestions" 
-                               placeholder="" 
+                               placeholder="Pilih atau ketik warna badge..." 
                                class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         <datalist id="colorSuggestions">
                             <option value="primary">primary (Biru)</option>
@@ -395,7 +507,7 @@
 
                 </div>
 
-                <!-- Modal Footer (Tombol Tutup & Simpan Sesuai Gambar 2 & 3) -->
+                <!-- Modal Footer -->
                 <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
                     <button type="button" onclick="tutupModal()" 
                             class="px-5 py-2 bg-slate-500 hover:bg-slate-600 active:bg-slate-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer">
@@ -432,11 +544,14 @@
         // Buka Modal Tambah
         function bukaModalTambah() {
             document.getElementById('modalTitle').innerText = 'Tambah Setting Referensi';
+            document.getElementById('modalSubtitle').innerText = 'Tambahkan opsi formulir atau referensi sistem baru';
+            document.getElementById('modalLockedNotice').classList.add('hidden');
             document.getElementById('formReferensi').action = '<?= base_url('superadmin/referensi/simpan') ?>';
             document.getElementById('editReferensiId').value = '';
             
             // Set default select sesuai filter yang aktif jika ada
             const selectEl = document.getElementById('modalJenisSelect');
+            selectEl.disabled = false;
             if (currentFilterJenis && currentFilterJenis !== 'Semua Jenis') {
                 selectEl.value = currentFilterJenis;
             } else {
@@ -454,20 +569,29 @@
 
         // Buka Modal Edit
         function bukaModalEdit(id) {
-            // Ambil data dari atribut row
             const row = document.querySelector(`.ref-row[data-id="${id}"]`);
             if (!row) return;
-
-            document.getElementById('modalTitle').innerText = 'Edit Setting Referensi';
-            document.getElementById('formReferensi').action = '<?= base_url('superadmin/referensi/update') ?>/' + id;
-            document.getElementById('editReferensiId').value = id;
 
             const jenis = row.getAttribute('data-jenis');
             const ket = row.getAttribute('data-keterangan');
             const tipe = row.getAttribute('data-tipe');
             const color = row.getAttribute('data-color');
+            const isLocked = parseInt(row.getAttribute('data-is-locked') || '0', 10);
+            const labelText = row.getAttribute('data-label') || jenis;
+
+            document.getElementById('modalTitle').innerText = 'Edit Setting Referensi';
+            document.getElementById('modalSubtitle').innerText = `Mengubah data referensi untuk "${labelText}"`;
+            document.getElementById('formReferensi').action = '<?= base_url('superadmin/referensi/update') ?>/' + id;
+            document.getElementById('editReferensiId').value = id;
+
+            if (isLocked === 1) {
+                document.getElementById('modalLockedNotice').classList.remove('hidden');
+            } else {
+                document.getElementById('modalLockedNotice').classList.add('hidden');
+            }
 
             const selectEl = document.getElementById('modalJenisSelect');
+            selectEl.disabled = false;
             let found = false;
             for (let i = 0; i < selectEl.options.length; i++) {
                 if (selectEl.options[i].value === jenis) {
@@ -478,8 +602,7 @@
             }
 
             if (!found) {
-                // Tambahkan opsi baru ke select jika belum ada
-                const opt = new Option(jenis, jenis, true, true);
+                const opt = new Option(`${jenis} (${jenis})`, jenis, true, true);
                 selectEl.insertBefore(opt, selectEl.options[selectEl.options.length - 1]);
                 selectEl.value = jenis;
             }
@@ -524,7 +647,6 @@
                     });
                     return;
                 }
-                // Ubah nilai option
                 const opt = new Option(customVal, customVal, true, true);
                 selectEl.add(opt);
                 selectEl.value = customVal;
@@ -581,9 +703,10 @@
             // 1. Filter rows
             const filteredRows = rows.filter(row => {
                 const jenis = row.getAttribute('data-jenis');
-                const keterangan = row.getAttribute('data-keterangan').toLowerCase();
-                const tipe = row.getAttribute('data-tipe').toLowerCase();
-                const color = row.getAttribute('data-color').toLowerCase();
+                const keterangan = (row.getAttribute('data-keterangan') || '').toLowerCase();
+                const tipe = (row.getAttribute('data-tipe') || '').toLowerCase();
+                const color = (row.getAttribute('data-color') || '').toLowerCase();
+                const label = (row.getAttribute('data-label') || '').toLowerCase();
 
                 // Cek filter dropdown jenis
                 const matchJenis = (!currentFilterJenis || currentFilterJenis === 'Semua Jenis' || currentFilterJenis === '') ? true : (jenis === currentFilterJenis);
@@ -591,6 +714,7 @@
                 // Cek teks pencarian
                 const matchSearch = (!currentSearchQuery) ? true : (
                     jenis.toLowerCase().includes(currentSearchQuery) ||
+                    label.includes(currentSearchQuery) ||
                     keterangan.includes(currentSearchQuery) ||
                     tipe.includes(currentSearchQuery) ||
                     color.includes(currentSearchQuery)
@@ -612,7 +736,6 @@
 
             for (let i = startIndex; i < endIndex; i++) {
                 filteredRows[i].style.display = '';
-                // Update nomor baris yang tampil
                 const noEl = filteredRows[i].querySelector('.row-no');
                 if (noEl) noEl.innerText = (i + 1);
             }

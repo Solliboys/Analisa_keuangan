@@ -3,7 +3,7 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 mb-6">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
-                12
+                <?= (!empty($view_folder) && $view_folder === 'badan_usaha') ? '12' : '13' ?>
             </div>
             <div>
                 <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">REPAYMENT CAPACITY & DEBT SERVICE COVERAGE (DSC)</h3>

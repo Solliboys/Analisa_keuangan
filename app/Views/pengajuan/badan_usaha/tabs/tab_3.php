@@ -29,8 +29,8 @@ if (empty($listUsaha)) {
                     3
                 </div>
                 <div>
-                    <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">PROFIL KEGIATAN USAHA & OPERASIONAL</h3>
-                    <p class="text-[11px] text-slate-500">Profil operasional unit usaha penghasil arus kas pembayaran pinjaman (bisa lebih dari 1 usaha)</p>
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">LEGALITAS & PROFIL PERUSAHAAN (BADAN USAHA)</h3>
+                    <p class="text-[11px] text-slate-500">Profil perusahaan, akta pendirian, NIB, NPWP badan, dan operasional bisnis utama</p>
                 </div>
             </div>
             

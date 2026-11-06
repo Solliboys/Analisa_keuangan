@@ -1,9 +1,18 @@
+<?php
+$biayaLainList = [];
+if (!empty($disbursement['rincian_biaya_lain'])) {
+    $decoded = json_decode($disbursement['rincian_biaya_lain'], true);
+    if (is_array($decoded)) {
+        $biayaLainList = $decoded;
+    }
+}
+?>
 <div id="tab-11" class="tab-panel bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
     <!-- Section Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 mb-6">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
-                11
+                <?= (!empty($view_folder) && $view_folder === 'badan_usaha') ? '11' : '12' ?>
             </div>
             <div>
                 <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">SIMULASI BIAYA & PENCAIRAN BERSIH (DISBURSEMENT)</h3>
@@ -35,23 +44,6 @@
                 </div>
             </div>
 
-            <!-- Agent Fee -->
-            <div class="grid grid-cols-3 gap-3">
-                <div class="col-span-1">
-                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Agent Fee (%)</label>
-                    <input type="number" step="0.1" name="agent_persen" id="agent_persen" 
-                           value="<?= esc($disbursement['agent_persen'] ?? 1) ?>" 
-                           class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]" 
-                           oninput="hitungDisbursement();">
-                </div>
-                <div class="col-span-2">
-                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Agent Fee</label>
-                    <div class="w-full text-xs font-bold text-slate-800 bg-slate-50/80 border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
-                        <span id="nomAgent" class="font-bold text-slate-800">Rp 0</span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Admin Fee -->
             <div class="grid grid-cols-3 gap-3">
                 <div class="col-span-1">
@@ -69,38 +61,40 @@
                 </div>
             </div>
 
-            <!-- Hold Angsuran -->
-            <div class="grid grid-cols-3 gap-3">
-                <div class="col-span-1">
-                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Hold (Bulan)</label>
-                    <input type="number" name="hold_angsuran_bulan" id="hold_angsuran_bulan" 
-                           value="<?= esc($disbursement['hold_angsuran_bulan'] ?? 4) ?>" min="0" max="24"
-                           class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]" 
-                           oninput="hitungDisbursement();">
-                </div>
-                <div class="col-span-2">
-                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Hold Angsuran</label>
-                    <div class="w-full text-xs font-bold text-slate-800 bg-slate-50/80 border border-slate-200 rounded-xl px-3 py-2 flex items-center shadow-2xs h-[38px]">
-                        <span id="nomHoldAngsuran" class="font-bold text-slate-800">Rp 0</span>
+            <!-- Dynamic Biaya / Potongan Lainnya (Keterangan & Nominal) -->
+            <div class="pt-3 border-t border-slate-100 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Potongan & Biaya Lainnya</label>
+                        <p class="text-[11px] text-slate-400">Komponen biaya potongan muka tambahan</p>
                     </div>
+                    <button type="button" onclick="tambahBarisBiayaLain()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                        <span>Tambah Biaya</span>
+                    </button>
                 </div>
-            </div>
 
-            <!-- Asuransi Jiwa & Kebakaran -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Premi Asuransi Jiwa (Rp)</label>
-                    <input type="text" name="asuransi_jiwa" id="asuransi_jiwa" 
-                           value="<?= number_format((float)($disbursement['asuransi_jiwa'] ?? 0), 0, ',', '.') ?>" 
-                           class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]" 
-                           oninput="formatRupiah(this); hitungDisbursement();">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Premi Asuransi Kebakaran / Agunan (Rp)</label>
-                    <input type="text" name="asuransi_kebakaran" id="asuransi_kebakaran" 
-                           value="<?= number_format((float)($disbursement['asuransi_kebakaran'] ?? 0), 0, ',', '.') ?>" 
-                           class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]" 
-                           oninput="formatRupiah(this); hitungDisbursement();">
+                <!-- Container Baris Biaya Lain -->
+                <div id="containerBiayaLain" class="space-y-2.5">
+                    <?php if (empty($biayaLainList)): ?>
+                        <div id="emptyBiayaLainMsg" class="p-5 text-center border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-xs italic bg-slate-50/40">
+                            Belum ada biaya potongan tambahan. Klik tombol <strong>+ Tambah Biaya</strong> di atas untuk menambahkan.
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($biayaLainList as $idx => $biaya): ?>
+                            <div class="baris-biaya-lain flex items-center gap-2.5 p-2.5 bg-slate-50/70 border border-slate-200 rounded-xl transition hover:border-slate-300">
+                                <div class="flex-1">
+                                    <input type="text" name="biaya_lain[<?= $idx ?>][keterangan]" value="<?= esc($biaya['keterangan'] ?? '') ?>" placeholder="Keterangan (misal: Biaya Notaris, Asuransi, dll)" class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-lg px-3 py-2 bg-white focus:border-blue-500 focus:outline-none h-[38px]">
+                                </div>
+                                <div class="w-40 sm:w-48">
+                                    <input type="text" name="biaya_lain[<?= $idx ?>][nominal]" value="<?= number_format((float)($biaya['nominal'] ?? 0), 0, ',', '.') ?>" placeholder="Rp 0" class="biaya-lain-nominal w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg px-3 py-2 bg-white focus:border-blue-500 focus:outline-none rupiah-input h-[38px]" oninput="formatRupiah(this); hitungDisbursement();">
+                                </div>
+                                <button type="button" onclick="hapusBarisBiayaLain(this)" class="w-9 h-[38px] flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer shrink-0" title="Hapus Biaya">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

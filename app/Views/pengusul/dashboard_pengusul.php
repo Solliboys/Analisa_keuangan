@@ -133,19 +133,35 @@
         <!-- Welcome Hero Banner -->
         <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-6 sm:p-8 text-white shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-                <span class="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-blue-100 uppercase tracking-wider">
-                    Ruang Kerja Pengusul Kredit
-                </span>
+<?php 
+                    $petugasSlikAktif = (int)($pengaturan_sistem['petugas_slik_aktif'] ?? (($pengaturan_sistem['ijin_pengusul_isi_slik'] ?? 1) == 0 ? 1 : 0));
+                ?>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-blue-100 uppercase tracking-wider">
+                        Ruang Kerja Pengusul Kredit
+                    </span>
+                    <?php if ($petugasSlikAktif === 1): ?>
+                        <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-500/25 text-emerald-100 border border-emerald-400/30 inline-flex items-center gap-1.5" title="Verifikasi riwayat fasilitas SLIK debitur resmi diproses oleh Petugas SLIK terpusat">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            🛡️ Verifikasi SLIK: Petugas SLIK OJK (SOP Ketat)
+                        </span>
+                    <?php else: ?>
+                        <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-amber-400/25 text-amber-100 border border-amber-300/30 inline-flex items-center gap-1.5" title="Pengusul diberikan wewenang memproses dan mengunggah hasil SLIK secara mandiri">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span>
+                            ⚡ Verifikasi SLIK: Mandiri oleh Pengusul (Mode Fleksibel)
+                        </span>
+                    <?php endif; ?>
+                </div>
                 <h1 class="text-2xl sm:text-3xl font-extrabold mt-3 tracking-tight">Selamat Datang, <?= esc($nama_lengkap) ?>!</h1>
                 <p class="text-sm text-blue-100 mt-1 max-w-xl">
                     Kelola dan pantau permohonan pembiayaan nasabah Anda. Pastikan berkas 5C lengkap sebelum diajukan ke sidang Komite Kredit.
                 </p>
             </div>
             <div>
-                <a href="<?= base_url('pengajuan/baru') ?>" class="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-blue-800 hover:bg-blue-50 font-extrabold text-sm rounded-2xl shadow-md hover:shadow-lg transition">
+                <button type="button" onclick="bukaModalPilihDebitur()" class="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-blue-800 hover:bg-blue-50 font-extrabold text-sm rounded-2xl shadow-md hover:shadow-lg transition cursor-pointer">
                     <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     Buat Pengajuan & CAM Baru
-                </a>
+                </button>
             </div>
         </div>
 
@@ -175,15 +191,35 @@
 
         <!-- Table Card: Daftar Berkas Pengajuan Terakhir (Full Width) -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-            <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="relative w-full sm:w-80">
-                    <input type="text" id="searchInput" placeholder="Cari nomor CAM, debitur, usaha..." 
-                           class="w-full pl-9 pr-3 py-2 text-xs font-medium border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition">
-                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                    <!-- Search Box -->
+                    <div class="relative w-full sm:w-72">
+                        <input type="text" id="searchInput" placeholder="Cari nomor CAM, debitur, usaha..." 
+                               class="w-full pl-9 pr-3 py-2 text-xs font-medium border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+
+                    <!-- Dropdown Filter Tipe Debitur -->
+                    <div class="relative w-full sm:w-56 shrink-0">
+                        <select id="filterTipeDebitur" onchange="filterTabelPengajuan()"
+                                class="w-full appearance-none pl-9 pr-9 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs cursor-pointer">
+                            <option value="semua">Semua Tipe Debitur</option>
+                            <option value="perorangan">👤 Perorangan</option>
+                            <option value="badan_usaha">🏢 Badan Usaha</option>
+                        </select>
+                        <div class="absolute left-3 top-2.5 pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        </div>
+                        <div class="absolute right-3 top-2.5 pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex items-center gap-4">
+
+                <div class="flex items-center gap-4 justify-between sm:justify-end">
                     <div class="text-xs text-slate-500 font-medium">
-                        Menampilkan <span class="font-bold text-slate-800"><?= count($daftar_pengajuan) ?></span> pengajuan
+                        Menampilkan <span id="countDisplay" class="font-bold text-slate-800"><?= count($daftar_pengajuan) ?></span> pengajuan
                     </div>
                     <a href="<?= base_url('pengajuan') ?>" class="text-xs font-bold text-blue-600 hover:text-blue-800 hidden sm:inline">
                         Lihat Semua &rarr;
@@ -197,6 +233,7 @@
                         <tr>
                             <th class="py-3.5 px-4">No. Aplikasi</th>
                             <th class="py-3.5 px-4">Nama Debitur & Usaha</th>
+                            <th class="py-3.5 px-4">Tipe Debitur</th>
                             <th class="py-3.5 px-4">Plafon Pinjaman</th>
                             <th class="py-3.5 px-4">Skema & Tenor</th>
                             <th class="py-3.5 px-4">Jaminan</th>
@@ -208,7 +245,7 @@
                     <tbody class="divide-y divide-slate-100 font-normal">
                         <?php if (empty($daftar_pengajuan)): ?>
                             <tr>
-                                <td colspan="8" class="text-center py-12 text-slate-400">
+                                <td colspan="9" class="text-center py-12 text-slate-400">
                                     <div class="w-12 h-12 mx-auto mb-3 text-slate-300">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     </div>
@@ -218,7 +255,12 @@
                             </tr>
                         <?php else: ?>
                             <?php foreach ($daftar_pengajuan as $row): ?>
-                                <tr class="hover:bg-slate-50 transition" id="row-kredit-<?= $row['kredit_id'] ?>">
+                                <?php
+                                    $jdRaw = $row['jenis_debitur'] ?? '';
+                                    $isBadan = (!empty($jdRaw) && (stripos($jdRaw, 'badan') !== false || stripos($jdRaw, 'pt') !== false || stripos($jdRaw, 'cv') !== false));
+                                    $tipeKey = $isBadan ? 'badan_usaha' : 'perorangan';
+                                ?>
+                                <tr class="hover:bg-slate-50 transition" id="row-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>">
                                     <td class="py-3.5 px-4 font-bold text-slate-900 whitespace-nowrap">
                                         <?= esc($row['nomor_aplikasi']) ?>
                                         <span class="block text-xs font-normal text-slate-400"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?></span>
@@ -226,6 +268,19 @@
                                     <td class="py-3.5 px-4">
                                         <div class="font-bold text-slate-900"><?= esc($row['nama_debitur'] ?: '-') ?></div>
                                         <div class="text-xs text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?></div>
+                                    </td>
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                        <?php if ($isBadan): ?>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
+                                                <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                                Badan Usaha
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs">
+                                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                                Perorangan
+                                            </span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="py-3.5 px-4 font-bold text-blue-700 whitespace-nowrap">
                                         Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?>
@@ -635,16 +690,38 @@
         }
 
         // Fitur pencarian interaktif tabel pengajuan
+        function filterTabelPengajuan() {
+            const filterSelect = document.getElementById('filterTipeDebitur');
+            const selectedTipe = filterSelect ? filterSelect.value : 'semua';
+            const searchInput = document.getElementById('searchInput');
+            const term = (searchInput?.value || '').toLowerCase().trim();
+            const rows = document.querySelectorAll('#tabelPengajuan tbody tr[id^="row-kredit-"]');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const rowTipe = row.getAttribute('data-jenis-debitur') || '';
+                const rowText = row.innerText.toLowerCase();
+
+                const matchTipe = (selectedTipe === 'semua' || rowTipe === selectedTipe);
+                const matchSearch = (!term || rowText.includes(term));
+
+                if (matchTipe && matchSearch) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const countDisplay = document.getElementById('countDisplay');
+            if (countDisplay) {
+                countDisplay.innerText = visibleCount;
+            }
+        }
+
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
-            searchInput.addEventListener('keyup', function() {
-                const term = this.value.toLowerCase();
-                const rows = document.querySelectorAll('#tabelPengajuan tbody tr');
-                rows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(term) ? '' : 'none';
-                });
-            });
+            searchInput.addEventListener('keyup', filterTabelPengajuan);
         }
 
         // Dropdown Profil
@@ -736,6 +813,66 @@
                     });
                 }
             });
+        }
+    </script>
+    <!-- Modal Pilihan Jenis Debitur (Perorangan vs Badan Usaha) -->
+    <div id="modalPilihDebitur" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-100 transform transition-all">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                        📋
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-800">Pilih Kategori Pengajuan</h3>
+                        <p class="text-[11px] text-slate-400">Pilih formulir sesuai kategori entitas calon debitur</p>
+                    </div>
+                </div>
+                <button type="button" onclick="tutupModalPilihDebitur()" class="text-slate-400 hover:text-slate-700 text-lg font-bold p-1 rounded-lg hover:bg-slate-100 transition">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+                <!-- Pilihan 1: Perorangan -->
+                <a href="<?= base_url('pengajuan/baru?tipe=perorangan') ?>" class="group p-5 rounded-2xl border-2 border-slate-200 hover:border-blue-600 hover:bg-blue-50/50 transition flex flex-col justify-between text-left shadow-2xs">
+                    <div>
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-900 group-hover:text-blue-700 mb-1">Perorangan / Individu</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">Untuk nasabah individu, karyawan, pemilik usaha mikro/perorangan.</p>
+                    </div>
+                    <span class="mt-4 inline-flex items-center text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform">
+                        Buka Form Perorangan &rarr;
+                    </span>
+                </a>
+
+                <!-- Pilihan 2: Badan Usaha -->
+                <a href="<?= base_url('pengajuan/baru?tipe=badan_usaha') ?>" class="group p-5 rounded-2xl border-2 border-slate-200 hover:border-indigo-600 hover:bg-indigo-50/50 transition flex flex-col justify-between text-left shadow-2xs">
+                    <div>
+                        <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-900 group-hover:text-indigo-700 mb-1">Badan Usaha</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">Untuk perseroan terbatas (PT), CV, Koperasi, Yayasan, atau Firma.</p>
+                    </div>
+                    <span class="mt-4 inline-flex items-center text-xs font-bold text-indigo-600 group-hover:translate-x-1 transition-transform">
+                        Buka Form Badan Usaha &rarr;
+                    </span>
+                </a>
+            </div>
+
+            <div class="text-center">
+                <button type="button" onclick="tutupModalPilihDebitur()" class="text-xs font-semibold text-slate-400 hover:text-slate-600 transition">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function bukaModalPilihDebitur() {
+            document.getElementById('modalPilihDebitur').classList.remove('hidden');
+        }
+        function tutupModalPilihDebitur() {
+            document.getElementById('modalPilihDebitur').classList.add('hidden');
         }
     </script>
 </body>

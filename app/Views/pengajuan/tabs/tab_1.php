@@ -1,4 +1,11 @@
 <?php
+$isBu = (isset($view_folder) && $view_folder === 'badan_usaha') 
+        || (isset($kredit['jenis_debitur']) && (stripos($kredit['jenis_debitur'], 'badan') !== false || stripos($kredit['jenis_debitur'], 'pt') !== false || stripos($kredit['jenis_debitur'], 'cv') !== false));
+$jenisDebiturDisplay = $isBu ? 'Badan Usaha (PT / CV / Koperasi / Firma)' : 'Perorangan / Individu';
+$jenisDebiturVal = $isBu ? 'Badan Usaha' : 'Perorangan';
+$badgeColor = $isBu ? 'text-indigo-700 border-indigo-200 bg-indigo-50/60' : 'text-blue-700 border-blue-200 bg-blue-50/60';
+$iconColor = $isBu ? 'text-indigo-600' : 'text-blue-600';
+
 // Grouping referensi dinamis dari database setting_referensi
 $refByJenis = [];
 if (!empty($referensi) && is_array($referensi)) {
@@ -97,29 +104,20 @@ $listJaminan = $refByJenis['kre_jaminan'] ?? [];
                                     </select>
                                 </div>
 
-                                <!-- Jenis Debitur -->
+                                                                <!-- Jenis Debitur (Otomatis Perorangan / Badan Usaha) -->
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                        <?php if ($isBu): ?>
+                                            <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                        <?php else: ?>
+                                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                        <?php endif; ?>
                                         Jenis Debitur
                                     </label>
-                                    <select name="jenis_debitur" id="jenis_debitur" onchange="if(typeof ubahJenisDebitur === 'function') ubahJenisDebitur(this.value)" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                                        <?php 
-                                        $jd = $kredit['jenis_debitur'] ?? 'Perorangan'; 
-                                        if (!empty($listEntitas)):
-                                            foreach ($listEntitas as $opt):
-                                                $val = $opt['keterangan_referensi'];
-                                                $selected = ($jd === $val || strcasecmp($jd, $val) === 0 || ($jd === 'Individu' && (strcasecmp($val, 'Perorangan') === 0 || strcasecmp($val, 'sendiri') === 0))) ? 'selected' : '';
-                                        ?>
-                                            <option value="<?= esc($val) ?>" <?= $selected ?>><?= esc($val) ?></option>
-                                        <?php 
-                                            endforeach;
-                                        else: 
-                                        ?>
-                                            <option value="Perorangan" <?= ($jd === 'Perorangan' || $jd === 'Individu') ? 'selected' : '' ?>>Perorangan</option>
-                                            <option value="Badan Usaha" <?= (strpos($jd, 'Badan') !== false || $jd === 'Badan Usaha') ? 'selected' : '' ?>>Badan Usaha</option>
-                                        <?php endif; ?>
-                                    </select>
+                                    <div class="relative">
+                                        <input type="text" value="<?= esc($jenisDebiturDisplay) ?>" readonly class="w-full text-sm font-bold <?= $badgeColor ?> border rounded-xl px-3.5 py-2.5 cursor-not-allowed shadow-2xs">
+                                        <input type="hidden" name="jenis_debitur" id="jenis_debitur" value="<?= esc($jenisDebiturVal) ?>">
+                                    </div>
                                 </div>
 
                                 <!-- Nama Debitur -->
@@ -293,7 +291,7 @@ $listJaminan = $refByJenis['kre_jaminan'] ?? [];
                                             <svg id="iconEksekusiAnalisa" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                             </svg>
-                                            <span id="labelEksekusiAnalisa">Eksekusi Analisa</span>
+                                            <span id="labelEksekusiAnalisa">Simulasi Angsuran</span>
                                         </button>
                                     </div>
                                 </div>
@@ -366,8 +364,8 @@ $listJaminan = $refByJenis['kre_jaminan'] ?? [];
                                             <thead class="bg-[#334177] text-white font-bold uppercase tracking-wider sticky top-0 z-10 text-[11px]">
                                                 <tr>
                                                     <th class="py-3 px-3.5 text-center">Periode</th>
-                                                    <th class="py-3 px-3.5 text-right">Angsuran Bunga</th>
                                                     <th class="py-3 px-3.5 text-right">Angsuran Pokok</th>
+                                                    <th class="py-3 px-3.5 text-right">Angsuran Bunga</th>
                                                     <th class="py-3 px-3.5 text-right">Total Angsuran</th>
                                                     <th class="py-3 px-3.5 text-right">Sisa pinjaman</th>
                                                 </tr>

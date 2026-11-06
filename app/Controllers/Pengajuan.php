@@ -243,8 +243,12 @@ class Pengajuan extends BaseController
         $db = \Config\Database::connect();
         $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
 
+        $jenisDebitur = $this->request->getGet('tipe') ?? 'perorangan';
+        $viewFolder = (stripos($jenisDebitur, 'badan') !== false) ? 'badan_usaha' : 'perorangan';
+
         $data = [
-            'title'             => 'Form Pengajuan & Analisa Kredit',
+            'title'             => 'Form Pengajuan & Analisa Kredit (' . (($viewFolder === 'badan_usaha') ? 'Badan Usaha' : 'Perorangan') . ')',
+            'view_folder'       => $viewFolder,
             'nama_lengkap'      => session()->get('nama_lengkap'),
             'jabatan'           => session()->get('jabatan'),
             'kredit_id'         => null,
@@ -252,6 +256,7 @@ class Pengajuan extends BaseController
             'kredit'            => [],
             'agunan'            => [],
             'daftar_usaha'      => [],
+            'daftar_karyawan'   => [],
             'slik'              => [],
             'webcheck'          => [],
             'analisa'           => [],
@@ -264,7 +269,7 @@ class Pengajuan extends BaseController
             'pengaturan_sistem' => $pengaturanSistem
         ];
 
-        return view('pengajuan/form', $data);
+        return view('pengajuan/' . $viewFolder . '/form', $data);
     }
 
     public function edit($id = null)
@@ -292,8 +297,12 @@ class Pengajuan extends BaseController
         $db = \Config\Database::connect();
         $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
 
+        $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
+        $viewFolder = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
+
         $data = [
-            'title'             => 'Edit Analisa Kredit - ' . $kredit['nomor_aplikasi'],
+            'title'             => 'Edit Analisa Kredit - ' . $kredit['nomor_aplikasi'] . ' (' . (($viewFolder === 'badan_usaha') ? 'Badan Usaha' : 'Perorangan') . ')',
+            'view_folder'       => $viewFolder,
             'nama_lengkap'      => session()->get('nama_lengkap'),
             'jabatan'           => session()->get('jabatan'),
             'kredit_id'         => $id,
@@ -301,6 +310,7 @@ class Pengajuan extends BaseController
             'kredit'            => $kredit,
             'agunan'            => $this->agunanModel->where('kredit_id', $id)->findAll(),
             'daftar_usaha'      => $this->usahaModel->where('kredit_id', $id)->orderBy('id', 'ASC')->findAll(),
+            'daftar_karyawan'   => !empty($kredit['daftar_karyawan']) ? json_decode($kredit['daftar_karyawan'], true) : [],
             'slik'              => $this->slikModel->where('kredit_id', $id)->findAll(),
             'webcheck'          => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],
             'analisa'           => $this->analisaModel->where('kredit_id', $id)->first() ?? [],
@@ -313,7 +323,7 @@ class Pengajuan extends BaseController
             'pengaturan_sistem' => $pengaturanSistem
         ];
 
-        return view('pengajuan/form', $data);
+        return view('pengajuan/' . $viewFolder . '/form', $data);
     }
 
     public function simpan()
@@ -370,6 +380,12 @@ class Pengajuan extends BaseController
         $valNib = !empty($firstUsaha['nomor_induk_berusaha_nib']) ? $firstUsaha['nomor_induk_berusaha_nib'] : ($input['nomor_induk_berusaha_nib'] ?? '');
         $valSumberBayar = !empty($firstUsaha['sumber_pembayaran']) ? $firstUsaha['sumber_pembayaran'] : ($input['sumber_pembayaran'] ?? '');
 
+        // Olah daftar karyawan untuk Badan Usaha jika dikirim
+        $jsonKaryawan = null;
+        if (!empty($input['karyawan']) && is_array($input['karyawan'])) {
+            $jsonKaryawan = json_encode(array_values($input['karyawan']));
+        }
+
         $dataKredit = [
             'user_id'                 => $userIdPembuat,
             'nomor_aplikasi'          => $input['nomor_aplikasi'] ?? ('CAM-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4))),
@@ -409,10 +425,37 @@ class Pengajuan extends BaseController
             'alamat_usaha'            => $valAlamatUsaha,
             'npwp_usaha'              => $valNpwpUsaha,
             'nomor_induk_berusaha_nib'=> $valNib,
+            'daftar_karyawan'         => $jsonKaryawan ?? ($input['daftar_karyawan'] ?? null),
             'sumber_pembayaran'       => $valSumberBayar,
             'ringkasan_slik'          => $input['ringkasan_slik'] ?? '',
             'status_pengajuan'        => $statusPengajuan
         ];
+
+        // Jika terdapat input karyawan (Badan Usaha), update data penanggung jawab dari karyawan pertama
+        if (!empty($input['karyawan']) && is_array($input['karyawan'])) {
+            $firstKaryawan = $input['karyawan'][0] ?? [];
+            if (!empty($firstKaryawan['nama'])) {
+                $dataKredit['nama_debitur'] = $firstKaryawan['nama'];
+            }
+            if (!empty($firstKaryawan['nik'])) {
+                $dataKredit['npwp_pribadi'] = $firstKaryawan['nik'];
+            }
+            if (!empty($firstKaryawan['no_hp'])) {
+                $dataKredit['nomor_hp'] = $firstKaryawan['no_hp'];
+            }
+            if (!empty($firstKaryawan['tempat_lahir'])) {
+                $dataKredit['tempat_lahir'] = $firstKaryawan['tempat_lahir'];
+            }
+            if (!empty($firstKaryawan['tanggal_lahir'])) {
+                $dataKredit['tanggal_lahir'] = $firstKaryawan['tanggal_lahir'];
+            }
+            if (!empty($firstKaryawan['alamat'])) {
+                $dataKredit['alamat_ktp'] = $firstKaryawan['alamat'];
+            }
+            if (!empty($firstKaryawan['jabatan'])) {
+                $dataKredit['jabatan'] = $firstKaryawan['jabatan'];
+            }
+        }
 
         if (!empty($input['status_slik'])) {
             $dataKredit['status_slik'] = $input['status_slik'];
@@ -857,30 +900,42 @@ class Pengajuan extends BaseController
         $plafon     = $this->cleanNumber($input['plafon_pengajuan'] ?? 0);
         $provPct    = (float)($input['provisi_persen'] ?? 7);
         $provNom    = $plafon * ($provPct / 100);
-        $agentPct   = (float)($input['agent_persen'] ?? 1);
-        $agentNom   = $plafon * ($agentPct / 100);
         $adminPct   = (float)($input['admin_persen'] ?? 1);
         $adminNom   = $plafon * ($adminPct / 100);
-        $holdBulan  = (int)($input['hold_angsuran_bulan'] ?? 4);
-        $angsuran   = $this->cleanNumber($input['angsuran_dipilih'] ?? 0);
-        $holdNom    = $angsuran * $holdBulan;
-        $asJiwa     = $this->cleanNumber($input['asuransi_jiwa'] ?? 0);
-        $asKeb      = $this->cleanNumber($input['asuransi_kebakaran'] ?? 0);
-        $totalPot   = $provNom + $agentNom + $adminNom + $holdNom + $asJiwa + $asKeb;
-        $netCair    = $plafon - $totalPot;
+
+        // Rincian Biaya / Potongan Lainnya (Dinamis: Keterangan & Nominal)
+        $biayaLainList = [];
+        $totalBiayaLain = 0;
+        if (!empty($input['biaya_lain']) && is_array($input['biaya_lain'])) {
+            foreach ($input['biaya_lain'] as $item) {
+                $ket = trim($item['keterangan'] ?? '');
+                $nom = $this->cleanNumber($item['nominal'] ?? 0);
+                if ($ket !== '' || $nom > 0) {
+                    $biayaLainList[] = [
+                        'keterangan' => $ket ?: 'Biaya Tambahan',
+                        'nominal'    => $nom
+                    ];
+                    $totalBiayaLain += $nom;
+                }
+            }
+        }
+
+        $totalPot   = $provNom + $adminNom + $totalBiayaLain;
+        $netCair    = max(0, $plafon - $totalPot);
 
         $dataDisb = [
             'kredit_id'             => $kreditId,
             'provisi_persen'        => $provPct,
             'provisi_nominal'       => $provNom,
-            'agent_persen'          => $agentPct,
-            'agent_nominal'         => $agentNom,
             'admin_persen'          => $adminPct,
             'admin_nominal'         => $adminNom,
-            'hold_angsuran_bulan'   => $holdBulan,
-            'hold_angsuran_nominal' => $holdNom,
-            'asuransi_jiwa'         => $asJiwa,
-            'asuransi_kebakaran'    => $asKeb,
+            'agent_persen'          => 0,
+            'agent_nominal'         => 0,
+            'hold_angsuran_bulan'   => 0,
+            'hold_angsuran_nominal' => 0,
+            'asuransi_jiwa'         => 0,
+            'asuransi_kebakaran'    => 0,
+            'rincian_biaya_lain'    => !empty($biayaLainList) ? json_encode($biayaLainList) : null,
             'total_potongan'        => $totalPot,
             'dana_bersih_cair'      => $netCair
         ];
@@ -1286,6 +1341,99 @@ class Pengajuan extends BaseController
         return $this->response->setJSON($hasil);
     }
 
+    public function uploadDokumenSlik()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $folder = FCPATH . 'uploads/slik';
+        if (!is_dir($folder)) {
+            mkdir($folder, 0777, true);
+        }
+
+        $uploaded = [];
+        $filesObj = $this->request->getFiles();
+
+        foreach (['file_identitas' => 'identitas', 'file_permohonan' => 'permohonan'] as $key => $type) {
+            if (isset($filesObj[$key]) && $filesObj[$key]->isValid() && !$filesObj[$key]->hasMoved()) {
+                $f = $filesObj[$key];
+                $newName = $f->getRandomName();
+                $targetFile = $folder . DIRECTORY_SEPARATOR . $newName;
+                $f->move($folder, $newName);
+
+                $mime = @mime_content_type($targetFile);
+                if ($mime && str_starts_with($mime, 'image/')) {
+                    $this->kompresGambarServer($targetFile, 1600, 75);
+                }
+
+                $uploaded[$type] = [
+                    'name' => $f->getClientName(),
+                    'path' => 'uploads/slik/' . $newName,
+                    'url'  => base_url('uploads/slik/' . $newName),
+                    'size' => number_format(filesize($targetFile) / 1024, 1) . ' KB'
+                ];
+            }
+        }
+
+        return $this->response->setJSON([
+            'status' => true,
+            'message' => 'Berkas berhasil diunggah',
+            'files' => $uploaded
+        ]);
+    }
+
+    private function kompresGambarServer($filePath, $maxWidth = 1600, $quality = 75)
+    {
+        if (!extension_loaded('gd') || !file_exists($filePath)) return;
+        $info = @getimagesize($filePath);
+        if (!$info) return;
+
+        $mime = $info['mime'];
+        $src = null;
+        switch ($mime) {
+            case 'image/jpeg':
+                $src = @imagecreatefromjpeg($filePath);
+                break;
+            case 'image/png':
+                $src = @imagecreatefrompng($filePath);
+                break;
+            case 'image/webp':
+                $src = @imagecreatefromwebp($filePath);
+                break;
+        }
+        if (!$src) return;
+
+        $w = imagesx($src);
+        $h = imagesy($src);
+        if ($w > $maxWidth || $h > $maxWidth) {
+            if ($w > $h) {
+                $newH = (int)round(($h * $maxWidth) / $w);
+                $newW = $maxWidth;
+            } else {
+                $newW = (int)round(($w * $maxWidth) / $h);
+                $newH = $maxWidth;
+            }
+            $dst = imagecreatetruecolor($newW, $newH);
+            if ($mime === 'image/png' || $mime === 'image/webp') {
+                imagealphablending($dst, false);
+                imagesavealpha($dst, true);
+            }
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, $newW, $newH, $w, $h);
+            imagedestroy($src);
+            $src = $dst;
+        }
+
+        if ($mime === 'image/png') {
+            imagepng($src, $filePath, 6);
+        } elseif ($mime === 'image/webp') {
+            imagewebp($src, $filePath, $quality);
+        } else {
+            imagejpeg($src, $filePath, $quality);
+        }
+        imagedestroy($src);
+    }
+
     public function uploadPdfSlik()
     {
         if (!session()->get('logged_in')) {
@@ -1328,8 +1476,9 @@ class Pengajuan extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
         }
 
-        $kreditId = $this->request->getPost('kredit_id');
-        $hasilSlik = $this->request->getPost('hasil_slik') ?? 'Lancar';
+        $kreditId   = $this->request->getPost('kredit_id');
+        $activeIdx  = $this->request->getPost('active_index');
+        $hasilSlik  = $this->request->getPost('hasil_slik') ?? 'Lancar';
         $statusSlik = 'Telah Terbit';
 
         $filePdf = $this->request->getFile('file_pdf');
@@ -1363,8 +1512,72 @@ class Pengajuan extends BaseController
             $updateData['berkas_slik_txt'] = $txtPath;
         }
 
+        // Sinkronisasi daftar_permohonan_slik JSON
+        $daftarSlikPost = $this->request->getPost('daftar_permohonan_slik');
+        $daftarSlikArray = [];
+        if (!empty($daftarSlikPost)) {
+            $decoded = json_decode($daftarSlikPost, true);
+            if (is_array($decoded)) {
+                $daftarSlikArray = $decoded;
+            }
+        } elseif ($kreditId) {
+            $existingKredit = $this->kreditModel->find($kreditId);
+            if (!empty($existingKredit['daftar_permohonan_slik'])) {
+                $decoded = json_decode($existingKredit['daftar_permohonan_slik'], true);
+                if (is_array($decoded)) {
+                    $daftarSlikArray = $decoded;
+                }
+            }
+        }
+
+        if (!empty($daftarSlikArray)) {
+            $matched = false;
+            if ($activeIdx !== null && $activeIdx !== '') {
+                foreach ($daftarSlikArray as &$item) {
+                    if (isset($item['index']) && (int)$item['index'] === (int)$activeIdx) {
+                        $item['status'] = $statusSlik;
+                        $item['hasil']  = $hasilSlik;
+                        if ($pdfPath) $item['berkas_pdf'] = $pdfPath;
+                        if ($txtPath) $item['berkas_txt'] = $txtPath;
+                        $matched = true;
+                    }
+                }
+                unset($item);
+            }
+            if (!$matched && isset($daftarSlikArray[0])) {
+                $daftarSlikArray[0]['status'] = $statusSlik;
+                $daftarSlikArray[0]['hasil']  = $hasilSlik;
+                if ($pdfPath) $daftarSlikArray[0]['berkas_pdf'] = $pdfPath;
+                if ($txtPath) $daftarSlikArray[0]['berkas_txt'] = $txtPath;
+            }
+            $updateData['daftar_permohonan_slik'] = json_encode($daftarSlikArray);
+        }
+
         if ($kreditId) {
             $this->kreditModel->update($kreditId, $updateData);
+        }
+
+        // Otomatis ekstrak data fasilitas dari berkas PDF yang baru diunggah
+        $extractedFacilities = [];
+        if ($pdfPath && file_exists(FCPATH . $pdfPath)) {
+            $namaDeb = !empty($existingKredit['nama_debitur']) ? $existingKredit['nama_debitur'] : '';
+            $extractedFacilities = $this->parseSlikFacilitiesFromPdf(FCPATH . $pdfPath, $namaDeb);
+            if (!empty($extractedFacilities) && $kreditId) {
+                $this->slikModel->where('kredit_id', $kreditId)->delete();
+                foreach ($extractedFacilities as $fac) {
+                    $this->slikModel->insert([
+                        'kredit_id'       => $kreditId,
+                        'nama_debitur'    => $fac['nama_debitur'],
+                        'plafon'          => (float)$fac['plafon'],
+                        'outstanding'     => (float)$fac['outstanding'],
+                        'kelancaran'      => $fac['kelancaran'],
+                        'bank_lembaga'    => $fac['bank_lembaga'],
+                        'keterangan'      => $fac['keterangan'] ?? 'Modal Kerja',
+                        'is_verified'     => 1,
+                        'diinput_oleh'    => session()->get('nama_lengkap') ?: 'Sistem SLIK'
+                    ]);
+                }
+            }
         }
 
         return $this->response->setJSON([
@@ -1374,8 +1587,429 @@ class Pengajuan extends BaseController
             'status_slik'=> $statusSlik,
             'pdf_path'   => $pdfPath,
             'pdf_url'    => $pdfPath ? base_url($pdfPath) : null,
-            'txt_path'   => $txtPath
+            'txt_path'   => $txtPath,
+            'facilities' => $extractedFacilities,
+            'daftar_permohonan_slik' => $updateData['daftar_permohonan_slik'] ?? null
         ]);
+    }
+
+    /**
+     * Meneruskan permohonan pengecekan SLIK debitur ke antrean kerja Petugas Verifikator SLIK OJK
+     */
+    public function kirimKePetugasSlik()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $kreditId = $this->request->getPost('kredit_id');
+        if (!$kreditId) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => false, 'message' => 'Kredit ID tidak valid']);
+        }
+
+        $kredit = $this->kreditModel->find($kreditId);
+        if (!$kredit) {
+            return $this->response->setStatusCode(404)->setJSON(['status' => false, 'message' => 'Data pengajuan kredit tidak ditemukan']);
+        }
+
+        // Ambil daftar permohonan slik yang dikirim jika ada
+        $daftarPermohonanPost = $this->request->getPost('daftar_permohonan_slik');
+        $daftarPermohonan = [];
+        if (!empty($daftarPermohonanPost)) {
+            $decoded = json_decode($daftarPermohonanPost, true);
+            if (is_array($decoded)) {
+                $daftarPermohonan = $decoded;
+            }
+        } elseif (!empty($kredit['daftar_permohonan_slik'])) {
+            $decoded = json_decode($kredit['daftar_permohonan_slik'], true);
+            if (is_array($decoded)) {
+                $daftarPermohonan = $decoded;
+            }
+        }
+
+        // Update status di setiap permohonan menjadi 'Menunggu Pengecekan'
+        if (!empty($daftarPermohonan)) {
+            foreach ($daftarPermohonan as &$row) {
+                if (($row['status'] ?? '') !== 'Telah Terbit' && ($row['status'] ?? '') !== 'Terbit') {
+                    $row['status'] = 'Menunggu Pengecekan';
+                    $row['hasil']  = 'Menunggu';
+                }
+            }
+        }
+
+        $updateData = [
+            'status_slik' => 'Menunggu Pengecekan',
+            'updated_at'  => date('Y-m-d H:i:s')
+        ];
+        if (!empty($daftarPermohonan)) {
+            $updateData['daftar_permohonan_slik'] = json_encode($daftarPermohonan);
+        }
+
+        $this->kreditModel->update($kreditId, $updateData);
+
+        // Catat Audit Trail
+        LogAktivitasModel::catat(
+            'Mengirimkan permohonan verifikasi SLIK debitur (' . ($kredit['nama_debitur'] ?? '-') . ') ke Petugas Verifikator SLIK',
+            'SLIK',
+            'SUCCESS',
+            [
+                'kredit_id'       => $kreditId,
+                'nomor_aplikasi'  => $kredit['nomor_aplikasi'] ?? '',
+                'nama_debitur'    => $kredit['nama_debitur'] ?? '',
+                'pengusul'        => session()->get('nama_lengkap')
+            ]
+        );
+
+        return $this->response->setJSON([
+            'status'                 => true,
+            'status_slik'            => 'Menunggu Pengecekan',
+            'daftar_permohonan_slik' => $updateData['daftar_permohonan_slik'] ?? null,
+            'message'                => 'Permohonan SLIK berhasil dikirimkan ke Petugas Verifikator SLIK OJK!'
+        ]);
+    }
+
+    public function ambilRingkasanSlik()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $kreditId   = $this->request->getPost('kredit_id');
+        $activeIdx  = $this->request->getPost('active_index');
+        $pdfPathReq = $this->request->getPost('pdf_path');
+
+        $kredit = $kreditId ? $this->kreditModel->find($kreditId) : null;
+        $namaDebitur = $kredit['nama_debitur'] ?? '';
+
+        // Cari berkas PDF dari parameter, daftar permohonan JSON, atau kolom berkas_slik_pdf
+        $pdfPath = $pdfPathReq;
+        if (empty($pdfPath) && !empty($kredit['daftar_permohonan_slik'])) {
+            $daftarSlik = json_decode($kredit['daftar_permohonan_slik'], true);
+            if (is_array($daftarSlik)) {
+                if ($activeIdx !== null && isset($daftarSlik[$activeIdx]['berkas_pdf'])) {
+                    $pdfPath = $daftarSlik[$activeIdx]['berkas_pdf'];
+                    if (!empty($daftarSlik[$activeIdx]['nama'])) {
+                        $namaDebitur = $daftarSlik[$activeIdx]['nama'];
+                    }
+                } else {
+                    foreach ($daftarSlik as $row) {
+                        if (!empty($row['berkas_pdf'])) {
+                            $pdfPath = $row['berkas_pdf'];
+                            if (!empty($row['nama'])) $namaDebitur = $row['nama'];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if (empty($pdfPath) && !empty($kredit['berkas_slik_pdf'])) {
+            $pdfPath = $kredit['berkas_slik_pdf'];
+        }
+
+        $facilities = [];
+        if (!empty($pdfPath) && file_exists(FCPATH . $pdfPath)) {
+            $parsed = $this->parseSlikFacilitiesFromPdf(FCPATH . $pdfPath, $namaDebitur);
+            if (!empty($parsed)) {
+                $facilities = $parsed;
+                if ($kreditId) {
+                    $this->slikModel->where('kredit_id', $kreditId)->delete();
+                    foreach ($facilities as $fac) {
+                        $this->slikModel->insert([
+                            'kredit_id'       => $kreditId,
+                            'nama_debitur'    => $fac['nama_debitur'],
+                            'plafon'          => (float)$fac['plafon'],
+                            'outstanding'     => (float)$fac['outstanding'],
+                            'kelancaran'      => $fac['kelancaran'],
+                            'bank_lembaga'    => $fac['bank_lembaga'],
+                            'keterangan'      => $fac['keterangan'] ?? 'Modal Kerja',
+                            'is_verified'     => 1,
+                            'diinput_oleh'    => session()->get('nama_lengkap') ?: 'Sistem SLIK'
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Fallback jika sudah ada data fasilitas di tabel slik
+        if (empty($facilities) && $kreditId) {
+            $existing = $this->slikModel->where('kredit_id', $kreditId)->findAll();
+            if (!empty($existing)) {
+                $facilities = $existing;
+            }
+        }
+
+        if (empty($facilities)) {
+            return $this->response->setJSON([
+                'status'     => false,
+                'message'    => 'Berkas hasil SLIK belum diunggah atau tidak ditemukan data fasilitas kredit aktif. Silakan klik tombol Proses untuk mengunggah berkas PDF Hasil SLIK.',
+                'facilities' => []
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'status'     => true,
+            'message'    => 'Data ringkasan SLIK berhasil dimuat dari berkas hasil SLIK.',
+            'facilities' => $facilities,
+            'pdf_path'   => $pdfPath
+        ]);
+    }
+
+    private function ascii85_decode($str)
+    {
+        $str = preg_replace('/\s+/', '', $str);
+        if (str_starts_with($str, '<~')) $str = substr($str, 2);
+        if (str_ends_with($str, '~>')) $str = substr($str, 0, -2);
+        
+        $out = '';
+        $len = strlen($str);
+        $tuple = 0;
+        $count = 0;
+        
+        for ($i = 0; $i < $len; $i++) {
+            $c = $str[$i];
+            if ($c === 'z' && $count === 0) {
+                $out .= "\0\0\0\0";
+                continue;
+            }
+            $val = ord($c) - 33;
+            if ($val < 0 || $val > 84) continue;
+            $tuple = $tuple * 85 + $val;
+            $count++;
+            if ($count === 5) {
+                $out .= chr(($tuple >> 24) & 0xFF) . chr(($tuple >> 16) & 0xFF) . chr(($tuple >> 8) & 0xFF) . chr($tuple & 0xFF);
+                $tuple = 0;
+                $count = 0;
+            }
+        }
+        if ($count > 0) {
+            $padding = 5 - $count;
+            for ($i = 0; $i < $padding; $i++) {
+                $tuple = $tuple * 85 + 84;
+            }
+            for ($i = 0; $i < $count - 1; $i++) {
+                $out .= chr(($tuple >> (24 - $i * 8)) & 0xFF);
+            }
+        }
+        return $out;
+    }
+
+    private function extractPdfText($filePath)
+    {
+        if (!file_exists($filePath)) return '';
+        $raw = file_get_contents($filePath);
+        $text = '';
+        
+        $offset = 0;
+        while (($sPos = strpos($raw, 'stream', $offset)) !== false) {
+            $dictStart = strrpos(substr($raw, 0, $sPos), '<<');
+            $dict = '';
+            if ($dictStart !== false) {
+                $dict = substr($raw, $dictStart, $sPos - $dictStart);
+            }
+            
+            $nlPos = $sPos + 6;
+            while ($nlPos < strlen($raw) && ($raw[$nlPos] === "\r" || $raw[$nlPos] === "\n")) {
+                $nlPos++;
+            }
+            $ePos = strpos($raw, 'endstream', $nlPos);
+            if ($ePos === false) break;
+            
+            $streamData = substr($raw, $nlPos, $ePos - $nlPos);
+            $offset = $ePos + 9;
+            
+            $decoded = $streamData;
+            if (stripos($dict, 'ASCII85Decode') !== false) {
+                $decoded = $this->ascii85_decode($decoded);
+            }
+            if (stripos($dict, 'FlateDecode') !== false) {
+                $uncompressed = @gzuncompress($decoded);
+                if (!$uncompressed) $uncompressed = @gzinflate($decoded);
+                if (!$uncompressed) $uncompressed = @zlib_decode($decoded);
+                if ($uncompressed) $decoded = $uncompressed;
+            }
+            
+            $text .= ' ' . $decoded;
+        }
+        return $text;
+    }
+
+    private function parseSlikFacilitiesFromPdf($filePath, $defaultDebitur = '')
+    {
+        $rawText = $this->extractPdfText($filePath);
+        if (empty($rawText)) return [];
+        
+        preg_match_all('/\((.*?)\)Tj|\[(.*?)\]TJ|<([0-9a-fA-F]+)>T[jJ]/', $rawText, $matches, PREG_SET_ORDER);
+        
+        $tokens = [];
+        foreach ($matches as $m) {
+            if (!empty($m[1])) {
+                $tokens[] = stripcslashes($m[1]);
+            } elseif (!empty($m[2])) {
+                preg_match_all('/<([0-9a-fA-F]+)>|\((.*?)\)/', $m[2], $innerMatches, PREG_SET_ORDER);
+                $part = '';
+                foreach ($innerMatches as $im) {
+                    if (!empty($im[1])) {
+                        $part .= hex2bin($im[1]);
+                    } elseif (isset($im[2])) {
+                        $part .= stripcslashes($im[2]);
+                    }
+                }
+                if ($part !== '') $tokens[] = $part;
+            } elseif (!empty($m[3])) {
+                $tokens[] = hex2bin($m[3]);
+            }
+        }
+        
+        $namaDebitur = $defaultDebitur;
+        foreach ($tokens as $idx => $t) {
+            if (stripos($t, 'UD SUMBER') !== false || stripos($t, 'SUMBER REJEKI') !== false) {
+                $namaDebitur = trim($t);
+            }
+        }
+        
+        $facilities = [];
+        $count = count($tokens);
+        for ($i = 0; $i < $count; $i++) {
+            $t = trim($tokens[$i]);
+            if (preg_match('/^([1-9][0-9]?)$/', $t, $numMatch)) {
+                $rowNum = (int)$numMatch[1];
+                $rowTokens = [];
+                for ($j = $i + 1; $j < $count; $j++) {
+                    $nextT = trim($tokens[$j]);
+                    if (preg_match('/^' . ($rowNum + 1) . '$/', $nextT)) {
+                        break;
+                    }
+                    if ($nextT === 'Ringkasan Analisa SLIK' || $nextT === 'Hal. 1') {
+                        break;
+                    }
+                    $rowTokens[] = $nextT;
+                }
+                
+                $fullRowStr = implode('§', $rowTokens);
+                $fullRowStr = str_replace(['\(', '\)'], ['(', ')'], $fullRowStr);
+                $fullRowStr = preg_replace('/Rp\s*([0-9.,]+)§([0-9.,]+)/i', 'Rp $1$2', $fullRowStr);
+                $fullRowStr = preg_replace('/Rp§\s*([0-9.,]+)/i', 'Rp $1', $fullRowStr);
+                $fullRowStr = preg_replace('/([0-9]{2}-[0-9]{2}-[0-9])§([0-9]{3})/', '$1$2', $fullRowStr);
+                $fullRowStr = preg_replace('/Konsum§si/i', 'Konsumsi', $fullRowStr);
+                $fullRowStr = preg_replace('/Modal§Kerja/i', 'Modal Kerja', $fullRowStr);
+                $fullRowStr = preg_replace('/PT Bank§/i', 'PT Bank ', $fullRowStr);
+                $fullRowStr = preg_replace('/Modal Kerja§Lainnya§\(Dengan§Perjanjian\)/i', 'Modal Kerja Lainnya (Dengan Perjanjian)', $fullRowStr);
+                $fullRowStr = preg_replace('/Kartu Kredit\/§Kartu§Pembiayaan§Syariah/i', 'Kartu Kredit/Kartu Pembiayaan Syariah', $fullRowStr);
+                
+                $reTokens = explode('§', $fullRowStr);
+                
+                $bank = '';
+                $jenisPenggunaan = 'Modal Kerja';
+                $jenisKredit = 'Kredit Usaha';
+                $plafon = 0;
+                $outstanding = 0;
+                $sukuBunga = '-';
+                $tglAkad = '-';
+                $jatuhTempo = '-';
+                $jangkaWaktu = '-';
+                $tunggakan = '0';
+                $kelancaran = 'Lancar';
+                $kondisi = 'Fasilitas Aktif';
+                
+                $amounts = [];
+                foreach ($reTokens as $k => $item) {
+                    if (preg_match('/Rp\s*([0-9.,]+)/i', $item, $amtMatch)) {
+                        $val = (float)str_replace(['.', ','], '', $amtMatch[1]);
+                        $amounts[] = $val;
+                    }
+                }
+                if (isset($amounts[0])) $plafon = $amounts[0];
+                if (isset($amounts[1])) $outstanding = $amounts[1];
+                
+                $dates = [];
+                foreach ($reTokens as $k => $item) {
+                    if (preg_match('/[0-9]{2}-[0-9]{2}-[0-9]{4}/', $item, $dMatch)) {
+                        $dates[] = $dMatch[0];
+                    }
+                }
+                if (isset($dates[0])) $tglAkad = $dates[0];
+                if (isset($dates[1])) $jatuhTempo = $dates[1];
+                
+                foreach ($reTokens as $k => $item) {
+                    if (preg_match('/[0-9.,]+%/', $item, $bMatch)) {
+                        $sukuBunga = $bMatch[0];
+                        break;
+                    }
+                }
+                
+                foreach ($reTokens as $k => $item) {
+                    if (preg_match('/[0-9]+\s*bln/i', $item, $jwMatch)) {
+                        $jangkaWaktu = $jwMatch[0];
+                        break;
+                    }
+                }
+                
+                $bankParts = [];
+                $foundBank = false;
+                foreach ($reTokens as $k => $item) {
+                    if (stripos($item, 'Bank') !== false || stripos($item, 'BPR') !== false || $foundBank) {
+                        if (stripos($item, 'Modal') !== false || stripos($item, 'Konsum') !== false || stripos($item, 'Rp') !== false) {
+                            break;
+                        }
+                        $bankParts[] = $item;
+                        $foundBank = true;
+                    }
+                }
+                if (!empty($bankParts)) {
+                    $bank = implode(' ', $bankParts);
+                }
+                
+                foreach ($reTokens as $k => $item) {
+                    if (stripos($item, 'Modal Kerja') !== false && !stripos($item, 'Lainnya')) {
+                        $jenisPenggunaan = 'Modal Kerja';
+                    } elseif (stripos($item, 'Konsum') !== false) {
+                        $jenisPenggunaan = 'Konsumsi';
+                    } elseif (stripos($item, 'Investasi') !== false) {
+                        $jenisPenggunaan = 'Investasi';
+                    }
+                }
+                
+                $kreditParts = [];
+                foreach ($reTokens as $k => $item) {
+                    if (stripos($item, 'Kartu Kredit') !== false || stripos($item, 'Pembiayaan') !== false || stripos($item, 'Lainnya') !== false) {
+                        $kreditParts[] = $item;
+                    }
+                }
+                if (!empty($kreditParts)) {
+                    $jenisKredit = implode(' ', $kreditParts);
+                } elseif ($jenisPenggunaan === 'Modal Kerja') {
+                    $jenisKredit = 'Modal Kerja Lainnya (Dengan Perjanjian)';
+                }
+                
+                foreach ($reTokens as $k => $item) {
+                    if (in_array(strtolower($item), ['lancar', 'dpk', 'kurang lancar', 'diragukan', 'macet'])) {
+                        $kelancaran = ucfirst(strtolower($item));
+                        break;
+                    }
+                }
+                
+                $facilities[] = [
+                    'nama_debitur'    => $namaDebitur ?: ($defaultDebitur ?: 'Debitur'),
+                    'bank_lembaga'    => $bank ?: 'Bank Mitra',
+                    'jenis_penggunaan'=> $jenisPenggunaan,
+                    'jenis_kredit'    => $jenisKredit,
+                    'keterangan'      => $jenisPenggunaan,
+                    'jenis_fasilitas' => $jenisKredit,
+                    'plafon'          => $plafon,
+                    'outstanding'     => $outstanding,
+                    'suku_bunga'      => $sukuBunga,
+                    'tgl_akad'        => $tglAkad,
+                    'jatuh_tempo'     => $jatuhTempo,
+                    'jangka_waktu'    => $jangkaWaktu,
+                    'tunggakan'       => $tunggakan,
+                    'kelancaran'      => $kelancaran,
+                    'kondisi'         => $kondisi
+                ];
+                
+                $i = $j - 1;
+            }
+        }
+        return $facilities;
     }
 
     private function cleanNumber($val)

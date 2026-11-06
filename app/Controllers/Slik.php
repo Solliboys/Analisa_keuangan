@@ -303,28 +303,31 @@ class Slik extends BaseController
     }
 
     /**
-     * Toggle Akses Input SLIK oleh Pengusul (Aktif / Nonaktif)
+     * Toggle Akses Input SLIK oleh Pengusul / Petugas SLIK (Aktif / Nonaktif)
      */
     public function toggleAksesPengusul()
     {
         if ($redirect = $this->cekAuthSlik()) return $redirect;
 
-        $pengaturan = $this->db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray();
-        $currentVal = (int)($pengaturan['ijin_pengusul_isi_slik'] ?? 1);
-        $newVal     = $currentVal === 1 ? 0 : 1;
+        $pengaturan = $this->db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+        $currentAktif = (int)($pengaturan['petugas_slik_aktif'] ?? (($pengaturan['ijin_pengusul_isi_slik'] ?? 1) == 0 ? 1 : 0));
+        $newAktif     = ($currentAktif === 1) ? 0 : 1;
+        $ijinPengusul = ($newAktif === 1) ? 0 : 1;
 
         $this->db->table('pengaturan_sistem')->where('id', 1)->update([
-            'ijin_pengusul_isi_slik' => $newVal,
-            'petugas_slik_aktif'     => ($newVal === 1 ? 0 : 1),
+            'petugas_slik_aktif'     => $newAktif,
+            'ijin_pengusul_isi_slik' => $ijinPengusul,
             'updated_at'             => date('Y-m-d H:i:s')
         ]);
 
-        $statusText = $newVal === 1 ? 'DIAKTIFKAN (Pengusul dapat mengisi draf SLIK)' : 'DINONAKTIFKAN (Khusus Petugas SLIK)';
+        $statusText = ($newAktif === 1) ? 'DIAKTIFKAN (Mode Standar / SOP Ketat)' : 'DINONAKTIFKAN (Mode Fleksibel / Single AO)';
 
         return $this->response->setJSON([
-            'status'    => true,
-            'is_active' => $newVal === 1,
-            'message'   => 'Akses pengisian SLIK oleh Pengusul berhasil ' . $statusText
+            'status'             => true,
+            'is_active'          => ($newAktif === 1),
+            'petugas_slik_aktif' => $newAktif,
+            'ijin_pengusul_isi_slik' => $ijinPengusul,
+            'message'            => 'Status Petugas SLIK berhasil ' . $statusText
         ]);
     }
 

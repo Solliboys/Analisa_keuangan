@@ -25,6 +25,24 @@ $berkasSlikPdfVal = $kredit['berkas_slik_pdf'] ?? '';
 $berkasSlikTxtVal = $kredit['berkas_slik_txt'] ?? '';
 $pengusulVal = !empty($kredit['slik_verified_by']) ? $kredit['slik_verified_by'] : (session()->get('nama_lengkap') ?: 'Staff Pengusul Kredit');
 
+// Daftar Permohonan SLIK Tersimpan
+$daftarPermohonanSlik = [];
+$daftarPermohonanSlikDocs = [];
+if (!empty($kredit['daftar_permohonan_slik'])) {
+    $decodedSlik = json_decode($kredit['daftar_permohonan_slik'], true);
+    if (is_array($decodedSlik)) {
+        $daftarPermohonanSlik = $decodedSlik;
+        foreach ($daftarPermohonanSlik as $rowSlik) {
+            $rIdx = $rowSlik['index'] ?? 0;
+            $daftarPermohonanSlikDocs[$rIdx] = [
+                'nama' => $rowSlik['nama'] ?? '',
+                'identitas' => $rowSlik['file_identitas'] ?? null,
+                'permohonan' => $rowSlik['file_permohonan'] ?? null
+            ];
+        }
+    }
+}
+
 // Perhitungan Ringkasan SLIK
 $totalPlafonSlik = 0;
 $totalBakiDebetSlik = 0;
@@ -63,22 +81,6 @@ if (!empty($slik) && is_array($slik)) {
     }
 }
 
-// Data permohonan awal
-$daftarPermohonan = [];
-$daftarPermohonan[] = [
-    'index'          => 0,
-    'status'         => $statusSlikVal,
-    'no_reff'        => $noReffSlik,
-    'tgl_permohonan' => $tglPermohonan,
-    'no_id'          => $noIdVal ?: '-',
-    'nama'           => $namaDebiturVal ?: '-',
-    'hasil'          => $hasilSlikVal,
-    'ringkasan'      => $ringkasanSlikVal,
-    'berkas_pdf'     => $berkasSlikPdfVal,
-    'berkas_txt'     => $berkasSlikTxtVal,
-    'pengusul'       => $pengusulVal,
-    'is_utama'       => true
-];
 
 $isSuperadmin = (strtolower(session()->get('jabatan') ?? '') === 'superadmin');
 $isPetugasSlikRole = (strpos(strtolower(session()->get('jabatan') ?? ''), 'slik') !== false);
@@ -87,6 +89,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
 ?>
 <div id="tab-6" class="tab-panel bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
     <!-- Hidden sync inputs for form submission -->
+    <input type="hidden" name="daftar_permohonan_slik" id="hidden_daftar_permohonan_slik" value="<?= esc(!empty($kredit['daftar_permohonan_slik']) ? $kredit['daftar_permohonan_slik'] : '[]') ?>">
     <input type="hidden" name="status_slik" id="hidden_status_slik" value="<?= esc($statusSlikVal) ?>">
     <input type="hidden" name="hasil_slik" id="hidden_hasil_slik" value="<?= esc($hasilSlikVal) ?>">
     <input type="hidden" name="ringkasan_slik" id="ringkasan_slik" value="<?= esc($ringkasanSlikVal) ?>">
@@ -98,7 +101,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
     <div class="flex items-center justify-between pb-5 border-b border-slate-100 mb-6">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
-                6
+                <?= (!empty($view_folder) && $view_folder === 'badan_usaha') ? '5' : '6' ?>
             </div>
             <div>
                 <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">INFORMASI DEBITUR (SLIK OJK / IDEB)</h3>
@@ -106,192 +109,217 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <button type="button" onclick="exportTxtPermohonanSlik()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer" title="Export Berkas TXT Permohonan SLIK OJK (Otomatis dari Nama & NIK Debitur)">
-                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                <span>Export TXT</span>
+            <?php if (!$canEditSlik): ?>
+                <button type="button" 
+                        id="btnKirimKePetugasSlikHeader" 
+                        onclick="konfirmasiKirimPengajuanKePetugasSlik()" 
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 <?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'bg-indigo-700 hover:bg-indigo-800' : 'bg-blue-600 hover:bg-blue-700' ?> text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer" 
+                        title="Kirim Berkas Permohonan SLIK ke Petugas SLIK Terpusat">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    <span id="textBtnKirimSlikHeader"><?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'Antrean Petugas SLIK' : 'Kirim Pengajuan ke Petugas SLIK' ?></span>
+                </button>
+            <?php endif; ?>
+            <button type="button" onclick="bukaModalTambahPermohonanSlik()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer" title="Tambah permohonan SLIK untuk pasangan, penjamin, atau pengurus">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                <span>Tambah Pengajuan SLIK</span>
             </button>
+            <?php if ($canEditSlik): ?>
+                <button type="button" onclick="exportTxtPermohonanSlik()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer" title="Export Berkas TXT Permohonan SLIK OJK (Otomatis dari data terpilih)">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span>Export TXT</span>
+                </button>
+            <?php endif; ?>
         </div>
     </div>
 
-    <!-- Alert Khusus Bila Fitur Petugas SLIK Terpisah Aktif -->
+    <!-- Alert Status Alur Petugas SLIK vs Pengusul -->
     <?php if (!$canEditSlik): ?>
-        <div class="mb-5 p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-amber-950 flex items-start gap-3 shadow-2xs">
-            <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 text-sm shadow-xs">
-                🔒
-            </div>
-            <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                    <h4 class="font-bold text-xs uppercase tracking-wide text-amber-900">Fitur Petugas SLIK Terpisah Sedang Aktif</h4>
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900">Verifikator Resmi</span>
+        <div class="mb-5 p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs" id="bannerAlurPetugasSlik">
+            <div class="flex items-start gap-3 min-w-0">
+                <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 text-sm shadow-xs">
+                    🔒
                 </div>
-                <p class="text-[11px] text-amber-800 mt-1 leading-relaxed">
-                    Pemeriksaan riwayat fasilitas kredit debitur ditangani langsung oleh <strong>Petugas SLIK OJK</strong> terpusat. Sebagai pengusul, Anda dapat mengunduh berkas TXT permohonan di atas, dan <strong>dapat langsung melanjutkan ke Tahap 7 tanpa diblokir oleh verifikasi SLIK</strong>.
-                </p>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h4 class="font-bold text-xs uppercase tracking-wide text-amber-900">Alur Verifikasi: Petugas SLIK OJK Terpusat</h4>
+                        <span id="badgeAlertSlik" class="text-[10px] font-bold px-2 py-0.5 rounded-full <?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'bg-blue-100 text-blue-800' : 'bg-amber-200/80 text-amber-900' ?>">
+                            <?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'Antrean Petugas SLIK' : 'Verifikator Resmi (SOP Ketat)' ?>
+                        </span>
+                    </div>
+                    <p id="deskripsiAlertSlik" class="text-[11px] text-amber-800 mt-1 leading-relaxed">
+                        <?= ($statusSlikVal === 'Menunggu Pengecekan')
+                            ? 'Permohonan SLIK debitur telah berhasil dikirimkan ke <strong>Petugas Verifikator SLIK OJK</strong>. Anda dapat langsung melanjutkan pengisian formulir ke tahap berikutnya tanpa terhambat.'
+                            : 'Pemeriksaan riwayat fasilitas kredit debitur ditangani oleh <strong>Petugas SLIK OJK</strong>. Silakan periksa data permohonan debitur di bawah, lalu klik <strong>Kirim Pengajuan ke Petugas SLIK</strong> untuk memproses penarikan iDeb resmi.'
+                        ?>
+                    </p>
+                </div>
+            </div>
+            <div class="shrink-0 flex items-center gap-2 pl-11 sm:pl-0">
+                <button type="button" onclick="konfirmasiKirimPengajuanKePetugasSlik()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5 whitespace-nowrap">
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    <span id="btnAksiBannerSlik"><?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'Kirim Ulang ke Petugas' : 'Kirim ke Petugas SLIK' ?></span>
+                </button>
             </div>
         </div>
     <?php else: ?>
-        <div class="mb-5 p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-950 flex items-center gap-2.5 shadow-2xs">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <p class="text-xs text-emerald-900 font-semibold">
-                <strong>Mode Pengusul Langsung:</strong> Anda memiliki wewenang untuk mengisi hasil SLIK iDeb dan mengunggah dokumen PDF hasil pemeriksaan di tombol <strong>Proses</strong> pada tabel di bawah.
-            </p>
+        <div class="mb-5 p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 text-emerald-950 flex items-start gap-3 shadow-2xs">
+            <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0 text-sm shadow-xs">
+                ⚡
+            </div>
+            <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                    <h4 class="font-bold text-xs uppercase tracking-wide text-emerald-900">Mode Fleksibel Pengusul (Single AO)</h4>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900">Petugas SLIK Nonaktif</span>
+                </div>
+                <p class="text-[11px] text-emerald-800 mt-1 leading-relaxed">
+                    Fitur Petugas SLIK saat ini dinonaktifkan. Pengusul dapat <strong>langsung menginput hasil kolektibilitas, mengunggah berkas PDF/TXT hasil penarikan SLIK</strong>, dan mengelola rincian fasilitas pinjaman secara mandiri melalui tombol <strong>Proses</strong> pada tabel di bawah.
+                </p>
+            </div>
         </div>
     <?php endif; ?>
 
-    <!-- Tabel SLIK iDeb (Tanpa Kolom Pilih) -->
-    <div class="overflow-x-auto border-t border-b border-slate-100 my-2">
-        <table class="w-full text-left border-collapse" id="tabelSlikIdeb">
+    <!-- Tabel SLIK iDeb (Full Width - Tanpa Geser) -->
+    <div class="w-full overflow-x-auto border-t border-b border-slate-100 my-2">
+        <table class="w-full text-left border-collapse text-[11px] table-auto" id="tabelSlikIdeb">
             <thead>
-                <tr class="text-[11px] font-bold text-slate-400 tracking-wider uppercase border-b border-slate-100">
-                    <th class="py-3 px-3 whitespace-nowrap">STATUS</th>
-                    <th class="py-3 px-3 whitespace-nowrap">NO REFF SLIK</th>
-                    <th class="py-3 px-3 whitespace-nowrap">TGL PERMOHONAN</th>
-                    <th class="py-3 px-3 whitespace-nowrap">NO ID</th>
-                    <th class="py-3 px-3 whitespace-nowrap">NAMA</th>
-                    <th class="py-3 px-3 whitespace-nowrap text-center">HASIL</th>
-                    <th class="py-3 px-3 whitespace-nowrap text-center">RINGKASAN SLIK</th>
-                    <th class="py-3 px-3 whitespace-nowrap text-center">HASIL SLIK PDF</th>
-                    <th class="py-3 px-3 whitespace-nowrap">PENGUSUL</th>
-                    <th class="py-3 px-3 whitespace-nowrap text-center">AKSI</th>
+                <tr class="text-[10px] font-bold text-slate-400 tracking-wider uppercase border-b border-slate-100 bg-slate-50/50">
+                    <th class="py-2.5 px-2 text-center whitespace-nowrap w-8">
+                        <div class="flex items-center justify-center">
+                            <input type="checkbox" id="checkAllSlik" onchange="toggleSelectAllSlik(this)" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer" checked title="Pilih Semua">
+                        </div>
+                    </th>
+                    <th class="py-2.5 px-2 whitespace-nowrap">STATUS</th>
+                    <th class="py-2.5 px-2 whitespace-nowrap">NO REFF SLIK</th>
+                    <th class="py-2.5 px-2 whitespace-nowrap">TANGGAL</th>
+                    <th class="py-2.5 px-2 whitespace-nowrap">NO ID</th>
+                    <th class="py-2.5 px-2 whitespace-nowrap">NAMA</th>
+                    <th class="py-2.5 px-2 whitespace-nowrap text-center">HASIL</th>
+                    <th class="py-2.5 px-2 whitespace-nowrap text-center">RINGKASAN</th>
+                    <th class="py-2.5 px-2 whitespace-nowrap text-center">HASIL PDF</th>
+                    <th class="py-2.5 px-2 whitespace-nowrap">PENGUSUL</th>
+                    <th class="py-2.5 px-2 whitespace-nowrap text-center">AKSI</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100 text-xs" id="bodySlikIdeb">
-                <?php foreach ($daftarPermohonan as $item): ?>
-                    <tr class="hover:bg-slate-50/70 transition slik-row-item" data-index="<?= $item['index'] ?>" id="slik-row-<?= $item['index'] ?>">
-                        <!-- STATUS -->
-                        <td class="py-3.5 px-3 whitespace-nowrap" id="status-badge-cell-<?= $item['index'] ?>">
-                            <?php if ($item['status'] === 'Telah Terbit' || $item['status'] === 'Terbit'): ?>
-                                <span class="inline-block bg-[#00a859] text-white font-bold text-[11px] px-3 py-1 rounded shadow-2xs">
-                                    Telah Terbit
-                                </span>
-                            <?php elseif ($item['status'] === 'Menunggu Pengecekan'): ?>
-                                <span class="inline-block bg-blue-600 text-white font-bold text-[11px] px-3 py-1 rounded shadow-2xs">
-                                    Menunggu
-                                </span>
-                            <?php else: ?>
-                                <span class="inline-block bg-[#f59e0b] text-white font-bold text-[11px] px-3 py-1 rounded shadow-2xs">
-                                    Belum Terbit
-                                </span>
-                            <?php endif; ?>
+            <tbody class="divide-y divide-slate-100 text-[11px]" id="bodySlikIdeb">
+                <?php if (empty($daftarPermohonanSlik)): ?>
+                    <tr id="emptyStateSlik">
+                        <td colspan="11" class="py-10 text-center text-xs text-slate-400 font-medium">
+                            Belum ada permohonan SLIK. Klik <strong>Tambah Pengajuan SLIK</strong> untuk menambah.
                         </td>
-
-                        <!-- NO REFF SLIK -->
-                        <td class="py-3.5 px-3 whitespace-nowrap text-xs font-semibold text-slate-800" id="cell-reff-<?= $item['index'] ?>">
-                            <?= esc($item['no_reff']) ?>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($daftarPermohonanSlik as $row): 
+                        $idx = $row['index'] ?? 0;
+                        $rowNama = $row['nama'] ?? '';
+                        $rowNoId = $row['no_id'] ?? '';
+                        $rowKeterkaitan = $row['keterkaitan'] ?? 'Pemohon';
+                        $rowNoReff = $row['no_reff'] ?? '';
+                        $rowTgl = $row['tanggal'] ?? '';
+                        $rowStatus = $row['status'] ?? 'Belum Terbit';
+                        $rowHasil = $row['hasil'] ?? 'Menunggu';
+                        $rowPengusul = $row['pengusul'] ?? ($pengusulVal ?: 'Staff Pengusul Kredit');
+                    ?>
+                    <?php 
+                        $isTerbit = (strtolower($rowStatus) === "telah terbit");
+                        $colorHasil = "border-slate-300 text-slate-500 bg-slate-50/50";
+                        if (strtolower($rowHasil) === "lancar") {
+                            $colorHasil = "border-[#00a859] text-[#00a859] bg-emerald-50/30";
+                        } elseif (in_array(strtolower($rowHasil), ["dpk", "kurang lancar", "diragukan", "macet"])) {
+                            $colorHasil = "border-amber-500 text-amber-600 bg-amber-50/30";
+                        }
+                    ?>
+                    <tr class="hover:bg-slate-50/70 transition slik-row-item" data-index="<?= $idx ?>" id="slik-row-<?= $idx ?>">
+                        <td class="py-2.5 px-2 text-center whitespace-nowrap">
+                            <div class="flex items-center justify-center">
+                                <input type="checkbox" class="slik-select-item w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer" data-index="<?= $idx ?>" value="<?= $idx ?>" checked>
+                            </div>
                         </td>
-
-                        <!-- TGL PERMOHONAN -->
-                        <td class="py-3.5 px-3 whitespace-nowrap text-xs text-slate-800" id="cell-tgl-<?= $item['index'] ?>">
-                            <?= esc($item['tgl_permohonan']) ?>
+                        <td class="py-2.5 px-2 whitespace-nowrap" id="status-badge-cell-<?= $idx ?>">
+                            <span class="inline-block <?= $isTerbit ? "bg-[#00a859]" : "bg-[#f59e0b]" ?> text-white font-bold text-[10px] px-2 py-0.5 rounded shadow-2xs">
+                                <?= esc($rowStatus) ?>
+                            </span>
                         </td>
-
-                        <!-- NO ID -->
-                        <td class="py-3.5 px-3 whitespace-nowrap text-xs font-semibold text-slate-800" id="cell-noid-<?= $item['index'] ?>">
-                            <?= esc($item['no_id']) ?>
+                        <td class="py-2.5 px-2 text-[11px] font-semibold text-slate-700 max-w-[130px] truncate" id="cell-reff-<?= $idx ?>" title="<?= esc($rowNoReff) ?>">
+                            <?= esc($rowNoReff) ?>
                         </td>
-
-                        <!-- NAMA -->
-                        <td class="py-3.5 px-3 whitespace-nowrap text-xs font-bold text-slate-900 tracking-wide" id="cell-nama-<?= $item['index'] ?>">
-                            <?= esc($item['nama']) ?>
+                        <td class="py-2.5 px-2 whitespace-nowrap text-[11px] text-slate-600" id="cell-tgl-<?= $idx ?>">
+                            <?= esc($rowTgl) ?>
                         </td>
-
-                        <!-- HASIL -->
-                        <td class="py-3.5 px-3 whitespace-nowrap text-center" id="hasil-badge-cell-<?= $item['index'] ?>">
-                            <?php 
-                                $hLower = strtolower($item['hasil']);
-                                if ($hLower === 'lancar' || strpos($hLower, 'kol 1') !== false || empty($item['hasil'])):
-                            ?>
-                                <span class="inline-block px-3 py-0.5 rounded-full border border-emerald-500 text-emerald-600 text-xs font-semibold bg-emerald-50/20">
-                                    Lancar
-                                </span>
-                            <?php elseif (strpos($hLower, 'dpk') !== false || strpos($hLower, 'kol 2') !== false): ?>
-                                <span class="inline-block px-3 py-0.5 rounded-full border border-amber-500 text-amber-600 text-xs font-semibold bg-amber-50/20">
-                                    DPK
-                                </span>
-                            <?php else: ?>
-                                <span class="inline-block px-3 py-0.5 rounded-full border border-rose-500 text-rose-600 text-xs font-semibold bg-rose-50/20">
-                                    <?= esc($item['hasil']) ?>
-                                </span>
-                            <?php endif; ?>
+                        <td class="py-2.5 px-2 whitespace-nowrap text-[11px] font-semibold text-slate-800" id="cell-noid-<?= $idx ?>">
+                            <?= esc($rowNoId) ?>
                         </td>
-
-                        <!-- RINGKASAN SLIK (Lihat Button) -->
-                        <td class="py-3.5 px-3 text-center whitespace-nowrap">
-                            <button type="button" onclick="bukaModalRingkasanSlik(<?= $item['index'] ?>)" 
-                                    class="inline-flex items-center gap-1.5 px-3.5 py-1 bg-white border border-[#4834d4] hover:bg-indigo-50 text-[#4834d4] rounded-md text-xs font-semibold transition cursor-pointer shadow-2xs">
-                                <svg class="w-4 h-4 text-[#4834d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                </svg>
+                        <td class="py-2.5 px-2 whitespace-nowrap text-[11px] font-bold text-slate-900" id="cell-nama-<?= $idx ?>">
+                            <div class="flex items-center gap-1">
+                                <span><?= esc($rowNama) ?></span>
+                                <span class="text-[9px] font-bold px-1 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/60 uppercase"><?= esc($rowKeterkaitan) ?></span>
+                            </div>
+                        </td>
+                        <td class="py-2.5 px-2 whitespace-nowrap text-center" id="hasil-badge-cell-<?= $idx ?>">
+                            <span class="inline-block px-2 py-0.5 rounded-full border <?= $colorHasil ?> text-[10px] font-bold">
+                                <?= esc($rowHasil) ?>
+                            </span>
+                        </td>
+                        <td class="py-2.5 px-2 text-center whitespace-nowrap">
+                            <button type="button" onclick="bukaModalRingkasanSlik(<?= $idx ?>)" 
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[#4834d4] hover:bg-indigo-50 text-[#4834d4] rounded-md text-[11px] font-semibold transition cursor-pointer shadow-2xs">
+                                <svg class="w-3.5 h-3.5 text-[#4834d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 <span>Lihat</span>
                             </button>
                         </td>
-
-                        <!-- HASIL SLIK PDF (Lihat Button) -->
-                        <td class="py-3.5 px-3 text-center whitespace-nowrap">
-                            <button type="button" onclick="bukaModalPdfSlik(<?= $item['index'] ?>)" 
-                                    class="inline-flex items-center gap-1.5 px-3.5 py-1 bg-white border border-[#4834d4] hover:bg-indigo-50 text-[#4834d4] rounded-md text-xs font-semibold transition cursor-pointer shadow-2xs">
-                                <svg class="w-4 h-4 text-[#4834d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                </svg>
+                        <td class="py-2.5 px-2 text-center whitespace-nowrap">
+                            <button type="button" onclick="bukaModalPdfSlik(<?= $idx ?>)" 
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[#4834d4] hover:bg-indigo-50 text-[#4834d4] rounded-md text-[11px] font-semibold transition cursor-pointer shadow-2xs">
+                                <svg class="w-3.5 h-3.5 text-[#4834d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 <span>Lihat</span>
                             </button>
                         </td>
-
-                        <!-- PENGUSUL -->
-                        <td class="py-3.5 px-3 whitespace-nowrap text-xs text-slate-800" id="cell-pengusul-<?= $item['index'] ?>">
-                            <?= esc($item['pengusul']) ?>
+                        <td class="py-2.5 px-2 text-[11px] text-slate-600 max-w-[100px] truncate" id="cell-pengusul-<?= $idx ?>" title="<?= esc($rowPengusul) ?>">
+                            <?= esc($rowPengusul) ?>
                         </td>
-
-                        <!-- AKSI (Navy Button "Proses ∨" atau Kunci Khusus Petugas SLIK) -->
-                        <td class="py-3.5 px-3 text-center whitespace-nowrap">
-                            <div class="inline-flex items-center justify-center">
-                                <?php if ($canEditSlik): ?>
-                                    <button type="button" onclick="bukaModalUploadHasilSlik(<?= $item['index'] ?>)" 
-                                            class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#0a0082] hover:bg-[#07005e] text-white rounded-md text-xs font-bold transition shadow-xs cursor-pointer">
-                                        <span>Proses</span>
-                                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    </button>
-                                <?php else: ?>
-                                    <button type="button" onclick="pesanPetugasSlikAktif()" 
-                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-md text-xs font-semibold transition cursor-pointer border border-slate-200" title="Verifikasi SLIK OJK ditangani oleh Petugas SLIK resmi">
-                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                                        <span>Petugas SLIK</span>
-                                    </button>
-                                <?php endif; ?>
+                        <td class="py-2.5 px-2 text-center whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1 justify-center">
+                                <button type="button" onclick="bukaModalLihatDokumenSlik(<?= $idx ?>)" 
+                                        class="p-1 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-md transition cursor-pointer border border-blue-200 shadow-2xs" 
+                                        title="Lihat Dokumen yang Diunggah (Identitas & Permohonan)">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </button>
+                                <button type="button" onclick="toggleDropdownProsesSlik(event,<?= $idx ?>)"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-[#0a0082] hover:bg-[#07005e] text-white rounded-md text-[11px] font-bold transition shadow-xs cursor-pointer"
+                                        data-proses-idx="<?= $idx ?>">
+                                    <span>Proses</span>
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                                <button type="button" onclick="hapusBarisPermohonanSlik(<?= $idx ?>)" 
+                                        class="p-1 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-md transition cursor-pointer border border-rose-200" title="Hapus permohonan ini">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
                             </div>
                         </td>
                     </tr>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
 
-    <!-- Info Catatan Ringkas di Bawah Tabel -->
-    <div class="mt-4 p-4 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div class="flex items-center gap-2 text-slate-600">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Data SLIK iDeb terverifikasi resmi oleh sistem verifikator kredit.</span>
-        </div>
-        <div class="flex items-center gap-2">
-            <button type="button" onclick="bukaModalRingkasanSlik(0)" class="text-blue-600 font-bold hover:underline cursor-pointer">
-                Buka Ringkasan Hasil SLIK &rarr;
-            </button>
-        </div>
-    </div>
+    
 </div>
 
 <!-- =======================================================
-     MODAL 1: RINGKASAN HASIL SLIK (Tanpa Catatan Narasi Evaluasi)
+     MODAL 1: RINGKASAN HASIL SLIK
 ======================================================== -->
-<div id="modalRingkasanSlik" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+<div id="modalRingkasanSlik" onclick="if(event.target === this) tutupModalRingkasanSlik()" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl border border-slate-200 max-w-5xl w-full p-6 shadow-2xl relative animate-in fade-in duration-200 flex flex-col max-h-[92vh]">
         <!-- Header: Judul & Tombol Export PDF / Export Excel + Close -->
         <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-            <h3 class="text-sm sm:text-base font-bold text-slate-900">Ringkasan Hasil SLIK</h3>
+            <div>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">Ringkasan Hasil SLIK</h3>
+                <p class="text-[11px] text-slate-500 mt-0.5" id="ringkasanModalSubJudul">Laporan riwayat dan evaluasi fasilitas pinjaman perbankan</p>
+                <div id="loadingRingkasanSlik" class="hidden items-center gap-1.5 mt-1.5 text-xs font-semibold text-blue-600 animate-pulse">
+                    <svg class="w-3.5 h-3.5 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span>Memuat ringkasan...</span>
+                </div>
+            </div>
             <div class="flex items-center gap-2">
                 <button type="button" onclick="exportPdfRingkasanSlik()" class="px-3.5 py-1.5 bg-white border border-[#06b6d4] text-[#0891b2] hover:bg-cyan-50 rounded-md text-xs font-semibold transition cursor-pointer shadow-2xs flex items-center gap-1.5">
                     <span>Export PDF</span>
@@ -299,21 +327,49 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 <button type="button" onclick="exportExcelRingkasanSlik()" class="px-3.5 py-1.5 bg-[#00a859] hover:bg-[#00914c] text-white rounded-md text-xs font-semibold transition cursor-pointer shadow-2xs flex items-center gap-1.5">
                     <span>Export Excel</span>
                 </button>
-                <button type="button" onclick="tutupModalRingkasanSlik()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg ml-2 transition cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <button type="button" onclick="tutupModalRingkasanSlik()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 ml-1 transition cursor-pointer" title="Tutup">
+                    <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
         </div>
 
         <!-- Body Scrollable -->
         <div class="py-5 overflow-y-auto space-y-4 flex-1">
+            <!-- Banner Identitas Subjek Aktif -->
+            <div class="p-3.5 bg-indigo-50/70 border border-indigo-200/70 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                        IDEB
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-900 flex items-center gap-1.5">
+                            <span id="ringkasanDebiturNama"><?= esc($namaDebiturVal ?: 'Debitur') ?></span>
+                            <span id="ringkasanDebiturKeterkaitan" class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 border border-indigo-200 uppercase">PEMOHON</span>
+                        </div>
+                        <div class="text-[11px] text-slate-600 mt-0.5">
+                            <span>No. ID: <strong id="ringkasanDebiturNoId" class="font-mono"><?= esc($noIdVal ?: '-') ?></strong></span>
+                            <span class="mx-1.5 text-slate-300">|</span>
+                            <span>No. Reff: <span id="ringkasanDebiturNoReff" class="font-mono"><?= esc($noReffSlik) ?></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="ringkasanDebiturHasilBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        <?= esc($hasilSlikVal) ?>
+                    </span>
+                    <button type="button" onclick="tutupModalRingkasanSlik(); bukaModalPdfSlik(currentActiveSlikIndex);" class="px-3 py-1 bg-white border border-[#4834d4] text-[#4834d4] hover:bg-indigo-50 rounded-lg text-xs font-semibold shadow-2xs transition inline-flex items-center gap-1 cursor-pointer">
+                        <svg class="w-3.5 h-3.5 text-[#4834d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        <span>Lihat PDF SLIK</span>
+                    </button>
+                </div>
+            </div>
             
             <!-- Baris 1: 3 Kartu Metrik Utama -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- Total Plafond -->
                 <div class="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs">
                     <div class="text-[11px] text-slate-500 font-medium">Total Plafond</div>
-                    <div class="text-base font-bold text-slate-900 mt-1">
+                    <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricPlafon">
                         Rp <?= number_format($totalPlafonSlik, 0, ',', '.') ?>
                     </div>
                 </div>
@@ -321,7 +377,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 <!-- Total Baki Debet -->
                 <div class="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs">
                     <div class="text-[11px] text-slate-500 font-medium">Total Baki Debet</div>
-                    <div class="text-base font-bold text-slate-900 mt-1">
+                    <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricBakiDebet">
                         Rp <?= number_format($totalBakiDebetSlik, 0, ',', '.') ?>
                     </div>
                 </div>
@@ -329,10 +385,10 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 <!-- Kolektibilitas Terburuk -->
                 <div class="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs">
                     <div class="text-[11px] text-slate-500 font-medium">Kolektibilitas Terburuk</div>
-                    <div class="text-base font-bold text-slate-900 mt-1">
+                    <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricKol">
                         <?= esc($kolTerburuk) ?>
                     </div>
-                    <div class="text-[11px] text-slate-400 mt-0.5">-</div>
+                    <div class="text-[11px] text-slate-400 mt-0.5" id="ringkasanMetricKolSub">Berdasarkan data fasilitas</div>
                 </div>
             </div>
 
@@ -341,7 +397,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 <!-- Bank Umum -->
                 <div class="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs">
                     <div class="text-[11px] text-slate-500 font-medium">Bank Umum</div>
-                    <div class="text-base font-bold text-slate-900 mt-1">
+                    <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricBankUmum">
                         <?= (int)$countBankUmum ?>
                     </div>
                 </div>
@@ -349,7 +405,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 <!-- BPR / S -->
                 <div class="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs">
                     <div class="text-[11px] text-slate-500 font-medium">BPR / S</div>
-                    <div class="text-base font-bold text-slate-900 mt-1">
+                    <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricBpr">
                         <?= (int)$countBpr ?>
                     </div>
                 </div>
@@ -357,7 +413,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 <!-- Lembaga Pembiayaan -->
                 <div class="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs">
                     <div class="text-[11px] text-slate-500 font-medium">Lembaga Pembiayaan</div>
-                    <div class="text-base font-bold text-slate-900 mt-1">
+                    <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricLembaga">
                         <?= (int)$countLembagaPembiayaan ?>
                     </div>
                 </div>
@@ -365,14 +421,75 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 <!-- Lainnya -->
                 <div class="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs">
                     <div class="text-[11px] text-slate-500 font-medium">Lainnya</div>
-                    <div class="text-base font-bold text-slate-900 mt-1">
+                    <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricLainnya">
                         <?= (int)$countLainnya ?>
                     </div>
                 </div>
             </div>
 
+            <!-- Header Tabel & Tombol Tambah Fasilitas -->
+            <div class="flex items-center justify-between pt-2">
+                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wide">Rincian Fasilitas Pinjaman / Kredit</h4>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="bukaFormTambahFasilitasSlik()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        <span>Tambah Fasilitas</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Form Tambah Fasilitas Cepat (Collapsible) -->
+            <div id="formTambahFasilitasSlikContainer" class="hidden p-4 rounded-xl border border-blue-200 bg-blue-50/50 space-y-3 transition">
+                <div class="font-bold text-xs text-blue-900 flex items-center justify-between">
+                    <span>Input Catatan Fasilitas Pinjaman</span>
+                    <button type="button" onclick="tutupFormTambahFasilitasSlik()" class="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Nama Bank / Lembaga</label>
+                        <input type="text" id="inputFasBank" placeholder="Contoh: Bank BRI / BCA" class="w-full bg-white border border-slate-300 rounded-lg p-2 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Jenis Fasilitas / Kredit</label>
+                        <input type="text" id="inputFasJenis" placeholder="Modal Kerja / Konsumtif" class="w-full bg-white border border-slate-300 rounded-lg p-2 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Plafond (Rp)</label>
+                        <input type="text" id="inputFasPlafon" placeholder="0" oninput="this.value = formatRupiahInput(this.value)" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Baki Debet (Rp)</label>
+                        <input type="text" id="inputFasOutstanding" placeholder="0" oninput="this.value = formatRupiahInput(this.value)" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold text-blue-700 focus:border-blue-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Kolektibilitas</label>
+                        <select id="inputFasKelancaran" class="w-full bg-white border border-slate-300 rounded-lg p-2 focus:border-blue-500 focus:outline-none cursor-pointer">
+                            <option value="Lancar">Kol 1 (Lancar)</option>
+                            <option value="DPK">Kol 2 (DPK)</option>
+                            <option value="Kurang Lancar">Kol 3 (Kurang Lancar)</option>
+                            <option value="Diragukan">Kol 4 (Diragukan)</option>
+                            <option value="Macet">Kol 5 (Macet)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Suku Bunga</label>
+                        <input type="text" id="inputFasBunga" placeholder="Contoh: 9%" class="w-full bg-white border border-slate-300 rounded-lg p-2 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button type="button" onclick="simpanFasilitasSlikBaru()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition shadow-xs cursor-pointer">
+                            Simpan ke Rincian
+                        </button>
+                        <button type="button" onclick="tutupFormTambahFasilitasSlik()" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold transition cursor-pointer">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tabel Rincian Fasilitas Kredit -->
-            <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs mt-4">
+            <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs mt-1">
                 <table class="w-full text-left border-collapse text-xs" id="tabelRincianFasilitasSlik">
                     <thead>
                         <tr class="bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
@@ -389,18 +506,19 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                             <th class="py-2.5 px-3 border-r border-slate-200 min-w-[100px]">JANGKA WAKTU</th>
                             <th class="py-2.5 px-3 border-r border-slate-200 min-w-[100px]">TUNGGAKAN</th>
                             <th class="py-2.5 px-3 min-w-[110px] text-center">KOLEKTIBILITAS</th>
+                            <th class="py-2.5 px-2 text-center w-10">AKSI</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 font-medium text-slate-700" id="bodyRincianFasilitasSlik">
                         <?php if (empty($slik)): ?>
-                            <tr>
-                                <td colspan="13" class="py-8 text-center text-xs text-slate-400 italic bg-white">
+                            <tr id="emptyFasilitasRow">
+                                <td colspan="14" class="py-8 text-center text-xs text-slate-400 italic bg-white">
                                     Tidak ada catatan fasilitas pinjaman aktif.
                                 </td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($slik as $i => $row): ?>
-                                <tr class="hover:bg-slate-50/80 transition">
+                                <tr class="hover:bg-slate-50/80 transition" id="row-fasilitas-<?= $i ?>">
                                     <td class="py-2 px-3 border-r border-slate-100 text-center font-bold"><?= $i + 1 ?></td>
                                     <td class="py-2 px-3 border-r border-slate-100 font-bold"><?= esc(!empty($row['nama_debitur']) ? $row['nama_debitur'] : ($namaDebiturVal ?? '-')) ?></td>
                                     <td class="py-2 px-3 border-r border-slate-100"><?= esc(!empty($row['bank_lembaga']) ? $row['bank_lembaga'] : '-') ?></td>
@@ -408,15 +526,18 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                                     <td class="py-2 px-3 border-r border-slate-100"><?= esc(!empty($row['jenis_fasilitas']) ? $row['jenis_fasilitas'] : (!empty($row['keterangan']) ? $row['keterangan'] : 'Kredit Usaha')) ?></td>
                                     <td class="py-2 px-3 border-r border-slate-100 font-semibold">Rp <?= number_format((float)($row['plafon'] ?? 0), 0, ',', '.') ?></td>
                                     <td class="py-2 px-3 border-r border-slate-100 font-bold text-blue-700">Rp <?= number_format((float)($row['outstanding'] ?? 0), 0, ',', '.') ?></td>
-                                    <td class="py-2 px-3 border-r border-slate-100">-</td>
-                                    <td class="py-2 px-3 border-r border-slate-100">-</td>
-                                    <td class="py-2 px-3 border-r border-slate-100">-</td>
-                                    <td class="py-2 px-3 border-r border-slate-100">-</td>
-                                    <td class="py-2 px-3 border-r border-slate-100">-</td>
-                                    <td class="py-2 px-3 text-center">
+                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['suku_bunga'] ?? '-') ?></td>
+                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['tgl_akad'] ?? '-') ?></td>
+                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['jatuh_tempo'] ?? '-') ?></td>
+                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['jangka_waktu'] ?? '-') ?></td>
+                                    <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['tunggakan'] ?? '0') ?></td>
+                                    <td class="py-2 px-3 text-center border-r border-slate-100">
                                         <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold border <?= strtolower($row['kelancaran'] ?? '') === 'lancar' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-rose-50 text-rose-700 border-rose-300' ?>">
                                             <?= esc($row['kelancaran'] ?? 'Lancar') ?>
                                         </span>
+                                    </td>
+                                    <td class="py-2 px-2 text-center">
+                                        <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus">✕</button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -424,7 +545,8 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                     </tbody>
                 </table>
             </div>
-
+            <!-- Container hidden input sync untuk fasilitas SLIK agar otomatis tersimpan saat submit form -->
+            <div id="hiddenFasilitasSlikContainer"></div>
         </div>
 
         <!-- Footer -->
@@ -439,7 +561,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
 <!-- =======================================================
      MODAL 2: UPLOAD HASIL SLIK (Persis Sesuai Gambar Modal Upload Hasil SLIK)
 ======================================================== -->
-<div id="modalUploadHasilSlik" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+<div id="modalUploadHasilSlik" onclick="if(event.target === this) tutupModalUploadHasilSlik()" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl border border-slate-200 max-w-xl w-full p-6 shadow-2xl relative animate-in fade-in duration-200">
         <!-- Header: Judul & Close -->
         <div class="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -450,7 +572,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
         </div>
 
         <!-- Body Form -->
-        <form id="formUploadHasilSlik" onsubmit="submitFormUploadHasilSlik(event)" class="py-4 space-y-4">
+        <div id="formUploadHasilSlik" class="py-4 space-y-4">
             <!-- Hasil SLIK Dropdown -->
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">Hasil SLIK</label>
@@ -466,34 +588,34 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
             <!-- Grid 2 Upload Box: Upload Hasil TXT & Upload Hasil PDF -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                 <!-- Box 1: Upload Hasil TXT -->
-                <div>
+                <div class="min-w-0 overflow-hidden">
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Upload Hasil TXT</label>
                     <div id="dropzoneTxt" onclick="document.getElementById('inputTxtFile').click()" 
-                         class="border border-slate-200 hover:border-blue-400 rounded-2xl p-6 text-center flex flex-col items-center justify-center min-h-[160px] bg-white transition cursor-pointer shadow-2xs group">
+                         class="border border-slate-200 hover:border-blue-400 rounded-2xl p-4 text-center flex flex-col items-center justify-center min-h-[160px] bg-white transition cursor-pointer shadow-2xs group w-full max-w-full overflow-hidden">
                         <input type="file" id="inputTxtFile" accept=".txt" class="hidden" onchange="handleFileSelected(this, 'txt')">
-                        <div class="w-12 h-12 rounded-full bg-slate-50 group-hover:bg-blue-50 text-slate-400 group-hover:text-blue-600 flex items-center justify-center transition mb-2">
+                        <div class="w-12 h-12 rounded-full bg-slate-50 group-hover:bg-blue-50 text-slate-400 group-hover:text-blue-600 flex items-center justify-center transition mb-2 shrink-0">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                             </svg>
                         </div>
-                        <p class="text-xs text-slate-500 font-medium group-hover:text-blue-600 transition" id="labelFileNameTxt">Drag and drop a file here or click</p>
-                        <span class="text-[10px] text-slate-400 mt-1" id="labelFileSubTxt">Format .TXT</span>
+                        <p id="labelFileNameTxt" class="text-xs text-slate-700 font-semibold group-hover:text-blue-600 transition max-w-[190px] sm:max-w-[220px] mx-auto px-2 truncate block overflow-hidden">Drag and drop a file here or click</p>
+                        <span class="text-[10px] text-slate-400 mt-1 block truncate max-w-full" id="labelFileSubTxt">Format .TXT</span>
                     </div>
                 </div>
 
                 <!-- Box 2: Upload Hasil PDF -->
-                <div>
+                <div class="min-w-0 overflow-hidden">
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">Upload Hasil PDF</label>
                     <div id="dropzonePdf" onclick="document.getElementById('inputPdfFile').click()" 
-                         class="border border-slate-200 hover:border-blue-400 rounded-2xl p-6 text-center flex flex-col items-center justify-center min-h-[160px] bg-white transition cursor-pointer shadow-2xs group">
+                         class="border border-slate-200 hover:border-blue-400 rounded-2xl p-4 text-center flex flex-col items-center justify-center min-h-[160px] bg-white transition cursor-pointer shadow-2xs group w-full max-w-full overflow-hidden">
                         <input type="file" id="inputPdfFile" accept=".pdf" class="hidden" onchange="handleFileSelected(this, 'pdf')">
-                        <div class="w-12 h-12 rounded-full bg-slate-50 group-hover:bg-blue-50 text-slate-400 group-hover:text-blue-600 flex items-center justify-center transition mb-2">
+                        <div class="w-12 h-12 rounded-full bg-slate-50 group-hover:bg-blue-50 text-slate-400 group-hover:text-blue-600 flex items-center justify-center transition mb-2 shrink-0">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                             </svg>
                         </div>
-                        <p class="text-xs text-slate-500 font-medium group-hover:text-blue-600 transition" id="labelFileNamePdf">Drag and drop a file here or click</p>
-                        <span class="text-[10px] text-slate-400 mt-1" id="labelFileSubPdf">Format .PDF</span>
+                        <p id="labelFileNamePdf" class="text-xs text-slate-700 font-semibold group-hover:text-blue-600 transition max-w-[190px] sm:max-w-[220px] mx-auto px-2 truncate block overflow-hidden">Drag and drop a file here or click</p>
+                        <span class="text-[10px] text-slate-400 mt-1 block truncate max-w-full" id="labelFileSubPdf">Format .PDF</span>
                     </div>
                 </div>
             </div>
@@ -503,24 +625,24 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 <button type="button" onclick="tutupModalUploadHasilSlik()" class="px-5 py-2 bg-[#64748b] hover:bg-[#475569] text-white text-xs font-bold rounded-lg transition cursor-pointer">
                     Batal
                 </button>
-                <button type="submit" id="btnSimpanUploadSlik" class="px-5 py-2 bg-[#00a859] hover:bg-[#00914c] text-white text-xs font-bold rounded-lg transition shadow-xs cursor-pointer">
+                <button type="button" onclick="submitFormUploadHasilSlik(event)" id="btnSimpanUploadSlik" class="px-5 py-2 bg-[#00a859] hover:bg-[#00914c] text-white text-xs font-bold rounded-lg transition shadow-xs cursor-pointer">
                     Simpan
                 </button>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
 <!-- =======================================================
      MODAL 3: HASIL SLIK OJK (Menampilkan Hasil Upload PDF)
 ======================================================== -->
-<div id="modalPdfSlik" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+<div id="modalPdfSlik" onclick="if(event.target === this) tutupModalPdfSlik()" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl border border-slate-200 max-w-5xl w-full p-6 shadow-2xl relative animate-in fade-in duration-200 flex flex-col max-h-[92vh]">
         <!-- Header: Hasil SLIK OJK & Close X -->
         <div class="flex items-center justify-between pb-4 border-b border-slate-100">
             <h3 class="text-sm sm:text-base font-bold text-slate-900">Hasil SLIK OJK</h3>
-            <button type="button" onclick="tutupModalPdfSlik()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition cursor-pointer">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <button type="button" onclick="tutupModalPdfSlik()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer" title="Tutup">
+                <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
 
@@ -571,396 +693,203 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
 
 
 
+<!-- Modal Tambah Permohonan SLIK -->
+
+<!-- =======================================================
+     MODAL: LIHAT DOKUMEN PENGAJUAN SLIK (Identitas & Permohonan)
+======================================================== -->
+<div id="modalLihatDokumenSlik" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in duration-200 flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">Dokumen Pengajuan SLIK</h3>
+                <p class="text-xs text-slate-500 mt-0.5" id="modalLihatDokumenSub">Berkas identitas dan permohonan</p>
+            </div>
+            <button type="button" onclick="tutupModalLihatDokumenSlik()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div class="space-y-3.5 py-4" id="modalLihatDokumenBody">
+            <!-- Dokumen Identitas Card -->
+            <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 font-bold text-xs">
+                        ID
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-xs font-bold text-slate-800">Dokumen Identitas (KTP/NPWP)</div>
+                        <div class="text-[11px] text-slate-500 truncate" id="lihatDocNamaIdentitas">-</div>
+                    </div>
+                </div>
+                <div id="lihatDocBtnIdentitas" class="shrink-0">
+                    <span class="text-xs text-slate-400 italic">Tidak ada berkas</span>
+                </div>
+            </div>
+
+            <!-- Dokumen Permohonan Card -->
+            <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-bold text-xs">
+                        REQ
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-xs font-bold text-slate-800">Dokumen Permohonan SLIK</div>
+                        <div class="text-[11px] text-slate-500 truncate" id="lihatDocNamaPermohonan">-</div>
+                    </div>
+                </div>
+                <div id="lihatDocBtnPermohonan" class="shrink-0">
+                    <span class="text-xs text-slate-400 italic">Tidak ada berkas</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end pt-3 border-t border-slate-100">
+            <button type="button" onclick="tutupModalLihatDokumenSlik()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =======================================================
+     MODAL PREVIEW BERKAS DOKUMEN SLIK (Image / PDF / TXT)
+======================================================== -->
+<div id="modalPreviewDocSlik" class="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full p-4 sm:p-5 shadow-2xl relative animate-in fade-in duration-200 flex flex-col max-h-[92vh]">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+            <div class="min-w-0 pr-2">
+                <h3 class="text-sm sm:text-base font-bold text-slate-900 truncate" id="previewDocTitle">Preview Dokumen</h3>
+                <p class="text-xs text-slate-500 truncate" id="previewDocSub">Berkas pengajuan</p>
+            </div>
+            <button type="button" onclick="tutupPreviewDocSlik()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-auto py-3 flex items-center justify-center min-h-[350px] bg-slate-50/70 rounded-xl mt-3" id="previewDocContainer">
+            <!-- Konten Pratinjau Dokumen -->
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 shrink-0 mt-3">
+            <button type="button" onclick="tutupPreviewDocSlik()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-xs font-bold transition cursor-pointer">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="modalTambahPermohonanSlik" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in duration-200">
+        <!-- Header Modal -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+            <h3 class="text-sm sm:text-base font-bold text-slate-900">Pengajuan SLIK <?= (isset($view_folder) && $view_folder === 'badan_usaha') ? 'Badan Usaha' : 'Perorangan' ?></h3>
+            <button type="button" onclick="tutupModalTambahPermohonanSlik()" class="text-slate-400 hover:text-slate-600 text-lg p-1 transition cursor-pointer">
+                ✕
+            </button>
+        </div>
+
+        <!-- Form Body -->
+        <div class="space-y-4 text-xs sm:text-sm">
+            <!-- Nama -->
+            <div>
+                <label class="block font-semibold text-slate-800 mb-1">Nama</label>
+                <input type="text" id="inputSlikNama" placeholder="" class="w-full text-xs sm:text-sm border border-slate-300 rounded-lg px-3.5 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition">
+                <div class="mt-2">
+                    <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="checkNamaSamaPemohon" onchange="toggleNamaSamaPemohon(this)" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                        <span class="text-xs text-slate-700 font-medium">Nama Sama dengan Pemohon</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Nomor Identitas -->
+            <div>
+                <label class="block font-semibold text-slate-800 mb-1">Nomor Identitas</label>
+                <input type="text" id="inputSlikNoId" inputmode="numeric" pattern="[0-9]*" maxlength="20" placeholder="16 digit angka (contoh: 3201012345670001)" oninput="this.value = this.value.replace(/\D/g, '')" class="w-full text-xs sm:text-sm border border-slate-300 rounded-lg px-3.5 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition font-mono">
+            </div>
+
+            <!-- Keterkaitan -->
+            <div>
+                <label class="block font-semibold text-slate-800 mb-1">Keterkaitan</label>
+                <div class="relative">
+                    <select id="inputSlikKeterkaitan" class="w-full text-xs sm:text-sm border border-slate-300 rounded-lg px-3.5 py-2.5 pr-8 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition cursor-pointer appearance-none">
+                        <option value="" disabled selected>Pilih Keterkaitan</option>
+                        <option value="Pemohon">Pemohon / Debitur Utama</option>
+                        <option value="Pasangan">Pasangan</option>
+                        <option value="Penjamin">Penjamin</option>
+                        <option value="Pengurus / Direksi">Pengurus / Direksi</option>
+                        <option value="Pemegang Saham">Pemegang Saham</option>
+                        <option value="Pemilik Jaminan">Pemilik Jaminan</option>
+                    </select>
+                    
+                </div>
+            </div>
+
+            <!-- 2 Kolom Upload: Upload Identitas & Upload Permohonan -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                <!-- Upload Identitas -->
+                <div class="min-w-0 overflow-hidden">
+                    <label class="block font-semibold text-slate-800 mb-1">Upload Identitas</label>
+                    <div onclick="document.getElementById('inputSlikFileIdentitas').click()"
+                         id="dropzoneIdentitas"
+                         class="border-2 border-dashed border-slate-200 hover:border-blue-400 bg-white hover:bg-slate-50/50 rounded-xl p-4 text-center cursor-pointer transition flex flex-col items-center justify-center min-h-[140px] w-full max-w-full overflow-hidden">
+                        <input type="file" id="inputSlikFileIdentitas" accept=".pdf,image/*" class="hidden" onchange="handleModalFileSlik(this, 'identitas')">
+                        <div class="text-slate-400 mb-2 shrink-0">
+                            <svg class="w-7 h-7 mx-auto stroke-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div id="labelFileIdentitas" class="text-xs text-slate-700 font-semibold truncate block max-w-[180px] sm:max-w-[210px] mx-auto px-2 overflow-hidden">Drag and drop a file here or click</div>
+                        <div id="subFileIdentitas" class="text-[10px] text-slate-400 mt-0.5 block truncate max-w-full">Format PDF / Gambar</div>
+                    </div>
+                </div>
+
+                <!-- Upload Permohonan -->
+                <div class="min-w-0 overflow-hidden">
+                    <label class="block font-semibold text-slate-800 mb-1">Upload Permohonan</label>
+                    <div onclick="document.getElementById('inputSlikFilePermohonan').click()"
+                         id="dropzonePermohonan"
+                         class="border-2 border-dashed border-slate-200 hover:border-blue-400 bg-white hover:bg-slate-50/50 rounded-xl p-4 text-center cursor-pointer transition flex flex-col items-center justify-center min-h-[140px] w-full max-w-full overflow-hidden">
+                        <input type="file" id="inputSlikFilePermohonan" accept=".pdf,image/*,.txt" class="hidden" onchange="handleModalFileSlik(this, 'permohonan')">
+                        <div class="text-slate-400 mb-2 shrink-0">
+                            <svg class="w-7 h-7 mx-auto stroke-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div id="labelFilePermohonan" class="text-xs text-slate-700 font-semibold truncate block max-w-[180px] sm:max-w-[210px] mx-auto px-2 overflow-hidden">Drag and drop a file here or click</div>
+                        <div id="subFilePermohonan" class="text-[10px] text-slate-400 mt-0.5 block truncate max-w-full">Format PDF / TXT</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Modal -->
+        <div class="flex items-center justify-end gap-2.5 pt-4 mt-5 border-t border-slate-200">
+            <button type="button" onclick="tutupModalTambahPermohonanSlik()" class="px-5 py-2 bg-[#6b7280] hover:bg-[#4b5563] text-white text-xs sm:text-sm font-semibold rounded-lg transition cursor-pointer">
+                Batal
+            </button>
+            <button type="button" onclick="simpanTambahPermohonanSlik()" class="px-5 py-2 bg-[#00a859] hover:bg-[#008f4c] text-white text-xs sm:text-sm font-semibold rounded-lg transition shadow-xs cursor-pointer">
+                Simpan
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
-window.CAN_EDIT_SLIK = <?= $canEditSlik ? 'true' : 'false' ?>;
-window.PETUGAS_SLIK_AKTIF = <?= $petugasSlikAktif ?>;
-
-function pesanPetugasSlikAktif() {
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            icon: 'info',
-            title: 'Fitur Petugas SLIK Terpisah Aktif',
-            text: 'Pengisian dan verifikasi hasil SLIK dilakukan secara resmi oleh Petugas SLIK OJK. Anda dapat melanjutkan ke tahap berikutnya tanpa mengisi hasil SLIK.',
-            confirmButtonColor: '#2563eb'
-        });
-    } else {
-        alert('Pengisian hasil SLIK dilakukan oleh Petugas SLIK OJK resmi. Anda dapat melanjutkan ke tahap berikutnya.');
-    }
-}
-window.pesanPetugasSlikAktif = pesanPetugasSlikAktif;
-
-// ========================================================
-// SINKRONISASI OTOMATIS DATA DEBITUR DARI TAB SEBELUMNYA
-// ========================================================
-function sinkronisasiDataDebiturKeSlik() {
-    // 1. Ambil Nama Debitur dari Tab 1 atau Tab 2
-    const elNama1 = document.getElementById("nama_debitur");
-    const elNama2 = document.getElementById("nama_debitur_tab2");
-    let namaVal = (elNama1?.value || elNama2?.value || "").trim().toUpperCase();
-
-    // 2. Ambil NIK KTP / NPWP dari Tab 2
-    const elNik = document.getElementById("npwp_pribadi");
-    let nikVal = (elNik?.value || "").trim();
-
-    // 3. Ambil Jenis Debitur dari Tab 1
-    const elJd = document.getElementById("jenis_debitur");
-    const jdVal = (elJd?.value || "Individu").toLowerCase();
-    const entitas = (jdVal.includes("badan") || jdVal.includes("usaha") || jdVal.includes("pt") || jdVal.includes("cv")) ? "B" : "I";
-
-    // 4. Update data baris 0 (Debitur Utama)
-    const cellNama = document.getElementById("cell-nama-0");
-    if (cellNama && namaVal) {
-        cellNama.textContent = namaVal;
-    }
-
-    const cellNoid = document.getElementById("cell-noid-0");
-    if (cellNoid && nikVal) {
-        cellNoid.textContent = nikVal;
-    }
-
-    const cellReff = document.getElementById("cell-reff-0");
-    const kid = document.getElementById("kredit_id")?.value || "<?= $kreditIdVal ?>";
-    const tahun = "<?= date("Y", $tglTimestamp) ?>";
-    const baseReff = kid + "/BPR-SA/IDEB/" + tahun;
-    if (cellReff) {
-        cellReff.textContent = `${baseReff}|01|${entitas}|${nikVal || "-"}`;
-    }
-
-    const hiddenNik = document.getElementById("hidden_slik_nik");
-    if (hiddenNik && nikVal) {
-        hiddenNik.value = nikVal;
-    }
-}
-window.sinkronisasiDataDebiturKeSlik = sinkronisasiDataDebiturKeSlik;
-
-// Pasang listener real-time agar saat input di Tab 1 / Tab 2 diisi, Tab 6 langsung terupdate
-function pasangListenerSinkronisasiSlik() {
-    sinkronisasiDataDebiturKeSlik();
-    ["nama_debitur", "nama_debitur_tab2", "npwp_pribadi", "jenis_debitur"].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.addEventListener("input", sinkronisasiDataDebiturKeSlik);
-            el.addEventListener("change", sinkronisasiDataDebiturKeSlik);
-        }
-    });
-}
-
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", pasangListenerSinkronisasiSlik);
-} else {
-    pasangListenerSinkronisasiSlik();
-}
-setTimeout(sinkronisasiDataDebiturKeSlik, 500);
-
-let currentActiveSlikIndex = 0;
-let permohonanCount = <?= count($daftarPermohonan) ?>;
-
-// Filter Pencarian
-function filterTabelSlik(query) {
-    const q = (query || '').toLowerCase().trim();
-    const rows = document.querySelectorAll('#bodySlikIdeb tr.slik-row-item');
-    rows.forEach(tr => {
-        const text = tr.innerText.toLowerCase();
-        tr.style.display = text.includes(q) ? '' : 'none';
-    });
-}
-
-// Fungsi Download Berkas TXT di Browser
-function downloadTxtContent(filename, text) {
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }, 200);
-}
-window.downloadTxtContent = downloadTxtContent;
-
-// Fungsi Export TXT Permohonan SLIK
-function exportTxtPermohonanSlik() {
-    if (typeof sinkronisasiDataDebiturKeSlik === 'function') {
-        sinkronisasiDataDebiturKeSlik();
-    }
-
-    const cellReff = document.getElementById('cell-reff-0');
-    let lineReff = cellReff ? cellReff.innerText.trim() : '';
-
-    const kid = document.getElementById('kredit_id')?.value || '<?= $kreditIdVal ?>';
-    const tahun = '<?= date("Y", $tglTimestamp) ?>';
-
-    // Jika cell belum terisi, bangun string No Reff secara dinamis
-    if (!lineReff || lineReff.includes('|-')) {
-        const elNama = (document.getElementById('nama_debitur')?.value || document.getElementById('nama_debitur_tab2')?.value || '<?= esc($namaDebiturVal) ?>').trim().toUpperCase();
-        const elNik = (document.getElementById('npwp_pribadi')?.value || '<?= esc($noIdVal) ?>').trim();
-        const jdVal = (document.getElementById('jenis_debitur')?.value || '<?= esc($kredit['jenis_debitur'] ?? 'Individu') ?>').toLowerCase();
-        const entitas = (jdVal.includes('badan') || jdVal.includes('usaha') || jdVal.includes('pt') || jdVal.includes('cv')) ? 'B' : 'I';
-        lineReff = `${kid}/BPR-SA/IDEB/${tahun}|01|${entitas}|${elNik || '3515082104990002'}`;
-    }
-
-    const cleanNama = (document.getElementById('nama_debitur')?.value || document.getElementById('nama_debitur_tab2')?.value || '<?= esc($namaDebiturVal) ?>' || 'DEBITUR').trim().replace(/[^a-zA-Z0-9]/g, '_');
-    const filename = `Permohonan_SLIK_${kid}_${cleanNama || 'DEBITUR'}_${tahun}.txt`;
-
-    downloadTxtContent(filename, lineReff + "\r\n");
-
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Berkas TXT Permohonan SLIK berhasil diekspor!',
-            showConfirmButton: false,
-            timer: 2000
-        });
-    }
-}
-window.exportTxtPermohonanSlik = exportTxtPermohonanSlik;
-
-// Modal Upload Hasil SLIK (Dibuka saat tombol "Proses" diklik)
-function bukaModalUploadHasilSlik(idx) {
-    currentActiveSlikIndex = idx || 0;
-    const currentHasil = document.getElementById('hidden_hasil_slik').value || 'Lancar';
-    const sel = document.getElementById('modalHasilSlikSelect');
-    if (sel) sel.value = currentHasil;
-
-    // Reset label file input bila belum dipilih
-    const pdfPath = document.getElementById('hidden_berkas_slik_pdf').value;
-    if (pdfPath) {
-        document.getElementById('labelFileNamePdf').innerText = pdfPath.split('/').pop();
-        document.getElementById('labelFileSubPdf').innerText = 'Berkas tersimpan';
-    } else {
-        document.getElementById('labelFileNamePdf').innerText = 'Drag and drop a file here or click';
-        document.getElementById('labelFileSubPdf').innerText = 'Format .PDF';
-    }
-
-    const txtPath = document.getElementById('hidden_berkas_slik_txt').value;
-    if (txtPath) {
-        document.getElementById('labelFileNameTxt').innerText = txtPath.split('/').pop();
-        document.getElementById('labelFileSubTxt').innerText = 'Berkas tersimpan';
-    } else {
-        document.getElementById('labelFileNameTxt').innerText = 'Drag and drop a file here or click';
-        document.getElementById('labelFileSubTxt').innerText = 'Format .TXT';
-    }
-
-    document.getElementById('modalUploadHasilSlik').classList.remove('hidden');
-}
-
-function tutupModalUploadHasilSlik() {
-    document.getElementById('modalUploadHasilSlik').classList.add('hidden');
-}
-
-function handleFileSelected(input, type) {
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        if (type === 'txt') {
-            document.getElementById('labelFileNameTxt').innerText = file.name;
-            document.getElementById('labelFileSubTxt').innerText = (file.size / 1024).toFixed(1) + ' KB';
-        } else if (type === 'pdf') {
-            document.getElementById('labelFileNamePdf').innerText = file.name;
-            document.getElementById('labelFileSubPdf').innerText = (file.size / 1024).toFixed(1) + ' KB';
-        }
-    }
-}
-
-// Drag & drop support
-['dropzoneTxt', 'dropzonePdf'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        el.classList.add('border-blue-500', 'bg-blue-50/40');
-    });
-    el.addEventListener('dragleave', () => {
-        el.classList.remove('border-blue-500', 'bg-blue-50/40');
-    });
-    el.addEventListener('drop', (e) => {
-        e.preventDefault();
-        el.classList.remove('border-blue-500', 'bg-blue-50/40');
-        const inputId = id === 'dropzoneTxt' ? 'inputTxtFile' : 'inputPdfFile';
-        const type = id === 'dropzoneTxt' ? 'txt' : 'pdf';
-        const inp = document.getElementById(inputId);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            inp.files = e.dataTransfer.files;
-            handleFileSelected(inp, type);
-        }
-    });
-});
-
-// Submit Form Upload Hasil SLIK
-function submitFormUploadHasilSlik(e) {
-    e.preventDefault();
-    const hasilVal = document.getElementById('modalHasilSlikSelect').value;
-    const filePdf = document.getElementById('inputPdfFile').files[0];
-    const fileTxt = document.getElementById('inputTxtFile').files[0];
-    const kid = document.getElementById('kredit_id')?.value || '';
-
-    const formData = new FormData();
-    formData.append('hasil_slik', hasilVal);
-    if (kid) formData.append('kredit_id', kid);
-    if (filePdf) formData.append('file_pdf', filePdf);
-    if (fileTxt) formData.append('file_txt', fileTxt);
-
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            title: 'Menyimpan Hasil SLIK...',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-    }
-
-    fetch('<?= base_url('pengajuan/upload-hasil-slik') ?>', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.status) {
-            // Update hidden inputs
-            document.getElementById('hidden_status_slik').value = 'Telah Terbit';
-            document.getElementById('hidden_hasil_slik').value = hasilVal;
-            if (data.pdf_path) document.getElementById('hidden_berkas_slik_pdf').value = data.pdf_path;
-            if (data.txt_path) document.getElementById('hidden_berkas_slik_txt').value = data.txt_path;
-
-            // Update UI row tabel
-            const statusCell = document.getElementById(`status-badge-cell-${currentActiveSlikIndex}`);
-            if (statusCell) {
-                statusCell.innerHTML = `<span class="inline-block bg-[#00a859] text-white font-bold text-[11px] px-3 py-1 rounded shadow-2xs">Telah Terbit</span>`;
-            }
-
-            const hasilCell = document.getElementById(`hasil-badge-cell-${currentActiveSlikIndex}`);
-            if (hasilCell) {
-                if (hasilVal === 'Lancar') {
-                    hasilCell.innerHTML = `<span class="inline-block px-3 py-0.5 rounded-full border border-emerald-500 text-emerald-600 text-xs font-semibold bg-emerald-50/20">Lancar</span>`;
-                } else if (hasilVal === 'DPK') {
-                    hasilCell.innerHTML = `<span class="inline-block px-3 py-0.5 rounded-full border border-amber-500 text-amber-600 text-xs font-semibold bg-amber-50/20">DPK</span>`;
-                } else {
-                    hasilCell.innerHTML = `<span class="inline-block px-3 py-0.5 rounded-full border border-rose-500 text-rose-600 text-xs font-semibold bg-rose-50/20">${hasilVal}</span>`;
-                }
-            }
-
-            tutupModalUploadHasilSlik();
-
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: data.message,
-                    timer: 1600,
-                    showConfirmButton: false
-                });
-            }
-        } else {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire('Gagal Menyimpan', data.message || 'Terjadi kesalahan sistem.', 'error');
-            }
-        }
-    })
-    .catch(err => {
-        if (typeof Swal !== 'undefined') {
-            Swal.fire('Error', 'Gagal memproses ke server.', 'error');
-        }
-    });
-}
-
-// Modal Ringkasan Hasil SLIK
-function bukaModalRingkasanSlik(idx) {
-    currentActiveSlikIndex = idx || 0;
-    document.getElementById('modalRingkasanSlik').classList.remove('hidden');
-}
-
-function tutupModalRingkasanSlik() {
-    document.getElementById('modalRingkasanSlik').classList.add('hidden');
-}
-
-function exportPdfRingkasanSlik() {
-    window.print();
-}
-
-function exportExcelRingkasanSlik() {
-    const table = document.getElementById('tabelRincianFasilitasSlik');
-    if (!table) return;
-    let html = table.outerHTML;
-    const uri = 'data:application/vnd.ms-excel;base64,' + window.btoa(unescape(encodeURIComponent(html)));
-    const a = document.createElement('a');
-    a.href = uri;
-    a.download = 'Ringkasan_Hasil_SLIK_' + (document.getElementById('nama_debitur')?.value || 'Nasabah') + '.xls';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
-
-// Modal Hasil SLIK OJK PDF (Menampilkan PDF yang diupload di Proses tadi)
-function bukaModalPdfSlik(idx) {
-    currentActiveSlikIndex = idx || 0;
-    const pdfPath = document.getElementById('hidden_berkas_slik_pdf').value;
-    const wrapper = document.getElementById('pdfViewerWrapper');
-    const emptyWrapper = document.getElementById('pdfEmptyWrapper');
-    const iframe = document.getElementById('iframePdfSlik');
-    const btnBuka = document.getElementById('btnBukaPdfTab');
-    const label = document.getElementById('pdfFileNameLabel');
-
-    if (pdfPath && pdfPath.trim() !== '') {
-        const fullUrl = pdfPath.startsWith('http') ? pdfPath : ('<?= base_url() ?>/' + pdfPath.replace(/^\//, ''));
-        iframe.src = fullUrl;
-        btnBuka.href = fullUrl;
-        if (label) label.innerText = pdfPath.split('/').pop();
-        wrapper.classList.remove('hidden');
-        emptyWrapper.classList.add('hidden');
-    } else {
-        iframe.src = '';
-        wrapper.classList.add('hidden');
-        emptyWrapper.classList.remove('hidden');
-    }
-
-    document.getElementById('modalPdfSlik').classList.remove('hidden');
-}
-
-function tutupModalPdfSlik() {
-    document.getElementById('modalPdfSlik').classList.add('hidden');
-}
-
-function gantiPageLengthSlik(val) {
-    // Pengaturan pagination
-}
-
-function hapusBarisPermohonanSlik(idx) {
-    const row = document.getElementById(`slik-row-${idx}`);
-    if (!row) return;
-
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            title: 'Hapus Permohonan SLIK?',
-            text: 'Baris permohonan ini akan dihapus dari daftar.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#e11d48',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'Ya, Hapus',
-            cancelButtonText: 'Batal'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                row.remove();
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: 'Permohonan SLIK berhasil dihapus',
-                    showConfirmButton: false,
-                    timer: 1500
-                });
-            }
-        });
-    } else {
-        if (confirm('Hapus baris permohonan SLIK ini?')) {
-            row.remove();
-        }
-    }
-}
+    window.slikDokumenUploaded = <?= json_encode(!empty($daftarPermohonanSlikDocs) ? (object)$daftarPermohonanSlikDocs : new stdClass()) ?>;
+    window.slikFasilitasArray = <?= json_encode(!empty($slik) ? $slik : []) ?>;
+    window.BERKAS_SLIK_PDF_VAL = '<?= esc($berkasSlikPdfVal) ?>';
+    window.BERKAS_SLIK_TXT_VAL = '<?= esc($berkasSlikTxtVal) ?>';
+    window.daftarPermohonanSlikArray = <?= json_encode($daftarPermohonanSlik) ?>;
+    window.CAN_EDIT_SLIK = <?= $canEditSlik ? 'true' : 'false' ?>;
+    window.PETUGAS_SLIK_AKTIF = <?= $petugasSlikAktif ?>;
+    window.USER_ROLE = '<?= esc(strtolower(session()->get('jabatan') ?? 'pengusul')) ?>';
+    window.KREDIT_ID_VAL = '<?= $kreditIdVal ?>';
+    window.TGL_TAHUN_VAL = '<?= date("Y", $tglTimestamp) ?>';
+    window.NAMA_DEBITUR_VAL = '<?= esc($namaDebiturVal) ?>';
+    window.NO_ID_VAL = '<?= esc($noIdVal) ?>';
+    window.JENIS_DEBITUR_VAL = '<?= esc($kredit['jenis_debitur'] ?? 'Individu') ?>';
+    window.BASE_URL = '<?= base_url() ?>';
 </script>
+<script src="<?= base_url('js/pengajuan-slik.js?v=' . time()) ?>"></script>

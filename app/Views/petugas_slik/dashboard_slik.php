@@ -117,8 +117,10 @@
     <main class="w-full px-4 sm:px-6 lg:px-8 py-6 flex-1">
         
         <!-- Welcome Hero Banner -->
-        <?php $ijinSlikPengusul = (int)($pengaturan_sistem['ijin_pengusul_isi_slik'] ?? 1); ?>
-        <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-6 sm:p-8 text-white shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <?php 
+            $petugasSlikAktif = (int)($pengaturan_sistem['petugas_slik_aktif'] ?? (($pengaturan_sistem['ijin_pengusul_isi_slik'] ?? 1) == 0 ? 1 : 0));
+        ?>
+        <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-6 sm:p-8 text-white shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
                 <span class="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-blue-100 uppercase tracking-wider">
                     Ruang Kerja <?= esc(!empty($jabatan) ? $jabatan : 'Petugas SLIK') ?>
@@ -129,18 +131,34 @@
                 </p>
             </div>
 
-            <!-- Quick Control: Akses SLIK Pengusul -->
-            <div class="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center justify-between gap-4 self-stretch md:self-auto shrink-0 min-w-[290px] shadow-sm">
+            <!-- Quick Control: Pemisahan Peran Petugas SLIK -->
+            <div class="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl flex items-center justify-between gap-4 self-stretch md:self-auto shrink-0 min-w-[310px] shadow-sm">
                 <div>
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-blue-200 block">Akses Input SLIK Pengusul</span>
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-blue-200 block">Status Peran Petugas SLIK</span>
                     <span id="labelStatusAkses" class="text-xs font-bold text-white block mt-0.5">
-                        <?= $ijinSlikPengusul === 1 ? '🟢 Diizinkan (Fleksibel)' : '🔒 Dinonaktifkan (Khusus SLIK)' ?>
+                        <?= $petugasSlikAktif === 1 ? '🟢 Petugas SLIK AKTIF (SOP Ketat)' : '⚪ Petugas SLIK NONAKTIF (Mode Fleksibel)' ?>
                     </span>
                 </div>
                 <button type="button" onclick="toggleAksesPengusul()" id="btnToggleAkses"
-                        class="px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer <?= $ijinSlikPengusul === 1 ? 'bg-amber-400 hover:bg-amber-300 text-slate-900' : 'bg-emerald-500 hover:bg-emerald-400 text-white' ?>">
-                    <?= $ijinSlikPengusul === 1 ? 'Nonaktifkan' : 'Aktifkan' ?>
+                        class="px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer <?= $petugasSlikAktif === 1 ? 'bg-amber-400 hover:bg-amber-300 text-slate-900' : 'bg-emerald-500 hover:bg-emerald-400 text-white' ?>">
+                    <?= $petugasSlikAktif === 1 ? 'Nonaktifkan' : 'Aktifkan' ?>
                 </button>
+            </div>
+        </div>
+
+        <!-- Banner Peringatan Jika Petugas SLIK Nonaktif -->
+        <div id="bannerPetugasSlikNonaktif" class="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3 shadow-2xs <?= $petugasSlikAktif === 0 ? '' : 'hidden' ?>">
+            <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 text-sm shadow-xs">
+                ⚠️
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center gap-2">
+                    <h4 class="font-bold text-xs uppercase tracking-wide text-amber-900">Peran Petugas SLIK Sedang Dinonaktifkan (Mode Fleksibel AO)</h4>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">Pengusul Mandiri</span>
+                </div>
+                <p class="text-xs text-amber-800 mt-1 leading-relaxed">
+                    Saat ini sistem berjalan dalam <strong>Mode Fleksibel (Single AO)</strong>. Pengusul (Account Officer) memiliki wewenang untuk langsung memproses hasil SLIK, menentukan status kolektibilitas, dan mengunggah berkas iDeb di formulir pengajuan kredit tanpa menunggu Petugas SLIK. Anda tetap dapat memantau data atau mengaktifkan kembali pemisahan peran kapan saja.
+                </p>
             </div>
         </div>
 
@@ -408,11 +426,12 @@
             if (m) m.classList.add('hidden');
         }
 
-        // Toggle Akses SLIK Pengusul
+        // Toggle Status Peran Petugas SLIK
         function toggleAksesPengusul() {
             const btn = document.getElementById('btnToggleAkses');
             const lbl = document.getElementById('labelStatusAkses');
-            btn.disabled = true;
+            const banner = document.getElementById('bannerPetugasSlikNonaktif');
+            if (btn) btn.disabled = true;
 
             fetch('<?= base_url('slik/toggle-akses-pengusul') ?>', {
                 method: 'POST',
@@ -422,16 +441,24 @@
             })
             .then(res => res.json())
             .then(data => {
-                btn.disabled = false;
+                if (btn) btn.disabled = false;
                 if (data.status) {
-                    if (data.is_active) {
-                        lbl.innerHTML = '🟢 Diizinkan (Fleksibel)';
-                        btn.innerHTML = 'Nonaktifkan';
-                        btn.className = 'px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer bg-amber-400 hover:bg-amber-300 text-slate-900';
-                    } else {
-                        lbl.innerHTML = '🔒 Dinonaktifkan (Khusus SLIK)';
-                        btn.innerHTML = 'Aktifkan';
-                        btn.className = 'px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-white';
+                    const isAktif = (data.petugas_slik_aktif === 1);
+                    if (lbl) {
+                        lbl.innerHTML = isAktif ? '🟢 Petugas SLIK AKTIF (SOP Ketat)' : '⚪ Petugas SLIK NONAKTIF (Mode Fleksibel)';
+                    }
+                    if (btn) {
+                        btn.innerHTML = isAktif ? 'Nonaktifkan' : 'Aktifkan';
+                        btn.className = isAktif 
+                            ? 'px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer bg-amber-400 hover:bg-amber-300 text-slate-900' 
+                            : 'px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-sm cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-white';
+                    }
+                    if (banner) {
+                        if (isAktif) {
+                            banner.classList.add('hidden');
+                        } else {
+                            banner.classList.remove('hidden');
+                        }
                     }
 
                     Swal.fire({
@@ -448,7 +475,7 @@
                 }
             })
             .catch(err => {
-                btn.disabled = false;
+                if (btn) btn.disabled = false;
                 Swal.fire('Error', 'Gagal menghubungi server.', 'error');
             });
         }

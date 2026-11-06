@@ -19,6 +19,7 @@ class SettingReferensiModel extends Model
         'color_referensi',
         'urutan',
         'is_active',
+        'is_locked',
         'created_at',
         'updated_at'
     ];

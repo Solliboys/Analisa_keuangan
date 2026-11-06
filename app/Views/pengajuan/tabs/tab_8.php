@@ -3,8 +3,8 @@
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 mb-6">
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
-                            8
-                        </div>
+                <?= (!empty($view_folder) && $view_folder === 'badan_usaha') ? '7' : '8' ?>
+            </div>
                         <div>
                             <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">REKAPITULASI MUTASI REKENING KORAN</h3>
                             <p class="text-[11px] text-slate-500">Pencatatan arus kas masuk (kredit) dan keluar (debit) untuk validasi omzet usaha riil</p>

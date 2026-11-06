@@ -23,6 +23,7 @@ class KreditDisbursementModel extends Model
         'hold_angsuran_nominal',
         'asuransi_jiwa',
         'asuransi_kebakaran',
+        'rincian_biaya_lain',
         'total_potongan',
         'dana_bersih_cair',
     ];

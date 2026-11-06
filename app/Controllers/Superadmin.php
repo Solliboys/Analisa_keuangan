@@ -635,6 +635,50 @@ class Superadmin extends BaseController
     }
 
     /**
+     * Toggle status fitur Petugas SLIK (Aktif / Nonaktif) via AJAX oleh Superadmin
+     */
+    public function togglePetugasSlik()
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses khusus Superadmin.']);
+        }
+
+        $db = \Config\Database::connect();
+        $pengaturan = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+        
+        $currentAktif = (int)($pengaturan['petugas_slik_aktif'] ?? (($pengaturan['ijin_pengusul_isi_slik'] ?? 1) == 0 ? 1 : 0));
+        $newAktif = ($currentAktif === 1) ? 0 : 1;
+        $ijinPengusul = ($newAktif === 1) ? 0 : 1;
+
+        $db->table('pengaturan_sistem')->where('id', 1)->update([
+            'petugas_slik_aktif'     => $newAktif,
+            'ijin_pengusul_isi_slik' => $ijinPengusul,
+            'updated_at'             => date('Y-m-d H:i:s')
+        ]);
+
+        $statusText = ($newAktif === 1) ? 'DIAKTIFKAN (Mode Standar / SOP Ketat)' : 'DINONAKTIFKAN (Mode Fleksibel / Single AO)';
+
+        // Catat Log Aktivitas
+        LogAktivitasModel::catat(
+            'Mengubah alur verifikasi SLIK OJK menjadi: ' . $statusText,
+            'PENGATURAN',
+            'SUCCESS',
+            [
+                'petugas_slik_aktif'     => $newAktif,
+                'ijin_pengusul_isi_slik' => $ijinPengusul
+            ]
+        );
+
+        return $this->response->setJSON([
+            'status'             => true,
+            'is_active'          => $newAktif,
+            'petugas_slik_aktif' => $newAktif,
+            'ijin_pengusul_isi_slik' => $ijinPengusul,
+            'message'            => 'Fitur Petugas SLIK berhasil ' . $statusText
+        ]);
+    }
+
+    /**
      * Menampilkan tabel aktivitas log sistem (Hanya Bisa Download dan Lihat Detail)
      */
     public function log()
@@ -839,22 +883,95 @@ class Superadmin extends BaseController
             return $item['jenis_referensi'];
         }, $rawJenis);
 
-        // Pastikan jenis-jenis standar sistem selalu tersedia di dropdown pilihan modal
-        $standardJenis = [
-            'jns_entitas',
-            'kre_jaminan',
-            'kre_jns',
-            'kre_kepkomite',
-            'kre_lampberkas',
-            'kre_referral',
-            'kre_sts',
-            'kre_tujuan',
-            'slik_hsl',
-            'slik_keterkaitan',
-            'target_kategori',
-            'target_kode'
+        // Metadata nama lengkap, kategori hak akses, dan deskripsi sesuai struktur form input saat ini
+        $mapJenisMetadata = [
+            // Kategori 1: Formulir Dinamis (Bebas Tambah / Edit / Hapus)
+            'kre_jaminan' => [
+                'label'     => 'Jenis Jaminan / Agunan Kredit',
+                'kategori'  => 'fleksibel',
+                'deskripsi' => 'Pilihan jenis agunan pada Tab 1 & Tab 4 (SHM, SHGB, BPKB Mobil, BPKB Motor, Deposito, dll.)',
+            ],
+            'kre_tujuan' => [
+                'label'     => 'Tujuan Pembiayaan Kredit',
+                'kategori'  => 'fleksibel',
+                'deskripsi' => 'Pilihan tujuan penggunaan kredit pada Tab 1 (Modal Kerja, Investasi, Konsumsi/Multiguna, Take Over)',
+            ],
+            'kre_jns' => [
+                'label'     => 'Tipe Aplikasi Kredit',
+                'kategori'  => 'fleksibel',
+                'deskripsi' => 'Pilihan permohonan pada Tab 1 (Fasilitas Baru, Perpanjangan, Top Up, Restrukturisasi)',
+            ],
+            'kre_skema' => [
+                'label'     => 'Skema Pembayaran / Angsuran',
+                'kategori'  => 'fleksibel',
+                'deskripsi' => 'Pilihan skema angsuran pada Tab 1 (Installment, Balloon Payment, Grace Period, Step Up)',
+            ],
+            'bu_bentuk' => [
+                'label'     => 'Bentuk Legalitas Badan Usaha',
+                'kategori'  => 'fleksibel',
+                'deskripsi' => 'Pilihan legalitas perusahaan pada Tab 2 Badan Usaha (PT, CV, Koperasi, Yayasan, Firma, dll.)',
+            ],
+            'dom_status' => [
+                'label'     => 'Status Kepemilikan Tempat Usaha / Domisili',
+                'kategori'  => 'fleksibel',
+                'deskripsi' => 'Pilihan status kepemilikan kantor / tempat tinggal pada Tab 2 (Milik Sendiri, Sewa, HGB, dll.)',
+            ],
+            'disb_biaya' => [
+                'label'     => 'Komponen Biaya Pencairan (Disbursement)',
+                'kategori'  => 'fleksibel',
+                'deskripsi' => 'Rincian komponen potongan biaya pencairan pada Tab 11 (Provisi, Admin, Agent Fee, Asuransi, dll.)',
+            ],
+            'slik_keterkaitan' => [
+                'label'     => 'Keterkaitan Subjek Permohonan SLIK',
+                'kategori'  => 'fleksibel',
+                'deskripsi' => 'Pilihan relasi subjek pada Tab 6 SLIK (Pemohon, Pasangan, Penjamin, Pengurus, Pemegang Saham, dll.)',
+            ],
+            'kre_lampberkas' => [
+                'label'     => 'Kategori Dokumen Persyaratan',
+                'kategori'  => 'fleksibel',
+                'deskripsi' => 'Kategori upload dokumen pada Tab 5 Berkas Persyaratan (Identitas, Agunan, Rekening Koran, Legalitas, dll.)',
+            ],
+            'kre_referral' => [
+                'label'     => 'Sumber Referral / Saluran Pemasaran',
+                'kategori'  => 'fleksibel',
+                'deskripsi' => 'Pilihan asal perolehan nasabah pada formulir (Direct, Broker, Agen Properti, Karyawan, dll.)',
+            ],
+
+            // Kategori 2: Data Inti Sistem & Regulasi (Terkunci - Hanya Edit Keterangan / Warna, Tidak Boleh Dihapus)
+            'jns_entitas' => [
+                'label'     => 'Jenis Entitas Debitur [Sistem]',
+                'kategori'  => 'sistem',
+                'deskripsi' => 'Entitas dasar aplikasi: Perorangan (I) & Badan Usaha (B). Terkunci untuk menjaga logika alur.',
+            ],
+            'kre_sts' => [
+                'label'     => 'Status Alur Pengajuan Kredit [Sistem]',
+                'kategori'  => 'sistem',
+                'deskripsi' => 'Status siklus hidup kredit (Draft, Diajukan, Disetujui, Ditolak). Terkunci sistem.',
+            ],
+            'kre_kepkomite' => [
+                'label'     => 'Keputusan Komite & Reviewer [Sistem]',
+                'kategori'  => 'sistem',
+                'deskripsi' => 'Hasil sidang komite (Disetujui, Disetujui Bersyarat, Ditolak, Revisi ke AO, Pending). Terkunci sistem.',
+            ],
+            'slik_hsl' => [
+                'label'     => 'Hasil Kolektibilitas SLIK OJK [Sistem]',
+                'kategori'  => 'sistem',
+                'deskripsi' => 'Standar regulasi OJK Kolektibilitas 1 s/d 5 (Lancar s/d Macet). Terkunci sistem.',
+            ],
+            'target_kategori' => [
+                'label'     => 'Kategori Prinsip Analisa 5C [Sistem]',
+                'kategori'  => 'sistem',
+                'deskripsi' => 'Pilar analisa 5C: Character, Capacity, Capital, Collateral, Condition. Terkunci sistem.',
+            ],
+            'target_kode' => [
+                'label'     => 'Parameter Batasan Rasio (DSC / LTV) [Sistem]',
+                'kategori'  => 'sistem',
+                'deskripsi' => 'Batas ambang parameter rasio kelayakan keuangan (DSC min, LTV max, Tenor max). Terkunci sistem.',
+            ],
         ];
-        foreach ($standardJenis as $sj) {
+
+        // Pastikan seluruh jenis referensi standar selalu terdaftar
+        foreach (array_keys($mapJenisMetadata) as $sj) {
             if (!in_array($sj, $daftarJenis)) {
                 $daftarJenis[] = $sj;
             }
@@ -869,6 +986,7 @@ class Superadmin extends BaseController
             'active_menu'       => 'referensi',
             'daftar_referensi'  => $daftarReferensi,
             'daftar_jenis'      => $daftarJenis,
+            'map_metadata'      => $mapJenisMetadata,
             'selected_jenis'    => $filterJenis,
             'pengaturan_sistem' => $pengaturanSistem,
             'nama_lengkap'      => session()->get('nama_lengkap'),
@@ -1033,6 +1151,15 @@ class Superadmin extends BaseController
             $msg = 'Data referensi tidak ditemukan.';
             if ($this->request->isAJAX()) {
                 return $this->response->setJSON(['status' => 'error', 'message' => $msg]);
+            }
+            return redirect()->to(base_url('superadmin/referensi'))->with('error', $msg);
+        }
+
+        // Cek apakah data bawaan sistem yang terkunci
+        if (!empty($ref['is_locked']) && (int)$ref['is_locked'] === 1) {
+            $msg = 'Data referensi ini adalah bawaan sistem inti dan tidak boleh dihapus agar alur aplikasi tidak terganggu.';
+            if ($this->request->isAJAX()) {
+                return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => $msg]);
             }
             return redirect()->to(base_url('superadmin/referensi'))->with('error', $msg);
         }

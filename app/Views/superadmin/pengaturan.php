@@ -5,32 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'Pengaturan Sistem & Lembaga | OTW Kredit') ?></title>
     <!-- Tailwind CSS CDN -->
-    <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>">        function toggleApiKeyVisibility() {
-            const input = document.getElementById('inputApiKey');
-            const eyeIcon = document.getElementById('eyeIcon');
-            if (input.type === 'password') {
-                input.type = 'text';
-                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />`;
-            } else {
-                input.type = 'password';
-                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
-            }
-        }
-    </script>
+    <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <!-- SweetAlert2 CDN -->
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
-    <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>">        function toggleApiKeyVisibility() {
-            const input = document.getElementById('inputApiKey');
-            const eyeIcon = document.getElementById('eyeIcon');
-            if (input.type === 'password') {
-                input.type = 'text';
-                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />`;
-            } else {
-                input.type = 'password';
-                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
-            }
-        }
-    </script>
+    <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
     <!-- Google Fonts -->
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <style>
@@ -530,12 +508,12 @@
                 cancelButtonText: 'Batal'
             }).then((res) => {
                 if (res.isConfirmed) {
-                    document.getElementById('inputNamaAplikasi').value = 'OTW Kredit';
-                    document.getElementById('inputSloganAplikasi').value = 'Sistem Analisa Kredit';
-                    document.getElementById('inputNamaLembaga').value = 'PT BPR / Lembaga Pembiayaan';
-                    document.getElementById('inputAlamatLembaga').value = 'BPR Financial Center, Lantai 8, Jakarta Selatan';
-                    document.getElementById('inputEmailLembaga').value = 'info@otwkredit.id';
-                    document.getElementById('inputTeleponLembaga').value = '(021) 5088-2900';
+                    if (document.getElementById('inputNamaAplikasi')) document.getElementById('inputNamaAplikasi').value = 'OTW Kredit';
+                    if (document.getElementById('inputSloganAplikasi')) document.getElementById('inputSloganAplikasi').value = 'Sistem Analisa Kredit';
+                    if (document.getElementById('inputNamaLembaga')) document.getElementById('inputNamaLembaga').value = 'PT BPR / Lembaga Pembiayaan';
+                    if (document.getElementById('inputAlamatLembaga')) document.getElementById('inputAlamatLembaga').value = 'BPR Financial Center, Lantai 8, Jakarta Selatan';
+                    if (document.getElementById('inputEmailLembaga')) document.getElementById('inputEmailLembaga').value = 'info@otwkredit.id';
+                    if (document.getElementById('inputTeleponLembaga')) document.getElementById('inputTeleponLembaga').value = '(021) 5088-2900';
                     updatePreviewKop();
                     Swal.fire({
                         icon: 'success',
@@ -546,8 +524,9 @@
                     });
                 }
             });
-        function toggleSettingPetugasSlik() {
-            const input = document.getElementById('inputPetugasSlikAktif');
+        }
+
+        function updateUiPetugasSlik(isAktif) {
             const btn = document.getElementById('btnTogglePetugasSlik');
             const knob = document.getElementById('toggleKnobPetugasSlik');
             const badge = document.getElementById('badgeStatusSlikSetting');
@@ -555,40 +534,113 @@
             const labelMode = document.getElementById('labelModeSlik');
             const desc = document.getElementById('deskripsiSlikSetting');
             const hint = document.getElementById('hintSlikSetting');
+            const input = document.getElementById('inputPetugasSlikAktif');
 
-            const current = parseInt(input.value) || 0;
-            const next = current === 1 ? 0 : 1;
-            input.value = next;
+            if (input) input.value = isAktif ? '1' : '0';
 
-            if (next === 1) {
-                // Aktif
-                btn.className = 'relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-blue-600';
-                btn.setAttribute('aria-checked', 'true');
-                knob.className = 'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-8';
-                badge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md border text-emerald-700 bg-emerald-50 border-emerald-200';
-                badge.innerText = '🟢 Petugas SLIK Aktif';
-                text.innerText = 'Status: AKTIF';
-                labelMode.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700';
-                labelMode.innerText = 'Mode Standar (SOP Ketat)';
-                desc.innerHTML = '<b>Petugas SLIK Khusus Diaktifkan:</b> Pengusul (AO) <b>tidak bisa</b> langsung menginput atau mengunggah berkas hasil SLIK di formulir pengajuan (Tab 6 terkunci). Hasil verifikasi fasilitas kredit wajib diinput oleh Petugas SLIK terpisah. Pengusul tetap dapat melanjutkan pengisian tahap formulir berikutnya.';
-                hint.innerText = 'Pengusul dibatasi hanya dapat membuat permohonan TXT dan membaca hasil.';
+            if (isAktif) {
+                if (btn) {
+                    btn.className = 'relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-blue-600';
+                    btn.setAttribute('aria-checked', 'true');
+                }
+                if (knob) {
+                    knob.className = 'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-8';
+                }
+                if (badge) {
+                    badge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md border text-emerald-700 bg-emerald-50 border-emerald-200';
+                    badge.innerText = '🟢 Petugas SLIK Aktif';
+                }
+                if (text) text.innerText = 'Status: AKTIF';
+                if (labelMode) {
+                    labelMode.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700';
+                    labelMode.innerText = 'Mode Standar (SOP Ketat)';
+                }
+                if (desc) {
+                    desc.innerHTML = '<b>Petugas SLIK Khusus Diaktifkan:</b> Pengusul (AO) <b>tidak bisa</b> langsung menginput atau mengunggah berkas hasil SLIK di formulir pengajuan (Tab 6 terkunci). Hasil verifikasi fasilitas kredit wajib diinput oleh Petugas SLIK terpisah. Pengusul tetap dapat melanjutkan pengisian tahap formulir berikutnya.';
+                }
+                if (hint) {
+                    hint.innerText = 'Pengusul dibatasi hanya dapat membuat permohonan TXT dan membaca hasil.';
+                }
             } else {
-                // Nonaktif
-                btn.className = 'relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-slate-300';
-                btn.setAttribute('aria-checked', 'false');
-                knob.className = 'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-0';
-                badge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md border text-slate-600 bg-slate-100 border-slate-200';
-                badge.innerText = '⚪ Petugas SLIK Nonaktif';
-                text.innerText = 'Status: NONAKTIF';
-                labelMode.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700';
-                labelMode.innerText = 'Mode Fleksibel (Single AO)';
-                desc.innerHTML = '<b>Petugas SLIK Nonaktif / Bebas:</b> Pengusul (AO) <b>bisa langsung</b> menginput hasil kolektibilitas, ringkasan, serta mengunggah PDF SLIK sendiri di Tab 6 formulir pengajuan kredit.';
-                hint.innerText = 'Pengusul memiliki wewenang penuh mengisi formulir SLIK.';
+                if (btn) {
+                    btn.className = 'relative inline-flex h-8 w-16 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none bg-slate-300';
+                    btn.setAttribute('aria-checked', 'false');
+                }
+                if (knob) {
+                    knob.className = 'pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out translate-x-0';
+                }
+                if (badge) {
+                    badge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md border text-slate-600 bg-slate-100 border-slate-200';
+                    badge.innerText = '⚪ Petugas SLIK Nonaktif';
+                }
+                if (text) text.innerText = 'Status: NONAKTIF';
+                if (labelMode) {
+                    labelMode.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700';
+                    labelMode.innerText = 'Mode Fleksibel (Single AO)';
+                }
+                if (desc) {
+                    desc.innerHTML = '<b>Petugas SLIK Nonaktif / Bebas:</b> Pengusul (AO) <b>bisa langsung</b> menginput hasil kolektibilitas, ringkasan, serta mengunggah PDF SLIK sendiri di Tab 6 formulir pengajuan kredit.';
+                }
+                if (hint) {
+                    hint.innerText = 'Pengusul memiliki wewenang penuh mengisi formulir SLIK.';
+                }
             }
         }
-            function toggleApiKeyVisibility() {
+
+        function toggleSettingPetugasSlik() {
+            const input = document.getElementById('inputPetugasSlikAktif');
+            const current = parseInt(input ? input.value : 0) || 0;
+            const next = current === 1 ? 0 : 1;
+
+            // Update UI langsung untuk respon cepat
+            updateUiPetugasSlik(next === 1);
+
+            // Simpan status langsung via AJAX ke server
+            fetch('<?= base_url('superadmin/toggle-petugas-slik') ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status) {
+                    const isAktif = (parseInt(data.petugas_slik_aktif) === 1);
+                    updateUiPetugasSlik(isAktif);
+                    Swal.fire({
+                        icon: isAktif ? 'success' : 'info',
+                        title: isAktif ? 'Petugas SLIK Diaktifkan' : 'Petugas SLIK Dinonaktifkan',
+                        text: data.message || 'Status alur verifikasi SLIK OJK berhasil diperbarui.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    // Rollback ke state semula jika gagal
+                    updateUiPetugasSlik(current === 1);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal Mengubah Pengaturan',
+                        text: data.message || 'Terjadi kesalahan sistem.'
+                    });
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                // Rollback ke state semula jika koneksi terganggu
+                updateUiPetugasSlik(current === 1);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Kesalahan Jaringan',
+                    text: 'Tidak dapat menghubungi server.'
+                });
+            });
+        }
+
+        function toggleApiKeyVisibility() {
             const input = document.getElementById('inputApiKey');
             const eyeIcon = document.getElementById('eyeIcon');
+            if (!input || !eyeIcon) return;
             if (input.type === 'password') {
                 input.type = 'text';
                 eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />`;

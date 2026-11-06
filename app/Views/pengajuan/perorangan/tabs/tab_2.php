@@ -233,7 +233,12 @@ function hapusBarisUsaha(btn) {
 function updateCardUsahaLabels(card, isBadan, num) {
     const prefixTitle = card.querySelector('.usaha-prefix-title');
     if (prefixTitle) {
-        prefixTitle.innerText = isBadan ? 'Unit Usaha / Perusahaan #' : 'Usaha / Sumber Penghasilan #';
+        prefixTitle.innerText = isBadan ? 'Unit Usaha / Perusahaan #' : 'Pekerjaan / Usaha #';
+    }
+
+    const badgeEl = card.querySelector('.usaha-status-badge');
+    if (badgeEl) {
+        badgeEl.innerText = (num === 1) ? '(Utama)' : (isBadan ? '(Tambahan)' : '(Tambahan / Sampingan)');
     }
 
     const lblNamaUsaha = card.querySelector('.lbl-nama-usaha');
@@ -243,8 +248,8 @@ function updateCardUsahaLabels(card, isBadan, num) {
             lblNamaUsaha.innerText = 'Nama Perusahaan';
             inpNamaUsaha.placeholder = 'Contoh: PT Mandiri Sejahtera';
         } else {
-            lblNamaUsaha.innerText = 'Nama Usaha atau Nama Perusahaan / Tempat Bekerja';
-            inpNamaUsaha.placeholder = 'Nama tempat bekerja / Toko Berkah / Usaha Mandiri';
+            lblNamaUsaha.innerText = 'Nama Perusahaan / Tempat Bekerja / Usaha';
+            inpNamaUsaha.placeholder = 'Contoh: PT Telkom / Dinas Pendidikan / Toko Berkah';
         }
     }
 
@@ -255,14 +260,18 @@ function updateCardUsahaLabels(card, isBadan, num) {
             lblJabatan.innerText = 'Jabatan Pemohon di Usaha';
             inpJabatan.placeholder = 'Direktur / Komisaris / General Manager';
         } else {
-            lblJabatan.innerText = 'Jabatan / Status (Pemilik, Karyawan, dll.)';
-            inpJabatan.placeholder = 'Pemilik / Karyawan / Pengelola';
+            lblJabatan.innerText = 'Jabatan / Status Pekerjaan';
+            inpJabatan.placeholder = 'Contoh: Karyawan Tetap / Manajer / Staf / Pemilik';
         }
     }
 
     const lblLamaUsaha = card.querySelector('.lbl-lama-usaha');
+    const inpLamaUsaha = card.querySelector('.inp-lama-usaha');
     if (lblLamaUsaha) {
-        lblLamaUsaha.innerText = isBadan ? 'Lama Usaha Berjalan' : 'Lama Usaha / Lama Bekerja';
+        lblLamaUsaha.innerText = isBadan ? 'Lama Usaha Berjalan' : 'Lama Bekerja / Masa Kerja';
+        if (inpLamaUsaha && !isBadan) {
+            inpLamaUsaha.placeholder = 'Contoh: 3 Tahun / 5 Tahun';
+        }
     }
 
     const lblAlamatUsaha = card.querySelector('.lbl-alamat-usaha');
@@ -272,26 +281,26 @@ function updateCardUsahaLabels(card, isBadan, num) {
             lblAlamatUsaha.innerText = 'Alamat Lokasi Tempat Usaha / Kantor Operasional';
             inpAlamatUsaha.placeholder = 'Alamat kantor / pabrik / workshop operasional perusahaan';
         } else {
-            lblAlamatUsaha.innerText = 'Alamat Usaha / Tempat Bekerja';
-            inpAlamatUsaha.placeholder = 'Alamat tempat usaha atau alamat kantor / tempat bekerja';
+            lblAlamatUsaha.innerText = 'Alamat Kantor / Tempat Bekerja';
+            inpAlamatUsaha.placeholder = 'Alamat tempat bekerja atau alamat kantor operasional';
         }
     }
 
     const lblNpwp = card.querySelector('.lbl-npwp-usaha');
     if (lblNpwp) {
-        lblNpwp.innerText = isBadan ? 'NPWP Usaha / Badan' : 'NPWP Usaha';
+        lblNpwp.innerText = isBadan ? 'NPWP Usaha / Badan' : 'NPWP Usaha / Perusahaan';
     }
 
     const lblNib = card.querySelector('.lbl-nib');
     if (lblNib) {
-        lblNib.innerText = isBadan ? 'Nomor Induk Berusaha (NIB) / Izin' : 'NIB / Izin Usaha';
+        lblNib.innerText = isBadan ? 'Nomor Induk Berusaha (NIB) / Izin' : 'NIB / Izin Usaha / SK Kerja';
     }
 }
 
 function updateSemuaCardUsaha(isBadan) {
     const btnText = document.getElementById('btn_text_tambah_usaha');
     if (btnText) {
-        btnText.innerText = isBadan ? 'Tambah Unit Usaha / Perusahaan' : 'Tambah Usaha / Pekerjaan Lain';
+        btnText.innerText = isBadan ? 'Tambah Unit Usaha / Perusahaan' : 'Tambah Pekerjaan / Usaha';
     }
 
     const container = document.getElementById('containerUsaha');

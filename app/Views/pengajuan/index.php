@@ -222,12 +222,32 @@
 
         <!-- Table Card -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="relative w-full sm:w-80">
-                    <input type="text" id="searchInput" placeholder="Cari nomor CAM, debitur, usaha..." 
-                           class="w-full pl-9 pr-3 py-2 text-xs font-medium border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition">
-                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                    <!-- Search Box -->
+                    <div class="relative w-full sm:w-72">
+                        <input type="text" id="searchInput" placeholder="Cari nomor CAM, debitur, usaha..." 
+                               class="w-full pl-9 pr-3 py-2 text-xs font-medium border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs">
+                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+
+                    <!-- Dropdown Filter Tipe Debitur -->
+                    <div class="relative w-full sm:w-56 shrink-0">
+                        <select id="filterTipeDebitur" onchange="filterTabelPengajuan()"
+                                class="w-full appearance-none pl-9 pr-9 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs cursor-pointer">
+                            <option value="semua">Semua Tipe Debitur</option>
+                            <option value="perorangan">👤 Perorangan</option>
+                            <option value="badan_usaha">🏢 Badan Usaha</option>
+                        </select>
+                        <div class="absolute left-3 top-2.5 pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        </div>
+                        <div class="absolute right-3 top-2.5 pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="text-xs text-slate-500 font-medium">
                     Menampilkan <span id="countDisplay" class="font-bold text-slate-800"><?= count($daftar_kredit) ?></span> pengajuan
                 </div>
@@ -239,6 +259,7 @@
                         <tr>
                             <th class="py-3.5 px-4">No. Aplikasi</th>
                             <th class="py-3.5 px-4">Nama Debitur & Usaha</th>
+                            <th class="py-3.5 px-4">Tipe Debitur</th>
                             <th class="py-3.5 px-4">Plafon Pinjaman</th>
                             <th class="py-3.5 px-4">Skema & Tenor</th>
                             <th class="py-3.5 px-4">Jaminan</th>
@@ -250,7 +271,7 @@
                     <tbody class="divide-y divide-slate-100 font-normal">
                         <?php if (empty($daftar_kredit)): ?>
                             <tr>
-                                <td colspan="8" class="text-center py-12 text-slate-400">
+                                <td colspan="9" class="text-center py-12 text-slate-400">
                                     <div class="w-12 h-12 mx-auto mb-3 text-slate-300">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     </div>
@@ -260,14 +281,32 @@
                             </tr>
                         <?php else: ?>
                             <?php foreach ($daftar_kredit as $row): ?>
-                                <tr class="hover:bg-slate-50 transition" id="row-kredit-<?= $row['kredit_id'] ?>" data-tanggal="<?= date('Y-m-d', strtotime($row['created_at'])) ?>">
+                                <?php
+                                    $jdRaw = $row['jenis_debitur'] ?? '';
+                                    $isBadan = (!empty($jdRaw) && (stripos($jdRaw, 'badan') !== false || stripos($jdRaw, 'pt') !== false || stripos($jdRaw, 'cv') !== false));
+                                    $tipeKey = $isBadan ? 'badan_usaha' : 'perorangan';
+                                ?>
+                                <tr class="hover:bg-slate-50 transition" id="row-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>" data-tanggal="<?= date('Y-m-d', strtotime($row['created_at'])) ?>">
                                     <td class="py-3.5 px-4 font-bold text-slate-900 whitespace-nowrap">
                                         <?= esc($row['nomor_aplikasi']) ?>
                                         <span class="block text-xs font-normal text-slate-400"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?></span>
                                     </td>
                                     <td class="py-3.5 px-4">
                                         <div class="font-bold text-slate-900"><?= esc($row['nama_debitur'] ?: '-') ?></div>
-                                        <div class="text-xs text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? '-')) ?></div>
+                                        <div class="text-xs text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?></div>
+                                    </td>
+                                    <td class="py-3.5 px-4 whitespace-nowrap">
+                                        <?php if ($isBadan): ?>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
+                                                <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                                Badan Usaha
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs">
+                                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                                Perorangan
+                                            </span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="py-3.5 px-4 font-bold text-blue-700 whitespace-nowrap">
                                         Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?>
@@ -394,8 +433,8 @@
         </div>
     </footer>
 
-    <script>
-        // Logika Filter Terpadu: Rentang Waktu & Pencarian Kata Kunci
+        <script>
+        // Logika Filter Terpadu: Rentang Waktu, Tipe Debitur, & Pencarian Kata Kunci
         function filterTabelPengajuan() {
             const rentang = document.getElementById('filterRentangWaktu')?.value || 'semua';
             const customBox = document.getElementById('customDateRangeBox');
@@ -450,6 +489,8 @@
                 if (tglS) endDate = tglS;
             }
 
+            const filterSelect = document.getElementById('filterTipeDebitur');
+            const selectedTipe = filterSelect ? filterSelect.value : 'semua';
             const searchInput = document.getElementById('searchInput');
             const term = (searchInput?.value || '').toLowerCase().trim();
             const rows = document.querySelectorAll('#tabelPengajuan tbody tr[data-tanggal]');
@@ -457,16 +498,17 @@
 
             rows.forEach(row => {
                 const rowDate = row.getAttribute('data-tanggal');
+                const rowTipe = row.getAttribute('data-jenis-debitur') || '';
                 const rowText = row.innerText.toLowerCase();
 
                 let matchDate = true;
-                if (startDate && rowDate < startDate) matchDate = false;
-                if (endDate && rowDate > endDate) matchDate = false;
+                if (startDate && rowDate && rowDate < startDate) matchDate = false;
+                if (endDate && rowDate && rowDate > endDate) matchDate = false;
 
-                let matchSearch = true;
-                if (term && !rowText.includes(term)) matchSearch = false;
+                const matchTipe = (selectedTipe === 'semua' || rowTipe === selectedTipe);
+                const matchSearch = (!term || rowText.includes(term));
 
-                if (matchDate && matchSearch) {
+                if (matchDate && matchTipe && matchSearch) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -484,6 +526,22 @@
         if (searchInput) {
             searchInput.addEventListener('keyup', filterTabelPengajuan);
         }
+
+        // Dropdown Profil
+        function toggleProfileDropdown(e) {
+            e.stopPropagation();
+            const menu = document.getElementById('dropdownMenuProfil');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        // Tutup dropdown saat klik di luar
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('userProfileDropdown');
+            const menu = document.getElementById('dropdownMenuProfil');
+            if (dropdown && !dropdown.contains(e.target) && menu) {
+                menu.classList.add('hidden');
+            }
+        });
     </script>
 
     <!-- Modal Pop-up Laporan Analisa AI & Rekomendasi Komite Kredit (Sesuai Screenshot) -->

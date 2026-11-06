@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between pb-5 border-b border-slate-100 mb-6">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
-                5
+                <?= (!empty($view_folder) && $view_folder === 'badan_usaha') ? '4' : '5' ?>
             </div>
             <div>
                 <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">DOKUMEN PERSYARATAN & BERKAS LEGALITAS</h3>
@@ -95,6 +95,13 @@
                             $rawKat = trim($doc['kategori_dokumen'] ?? '');
                             $catatan = trim($doc['catatan_dokumen'] ?? '');
                             $ukuranKb = number_format(($doc['ukuran_file_bytes'] ?? 0) / 1024, 1);
+
+                            // Format nama file tampilan agar selalu rapi sesuai kategori jika masih UUID / hash acak
+                            $namaFileDisplay = $doc['nama_file_asli'] ?? '';
+                            if (preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i', $namaFileDisplay) || preg_match('/^[a-f0-9]{32}/i', $namaFileDisplay)) {
+                                $cleanKatDisplay = preg_replace('/[^a-zA-Z0-9]+/', '_', $rawKat ?: 'Dokumen');
+                                $namaFileDisplay = trim($cleanKatDisplay, '_') . '.' . strtolower($ext);
+                            }
                         ?>
                         <div class="p-3 bg-white border border-slate-200/90 rounded-2xl flex flex-col gap-2.5 text-xs hover:border-blue-300 hover:shadow-xs transition" id="docRow_<?= $doc['dokumen_id'] ?>">
                             <!-- Baris Atas: Info File & Tombol Aksi (Hapus di sebelah kiri Lihat File) -->
@@ -104,8 +111,8 @@
                                         <?= $ext ?>
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="font-bold text-slate-800 text-xs sm:text-sm leading-snug truncate" title="<?= esc($doc['nama_file_asli']) ?>">
-                                            <?= esc($doc['nama_file_asli']) ?>
+                                        <div class="font-bold text-slate-800 text-xs sm:text-sm leading-snug truncate" title="<?= esc($namaFileDisplay) ?>">
+                                            <?= esc($namaFileDisplay) ?>
                                         </div>
                                         <div class="flex flex-wrap items-center gap-2 mt-0.5">
                                             <input type="hidden" id="kategoriDokumen_<?= $doc['dokumen_id'] ?>" value="<?= esc($rawKat) ?>">
@@ -271,9 +278,22 @@ async function uploadBerkasDokumenTab5(input) {
         showToast('Mengunggah dokumen...', 'info');
     }
 
-    const kategoriPilihan = document.getElementById('kategoriUpload')?.value || 'KTP & NPWP';
+    const kategoriSelect = document.getElementById('kategoriUpload');
+    const kategoriPilihan = kategoriSelect?.value || 'KTP & NPWP';
+
+    // Rename file di sisi klien agar langsung bernama kategori
+    const ext = (finalFile.name || '').split('.').pop() || (finalFile.type === 'application/pdf' ? 'pdf' : 'jpg');
+    let cleanKatClient = kategoriPilihan.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    const clientFileName = (cleanKatClient || 'Dokumen') + '.' + ext.toLowerCase();
+    let fileToUpload = finalFile;
+    try {
+        fileToUpload = new File([finalFile], clientFileName, { type: finalFile.type });
+    } catch (e) {
+        fileToUpload = finalFile;
+    }
+
     const formData = new FormData();
-    formData.append('file', finalFile);
+    formData.append('file', fileToUpload);
     formData.append('kredit_id', activeKreditId);
     formData.append('kategori', kategoriPilihan);
     formData.append('catatan', '');
