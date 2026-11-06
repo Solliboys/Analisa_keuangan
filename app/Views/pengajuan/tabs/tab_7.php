@@ -54,8 +54,69 @@ $renderFilePreview = function($filePath) {
                     <div class="flex items-center gap-2.5 self-start sm:self-auto">
                         <button type="button" id="btnAiWebcheck" onclick="jalankanAiWebcheck()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-md hover:shadow-lg cursor-pointer">
                             <svg class="w-4 h-4 text-amber-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            <span>1-Klik AI Scan 5 Aspek Web Check</span>
+                            <span>Cek Rekam Jejak Otomatis</span>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Box Loading Otomatis saat 1-Klik AI Scan Dijalankan -->
+                <div id="tab7_loading_box" class="hidden mb-6 p-5 bg-blue-50/80 border border-blue-200 rounded-2xl space-y-3 text-center animate-in fade-in duration-150">
+                    <div class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white animate-spin shadow-sm">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                    </div>
+                    <div>
+                        <h4 class="text-xs sm:text-sm font-extrabold text-blue-950">Sedang Memindai Perkara MA & Jejak Digital (Individu + Perusahaan)...</h4>
+                        <p id="tab7_loading_subjek" class="text-[11px] font-semibold text-blue-700 mt-0.5">Melacak rekam jejak pidana, perdata, kepailitan/PKPU, dan pemberitaan media online</p>
+                    </div>
+                </div>
+
+                <!-- Panel Ringkasan Hasil Pelacakan Ganda (Orang/Pengurus & Perusahaan/Usaha) -->
+                <div id="tab7_summary_box" class="hidden mb-6 p-4 sm:p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 shadow-2xs">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
+                        <div class="space-y-0.5">
+                            <div class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                                <span>🛡️ Hasil Radar Deteksi Risiko Hukum & Reputasi (MA + Media Live):</span>
+                            </div>
+                            <p id="tab7_ringkasan_risiko" class="text-xs font-bold text-slate-800 leading-relaxed"></p>
+                        </div>
+                        <div id="tab7_badge_risiko" class="self-start sm:self-auto px-3.5 py-1.5 rounded-full text-xs font-extrabold shrink-0 bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            🟢 LOW RISK / BERSIH
+                        </div>
+                    </div>
+
+                    <!-- Profil Subjek -->
+                    <div id="tab7_profil_box" class="hidden p-3 bg-white border border-slate-200/90 rounded-xl text-xs">
+                        <span class="font-bold text-slate-700">📌 Profil Teridentifikasi: </span>
+                        <span id="tab7_profil_teks" class="text-slate-600 leading-relaxed"></span>
+                    </div>
+
+                    <!-- 2 Kartu Status: Individu/Pengurus vs Perusahaan/Usaha -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        <!-- Kartu 1: Individu / Pengurus -->
+                        <div id="tab7_card_individu" class="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2 shadow-2xs">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 truncate">
+                                    <span>👤 Lacak Orang / Pengurus:</span>
+                                    <span id="tab7_nama_individu" class="text-blue-700 truncate">-</span>
+                                </span>
+                                <span id="tab7_badge_individu" class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-100 text-emerald-800 shrink-0">AMAN</span>
+                            </div>
+                            <p id="tab7_status_individu" class="text-[11px] text-slate-600 leading-relaxed"></p>
+                            <div id="tab7_links_individu" class="pt-1 flex flex-wrap items-center gap-1.5"></div>
+                        </div>
+
+                        <!-- Kartu 2: Perusahaan / Tempat Usaha -->
+                        <div id="tab7_card_perusahaan" class="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2 shadow-2xs">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 truncate">
+                                    <span>🏢 Lacak Perusahaan / Usaha:</span>
+                                    <span id="tab7_nama_perusahaan" class="text-indigo-700 truncate">-</span>
+                                </span>
+                                <span id="tab7_badge_perusahaan" class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-100 text-emerald-800 shrink-0">AMAN</span>
+                            </div>
+                            <p id="tab7_status_perusahaan" class="text-[11px] text-slate-600 leading-relaxed"></p>
+                            <div id="tab7_links_perusahaan" class="pt-1 flex flex-wrap items-center gap-1.5"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -64,8 +125,8 @@ $renderFilePreview = function($filePath) {
                     <div class="p-4 sm:p-5 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div>
-                                <span class="text-xs font-bold text-slate-800">1. Penelusuran Perkara Pengadilan (SIPP)</span>
-                                <span class="text-[11px] text-slate-400 block sm:inline sm:ml-2">PN / PA / PTUN / Pengadilan Niaga</span>
+                                <span class="text-xs font-bold text-slate-800">1. Penelusuran Perkara Pengadilan (SIPP & Putusan MA)</span>
+                                <span class="text-[11px] text-slate-400 block sm:inline sm:ml-2">PN / PA / PTUN / Pengadilan Niaga / Mahkamah Agung</span>
                             </div>
                             <div class="flex items-center gap-2 self-end sm:self-auto">
                                 <!-- Dropdown Bantuan Narasi -->
@@ -89,9 +150,16 @@ $renderFilePreview = function($filePath) {
                             </div>
                         </div>
                     </div>
-                    <textarea id="sipp_keterangan" name="sipp_keterangan" rows="2" 
+                    <textarea id="sipp_keterangan" name="sipp_keterangan" rows="3" 
                                   placeholder="Tuliskan hasil penelusuran perkara pengadilan..." 
                                   class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-xl p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs leading-relaxed"><?= esc($webcheck['sipp_keterangan'] ?? 'Tidak ditemukan perkara perdata, pidana, atau kepailitan aktif atas nama calon debitur.') ?></textarea>
+                        <!-- Bukti Link Direktori Putusan MA (Otomatis muncul setelah 1-Klik Scan) -->
+                        <div id="tab7_bukti_ma_box" class="hidden p-3 bg-white rounded-xl border border-blue-200/80 space-y-2">
+                            <div class="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                                <span>⚖️ Tautan Bukti Pencarian Direktori Putusan Mahkamah Agung RI (Orang & Perusahaan):</span>
+                            </div>
+                            <div id="tab7_bukti_ma_list" class="flex flex-wrap gap-2"></div>
+                        </div>
                         <!-- Upload Bukti SIPP -->
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-slate-200/60">
                             <div class="flex items-center gap-2">
@@ -137,7 +205,7 @@ $renderFilePreview = function($filePath) {
                                 </div>
                             </div>
                         </div>
-                        <textarea id="internet_keterangan" name="internet_keterangan" rows="2" 
+                        <textarea id="internet_keterangan" name="internet_keterangan" rows="3" 
                                   placeholder="Tuliskan hasil penelusuran media online..." 
                                   class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-xl p-3 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs leading-relaxed"><?= esc($webcheck['internet_keterangan'] ?? 'Hasil penelusuran nama debitur dan usaha bersih dari pemberitaan negatif.') ?></textarea>
                         <!-- Upload Bukti Media Online -->
@@ -296,6 +364,27 @@ $renderFilePreview = function($filePath) {
                                 <?= $renderFilePreview($webcheck['negatif_file'] ?? '') ?>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Area Bukti & Link Referensi (Putusan MA & Berita Media Online Live) di Bawah 5 Aspek -->
+                    <div id="tab7_area_berita" class="hidden p-4 sm:p-5 bg-blue-50/70 rounded-2xl border border-blue-200 space-y-3 shadow-2xs">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-blue-200/70">
+                            <div>
+                                <h4 class="text-xs sm:text-sm font-extrabold text-blue-950 flex items-center gap-1.5">
+                                    <span>🔗 Bukti & Tautan Referensi Hasil Pelacakan (Direktori Putusan MA & Media Online)</span>
+                                </h4>
+                                <p class="text-[11px] text-blue-700 mt-0.5">Klik tautan di bawah untuk membuka bukti perkara Mahkamah Agung atau liputan berita terkait Individu/Pengurus & Perusahaan</p>
+                            </div>
+                            <span id="tab7_count_berita" class="self-start sm:self-auto text-[10px] text-blue-800 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-full font-extrabold shrink-0">
+                                Live Radar MA & Media
+                            </span>
+                        </div>
+
+                        <!-- Link Direktori Putusan MA & Pencarian Hukum -->
+                        <div id="tab7_bottom_ma_links" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
+
+                        <!-- Daftar Artikel Berita / Kasus yang Ditemukan -->
+                        <div id="tab7_list_berita" class="space-y-2 pt-1"></div>
                     </div>
                 </div>
             </div>

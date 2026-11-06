@@ -679,6 +679,171 @@ class Superadmin extends BaseController
     }
 
     /**
+     * Toggle status fitur individual (Feature Flag) via AJAX oleh Superadmin
+     */
+    public function toggleFeatureFlag()
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses khusus Superadmin.']);
+        }
+
+        $feature = trim($this->request->getPost('feature') ?? '');
+        $value   = $this->request->getPost('value');
+
+        $allowedFeatures = [
+            'fitur_ai_aktif',
+            'fitur_badan_usaha_aktif',
+            'mode_approval_komite',
+            'fitur_disbursement_aktif',
+            'mode_strict_dokumen'
+        ];
+
+        if (!in_array($feature, $allowedFeatures)) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => false, 'message' => 'Fitur tidak dikenali.']);
+        }
+
+        $db = \Config\Database::connect();
+        $pengaturan = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+
+        if ($feature === 'mode_approval_komite') {
+            $newVal = in_array($value, ['cepat', 'bertingkat']) ? $value : (($pengaturan['mode_approval_komite'] ?? 'cepat') === 'cepat' ? 'bertingkat' : 'cepat');
+            $statusText = ($newVal === 'bertingkat') ? 'Mode Bertingkat (Hierarki Reviewer lalu CEO)' : 'Mode Cepat (Siapa cepat Reviewer/CEO)';
+        } else {
+            if ($value !== null && $value !== '') {
+                $newVal = (int)$value === 1 ? 1 : 0;
+            } else {
+                $currentVal = (int)($pengaturan[$feature] ?? 1);
+                $newVal = ($currentVal === 1) ? 0 : 1;
+            }
+            $statusText = ($newVal === 1) ? 'DIAKTIFKAN' : 'DINONAKTIFKAN';
+        }
+
+        $db->table('pengaturan_sistem')->where('id', 1)->update([
+            $feature     => $newVal,
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        // Catat Log Aktivitas
+        LogAktivitasModel::catat(
+            "Mengubah switch fitur [{$feature}] menjadi: {$statusText}",
+            'PENGATURAN',
+            'SUCCESS',
+            [
+                'feature'   => $feature,
+                'new_value' => $newVal
+            ]
+        );
+
+        return $this->response->setJSON([
+            'status'     => true,
+            'feature'    => $feature,
+            'new_value'  => $newVal,
+            'status_text'=> $statusText,
+            'message'    => "Fitur {$feature} berhasil {$statusText}."
+        ]);
+    }
+
+    /**
+     * Backup database lengkap (struktur + data) ke file .sql, lalu diunduh langsung oleh Superadmin.
+     * Salinan juga disimpan di writable/backups/ agar ada arsip di server.
+     */
+    public function backupDatabase()
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            return $redirect;
+        }
+
+        @set_time_limit(0);
+        $db     = \Config\Database::connect();
+        $tables = $db->listTables();
+
+        $sql  = "-- OTW Credit Engine - Backup Database\n";
+        $sql .= "-- Dibuat: " . date('Y-m-d H:i:s') . " oleh " . (session()->get('nama_lengkap') ?? '-') . "\n\n";
+        $sql .= "SET FOREIGN_KEY_CHECKS=0;\nSET NAMES utf8mb4;\n\n";
+
+        foreach ($tables as $table) {
+            $create = $db->query('SHOW CREATE TABLE `' . $table . '`')->getRowArray();
+            $createSql = $create['Create Table'] ?? array_values($create)[1] ?? '';
+            $sql .= "DROP TABLE IF EXISTS `{$table}`;\n{$createSql};\n\n";
+
+            $rows = $db->table($table)->get()->getResultArray();
+            foreach (array_chunk($rows, 200) as $chunk) {
+                $cols = '`' . implode('`,`', array_keys($chunk[0])) . '`';
+                $vals = [];
+                foreach ($chunk as $row) {
+                    $vals[] = '(' . implode(',', array_map(
+                        static fn($v) => $v === null ? 'NULL' : $db->escape((string) $v),
+                        array_values($row)
+                    )) . ')';
+                }
+                $sql .= "INSERT INTO `{$table}` ({$cols}) VALUES\n" . implode(",\n", $vals) . ";\n";
+            }
+            $sql .= "\n";
+        }
+        $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
+
+        $filename = 'backup_otw_' . date('Ymd_His') . '.sql';
+        $dir      = WRITEPATH . 'backups/';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        file_put_contents($dir . $filename, $sql);
+
+        LogAktivitasModel::catat(
+            'Mengunduh backup database: ' . $filename,
+            'PENGATURAN',
+            'SUCCESS',
+            ['file' => $filename, 'jumlah_tabel' => count($tables)]
+        );
+
+        return $this->response->download($dir . $filename, null)->setFileName($filename);
+    }
+
+    /**
+     * Backup folder uploads (dokumen, bukti, foto) dalam satu file ZIP untuk disalin ke flashdisk.
+     */
+    public function backupBerkas()
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            return $redirect;
+        }
+
+        if (!class_exists('ZipArchive')) {
+            return redirect()->to('/superadmin/pengaturan')->with('error', 'Ekstensi PHP ZipArchive belum aktif di server.');
+        }
+
+        @set_time_limit(0);
+        $src = FCPATH . 'uploads';
+        if (!is_dir($src)) {
+            return redirect()->to('/superadmin/pengaturan')->with('error', 'Folder uploads belum ada / belum ada berkas.');
+        }
+
+        $dir = WRITEPATH . 'backups/';
+        if (!is_dir($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $filename = 'backup_berkas_' . date('Ymd_His') . '.zip';
+        $zipPath  = $dir . $filename;
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return redirect()->to('/superadmin/pengaturan')->with('error', 'Gagal membuat file ZIP backup.');
+        }
+
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($src, \FilesystemIterator::SKIP_DOTS));
+        foreach ($it as $file) {
+            if ($file->isFile()) {
+                $zip->addFile($file->getPathname(), 'uploads/' . substr($file->getPathname(), strlen($src) + 1));
+            }
+        }
+        $zip->close();
+
+        LogAktivitasModel::catat('Mengunduh backup berkas upload: ' . $filename, 'PENGATURAN', 'SUCCESS', ['file' => $filename]);
+
+        return $this->response->download($zipPath, null)->setFileName($filename);
+    }
+
+    /**
      * Menampilkan tabel aktivitas log sistem (Hanya Bisa Download dan Lihat Detail)
      */
     public function log()

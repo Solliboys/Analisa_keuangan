@@ -86,6 +86,9 @@ $routes->group('superadmin', static function ($routes) {
     $routes->post('simpan-pengaturan-ai', 'Superadmin::simpanPengaturanAi');
     $routes->get('pengaturan', 'Superadmin::pengaturan');
     $routes->post('toggle-petugas-slik', 'Superadmin::togglePetugasSlik');
+    $routes->post('toggle-fitur', 'Superadmin::toggleFeatureFlag');
+    $routes->get('backup-database', 'Superadmin::backupDatabase');
+    $routes->get('backup-berkas', 'Superadmin::backupBerkas');
     $routes->get('hapus-simulasi/(:num)', 'Superadmin::hapusSimulasi/$1');
     $routes->post('hapus-simulasi/(:num)', 'Superadmin::hapusSimulasi/$1');
     $routes->get('log', 'Superadmin::log');

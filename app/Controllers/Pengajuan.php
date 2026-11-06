@@ -1225,9 +1225,29 @@ class Pengajuan extends BaseController
         $kota            = $this->request->getPost('kota') ?? '';
         $bidangUsaha     = $this->request->getPost('bidang_usaha') ?? '';
         $catatanTambahan = $this->request->getPost('catatan_tambahan') ?? '';
+        $jenisForm       = $this->request->getPost('jenis_form') ?? 'perorangan';
+        $daftarPengurus  = $this->request->getPost('daftar_pengurus') ?? '';
+
+        // Tambahan parameter 4 Variabel Inti Pembeda Homonim (Nama & Kota Sama)
+        $metaIdentitas = [
+            'bentuk_usaha'   => $this->request->getPost('bentuk_usaha') ?? '',
+            'tanggal_lahir'  => $this->request->getPost('tanggal_lahir') ?? '',
+            'umur_debitur'   => $this->request->getPost('umur_debitur') ?? '',
+            'jabatan'        => $this->request->getPost('jabatan') ?? '',
+            'alamat_lengkap' => $this->request->getPost('alamat_lengkap') ?? '',
+        ];
 
         $service = new GeminiAiService();
-        $hasil = $service->investigasiWebcheck($namaDebitur, $namaUsaha, $kota, $bidangUsaha, $catatanTambahan);
+        $hasil = $service->investigasiWebcheck(
+            $namaDebitur,
+            $namaUsaha,
+            $kota,
+            $bidangUsaha,
+            $catatanTambahan,
+            $jenisForm,
+            $daftarPengurus,
+            $metaIdentitas
+        );
 
         return $this->response->setJSON($hasil);
     }

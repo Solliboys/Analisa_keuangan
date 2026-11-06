@@ -371,7 +371,7 @@ function validateTab(tabNum) {
         const hasFilled = (sipp && sipp.value.trim()) || (internet && internet.value.trim()) || (dhn && dhn.value.trim());
         if (!hasFilled) {
             const btnAi = document.getElementById('btnAiWebcheck');
-            addError(btnAi, 'Harap jalankan verifikasi Web Check (Klik "1-Klik AI Scan" atau isi keterangan penelusuran)');
+            addError(btnAi, 'Harap jalankan verifikasi Web Check (Klik "Cek Rekam Jejak Otomatis" atau isi keterangan penelusuran)');
             // Jika pengguna mengetik manual di salah satu keterangan, bersihkan error pada tombol AI
             [sipp, internet, dhn].forEach(inputEl => {
                 if (inputEl) {
@@ -621,9 +621,37 @@ function handleStepperClick(targetTab) {
 
     const normTarget = normalizeTab(targetTab);
 
-    // KETIKA LONCAT KE TAHAP 6 (SLIK/CLIK):
-    // Semua langkah sebelumnya (1, 2, 3, 4, 5) otomatis menjadi HIJAU (Selesai ✓)
-    if (normTarget === 6) {
+    // CEK PERSYARATAN IDENTITAS (TAB 2) UNTUK TAHAP LANJUTAN:
+    // Jika user ingin loncat ke Tab 6 (SLIK) atau Tab 7 (Web Check), pastikan nama debitur / nama usaha di Tab 2 sudah terisi!
+    if ((normTarget === 6 || normTarget === 7) && curIdx < findStepIndex(steps, 2)) {
+        const valTab2 = validateTab(2);
+        if (!valTab2.valid) {
+            tabValidationStatus[currentTab] = false;
+            updateStepperVisuals();
+            const namaTabTujuan = normTarget === 7 ? 'Web Check' : 'SLIK / CLIK';
+            const labelLangkah2 = window.IS_BADAN_USAHA ? 'Langkah 2: Legalitas Usaha & Tim' : 'Langkah 2: Info Pribadi Calon Debitur';
+            
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Perlu Data Identitas',
+                    text: `Untuk membuka tahap ${namaTabTujuan}, harap lengkapi identitas nama dan data pada ${labelLangkah2} terlebih dahulu!`,
+                    confirmButtonText: 'Isi Langkah 2 Sekarang',
+                    confirmButtonColor: '#2563eb'
+                }).then(() => {
+                    goToTab(2);
+                });
+            } else {
+                alert(`Harap lengkapi identitas pada Langkah 2 terlebih dahulu sebelum membuka ${namaTabTujuan}.`);
+                goToTab(2);
+            }
+            return;
+        }
+    }
+
+    // KETIKA LONCAT KE TAHAP 6 (SLIK/CLIK) ATAU TAHAP 7 (WEB CHECK):
+    // Semua langkah sebelumnya otomatis menjadi HIJAU (Selesai ✓) asalkan syarat identitas di atas sudah terpenuhi
+    if (normTarget === 6 || normTarget === 7) {
         for (let k = 0; k < targetIdx; k++) {
             const stepNum = steps[k];
             tabValidationStatus[stepNum] = true;
@@ -2815,11 +2843,528 @@ function terapkanHasilMaKeForm() {
 }
 
 /* =========================================================================
- * FITUR MODAL AI WEB CHECK (5 ASPEK BACKGROUND SCREENING)
+ * FITUR 1-KLIK AUTO AI WEB CHECK (PERORANGAN & BADAN USAHA + DIREKTORI MA)
  * ========================================================================= */
 
-function jalankanAiWebcheck() {
-    bukaModalAiWebcheck();
+function hitungUmurDariTanggal(tglString) {
+    if (!tglString) return '';
+    const birthDate = new Date(tglString);
+    if (isNaN(birthDate.getTime())) return '';
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age > 0 && age < 120 ? `${age} tahun (Lahir: ${tglString})` : '';
+}
+
+function ekstrakKotaDariAlamat(alamat, fallbackTempatLahir = '') {
+    let kota = '';
+    if (alamat) {
+        const parts = alamat.split(/[,.\n-]/);
+        for (let part of parts) {
+            part = part.trim();
+            if (/kota|kabupaten|kab\b|jakarta|surabaya|bandung|semarang|medan|malang|solo|yogya|sidoarjo|gresik|bekasi|tangerang|depok|bogor|denpasar|makassar|palembang|balikpapan|samarinda|kediri|jember|banyuwangi|mojokerto|pasuruan|probolinggo|madiun|blitar|tuban|lamongan|bojonegoro/i.test(part)) {
+                kota = part;
+                break;
+            }
+        }
+        if (!kota && parts.length > 1) kota = parts[parts.length - 1].trim();
+    }
+    if (!kota && fallbackTempatLahir) {
+        kota = fallbackTempatLahir.trim();
+    }
+    return kota;
+}
+
+function ambilDataSubjekWebcheck() {
+    const isBadanUsaha = Boolean(window.IS_BADAN_USAHA || document.getElementById('nama_usaha_bu'));
+    let namaDebitur = '';
+    let tanggalLahir = '';
+    let umurDebitur = '';
+    let jabatan = '';
+    let bentukUsaha = '';
+    let namaUsaha = '';
+    let bidangUsaha = '';
+    let alamatLengkap = '';
+    let kota = '';
+    let daftarPengurus = '';
+
+    if (isBadanUsaha) {
+        // 4 VARIABEL INTI BADAN USAHA:
+        // 1. Bentuk Badan Hukum + Nama Usaha
+        bentukUsaha = document.getElementById('jenis_debitur_bu')?.value?.trim() || 'Badan Usaha';
+        namaUsaha = document.getElementById('nama_usaha_bu')?.value?.trim()
+            || document.querySelector('input[name="nama_usaha"]')?.value?.trim()
+            || '';
+
+        // 2. Bidang Usaha / Sektor Industri
+        bidangUsaha = document.getElementById('bidang_usaha_bu')?.value?.trim()
+            || document.querySelector('input[name="bidang_usaha"]')?.value?.trim()
+            || '';
+
+        // 3. Alamat Lengkap Kedudukan Usaha & Kota
+        alamatLengkap = document.getElementById('alamat_usaha_bu')?.value?.trim()
+            || document.querySelector('textarea[name="alamat_usaha"]')?.value?.trim()
+            || '';
+
+        // 4. Daftar Pengurus / Direksi + Jabatan + Umur (Tanggal Lahir) + Alamat
+        const namaEls = document.querySelectorAll('.inp-karyawan-nama');
+        const jabatanEls = document.querySelectorAll('.inp-karyawan-jabatan');
+        const tglLahirEls = document.querySelectorAll('.inp-karyawan-tanggal-lahir');
+        const tmpLahirEls = document.querySelectorAll('.inp-karyawan-tempat-lahir');
+        const alamatKarEls = document.querySelectorAll('.inp-karyawan-alamat');
+
+        const listPengurus = [];
+        namaEls.forEach((el, idx) => {
+            const n = el.value?.trim();
+            if (!n) return;
+            const j = jabatanEls[idx]?.value?.trim() || 'Pengurus';
+            const tgl = tglLahirEls[idx]?.value?.trim() || '';
+            const tmp = tmpLahirEls[idx]?.value?.trim() || '';
+            const alm = alamatKarEls[idx]?.value?.trim() || '';
+            const umurStr = hitungUmurDariTanggal(tgl);
+            const kotaPengurus = ekstrakKotaDariAlamat(alm, tmp);
+
+            if (!namaDebitur) {
+                namaDebitur = n;
+                jabatan = j;
+                tanggalLahir = tgl;
+                umurDebitur = umurStr;
+            }
+
+            let detailPengurus = `${n} (${j}`;
+            if (umurStr) detailPengurus += `, Usia: ${umurStr}`;
+            if (kotaPengurus) detailPengurus += `, Domisili: ${kotaPengurus}`;
+            detailPengurus += ')';
+            listPengurus.push(detailPengurus);
+        });
+
+        if (!namaDebitur) {
+            namaDebitur = document.getElementById('nama_debitur_hidden')?.value?.trim() || namaUsaha;
+        }
+        daftarPengurus = listPengurus.join('; ');
+        kota = ekstrakKotaDariAlamat(alamatLengkap, document.getElementById('tempat_lahir')?.value || '');
+    } else {
+        // 4 VARIABEL INTI PERORANGAN:
+        // 1. Nama Lengkap Debitur
+        bentukUsaha = 'Perorangan / Individu';
+        namaDebitur = document.getElementById('nama_debitur_tab2')?.value?.trim()
+            || document.getElementById('nama_debitur')?.value?.trim()
+            || '';
+
+        // 2. Tanggal Lahir -> Umur
+        tanggalLahir = document.getElementById('tanggal_lahir')?.value?.trim() || '';
+        umurDebitur = hitungUmurDariTanggal(tanggalLahir);
+        const tempatLahir = document.getElementById('tempat_lahir')?.value?.trim() || '';
+
+        // 3. Alamat KTP / Domisili / Tempat Usaha & Kota
+        const alamatKtp = document.querySelector('textarea[name="alamat_ktp"]')?.value?.trim() || '';
+        const alamatDomisili = document.querySelector('textarea[name="alamat_domisili"]')?.value?.trim() || '';
+        const alamatUsahaPertama = document.querySelector('.inp-alamat-usaha')?.value?.trim() || '';
+        alamatLengkap = alamatKtp || alamatDomisili || alamatUsahaPertama;
+        kota = ekstrakKotaDariAlamat(alamatLengkap, tempatLahir);
+
+        // 4. Pekerjaan / Nama Usaha, Bidang Usaha & Jabatan/Profesi (Tab 3)
+        const usahaEls = document.querySelectorAll('.inp-nama-usaha');
+        const bidangEls = document.querySelectorAll('.inp-bidang-usaha');
+        const jabatanEls = document.querySelectorAll('.inp-jabatan');
+        const alamatUsahaEls = document.querySelectorAll('.inp-alamat-usaha');
+
+        const listUsaha = [];
+        const listBidang = [];
+        const listJabatan = [];
+        const listProfilPekerjaan = [];
+
+        usahaEls.forEach((el, idx) => {
+            const u = el.value?.trim() || '';
+            const b = bidangEls[idx]?.value?.trim() || '';
+            const j = jabatanEls[idx]?.value?.trim() || '';
+            const au = alamatUsahaEls[idx]?.value?.trim() || '';
+
+            if (u && !listUsaha.includes(u)) listUsaha.push(u);
+            if (b && !listBidang.includes(b)) listBidang.push(b);
+            if (j && !listJabatan.includes(j)) listJabatan.push(j);
+
+            if (u || b || j) {
+                let itemStr = u || 'Usaha Mandiri';
+                if (j) itemStr = `${j} di ${itemStr}`;
+                if (b) itemStr += ` (Bidang: ${b})`;
+                if (au) itemStr += ` [Lokasi: ${au}]`;
+                listProfilPekerjaan.push(itemStr);
+            }
+        });
+
+        namaUsaha = listUsaha.join(' ; ') || document.querySelector('input[name="nama_usaha"]')?.value?.trim() || '';
+        bidangUsaha = listBidang.join(', ') || document.querySelector('input[name="bidang_usaha"]')?.value?.trim() || '';
+        jabatan = listJabatan.join(', ');
+        daftarPengurus = listProfilPekerjaan.join('; ');
+    }
+
+    return {
+        isBadanUsaha,
+        jenisForm: isBadanUsaha ? 'badan_usaha' : 'perorangan',
+        bentukUsaha,
+        namaDebitur,
+        tanggalLahir,
+        umurDebitur,
+        jabatan,
+        namaUsaha,
+        bidangUsaha,
+        alamatLengkap,
+        kota,
+        daftarPengurus
+    };
+}
+
+async function jalankanAiWebcheck() {
+    const info = ambilDataSubjekWebcheck();
+
+    if (!info.namaDebitur && !info.namaUsaha) {
+        showToast('Harap isi Nama Calon Debitur atau Nama Perusahaan terlebih dahulu di Langkah 2!', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btnAiWebcheck');
+    const loadingBox = document.getElementById('tab7_loading_box');
+    const loadingSubjek = document.getElementById('tab7_loading_subjek');
+    const originalBtnHtml = btn ? btn.innerHTML : '';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <svg class="animate-spin h-4 w-4 text-amber-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span>Memindai MA & 5 Aspek...</span>
+        `;
+    }
+
+    if (loadingSubjek) {
+        const labelOrang = info.namaDebitur + (info.umurDebitur ? ` (${info.umurDebitur})` : '');
+        const labelUsaha = info.namaUsaha ? `${info.namaUsaha} (${info.bidangUsaha || info.bentukUsaha})` : '(Tanpa Nama Perusahaan)';
+        loadingSubjek.innerText = `Melacak 4 Variabel Inti — Subjek: "${labelOrang}" | Usaha: "${labelUsaha}" | Lokasi: "${info.kota || info.alamatLengkap || '-'}" ke Direktori Putusan MA & Media Online...`;
+    }
+    if (loadingBox) loadingBox.classList.remove('hidden');
+
+    try {
+        const formData = new FormData();
+        formData.append('jenis_form', info.jenisForm);
+        formData.append('bentuk_usaha', info.bentukUsaha);
+        formData.append('nama_debitur', info.namaDebitur || info.namaUsaha);
+        formData.append('tanggal_lahir', info.tanggalLahir);
+        formData.append('umur_debitur', info.umurDebitur);
+        formData.append('jabatan', info.jabatan);
+        formData.append('nama_usaha', info.namaUsaha);
+        formData.append('bidang_usaha', info.bidangUsaha);
+        formData.append('alamat_lengkap', info.alamatLengkap);
+        formData.append('kota', info.kota);
+        formData.append('daftar_pengurus', info.daftarPengurus);
+
+        const res = await fetch(getBaseUrl() + '/pengajuan/ai-webcheck', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        if (loadingBox) loadingBox.classList.add('hidden');
+
+        if (data.status) {
+            // 1. Langsung isi otomatis ke-5 kotak di halaman Web Check (Tab 7)
+            const fieldsMap = {
+                sipp_keterangan: data.sipp_keterangan,
+                internet_keterangan: data.internet_keterangan,
+                watchlist_keterangan: data.watchlist_keterangan,
+                lelang_keterangan: data.lelang_keterangan,
+                negatif_keterangan: data.negatif_keterangan
+            };
+
+            Object.entries(fieldsMap).forEach(([fieldId, val]) => {
+                const el = document.getElementById(fieldId);
+                if (el && val) {
+                    el.value = val;
+                    clearFieldError(el);
+                    el.classList.add('ring-2', 'ring-blue-300', 'bg-blue-50/30');
+                    setTimeout(() => {
+                        el.classList.remove('ring-2', 'ring-blue-300', 'bg-blue-50/30');
+                    }, 1800);
+                }
+            });
+
+            if (btn) clearFieldError(btn);
+
+            // 2. Tampilkan Panel Ringkasan Dual-Track (Orang/Pengurus vs Perusahaan/Usaha)
+            renderHasilWebcheckDiHalaman(data, info);
+
+            const risiko = (data.tingkat_risiko || 'LOW').toUpperCase();
+            if (risiko.includes('HIGH') || risiko.includes('CRITICAL')) {
+                showToast('⚠️ Peringatan: Terdeteksi indikasi masalah hukum / perkara pada hasil Web Check!', 'error');
+            } else {
+                showToast('Cek Rekam Jejak Otomatis selesai! 5 aspek & tautan bukti telah ditampilkan.', 'success');
+            }
+        } else {
+            showToast(data.message || 'Gagal memproses investigasi Web Check', 'error');
+        }
+    } catch (err) {
+        if (loadingBox) loadingBox.classList.add('hidden');
+        showToast('Koneksi terganggu saat memproses investigasi Web Check', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHtml;
+        }
+    }
+}
+
+function renderHasilWebcheckDiHalaman(data, info) {
+    const summaryBox = document.getElementById('tab7_summary_box');
+    if (summaryBox) {
+        summaryBox.classList.remove('hidden');
+
+        // Ringkasan & Badge Risiko Utama
+        const ringkasanEl = document.getElementById('tab7_ringkasan_risiko');
+        if (ringkasanEl) {
+            ringkasanEl.innerText = data.ringkasan_risiko || 'Pemeriksaan integritas dan rekam jejak hukum telah selesai dipetakan.';
+        }
+
+        const badgeRisiko = document.getElementById('tab7_badge_risiko');
+        const risiko = (data.tingkat_risiko || 'LOW').toUpperCase();
+        if (badgeRisiko) {
+            if (risiko.includes('CRITICAL') || risiko.includes('HIGH')) {
+                badgeRisiko.className = 'self-start sm:self-auto px-3.5 py-1.5 rounded-full text-xs font-extrabold shrink-0 bg-rose-100 text-rose-800 border border-rose-300 shadow-2xs';
+                badgeRisiko.innerHTML = '🔴 ' + risiko + ' RISK (BERMASALAH)';
+                summaryBox.className = 'mb-6 p-4 sm:p-5 bg-rose-50/70 rounded-2xl border border-rose-200 space-y-4 shadow-2xs';
+            } else if (risiko.includes('PEP') || risiko.includes('MEDIUM')) {
+                badgeRisiko.className = 'self-start sm:self-auto px-3.5 py-1.5 rounded-full text-xs font-extrabold shrink-0 bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs';
+                badgeRisiko.innerHTML = '🟡 ' + (risiko.includes('PEP') ? 'TERIDENTIFIKASI PEP' : 'MEDIUM RISK');
+                summaryBox.className = 'mb-6 p-4 sm:p-5 bg-amber-50/70 rounded-2xl border border-amber-200 space-y-4 shadow-2xs';
+            } else {
+                badgeRisiko.className = 'self-start sm:self-auto px-3.5 py-1.5 rounded-full text-xs font-extrabold shrink-0 bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs';
+                badgeRisiko.innerHTML = '🟢 LOW RISK / BERSIH';
+                summaryBox.className = 'mb-6 p-4 sm:p-5 bg-emerald-50/50 rounded-2xl border border-emerald-200 space-y-4 shadow-2xs';
+            }
+        }
+
+        // Profil Subjek
+        const profilBox = document.getElementById('tab7_profil_box');
+        const profilTeks = document.getElementById('tab7_profil_teks');
+        if (profilBox && profilTeks) {
+            if (data.profil_subjek) {
+                profilTeks.innerText = data.profil_subjek;
+                profilBox.classList.remove('hidden');
+            } else {
+                profilBox.classList.add('hidden');
+            }
+        }
+
+        // Kartu 1: Status Individu / Pengurus
+        const namaIndEl = document.getElementById('tab7_nama_individu');
+        const statusIndEl = document.getElementById('tab7_status_individu');
+        const badgeIndEl = document.getElementById('tab7_badge_individu');
+        const cardIndEl = document.getElementById('tab7_card_individu');
+        if (namaIndEl) {
+            if (info.isBadanUsaha) {
+                namaIndEl.innerText = info.daftarPengurus || info.namaDebitur || 'Pengurus Badan Usaha';
+            } else {
+                let labelInd = info.namaDebitur || 'Calon Debitur';
+                if (info.umurDebitur) labelInd += ` • ${info.umurDebitur}`;
+                if (info.kota) labelInd += ` • ${info.kota}`;
+                namaIndEl.innerText = labelInd;
+            }
+        }
+        if (statusIndEl) statusIndEl.innerText = data.status_individu || 'Tidak ditemukan catatan perkara pidana atau sengketa aktif.';
+        if (badgeIndEl && cardIndEl) {
+            const rInd = (data.risiko_individu || 'AMAN').toUpperCase();
+            if (rInd.includes('MASALAH') || rInd.includes('HIGH') || rInd.includes('CRITICAL')) {
+                badgeIndEl.className = 'px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 shrink-0';
+                badgeIndEl.innerText = '🔴 BERPOTENSI MASALAH';
+                cardIndEl.className = 'p-3.5 bg-white rounded-xl border-2 border-rose-300 space-y-2 shadow-2xs';
+            } else if (rInd.includes('PERHATIAN') || rInd.includes('PEP') || rInd.includes('MEDIUM')) {
+                badgeIndEl.className = 'px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 shrink-0';
+                badgeIndEl.innerText = '🟡 PERLU PERHATIAN';
+                cardIndEl.className = 'p-3.5 bg-white rounded-xl border border-amber-300 space-y-2 shadow-2xs';
+            } else {
+                badgeIndEl.className = 'px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0';
+                badgeIndEl.innerText = '🟢 BERSIH / AMAN';
+                cardIndEl.className = 'p-3.5 bg-white rounded-xl border border-slate-200 space-y-2 shadow-2xs';
+            }
+        }
+
+        // Kartu 2: Status Perusahaan / Usaha
+        const namaPrsEl = document.getElementById('tab7_nama_perusahaan');
+        const statusPrsEl = document.getElementById('tab7_status_perusahaan');
+        const badgePrsEl = document.getElementById('tab7_badge_perusahaan');
+        const cardPrsEl = document.getElementById('tab7_card_perusahaan');
+        if (namaPrsEl) {
+            let labelPrs = info.namaUsaha || 'Usaha / Tempat Kerja Debitur';
+            if (info.bidangUsaha) labelPrs += ` (${info.bidangUsaha})`;
+            if (info.kota) labelPrs += ` • ${info.kota}`;
+            namaPrsEl.innerText = labelPrs;
+        }
+        if (statusPrsEl) statusPrsEl.innerText = data.status_perusahaan || 'Tidak ditemukan catatan kepailitan/PKPU atau sengketa perusahaan.';
+        if (badgePrsEl && cardPrsEl) {
+            const rPrs = (data.risiko_perusahaan || 'AMAN').toUpperCase();
+            if (rPrs.includes('MASALAH') || rPrs.includes('HIGH') || rPrs.includes('CRITICAL')) {
+                badgePrsEl.className = 'px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200 shrink-0';
+                badgePrsEl.innerText = '🔴 BERPOTENSI MASALAH';
+                cardPrsEl.className = 'p-3.5 bg-white rounded-xl border-2 border-rose-300 space-y-2 shadow-2xs';
+            } else if (rPrs.includes('PERHATIAN') || rPrs.includes('MEDIUM')) {
+                badgePrsEl.className = 'px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 shrink-0';
+                badgePrsEl.innerText = '🟡 PERLU PERHATIAN';
+                cardPrsEl.className = 'p-3.5 bg-white rounded-xl border border-amber-300 space-y-2 shadow-2xs';
+            } else {
+                badgePrsEl.className = 'px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0';
+                badgePrsEl.innerText = '🟢 BERSIH / AMAN';
+                cardPrsEl.className = 'p-3.5 bg-white rounded-xl border border-slate-200 space-y-2 shadow-2xs';
+            }
+        }
+    }
+
+    // 3. Render Link Bukti Direktori Putusan MA & Berita Hukum di Kartu & Kotak SIPP
+    const linksVerifikasi = data.link_verifikasi || [];
+    const linksIndContainer = document.getElementById('tab7_links_individu');
+    const linksPrsContainer = document.getElementById('tab7_links_perusahaan');
+    const buktiMaBox = document.getElementById('tab7_bukti_ma_box');
+    const buktiMaList = document.getElementById('tab7_bukti_ma_list');
+    const bottomMaLinks = document.getElementById('tab7_bottom_ma_links');
+
+    let indLinksHtml = '';
+    let prsLinksHtml = '';
+    let maPillsHtml = '';
+    let bottomMaCardsHtml = '';
+
+    linksVerifikasi.forEach(lk => {
+        const isPrs = (lk.kategori === 'perusahaan');
+        const icon = isPrs ? '🏢' : '👤';
+        const pillBtn = `
+            <a href="${lk.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition">
+                <span>⚖️ Cek Putusan MA (${lk.subjek}) ↗</span>
+            </a>
+            <a href="${lk.news_url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition">
+                <span>📰 Cek Berita Hukum ↗</span>
+            </a>
+        `;
+        if (isPrs) {
+            prsLinksHtml += pillBtn;
+        } else {
+            indLinksHtml += pillBtn;
+        }
+
+        maPillsHtml += `
+            <a href="${lk.url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 transition shadow-2xs">
+                <span>${icon} ⚖️ ${lk.label}</span>
+                <svg class="w-3 h-3 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            </a>
+        `;
+
+        bottomMaCardsHtml += `
+            <div class="p-3 bg-white rounded-xl border border-blue-200 flex items-center justify-between gap-2 shadow-2xs">
+                <div class="min-w-0 flex-1">
+                    <div class="text-[10px] font-extrabold uppercase tracking-wider ${isPrs ? 'text-indigo-600' : 'text-blue-600'}">
+                        ${icon} ${isPrs ? 'Pelacakan Perusahaan / Usaha' : 'Pelacakan Individu / Pengurus'}
+                    </div>
+                    <div class="text-xs font-bold text-slate-800 truncate">${lk.subjek}</div>
+                    <div class="text-[10px] text-slate-500 truncate">${lk.source}</div>
+                </div>
+                <div class="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 shrink-0">
+                    <a href="${lk.url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg transition shadow-2xs whitespace-nowrap">
+                        ⚖️ Bukti MA ↗
+                    </a>
+                    <a href="${lk.news_url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg border border-slate-200 transition whitespace-nowrap">
+                        📰 Google News ↗
+                    </a>
+                </div>
+            </div>
+        `;
+    });
+
+    if (linksIndContainer) linksIndContainer.innerHTML = indLinksHtml;
+    if (linksPrsContainer) linksPrsContainer.innerHTML = prsLinksHtml;
+    if (buktiMaBox && buktiMaList) {
+        if (maPillsHtml) {
+            buktiMaList.innerHTML = maPillsHtml;
+            buktiMaBox.classList.remove('hidden');
+        } else {
+            buktiMaBox.classList.add('hidden');
+        }
+    }
+    if (bottomMaLinks) {
+        bottomMaLinks.innerHTML = bottomMaCardsHtml;
+    }
+
+    // 4. Render Daftar Bukti Berita / Kasus Hukum di Bawah 5 Aspek (#tab7_area_berita)
+    const beritaList = data.berita_terkait || [];
+    window._lastWebcheckBerita = beritaList;
+
+    const areaBeritaTab7 = document.getElementById('tab7_area_berita');
+    const listBeritaTab7 = document.getElementById('tab7_list_berita');
+    const countBeritaTab7 = document.getElementById('tab7_count_berita');
+
+    if (areaBeritaTab7 && listBeritaTab7) {
+        areaBeritaTab7.classList.remove('hidden');
+
+        if (beritaList.length > 0) {
+            const adverseCount = beritaList.filter(b => b.is_adverse).length;
+            if (countBeritaTab7) {
+                if (adverseCount > 0) {
+                    countBeritaTab7.className = 'self-start sm:self-auto text-[10px] text-rose-800 bg-rose-100 border border-rose-300 px-2.5 py-1 rounded-full font-extrabold shrink-0';
+                    countBeritaTab7.innerText = `⚠️ ${adverseCount} Indikasi Masalah dari ${beritaList.length} Temuan Berita`;
+                } else {
+                    countBeritaTab7.className = 'self-start sm:self-auto text-[10px] text-blue-800 bg-blue-100 border border-blue-200 px-2.5 py-1 rounded-full font-extrabold shrink-0';
+                    countBeritaTab7.innerText = `📰 ${beritaList.length} Artikel Terkait Ditemukan`;
+                }
+            }
+
+            let bHtml = '';
+            beritaList.forEach((item, idx) => {
+                const sumber = item.source || 'Media Online';
+                const tgl = item.date ? item.date.replace(/GMT.*$/, '').trim() : '';
+                const isAdverse = Boolean(item.is_adverse);
+                const isPrs = (item.target_type === 'perusahaan');
+                const badgeSubjek = isPrs
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">🏢 Perusahaan: ${item.target_name || '-'}</span>`
+                    : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">👤 Individu: ${item.target_name || '-'}</span>`;
+                const badgeAdverse = isAdverse
+                    ? `<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 text-rose-700 border border-rose-200">⚠️ Indikasi Perkara / Masalah Hukum</span>`
+                    : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Liputan Umum</span>`;
+
+                bHtml += `
+                    <div class="p-3 bg-white rounded-xl border ${isAdverse ? 'border-rose-300 bg-rose-50/20' : 'border-blue-100'} shadow-2xs hover:border-blue-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="text-xs leading-snug min-w-0 flex-1 space-y-1">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                ${badgeSubjek}
+                                ${badgeAdverse}
+                            </div>
+                            <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="font-bold text-slate-800 hover:text-blue-600 block">
+                                ${idx + 1}. ${item.title}
+                            </a>
+                            <div class="text-[10px] text-slate-500 flex flex-wrap items-center gap-2">
+                                <span class="font-semibold text-slate-700">🏛️ Sumber: ${sumber}</span>
+                                ${tgl ? `<span>• 📅 ${tgl}</span>` : ''}
+                            </div>
+                        </div>
+                        <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="self-start sm:self-center shrink-0 inline-flex items-center gap-1 px-3 py-1.5 ${isAdverse ? 'bg-rose-600 hover:bg-rose-700 text-white' : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200'} text-[11px] font-bold rounded-lg transition shadow-2xs">
+                            <span>🔗 Buka Bukti / Link ↗</span>
+                        </a>
+                    </div>
+                `;
+            });
+            listBeritaTab7.innerHTML = bHtml;
+        } else {
+            if (countBeritaTab7) {
+                countBeritaTab7.className = 'self-start sm:self-auto text-[10px] text-emerald-800 bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-full font-extrabold shrink-0';
+                countBeritaTab7.innerText = '🟢 Nihil Berita Kriminal / Sengketa';
+            }
+            listBeritaTab7.innerHTML = `
+                <div class="p-3 bg-white rounded-xl border border-emerald-200 text-xs text-emerald-800 font-semibold flex items-center gap-2">
+                    <span>✅</span>
+                    <span>Tidak ditemukan artikel berita kriminal, penangkapan kepolisian, maupun sengketa kepailitan di media arus utama untuk subjek individu maupun perusahaan di atas. Anda tetap dapat mengeklik tombol Bukti MA di atas untuk verifikasi langsung pada Direktori Putusan Mahkamah Agung RI.</span>
+                </div>
+            `;
+        }
+    }
 }
 
 function bukaModalAiWebcheck() {

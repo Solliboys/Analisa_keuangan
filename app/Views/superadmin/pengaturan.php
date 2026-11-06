@@ -353,6 +353,84 @@
                     </div>
                 </div>
 
+                <!-- CARD: MANAJEMEN FITUR & MODUL (FEATURE SWITCHES) -->
+                <?php
+                    $ffList = [
+                        ['key' => 'fitur_ai_aktif', 'icon' => '🤖', 'judul' => 'AI 5C & Cek Rekam Jejak (Web Check)', 'desc' => 'ON: tombol analisa AI & cek rekam jejak otomatis tersedia. OFF: analis mengisi manual.', 'def' => 1],
+                        ['key' => 'fitur_badan_usaha_aktif', 'icon' => '🏢', 'judul' => 'Pembiayaan Badan Usaha (PT / CV)', 'desc' => 'ON: pilihan Badan Usaha tersedia di pengajuan. OFF: hanya Perorangan.', 'def' => 1],
+                        ['key' => 'fitur_disbursement_aktif', 'icon' => '💰', 'judul' => 'Modul Disbursement & Repayment', 'desc' => 'ON: tab simulasi biaya pencairan & kemampuan angsur tampil. OFF: disembunyikan.', 'def' => 1],
+                        ['key' => 'mode_strict_dokumen', 'icon' => '📁', 'judul' => 'Mode Ketat Dokumen Wajib', 'desc' => 'ON: pengajuan tidak bisa dikirim sebelum berkas wajib (KTP, dll) diunggah. OFF: fleksibel.', 'def' => 0],
+                    ];
+                    $modeKomite = $pengaturan_sistem['mode_approval_komite'] ?? 'cepat';
+                ?>
+                <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-2xs w-full">
+                    <div class="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
+                        <div class="w-8 h-8 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold text-sm">🎛️</div>
+                        <div>
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Manajemen Fitur &amp; Modul Sistem</h2>
+                            <p class="text-[11px] text-slate-400">Aktifkan / nonaktifkan fitur lanjutan kapan saja tanpa mengubah kode. Tersimpan langsung saat saklar diklik.</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <?php foreach ($ffList as $ff): $on = (int)($pengaturan_sistem[$ff['key']] ?? $ff['def']) === 1; ?>
+                            <div class="flex items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+                                <div class="min-w-0">
+                                    <div class="text-xs font-extrabold text-slate-900"><?= $ff['icon'] ?> <?= esc($ff['judul']) ?></div>
+                                    <p class="text-[11px] text-slate-500 mt-0.5"><?= esc($ff['desc']) ?></p>
+                                </div>
+                                <div class="shrink-0 flex flex-col items-end gap-1">
+                                    <button type="button" data-feature="<?= $ff['key'] ?>" data-on="<?= $on ? 1 : 0 ?>" onclick="toggleFitur(this)"
+                                            class="ff-switch relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 <?= $on ? 'bg-blue-600' : 'bg-slate-300' ?>" role="switch" aria-checked="<?= $on ? 'true' : 'false' ?>">
+                                        <span class="ff-knob pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition duration-200 <?= $on ? 'translate-x-7' : 'translate-x-0' ?>"></span>
+                                    </button>
+                                    <span class="ff-text text-[10px] font-bold text-slate-600"><?= $on ? 'AKTIF' : 'NONAKTIF' ?></span>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+
+                        <!-- Mode Persetujuan Komite -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
+                            <div class="min-w-0">
+                                <div class="text-xs font-extrabold text-slate-900">⚖️ Mode Persetujuan Komite</div>
+                                <p class="text-[11px] text-slate-500 mt-0.5"><b>Cepat:</b> Reviewer ATAU CEO, siapa cepat memutuskan. <b>Bertingkat:</b> Reviewer dulu, lalu CEO.</p>
+                            </div>
+                            <select id="selectModeKomite" onchange="setModeKomite(this.value)" class="shrink-0 px-3 py-2 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-xl cursor-pointer">
+                                <option value="cepat" <?= $modeKomite === 'cepat' ? 'selected' : '' ?>>Cepat (Siapa Cepat)</option>
+                                <option value="bertingkat" <?= $modeKomite === 'bertingkat' ? 'selected' : '' ?>>Bertingkat (Reviewer → CEO)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <p class="mt-4 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                        ℹ️ Saklar sudah tersimpan dan tercatat di Log Aktivitas. Penerapan di setiap form/tab dilakukan bertahap sesuai fitur masing-masing.
+                    </p>
+                </div>
+
+                <!-- CARD: BACKUP & ARSIP DATA -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-2xs w-full">
+                    <div class="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">💾</div>
+                        <div>
+                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Backup &amp; Arsip Data</h2>
+                            <p class="text-[11px] text-slate-400">Unduh salinan data untuk disimpan di flashdisk / hard disk eksternal (disarankan rutin, minimal tiap tahun).</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2">
+                            <div class="text-xs font-extrabold text-slate-900">🗄️ Backup Database (.sql)</div>
+                            <p class="text-[11px] text-slate-500">Seluruh data pengajuan, user, pengaturan, dan log dalam satu file SQL.</p>
+                            <a href="<?= base_url('superadmin/backup-database') ?>" class="inline-flex px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">⬇️ Unduh Backup Database</a>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2">
+                            <div class="text-xs font-extrabold text-slate-900">📦 Backup Berkas Upload (.zip)</div>
+                            <p class="text-[11px] text-slate-500">Semua dokumen, bukti, dan foto yang diunggah. Ukuran bisa besar.</p>
+                            <a href="<?= base_url('superadmin/backup-berkas') ?>" class="inline-flex px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">⬇️ Unduh Backup Berkas</a>
+                        </div>
+                    </div>
+                    <p class="mt-4 text-[11px] text-slate-500">Salinan juga tersimpan otomatis di server pada folder <code>writable/backups/</code>. Untuk arsip tahunan, unduh kedua file lalu salin ke flashdisk.</p>
+                </div>
+
                                 <!-- CARD: KONFIGURASI API & LINK GATEWAY MODEL AI -->
                 <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-2xs w-full">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100 mb-5">
@@ -635,6 +713,51 @@
                     text: 'Tidak dapat menghubungi server.'
                 });
             });
+        }
+
+        function kirimToggleFitur(feature, value, onOk, onFail) {
+            const body = new URLSearchParams({ feature: feature, value: value });
+            fetch('<?= base_url('superadmin/toggle-fitur') ?>', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+                body: body
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status) {
+                    onOk(d);
+                    Swal.fire({ icon: 'success', title: 'Tersimpan', text: d.message, timer: 1600, showConfirmButton: false });
+                } else {
+                    onFail();
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: d.message || 'Terjadi kesalahan.' });
+                }
+            })
+            .catch(() => {
+                onFail();
+                Swal.fire({ icon: 'error', title: 'Kesalahan Jaringan', text: 'Tidak dapat menghubungi server.' });
+            });
+        }
+
+        function renderSwitch(btn, on) {
+            btn.dataset.on = on ? 1 : 0;
+            btn.setAttribute('aria-checked', on ? 'true' : 'false');
+            btn.classList.toggle('bg-blue-600', on);
+            btn.classList.toggle('bg-slate-300', !on);
+            const knob = btn.querySelector('.ff-knob');
+            knob.classList.toggle('translate-x-7', on);
+            knob.classList.toggle('translate-x-0', !on);
+            const txt = btn.parentElement.querySelector('.ff-text');
+            if (txt) txt.innerText = on ? 'AKTIF' : 'NONAKTIF';
+        }
+
+        function toggleFitur(btn) {
+            const cur = parseInt(btn.dataset.on) === 1;
+            renderSwitch(btn, !cur);
+            kirimToggleFitur(btn.dataset.feature, cur ? 0 : 1, () => {}, () => renderSwitch(btn, cur));
+        }
+
+        function setModeKomite(val) {
+            kirimToggleFitur('mode_approval_komite', val, () => {}, () => { window.location.reload(); });
         }
 
         function toggleApiKeyVisibility() {
