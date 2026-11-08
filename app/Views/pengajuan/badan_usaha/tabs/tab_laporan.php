@@ -19,10 +19,102 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                     Konsolidasi posisi aset, liabilitas, dan ekuitas berdasarkan buku besar serta sinkronisasi perbankan mutakhir.
                 </p>
             </div>
-            <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap relative">
                 <span class="px-3 py-1 rounded-full text-[11px] font-bold text-blue-700 bg-blue-100">Badan Usaha</span>
                 <span class="px-3 py-1 rounded-full text-[11px] font-bold text-slate-700 bg-slate-200">1 Tahun</span>
                 <span class="px-3 py-1 rounded-full text-[11px] font-bold text-indigo-700 bg-indigo-100">● Estimasi</span>
+
+                <!-- DROPDOWN UNDUH LAPORAN -->
+                <div class="relative inline-block text-left" id="wrapperDropdownUnduh">
+                    <button type="button" id="btnDropdownUnduh" onclick="toggleDropdownUnduh(event)"
+                            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-2xs">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        <span>Unduh Laporan</span>
+                        <svg id="chevronUnduh" class="w-3.5 h-3.5 text-white transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown Menu Card -->
+                    <div id="menuDropdownUnduh" class="hidden absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200/90 py-2.5 z-50">
+                        <!-- Header -->
+                        <div class="px-4 py-1.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                            FORMAT DOKUMEN
+                        </div>
+
+                        <!-- Item 1: Unduh Semua (PDF) -->
+                        <button type="button" onclick="unduhLaporanPDF('semua')"
+                                class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between transition group">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-6 h-6 rounded flex items-center justify-center text-rose-600 shrink-0 border border-rose-200 bg-rose-50/50">
+                                    <span class="text-[9px] font-black text-rose-600">PDF</span>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-xs font-bold text-slate-800 leading-tight">Unduh Semua (PDF)</div>
+                                    <div class="text-[10px] text-slate-400">Laba Rugi, Arus Kas &amp; Neraca</div>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold text-rose-700 bg-rose-100">PDF</span>
+                        </button>
+
+                        <!-- Item 2: Unduh Laba Rugi (PDF) -->
+                        <button type="button" onclick="unduhLaporanPDF('lr')"
+                                class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between transition group">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <svg class="w-5 h-5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span class="text-xs font-bold text-slate-800">Unduh Laba Rugi (PDF)</span>
+                            </div>
+                            <span id="badgeUnduhLR" class="px-2 py-0.5 rounded text-[10px] font-bold text-blue-700 bg-blue-100">Aktif</span>
+                        </button>
+
+                        <!-- Item 3: Unduh Arus Kas (PDF) -->
+                        <button type="button" onclick="unduhLaporanPDF('ak')"
+                                class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between transition group">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <svg class="w-5 h-5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span class="text-xs font-bold text-slate-800">Unduh Arus Kas (PDF)</span>
+                            </div>
+                            <span id="badgeUnduhAK" class="text-[10px] text-slate-400 font-semibold">.pdf</span>
+                        </button>
+
+                        <!-- Item 4: Unduh Neraca (PDF) -->
+                        <button type="button" onclick="unduhLaporanPDF('nr')"
+                                class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between transition group">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <svg class="w-5 h-5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span class="text-xs font-bold text-slate-800">Unduh Neraca (PDF)</span>
+                            </div>
+                            <span id="badgeUnduhNR" class="text-[10px] text-slate-400 font-semibold">.pdf</span>
+                        </button>
+
+                        <div class="my-1.5 border-t border-slate-100"></div>
+
+                        <!-- Item 5: Unduh Semua (Excel) -->
+                        <button type="button" onclick="unduhLaporanExcel()"
+                                class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between transition group">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-6 h-6 rounded flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-200 bg-emerald-50/50">
+                                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-xs font-bold text-slate-800 leading-tight">Unduh Semua (Excel)</div>
+                                    <div class="text-[10px] text-slate-400">Buku besar &amp; rekapitulasi</div>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold text-emerald-800 bg-emerald-200">XLSX</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -359,6 +451,31 @@ function rpFmtParen(val) {
 }
 
 // ============================================================
+// DROPDOWN UNDUH LAPORAN
+// ============================================================
+function toggleDropdownUnduh(event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById('menuDropdownUnduh');
+    const chevron = document.getElementById('chevronUnduh');
+    if (!menu) return;
+    const isHidden = menu.classList.toggle('hidden');
+    if (chevron) {
+        chevron.style.transform = isHidden ? '' : 'rotate(180deg)';
+    }
+}
+
+// Close dropdown on click outside
+document.addEventListener('click', function(e) {
+    const wrapper = document.getElementById('wrapperDropdownUnduh');
+    const menu = document.getElementById('menuDropdownUnduh');
+    const chevron = document.getElementById('chevronUnduh');
+    if (wrapper && !wrapper.contains(e.target) && menu && !menu.classList.contains('hidden')) {
+        menu.classList.add('hidden');
+        if (chevron) chevron.style.transform = '';
+    }
+});
+
+// ============================================================
 // SWITCH TAB
 // ============================================================
 function switchTabLaporan(tab) {
@@ -380,6 +497,241 @@ function switchTabLaporan(tab) {
             nb.classList.remove('text-slate-500', 'border-transparent');
         }
     }
+
+    // Update dynamic badge in dropdown (Aktif vs .pdf)
+    const badgeLR = document.getElementById('badgeUnduhLR');
+    const badgeAK = document.getElementById('badgeUnduhAK');
+    const badgeNR = document.getElementById('badgeUnduhNR');
+    const activeClass = 'px-2 py-0.5 rounded text-[10px] font-bold text-blue-700 bg-blue-100';
+    const inactiveClass = 'text-[10px] text-slate-400 font-semibold';
+
+    if (badgeLR) {
+        badgeLR.className = (tab === 'lr') ? activeClass : inactiveClass;
+        badgeLR.textContent = (tab === 'lr') ? 'Aktif' : '.pdf';
+    }
+    if (badgeAK) {
+        badgeAK.className = (tab === 'ak') ? activeClass : inactiveClass;
+        badgeAK.textContent = (tab === 'ak') ? 'Aktif' : '.pdf';
+    }
+    if (badgeNR) {
+        badgeNR.className = (tab === 'nr') ? activeClass : inactiveClass;
+        badgeNR.textContent = (tab === 'nr') ? 'Aktif' : '.pdf';
+    }
+}
+
+// ============================================================
+// UNDUH LAPORAN KE PDF (CETAK/SAVE AS PDF)
+// ============================================================
+function unduhLaporanPDF(target) {
+    // Tutup dropdown
+    const menu = document.getElementById('menuDropdownUnduh');
+    if (menu) menu.classList.add('hidden');
+    const chevron = document.getElementById('chevronUnduh');
+    if (chevron) chevron.style.transform = '';
+
+    const namaDebitur = document.querySelector('[name="nama_debitur"]')?.value || 'PT Sumber Makmur Sejahtera';
+    const noApp       = document.querySelector('[name="nomor_aplikasi"]')?.value || 'NC-<?= date("Y") ?>';
+    const tahun       = '<?= date("Y") ?>';
+
+    let title = 'Laporan Keuangan';
+    if (target === 'lr') title = 'Laporan Laba Rugi';
+    else if (target === 'ak') title = 'Laporan Arus Kas';
+    else if (target === 'nr') title = 'Neraca (Posisi Keuangan)';
+
+    // Clone elemen yang ditargetkan
+    let htmlContent = '';
+    if (target === 'semua' || target === 'lr') {
+        const elLR = document.getElementById('panelBU_lr');
+        if (elLR) htmlContent += '<div class="print-section">' + elLR.innerHTML + '</div>';
+    }
+    if (target === 'semua' || target === 'ak') {
+        const elAK = document.getElementById('panelBU_ak');
+        if (elAK) htmlContent += '<div class="print-section" style="page-break-before: always; margin-top: 24px;">' + elAK.innerHTML + '</div>';
+    }
+    if (target === 'semua' || target === 'nr') {
+        const elNR = document.getElementById('panelBU_nr');
+        if (elNR) htmlContent += '<div class="print-section" style="page-break-before: always; margin-top: 24px;">' + elNR.innerHTML + '</div>';
+    }
+
+    const printWin = window.open('', '_blank', 'width=900,height=750');
+    if (!printWin) {
+        window.print();
+        return;
+    }
+
+    printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>${title} - ${namaDebitur}</title>
+            <link rel="stylesheet" href="${baseUrl}libs/tailwind/tailwind.min.js">
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #1e293b; }
+                .header-print { border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; }
+                .kop-title { font-size: 18px; font-weight: 800; color: #0f172a; text-transform: uppercase; }
+                .kop-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+                .badge-print { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: bold; background: #eff6ff; color: #1d4ed8; }
+                @media print {
+                    body { padding: 0; }
+                    .no-print { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header-print flex justify-between items-start">
+                <div>
+                    <div class="kop-title">${namaDebitur}</div>
+                    <div class="kop-sub">LAPORAN KEUANGAN ESTIMASI &bull; PERIODE ${tahun}</div>
+                    <div class="kop-sub">No. Aplikasi: <strong>${noApp}</strong> &bull; Status: Estimasi Terverifikasi</div>
+                </div>
+                <div class="text-right">
+                    <span class="badge-print">Badan Usaha</span>
+                    <span class="badge-print">1 Tahun</span>
+                </div>
+            </div>
+            <div>${htmlContent}</div>
+            <script>
+                window.onload = function() {
+                    // Remove hidden classes on cloned panels
+                    document.querySelectorAll('.tabPanelBU').forEach(p => p.classList.remove('hidden'));
+                    setTimeout(function() { window.print(); }, 400);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    printWin.document.close();
+}
+
+// ============================================================
+// UNDUH LAPORAN KE EXCEL (XLSX FORMAT)
+// ============================================================
+function unduhLaporanExcel() {
+    // Tutup dropdown
+    const menu = document.getElementById('menuDropdownUnduh');
+    if (menu) menu.classList.add('hidden');
+    const chevron = document.getElementById('chevronUnduh');
+    if (chevron) chevron.style.transform = '';
+
+    const namaDebitur = document.querySelector('[name="nama_debitur"]')?.value || 'PT Sumber Makmur Sejahtera';
+    const noApp       = document.querySelector('[name="nomor_aplikasi"]')?.value || 'NC-<?= date("Y") ?>';
+    const tahun       = '<?= date("Y") ?>';
+
+    // Ambil nilai teks langsung dari DOM
+    function v(id) {
+        return document.getElementById(id)?.textContent?.trim() || '—';
+    }
+
+    let excelHTML = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <style>
+                table { border-collapse: collapse; width: 100%; font-family: Calibri, Arial, sans-serif; }
+                th, td { border: 1px solid #cbd5e1; padding: 6px 10px; font-size: 11pt; }
+                .title-row { font-size: 14pt; font-weight: bold; background-color: #1e3a8a; color: #ffffff; text-align: left; }
+                .sub-title { font-size: 10pt; color: #475569; }
+                .header-section { background-color: #dbeafe; font-weight: bold; color: #1e40af; }
+                .highlight-row { background-color: #eff6ff; font-weight: bold; color: #1d4ed8; }
+                .total-row { background-color: #0f172a; color: #ffffff; font-weight: bold; }
+                .num-right { text-align: right; }
+            </style>
+        </head>
+        <body>
+            <!-- KOP PERUSAHAAN -->
+            <table>
+                <tr><td colspan="4" class="title-row">LAPORAN KEUANGAN ESTIMASI (BADAN USAHA)</td></tr>
+                <tr><td colspan="4" class="sub-title">Perusahaan: <strong>${namaDebitur}</strong> | No. Aplikasi: ${noApp} | Periode: ${tahun}</td></tr>
+                <tr><td colspan="4">&nbsp;</td></tr>
+            </table>
+
+            <!-- I. LABA RUGI -->
+            <table>
+                <tr class="header-section"><td colspan="2">I. LAPORAN LABA RUGI (INCOME STATEMENT)</td></tr>
+                <tr><td>Pendapatan Usaha</td><td class="num-right">${v('bu_lr_pendapatan')}</td></tr>
+                <tr><td>HPP</td><td class="num-right">${v('bu_lr_hpp')}</td></tr>
+                <tr class="highlight-row"><td>Laba Kotor</td><td class="num-right">${v('bu_lr_laba_kotor')}</td></tr>
+                <tr><td>Beban Gaji (Karyawan)</td><td class="num-right">${v('bu_lr_beban_gaji')}</td></tr>
+                <tr><td>Sewa, Utilitas &amp; Pemasaran</td><td class="num-right">${v('bu_lr_beban_op')}</td></tr>
+                <tr><td>Penyusutan</td><td class="num-right">${v('bu_lr_penyusutan')}</td></tr>
+                <tr class="highlight-row"><td>Laba Operasional</td><td class="num-right">${v('bu_lr_laba_op')}</td></tr>
+                <tr><td>Beban Bunga</td><td class="num-right">${v('bu_lr_beban_bunga')}</td></tr>
+                <tr><td>Pajak</td><td class="num-right">${v('bu_lr_pajak')}</td></tr>
+                <tr class="total-row"><td>LABA BERSIH</td><td class="num-right">${v('bu_lr_laba_bersih')}</td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+            </table>
+
+            <!-- II. ARUS KAS -->
+            <table>
+                <tr class="header-section"><td colspan="2">II. LAPORAN ARUS KAS (CASH FLOW STATEMENT)</td></tr>
+                <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Aktivitas Operasi</td></tr>
+                <tr><td>Laba Bersih</td><td class="num-right">${v('bu_ak_laba_bersih')}</td></tr>
+                <tr><td>Penyusutan</td><td class="num-right">${v('bu_ak_penyusutan')}</td></tr>
+                <tr><td>Kenaikan Piutang</td><td class="num-right">${v('bu_ak_kenaikan_piutang')}</td></tr>
+                <tr><td>Kenaikan Persediaan</td><td class="num-right">${v('bu_ak_kenaikan_persediaan')}</td></tr>
+                <tr><td>Kenaikan Utang Usaha</td><td class="num-right">${v('bu_ak_kenaikan_utang')}</td></tr>
+                <tr class="highlight-row"><td>Kas Operasi</td><td class="num-right">${v('bu_ak_kas_operasi')}</td></tr>
+
+                <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Aktivitas Investasi</td></tr>
+                <tr><td>Pembelian Aset Tetap</td><td class="num-right">${v('bu_ak_beli_aset')}</td></tr>
+                <tr class="highlight-row"><td>Kas Bersih Investasi</td><td class="num-right">${v('bu_ak_kas_investasi')}</td></tr>
+
+                <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Aktivitas Pendanaan</td></tr>
+                <tr><td>Cicilan Pokok Utang Bank</td><td class="num-right">${v('bu_ak_cicilan')}</td></tr>
+                <tr><td>Prive/Dividen</td><td class="num-right">${v('bu_ak_prive')}</td></tr>
+                <tr class="highlight-row"><td>Kas Pendanaan</td><td class="num-right">${v('bu_ak_kas_pendanaan')}</td></tr>
+
+                <tr class="highlight-row"><td>Kenaikan Kas Bersih</td><td class="num-right">${v('bu_ak_kenaikan_bersih')}</td></tr>
+                <tr><td>Saldo Kas Awal Periode</td><td class="num-right">${v('bu_ak_saldo_awal')}</td></tr>
+                <tr class="total-row"><td>SALDO KAS AKHIR PERIODE</td><td class="num-right">${v('bu_ak_kas_akhir')}</td></tr>
+                <tr><td colspan="2">&nbsp;</td></tr>
+            </table>
+
+            <!-- III. NERACA -->
+            <table>
+                <tr class="header-section"><td colspan="2">ASET</td><td colspan="2">LIABILITAS &amp; EKUITAS</td></tr>
+                <tr>
+                    <td>Kas &amp; Bank</td><td class="num-right">${v('bu_nr_kas')}</td>
+                    <td>Utang Usaha</td><td class="num-right">${v('bu_nr_utang_usaha')}</td>
+                </tr>
+                <tr>
+                    <td>Piutang Usaha</td><td class="num-right">${v('bu_nr_piutang')}</td>
+                    <td>Utang Bank</td><td class="num-right">${v('bu_nr_utang_bank')}</td>
+                </tr>
+                <tr>
+                    <td>Persediaan</td><td class="num-right">${v('bu_nr_persediaan')}</td>
+                    <td class="highlight-row">Total Liabilitas</td><td class="num-right highlight-row">${v('bu_nr_total_liab')}</td>
+                </tr>
+                <tr class="highlight-row">
+                    <td>Total Aset Lancar</td><td class="num-right">${v('bu_nr_total_aset_lancar')}</td>
+                    <td>Modal Disetor</td><td class="num-right">${v('bu_nr_modal')}</td>
+                </tr>
+                <tr>
+                    <td>Aset Tetap Neto</td><td class="num-right">${v('bu_nr_aset_tetap_neto')}</td>
+                    <td>Laba Ditahan</td><td class="num-right">${v('bu_nr_laba_ditahan')}</td>
+                </tr>
+                <tr>
+                    <td class="total-row">TOTAL ASET</td><td class="num-right total-row">${v('bu_nr_total_aset')}</td>
+                    <td class="highlight-row">Total Ekuitas</td><td class="num-right highlight-row">${v('bu_nr_total_ekuitas')}</td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td><td>&nbsp;</td>
+                    <td class="total-row">TOTAL LIABILITAS &amp; EKUITAS</td><td class="num-right total-row">${v('bu_nr_total_liab_ekuitas')}</td>
+                </tr>
+            </table>
+        </body>
+        </html>
+    `;
+
+    const blob = new Blob([excelHTML], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const link = document.createElement('a');
+    const safeName = namaDebitur.replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Laporan_Keuangan_${safeName}_${tahun}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // ============================================================
