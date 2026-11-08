@@ -119,6 +119,99 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
         </div>
     </div>
 
+    <?php
+    $adaSlik = !empty($slik);
+    $adaRekening = !empty($rekening);
+    $adaAgunan = !empty($agunan);
+    $adaWebcheck = !empty($webcheck) && (!empty($webcheck['sipp_keterangan']) || !empty($webcheck['internet_keterangan']));
+    $hasTahapLain = $adaSlik || $adaRekening || $adaAgunan || $adaWebcheck;
+
+    $totalBakiDebetSlik = 0;
+    $kolTerburuk = 1;
+    if ($adaSlik) {
+        foreach ($slik as $s) {
+            $totalBakiDebetSlik += (float)($s['outstanding'] ?? 0);
+            $k = (int)preg_replace('/[^0-9]/', '', $s['kelancaran'] ?? '1');
+            if ($k > $kolTerburuk) $kolTerburuk = $k;
+        }
+    }
+
+    $totalMutasiKredit = 0;
+    if ($adaRekening) {
+        foreach ($rekening as $r) {
+            $totalMutasiKredit += (float)($r['total_mutasi_kredit'] ?? 0);
+        }
+    }
+
+    $totalNilaiPasarAgunan = 0;
+    if ($adaAgunan) {
+        foreach ($agunan as $a) {
+            $totalNilaiPasarAgunan += (float)($a['nilai_pasar_mv'] ?? 0);
+        }
+    }
+    ?>
+
+    <?php if ($hasTahapLain): ?>
+    <!-- ============================================================
+         RINGKASAN VERIFIKASI TAHAP LAIN
+         ============================================================ -->
+    <div class="px-6 sm:px-8 pt-4">
+        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
+            <div class="flex items-center justify-between mb-2">
+                <div class="text-[11px] font-extrabold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>📋</span> Ringkasan Verifikasi &amp; Tahap Terkait
+                </div>
+                <span class="text-[10px] text-slate-400 font-semibold">Tersinkronisasi Otomatis</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <!-- SLIK -->
+                <div class="bg-white p-2.5 rounded-xl border border-slate-200/70 shadow-2xs">
+                    <div class="text-[10px] text-slate-400 font-bold uppercase">SLIK / OJK</div>
+                    <div class="text-xs font-bold text-slate-800 mt-0.5">
+                        <?= $adaSlik ? (count($slik) . ' Fasilitas (Kol ' . $kolTerburuk . ')') : '—' ?>
+                    </div>
+                    <div class="text-[10px] text-slate-500 font-medium truncate">
+                        <?= $adaSlik ? ('Baki: Rp ' . number_format($totalBakiDebetSlik, 0, ',', '.')) : 'Belum ada data' ?>
+                    </div>
+                </div>
+
+                <!-- Rekening Koran -->
+                <div class="bg-white p-2.5 rounded-xl border border-slate-200/70 shadow-2xs">
+                    <div class="text-[10px] text-slate-400 font-bold uppercase">Rekening Koran</div>
+                    <div class="text-xs font-bold text-slate-800 mt-0.5">
+                        <?= $adaRekening ? (count($rekening) . ' Rekening Bank') : '—' ?>
+                    </div>
+                    <div class="text-[10px] text-slate-500 font-medium truncate">
+                        <?= $adaRekening ? ('Mutasi: Rp ' . number_format($totalMutasiKredit, 0, ',', '.')) : 'Belum ada data' ?>
+                    </div>
+                </div>
+
+                <!-- Agunan -->
+                <div class="bg-white p-2.5 rounded-xl border border-slate-200/70 shadow-2xs">
+                    <div class="text-[10px] text-slate-400 font-bold uppercase">Agunan</div>
+                    <div class="text-xs font-bold text-slate-800 mt-0.5">
+                        <?= $adaAgunan ? (count($agunan) . ' Objek Jaminan') : '—' ?>
+                    </div>
+                    <div class="text-[10px] text-slate-500 font-medium truncate">
+                        <?= $adaAgunan ? ('MV: Rp ' . number_format($totalNilaiPasarAgunan, 0, ',', '.')) : 'Belum ada data' ?>
+                    </div>
+                </div>
+
+                <!-- Web Check -->
+                <div class="bg-white p-2.5 rounded-xl border border-slate-200/70 shadow-2xs">
+                    <div class="text-[10px] text-slate-400 font-bold uppercase">Web Check / Media</div>
+                    <div class="text-xs font-bold text-slate-800 mt-0.5">
+                        <?= $adaWebcheck ? 'Terverifikasi' : '—' ?>
+                    </div>
+                    <div class="text-[10px] text-slate-500 font-medium truncate">
+                        <?= $adaWebcheck ? 'SIPP / Watchlist checked' : 'Belum ada data' ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- ============================================================
          TAB NAVIGATION
          ============================================================ -->
