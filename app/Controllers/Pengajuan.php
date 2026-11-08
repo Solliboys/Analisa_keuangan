@@ -304,6 +304,23 @@ class Pengajuan extends BaseController
         $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
         $viewFolder = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
 
+        $keuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+        $laporanKeuangan = (new KreditLaporanKeuanganModel())->where('kredit_id', $id)->first() ?? [];
+
+        // Jika belum ada laporan tersimpan tetapi sudah ada data keuangan di tahap 9, hitung otomatis
+        if (empty($laporanKeuangan['json_laporan']) && !empty($keuangan)) {
+            $service = new LaporanKeuanganService();
+            $calcInput = array_merge($keuangan, ['daftar_karyawan' => $kredit['daftar_karyawan'] ?? '[]']);
+            $hasil = $service->hitungLaporan($calcInput, $viewFolder);
+            $laporanKeuangan = [
+                'kredit_id'    => $id,
+                'tipe_pemohon' => $viewFolder,
+                'json_laporan' => json_encode($hasil),
+                'generated_at' => date('Y-m-d H:i:s'),
+                'status_neraca'=> $hasil['validasi']['status_neraca'] ?? 'Seimbang',
+            ];
+        }
+
         $data = [
             'title'             => 'Edit Analisa Kredit - ' . $kredit['nomor_aplikasi'] . ' (' . (($viewFolder === 'badan_usaha') ? 'Badan Usaha' : 'Perorangan') . ')',
             'view_folder'       => $viewFolder,
@@ -319,14 +336,13 @@ class Pengajuan extends BaseController
             'webcheck'          => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],
             'analisa'           => $this->analisaModel->where('kredit_id', $id)->first() ?? [],
             'rekening'          => $this->rekeningModel->where('kredit_id', $id)->findAll(),
-            'keuangan'          => $this->keuanganModel->where('kredit_id', $id)->first() ?? [],
+            'keuangan'          => $keuangan,
             'disbursement'      => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
             'dokumen'           => $this->dokumenModel->where('kredit_id', $id)->findAll(),
             'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
             'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
             'pengaturan_sistem' => $pengaturanSistem,
-            'laporan_keuangan'  => [],,
-            'laporan_keuangan'  => (new KreditLaporanKeuanganModel())->where('kredit_id', $id)->first() ?? [],
+            'laporan_keuangan'  => $laporanKeuangan,
         ];
 
         return view('pengajuan/' . $viewFolder . '/form', $data);
