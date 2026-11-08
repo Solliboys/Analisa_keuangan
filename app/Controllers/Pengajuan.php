@@ -149,7 +149,8 @@ class Pengajuan extends BaseController
             'jabatan'           => session()->get('jabatan'),
             'daftar_kredit'     => $daftarKredit,
             'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
-            'pengaturan_sistem' => $pengaturanSistem
+            'pengaturan_sistem' => $pengaturanSistem,
+            'laporan_keuangan'  => [],
         ];
 
         return view('pengajuan/index', $data);
@@ -268,7 +269,8 @@ class Pengajuan extends BaseController
             'dokumen'           => [],
             'komite'            => [],
             'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
-            'pengaturan_sistem' => $pengaturanSistem
+            'pengaturan_sistem' => $pengaturanSistem,
+            'laporan_keuangan'  => [],
         ];
 
         return view('pengajuan/' . $viewFolder . '/form', $data);
@@ -323,6 +325,7 @@ class Pengajuan extends BaseController
             'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
             'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
             'pengaturan_sistem' => $pengaturanSistem,
+            'laporan_keuangan'  => [],,
             'laporan_keuangan'  => (new KreditLaporanKeuanganModel())->where('kredit_id', $id)->first() ?? [],
         ];
 
@@ -1211,7 +1214,8 @@ class Pengajuan extends BaseController
             'disbursement'      => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
             'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
             'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
-            'pengaturan_sistem' => $pengaturanSistem
+            'pengaturan_sistem' => $pengaturanSistem,
+            'laporan_keuangan'  => [],
         ];
 
         return view('pengajuan/cetak', $data);
