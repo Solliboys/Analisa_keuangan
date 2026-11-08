@@ -49,6 +49,7 @@ $routes->group('pengajuan', static function ($routes) {
     $routes->post('ambil-ringkasan-slik', 'Pengajuan::ambilRingkasanSlik');
     $routes->post('upload-dokumen-slik', 'Pengajuan::uploadDokumenSlik');
     $routes->get('cetak/(:num)', 'Pengajuan::cetak/$1');
+    $routes->post('generate-laporan', 'Pengajuan::generateLaporan');
 });
 
 // Modul Verifikasi SLIK OJK

@@ -16,6 +16,8 @@ use App\Models\KomiteModel;
 use App\Models\LogAktivitasModel;
 use App\Models\SettingReferensiModel;
 use App\Services\GeminiAiService;
+use App\Models\KreditLaporanKeuanganModel;
+use App\Services\LaporanKeuanganService;
 
 class Pengajuan extends BaseController
 {
@@ -320,7 +322,8 @@ class Pengajuan extends BaseController
             'dokumen'           => $this->dokumenModel->where('kredit_id', $id)->findAll(),
             'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
             'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
-            'pengaturan_sistem' => $pengaturanSistem
+            'pengaturan_sistem' => $pengaturanSistem,
+            'laporan_keuangan'  => (new KreditLaporanKeuanganModel())->where('kredit_id', $id)->first() ?? [],
         ];
 
         return view('pengajuan/' . $viewFolder . '/form', $data);
@@ -2036,5 +2039,168 @@ class Pengajuan extends BaseController
     {
         if (is_numeric($val)) return (float)$val;
         return (float)preg_replace('/[^0-9]/', '', (string)$val);
+    }
+
+    // ==========================================
+    // TAHAP 10: GENERATE LAPORAN KEUANGAN ESTIMASI
+    // ==========================================
+    public function generateLaporan()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Sesi berakhir, silakan login ulang.']);
+        }
+
+        $input    = $this->request->getPost();
+        $kreditId = (int)($input['kredit_id'] ?? 0);
+        if ($kreditId <= 0) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID pengajuan tidak valid.']);
+        }
+
+        // Ambil data kredit untuk menentukan tipe pemohon
+        $kredit = $this->kreditModel->find($kreditId);
+        if (!$kredit) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data pengajuan tidak ditemukan.']);
+        }
+
+        $rawJd       = $kredit['jenis_debitur'] ?? 'Perorangan';
+        $tipePemohon = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false)
+            ? 'badan_usaha' : 'karyawan';
+
+        // Ambil data laba rugi dari kredit_keuangan_dsc sebagai base
+        $keuangan = $this->keuanganModel->where('kredit_id', $kreditId)->first() ?? [];
+
+        // Gabungkan data DB dengan input POST (input POST override DB)
+        $mergedInput = array_merge($keuangan, $input);
+        $mergedInput['daftar_karyawan'] = $kredit['daftar_karyawan'] ?? '[]';
+
+        // Hitung laporan menggunakan service
+        $service = new LaporanKeuanganService();
+        $hasil   = $service->hitungLaporan($mergedInput, $tipePemohon);
+
+        // Validasi keseimbangan neraca (badan usaha)
+        $validasi = $hasil['validasi'];
+        $warningMsg = null;
+        if ($tipePemohon === 'badan_usaha' && !$validasi['is_seimbang']) {
+            $selisih = abs($validasi['selisih_neraca']);
+            $warningMsg = 'Neraca tidak seimbang — Selisih: Rp ' . number_format($selisih, 0, ',', '.') . '. Periksa kembali data input di Tahap 9.';
+        }
+
+        // Simpan ke tabel kredit_laporan_keuangan (upsert by kredit_id)
+        $laporanModel  = new KreditLaporanKeuanganModel();
+        $existingLaporan = $laporanModel->where('kredit_id', $kreditId)->first();
+
+        $labaRugi  = $hasil['laba_rugi'];
+        $arusKas   = $hasil['arus_kas'];
+        $neraca    = $hasil['neraca'] ?? [];
+        $asumsi    = $hasil['asumsi'];
+
+        $dataLaporan = [
+            'kredit_id'                 => $kreditId,
+            'tipe_pemohon'              => $tipePemohon,
+            // Asumsi & Saldo Awal
+            'asumsi_dso'                => $asumsi['dso'] ?? 30,
+            'asumsi_dio'                => $asumsi['dio'] ?? 45,
+            'asumsi_dpo'                => $asumsi['dpo'] ?? 30,
+            'saldo_awal_piutang'        => $asumsi['saldo_awal_piutang'] ?? 0,
+            'saldo_awal_persediaan'     => $asumsi['saldo_awal_persediaan'] ?? 0,
+            'saldo_awal_utang_usaha'    => $asumsi['saldo_awal_utang_usaha'] ?? 0,
+            'saldo_awal_aset_tetap'     => $asumsi['saldo_awal_aset_tetap'] ?? 0,
+            'saldo_awal_kas'            => $asumsi['saldo_awal_kas'] ?? 0,
+            // Input Neraca
+            'kas_bank_neraca'           => $neraca['kas_bank'] ?? ($arusKas['kas_akhir'] ?? 0),
+            'piutang_usaha_neraca'      => $neraca['piutang_usaha'] ?? 0,
+            'persediaan_neraca'         => $neraca['persediaan'] ?? 0,
+            'aset_lancar_lain_neraca'   => $neraca['aset_lancar_lain'] ?? 0,
+            'harga_perolehan_aset_tetap'=> $neraca['harga_perolehan_aset_tetap'] ?? 0,
+            'akumulasi_penyusutan'      => $neraca['akumulasi_penyusutan'] ?? 0,
+            'umur_ekonomis_tahun'       => $neraca['umur_ekonomis_tahun'] ?? 5,
+            'utang_usaha'               => $neraca['utang_usaha'] ?? 0,
+            'utang_bank_pendek'         => $neraca['utang_bank_pendek'] ?? 0,
+            'utang_jangka_panjang'      => $neraca['utang_jangka_panjang'] ?? 0,
+            'modal_disetor'             => $neraca['modal_disetor'] ?? 0,
+            'laba_ditahan_awal'         => $neraca['laba_ditahan_awal'] ?? 0,
+            'laba_ditahan_akhir'        => $neraca['laba_ditahan_akhir'] ?? 0,
+            'prive_dividen'             => $neraca['prive_dividen'] ?? (float)($input['prive_dividen'] ?? $input['input_prive_dividen'] ?? 0),
+            // Laba Rugi Summary
+            'pendapatan'                => $labaRugi['pendapatan'],
+            'hpp'                       => $labaRugi['hpp'],
+            'laba_kotor'                => $labaRugi['laba_kotor'],
+            'beban_gaji'                => $labaRugi['beban_gaji'],
+            'beban_operasional'         => $labaRugi['beban_operasional'],
+            'beban_sewa'                => $labaRugi['beban_sewa'] ?? 0,
+            'beban_lainnya'             => $labaRugi['beban_lainnya'],
+            'beban_penyusutan'          => $labaRugi['beban_penyusutan'] ?? 0,
+            'laba_operasional'          => $labaRugi['laba_operasional'],
+            'pendapatan_lain'           => $labaRugi['pendapatan_lain'],
+            'beban_bunga'               => $labaRugi['beban_bunga'],
+            'laba_sebelum_pajak'        => $labaRugi['laba_sebelum_pajak'],
+            'pajak'                     => $labaRugi['pajak'],
+            'laba_bersih'               => $labaRugi['laba_bersih'],
+            // Arus Kas
+            'kas_operasional'           => $arusKas['kas_operasional'],
+            'kas_investasi'             => $arusKas['kas_investasi'],
+            'kas_pendanaan'             => $arusKas['kas_pendanaan'],
+            'kenaikan_bersih_kas'       => $arusKas['kenaikan_bersih_kas'],
+            'kas_akhir'                 => $arusKas['kas_akhir'],
+            // Neraca Ringkas
+            'total_aset'                => $neraca['total_aset'] ?? 0,
+            'total_liabilitas'          => $neraca['total_liabilitas'] ?? 0,
+            'total_ekuitas'             => $neraca['total_ekuitas'] ?? 0,
+            // Validasi
+            'status_neraca'             => $validasi['status_neraca'],
+            'selisih_neraca'            => $validasi['selisih_neraca'],
+            'status_kas'                => $validasi['status_kas'],
+            'selisih_kas'               => $validasi['selisih_kas'],
+            // Simpan JSON lengkap
+            'json_laporan'              => json_encode($hasil),
+            'generated_at'              => date('Y-m-d H:i:s'),
+            'generated_by'              => session()->get('user_id'),
+        ];
+
+        try {
+            if ($existingLaporan) {
+                $laporanModel->update($existingLaporan['id'], $dataLaporan);
+            } else {
+                $laporanModel->insert($dataLaporan);
+            }
+
+            // Juga update status ke tabel kredit_keuangan_dsc jika ada
+            if ($keuangan && !empty($keuangan['keuangan_id'])) {
+                $this->keuanganModel->update($keuangan['keuangan_id'], [
+                    'is_laporan_generated' => 1,
+                    'laporan_generated_at' => date('Y-m-d H:i:s'),
+                    'laporan_json_data'    => json_encode($hasil),
+                    'neraca_total_aset'    => $neraca['total_aset'] ?? 0,
+                    'cf_kas_akhir'         => $arusKas['kas_akhir'] ?? 0,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyimpan laporan: ' . $e->getMessage()]);
+        }
+
+        // Catat ke log aktivitas
+        try {
+            LogAktivitasModel::catat(
+                'Generate Laporan Keuangan Estimasi untuk pengajuan #' . $kredit['nomor_aplikasi'] . ' (' . ($kredit['nama_debitur'] ?? '-') . ')',
+                'LAPORAN',
+                'SUCCESS',
+                [
+                    'kredit_id'      => $kreditId,
+                    'tipe_pemohon'   => $tipePemohon,
+                    'laba_bersih'    => $labaRugi['laba_bersih'],
+                    'kas_akhir'      => $arusKas['kas_akhir'],
+                    'status_neraca'  => $validasi['status_neraca'],
+                ]
+            );
+        } catch (\Throwable $e) {}
+
+        return $this->response->setJSON([
+            'status'   => true,
+            'warning'  => $warningMsg,
+            'message'  => $warningMsg
+                ? ('Laporan berhasil dibuat. ⚠️ ' . $warningMsg)
+                : 'Laporan Keuangan Estimasi berhasil dibuat.',
+            'data'     => $hasil,
+        ]);
     }
 }
