@@ -622,6 +622,12 @@ function unduhLaporanPDF(target) {
     const chevron = document.getElementById('chevronUnduh');
     if (chevron) chevron.style.transform = '';
 
+    const kreditId = document.getElementById('kredit_id')?.value || document.querySelector('[name="kredit_id"]')?.value;
+    if (kreditId) {
+        window.open(baseUrl + 'pengajuan/cetak-laporan/' + kreditId + '?tipe=' + target, '_blank', 'width=1000,height=850');
+        return;
+    }
+
     const namaDebitur = document.querySelector('[name="nama_debitur"]')?.value || 'PT Sumber Makmur Sejahtera';
     const noApp       = document.querySelector('[name="nomor_aplikasi"]')?.value || 'NC-2024-AK8921';
     const refDokumen  = 'REF: FIN-EST/' + ('<?= date("Y") ?>') + '/' + (noApp.replace(/[^a-zA-Z0-9]/g, '').slice(-6).toUpperCase() || 'BU-8921');
@@ -1270,6 +1276,12 @@ function unduhLaporanExcel() {
     if (menu) menu.classList.add('hidden');
     const chevron = document.getElementById('chevronUnduh');
     if (chevron) chevron.style.transform = '';
+
+    const kreditId = document.getElementById('kredit_id')?.value || document.querySelector('[name="kredit_id"]')?.value;
+    if (kreditId) {
+        window.location.href = baseUrl + 'pengajuan/unduh-laporan-excel/' + kreditId;
+        return;
+    }
 
     const namaDebitur = document.querySelector('[name="nama_debitur"]')?.value || 'PT Sumber Makmur Sejahtera';
     const noApp       = document.querySelector('[name="nomor_aplikasi"]')?.value || 'NC-<?= date("Y") ?>';

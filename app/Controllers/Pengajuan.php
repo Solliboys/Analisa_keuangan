@@ -2223,4 +2223,79 @@ class Pengajuan extends BaseController
             'data'     => $hasil,
         ]);
     }
+
+    /**
+     * Server-side Cetak / Unduh PDF Laporan Keuangan Estimasi
+     */
+    public function cetakLaporan($id = null)
+    {
+        if ($redirect = $this->cekAuth()) return $redirect;
+
+        $kredit = $this->kreditModel->find($id);
+        if (!$kredit) {
+            return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan');
+        }
+
+        $laporanModel = new KreditLaporanKeuanganModel();
+        $laporan = $laporanModel->where('kredit_id', $id)->first();
+
+        $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
+        $tipePemohon = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
+
+        if (!$laporan || empty($laporan['json_laporan'])) {
+            $keuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+            $service = new LaporanKeuanganService();
+            $calcInput = array_merge($keuangan, ['daftar_karyawan' => $kredit['daftar_karyawan'] ?? '[]']);
+            $hasil = $service->hitungLaporan($calcInput, $tipePemohon);
+        } else {
+            $hasil = json_decode($laporan['json_laporan'], true);
+        }
+
+        $tipeTarget = $this->request->getGet('tipe') ?? 'semua';
+
+        return view('pengajuan/cetak_laporan_keuangan', [
+            'kredit'       => $kredit,
+            'hasil'        => $hasil,
+            'tipeTarget'   => $tipeTarget,
+            'tipePemohon'  => $tipePemohon,
+        ]);
+    }
+
+    /**
+     * Server-side Unduh Excel Laporan Keuangan Estimasi
+     */
+    public function unduhLaporanExcel($id = null)
+    {
+        if ($redirect = $this->cekAuth()) return $redirect;
+
+        $kredit = $this->kreditModel->find($id);
+        if (!$kredit) {
+            return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan');
+        }
+
+        $laporanModel = new KreditLaporanKeuanganModel();
+        $laporan = $laporanModel->where('kredit_id', $id)->first();
+
+        $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
+        $tipePemohon = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
+
+        if (!$laporan || empty($laporan['json_laporan'])) {
+            $keuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+            $service = new LaporanKeuanganService();
+            $calcInput = array_merge($keuangan, ['daftar_karyawan' => $kredit['daftar_karyawan'] ?? '[]']);
+            $hasil = $service->hitungLaporan($calcInput, $tipePemohon);
+        } else {
+            $hasil = json_decode($laporan['json_laporan'], true);
+        }
+
+        $namaDebitur = $kredit['nama_debitur'] ?? 'Debitur';
+        $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $namaDebitur);
+        $filename = 'Laporan_Keuangan_' . $safeName . '_' . date('Ymd') . '.xls';
+
+        return view('pengajuan/unduh_laporan_excel', [
+            'kredit'   => $kredit,
+            'hasil'    => $hasil,
+            'filename' => $filename,
+        ]);
+    }
 }
