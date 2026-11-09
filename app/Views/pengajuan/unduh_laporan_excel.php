@@ -92,12 +92,9 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         </tr>
         <?php endforeach; else: ?>
         <tr>
-            <td>Bank BCA / Mandiri</td>
-            <td class="num-right">Rp 300.000.000</td>
-            <td class="num-right">Rp 150.000.000</td>
-            <td>Kol 1 (Lancar)</td>
+            <td colspan="4" style="text-align: center; color: #64748b; font-style: italic;">Tidak ada pinjaman bank lain tercatat pada SLIK OJK (Nihil / Bersih)</td>
         </tr>
-        <?php $totBaki = 150000000; endif; ?>
+        <?php endif; ?>
         <tr class="highlight-row">
             <td colspan="2">TOTAL BAKI DEBET SLIK</td>
             <td class="num-right"><?= v($totBaki) ?></td>
@@ -130,12 +127,9 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         </tr>
         <?php endforeach; else: ?>
         <tr>
-            <td>Bank Central Asia (BCA)</td>
-            <td>088-2918-201</td>
-            <td class="num-right">Rp 1.850.000.000</td>
-            <td class="num-right">Rp 308.333.333</td>
+            <td colspan="4" style="text-align: center; color: #64748b; font-style: italic;">Data mutasi rekening koran belum diunggah / dicatat</td>
         </tr>
-        <?php $totMutasi = 1850000000; $totRata = 308333333; endif; ?>
+        <?php endif; ?>
         <tr class="highlight-row">
             <td colspan="2">TOTAL MUTASI ARUS KAS MASUK</td>
             <td class="num-right"><?= v($totMutasi) ?></td>
@@ -168,12 +162,9 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         </tr>
         <?php endforeach; else: ?>
         <tr>
-            <td>Tanah &amp; Ruko Operasional</td>
-            <td>SHGB No. 4410</td>
-            <td class="num-right">Rp 1.450.000.000</td>
-            <td class="num-right">Rp 1.015.000.000</td>
+            <td colspan="4" style="text-align: center; color: #64748b; font-style: italic;">Pembiayaan tanpa agunan fisik / Clean Loan (Jaminan Personal / Fidusia Piutang &amp; Stok Usaha)</td>
         </tr>
-        <?php $totMv = 1450000000; $totLv = 1015000000; endif; ?>
+        <?php endif; ?>
         <tr class="highlight-row">
             <td colspan="2">TOTAL AGUNAN</td>
             <td class="num-right"><?= v($totMv) ?></td>

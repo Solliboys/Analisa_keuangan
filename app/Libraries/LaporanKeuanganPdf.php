@@ -243,12 +243,7 @@ class LaporanKeuanganPdf
                 $y += 4.8;
             }
         } else {
-            $this->text(18, $y + 3.5, 'Bank BCA / Mandiri (Fasilitas Lancar)', 8.2, false);
-            $this->text(70, $y + 3.5, 'Rp 300.000.000', 8.2, false, 15, 23, 42, 'R', 30);
-            $this->text(105, $y + 3.5, 'Rp 150.000.000', 8.2, false, 15, 23, 42, 'R', 30);
-            $this->text(140, $y + 3.5, 'Kol 1 (Lancar)', 8.2, true, 22, 101, 52);
-            $this->text(165, $y + 3.5, 'SLIK OJK Bersih', 8.0, false, 100, 116, 139);
-            $totBaki = 150000000;
+            $this->text(18, $y + 3.5, 'Tidak ada pinjaman bank lain tercatat pada SLIK OJK (Status Bersih)', 8.0, false, 100, 116, 139);
             $y += 4.8;
         }
 
@@ -288,12 +283,10 @@ class LaporanKeuanganPdf
                 $y += 4.8;
             }
         } else {
-            $this->text(18, $y + 3.5, 'Bank Central Asia (BCA)', 8.2, false);
-            $this->text(65, $y + 3.5, '088-2918-201', 8.2, false);
-            $this->text(110, $y + 3.5, 'Rp 1.850.000.000', 8.2, false, 15, 23, 42, 'R', 35);
-            $this->text(150, $y + 3.5, 'Rp 308.333.333', 8.2, true, 15, 23, 42, 'R', 35);
-            $totMutasiKredit = 1850000000;
-            $totRataKredit   = 308333333;
+            $lrPendapatan = (float)($this->hasil['laba_rugi']['pendapatan'] ?? 0);
+            $totMutasiKredit = $lrPendapatan;
+            $totRataKredit   = round($lrPendapatan / 12, 0);
+            $this->text(18, $y + 3.5, 'Rekapitulasi mutasi kas masuk mengikuti omzet usaha Laba Rugi', 8.0, false, 100, 116, 139);
             $y += 4.8;
         }
 
@@ -332,16 +325,11 @@ class LaporanKeuanganPdf
                 $y += 4.8;
             }
         } else {
-            $this->text(18, $y + 3.5, 'Tanah & Ruko Operasional', 8.2, false);
-            $this->text(65, $y + 3.5, 'SHGB No. 4410/Kebon Jeruk', 8.2, false);
-            $this->text(110, $y + 3.5, 'Rp 1.450.000.000', 8.2, false, 15, 23, 42, 'R', 35);
-            $this->text(150, $y + 3.5, 'Rp 1.015.000.000', 8.2, false, 15, 23, 42, 'R', 35);
-            $totMv = 1450000000;
-            $totLv = 1015000000;
+            $this->text(18, $y + 3.5, 'Tanpa agunan kebendaan terdaftar / Clean Loan', 8.0, false, 100, 116, 139);
             $y += 4.8;
         }
 
-        $coverage = ($plafon > 0 && $totMv > 0) ? round(($totMv / $plafon) * 100, 1) : 145.0;
+        $coverage = ($plafon > 0 && $totMv > 0) ? round(($totMv / $plafon) * 100, 1) : 0;
         $this->rect(15, $y, 180, 5, 219, 234, 254);
         $this->text(18, $y + 3.6, 'Total Nilai Agunan (Coverage: ' . $coverage . '%)', 8.2, true, 30, 64, 175);
         $this->text(110, $y + 3.6, $this->rp($totMv), 8.5, true, 30, 64, 175, 'R', 35);

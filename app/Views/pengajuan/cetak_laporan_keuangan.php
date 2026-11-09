@@ -46,9 +46,6 @@ foreach ($slikList as $s) {
     $k = (int)preg_replace('/[^0-9]/', '', $s['kelancaran'] ?? '1') ?: 1;
     if ($k > $maxKolSlik) $maxKolSlik = $k;
 }
-if (empty($slikList)) {
-    $totBakiSlik = 150000000;
-}
 
 $totMutasiKredit = 0;
 $totRataKredit   = 0;
@@ -57,9 +54,9 @@ foreach ($rekeningList as $r) {
     $totMutasiKredit += $mk;
     $totRataKredit   += (float)($r['rata_rata_kredit'] ?? ($mk / 3));
 }
-if (empty($rekeningList)) {
-    $totMutasiKredit = 1850000000;
-    $totRataKredit   = 308333333;
+if ($totMutasiKredit == 0 && !empty($lr['pendapatan'])) {
+    $totMutasiKredit = (float)$lr['pendapatan'];
+    $totRataKredit   = round($totMutasiKredit / 12, 0);
 }
 
 $totMvAgunan = 0;
@@ -69,11 +66,7 @@ foreach ($agunanList as $a) {
     $totMvAgunan += $mv;
     $totLvAgunan += (float)($a['nilai_likuidasi_lv'] ?? ($mv * 0.7));
 }
-if (empty($agunanList)) {
-    $totMvAgunan = 1450000000;
-    $totLvAgunan = 1015000000;
-}
-$coverageRatio = ($plafonPengajuan > 0 && $totMvAgunan > 0) ? round(($totMvAgunan / $plafonPengajuan) * 100, 1) : 145.0;
+$coverageRatio = ($plafonPengajuan > 0 && $totMvAgunan > 0) ? round(($totMvAgunan / $plafonPengajuan) * 100, 1) : 0;
 
 // Rasio Keuangan
 $pendapatanVal = (float)($lr['pendapatan'] ?? 1);
@@ -294,11 +287,9 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td>Bank BCA / Mandiri (Fasilitas Lancar)</td>
-                            <td class="col-val">Rp 300.000.000</td>
-                            <td class="col-val">Rp 150.000.000</td>
-                            <td><span style="color: #15803d; font-weight: 700;">Kol 1 (Lancar)</span></td>
-                            <td style="color: #64748b; font-size: 9px;">SLIK OJK Bersih</td>
+                            <td colspan="5" style="text-align: center; color: #64748b; font-style: italic; padding: 6px;">
+                                Tidak ada fasilitas kredit bank lain tercatat pada SLIK OJK (Status Debitur Bersih)
+                            </td>
                         </tr>
                     <?php endif; ?>
                     <tr class="row-total-accent">
@@ -332,10 +323,9 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td>Bank Central Asia (BCA)</td>
-                            <td>088-2918-201</td>
-                            <td class="col-val">Rp 1.850.000.000</td>
-                            <td class="col-val font-bold">Rp 308.333.333</td>
+                            <td colspan="4" style="text-align: center; color: #64748b; font-style: italic; padding: 6px;">
+                                Rekapitulasi arus kas bank mengikuti omzet Laba Rugi usaha (<?= rpFmt($totMutasiKredit) ?>)
+                            </td>
                         </tr>
                     <?php endif; ?>
                     <tr class="row-total-accent">
@@ -369,10 +359,9 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td>Tanah &amp; Ruko Operasional</td>
-                            <td>SHGB No. 4410/Kebon Jeruk</td>
-                            <td class="col-val">Rp 1.450.000.000</td>
-                            <td class="col-val">Rp 1.015.000.000</td>
+                            <td colspan="4" style="text-align: center; color: #64748b; font-style: italic; padding: 6px;">
+                                Pembiayaan tanpa agunan fisik terdaftar / fasilitas kredit berbasis arus kas operasional (Clean Loan)
+                            </td>
                         </tr>
                     <?php endif; ?>
                     <tr class="row-total-accent">
