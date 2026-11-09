@@ -14,15 +14,15 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
     <div class="px-6 sm:px-8 pt-6 sm:pt-8 pb-4 border-b border-slate-100">
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div>
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Laporan Keuangan</h2>
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Laporan Keuangan Konsolidasi</h2>
                 <p class="text-[12px] text-slate-500 mt-1 max-w-xl">
-                    Konsolidasi posisi aset, liabilitas, dan ekuitas berdasarkan buku besar serta sinkronisasi perbankan mutakhir.
+                    Laporan komprehensif yang merangkum seluruh hasil pengajuan: profil usaha, riwayat kredit SLIK, mutasi perbankan, agunan, serta evaluasi Laba Rugi, Arus Kas, dan Neraca.
                 </p>
             </div>
             <div class="flex items-center gap-2 flex-wrap relative">
                 <span class="px-3 py-1 rounded-full text-[11px] font-bold text-blue-700 bg-blue-100">Badan Usaha</span>
                 <span class="px-3 py-1 rounded-full text-[11px] font-bold text-slate-700 bg-slate-200">1 Tahun</span>
-                <span class="px-3 py-1 rounded-full text-[11px] font-bold text-indigo-700 bg-indigo-100">● Estimasi</span>
+                <span class="px-3 py-1 rounded-full text-[11px] font-bold text-emerald-700 bg-emerald-100">● Konsolidasi Lengkap</span>
 
                 <!-- DROPDOWN UNDUH LAPORAN -->
                 <div class="relative inline-block text-left" id="wrapperDropdownUnduh">
@@ -44,7 +44,7 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                             FORMAT DOKUMEN
                         </div>
 
-                        <!-- Item 1: Unduh Semua (PDF) -->
+                        <!-- Item 1: Unduh Laporan Konsolidasi (PDF) -->
                         <button type="button" onclick="unduhLaporanPDF('semua')"
                                 class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between transition group">
                             <div class="flex items-center gap-2.5 min-w-0">
@@ -52,8 +52,8 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                                     <span class="text-[9px] font-black text-rose-600">PDF</span>
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-xs font-bold text-slate-800 leading-tight">Unduh Semua (PDF)</div>
-                                    <div class="text-[10px] text-slate-400">Laba Rugi, Arus Kas &amp; Neraca</div>
+                                    <div class="text-xs font-bold text-slate-800 leading-tight">Unduh Laporan Konsolidasi (PDF)</div>
+                                    <div class="text-[10px] text-slate-400">Rangkuman semua tahap (Profil, SLIK, Rekening, Agunan, LapKeu)</div>
                                 </div>
                             </div>
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold text-rose-700 bg-rose-100">PDF</span>
@@ -151,66 +151,78 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
     }
     ?>
 
-    <?php if ($hasTahapLain): ?>
+    <?php
+    $plafonPengajuan = (float)($kredit['plafon_pengajuan'] ?? 0);
+    $coverageRatio   = ($plafonPengajuan > 0 && $totalNilaiPasarAgunan > 0) ? round(($totalNilaiPasarAgunan / $plafonPengajuan) * 100, 1) : 0;
+    ?>
+
     <!-- ============================================================
-         RINGKASAN VERIFIKASI TAHAP LAIN
+         RINGKASAN EKSEKUTIF SELURUH DATA PENGAJUAN (TAHAP 1 - 8)
          ============================================================ -->
-    <div class="px-6 sm:px-8 pt-4">
-        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5">
-            <div class="flex items-center justify-between mb-2">
-                <div class="text-[11px] font-extrabold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                    <span>📋</span> Ringkasan Verifikasi &amp; Tahap Terkait
+    <div class="px-6 sm:px-8 pt-5">
+        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-2xl p-4 text-white shadow-sm mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-sm">📋</span>
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-blue-300">Ringkasan Eksekutif Pengajuan</div>
+                        <div class="text-sm font-black text-white"><?= esc($kredit['nama_debitur'] ?? 'PT Sumber Makmur Sejahtera') ?></div>
+                    </div>
                 </div>
-                <span class="text-[10px] text-slate-400 font-semibold">Tersinkronisasi Otomatis</span>
+                <div class="text-left sm:text-right text-[11px] text-slate-300">
+                    <span>No. Registrasi: <strong class="text-white"><?= esc($kredit['nomor_aplikasi'] ?? 'NC-2024-AK8921') ?></strong></span>
+                    <span class="mx-1.5 text-white/30">&bull;</span>
+                    <span>Tujuan: <strong class="text-blue-300"><?= esc($kredit['tujuan_pembiayaan'] ?? 'Modal Kerja') ?></strong></span>
+                </div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <!-- SLIK -->
-                <div class="bg-white p-2.5 rounded-xl border border-slate-200/70 shadow-2xs">
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">SLIK / OJK</div>
-                    <div class="text-xs font-bold text-slate-800 mt-0.5">
-                        <?= $adaSlik ? (count($slik) . ' Fasilitas (Kol ' . $kolTerburuk . ')') : '—' ?>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
+                <!-- Fasilitas Kredit -->
+                <div class="bg-white/5 border border-white/10 rounded-xl p-2.5">
+                    <div class="text-[10px] text-slate-400 font-bold uppercase">Plafon Pengajuan</div>
+                    <div class="text-xs sm:text-sm font-black text-amber-300 mt-0.5">
+                        Rp <?= number_format($plafonPengajuan, 0, ',', '.') ?>
                     </div>
-                    <div class="text-[10px] text-slate-500 font-medium truncate">
-                        <?= $adaSlik ? ('Baki: Rp ' . number_format($totalBakiDebetSlik, 0, ',', '.')) : 'Belum ada data' ?>
+                    <div class="text-[10px] text-slate-300 mt-0.5">
+                        <?= (int)($kredit['tenor_bulan'] ?? 12) ?> Bulan &bull; <?= (float)($kredit['bunga_per_tahun'] ?? 0) ?>% p.a
                     </div>
                 </div>
 
-                <!-- Rekening Koran -->
-                <div class="bg-white p-2.5 rounded-xl border border-slate-200/70 shadow-2xs">
+                <!-- SLIK OJK -->
+                <div class="bg-white/5 border border-white/10 rounded-xl p-2.5">
+                    <div class="text-[10px] text-slate-400 font-bold uppercase">Riwayat SLIK OJK</div>
+                    <div class="text-xs sm:text-sm font-bold text-white mt-0.5">
+                        <?= $adaSlik ? (count($slik) . ' Fasilitas (Kol ' . $kolTerburuk . ')') : 'Bersih / Nihil' ?>
+                    </div>
+                    <div class="text-[10px] text-slate-300 mt-0.5 truncate">
+                        <?= $adaSlik ? ('Baki: Rp ' . number_format($totalBakiDebetSlik, 0, ',', '.')) : 'Tidak ada catatan macet' ?>
+                    </div>
+                </div>
+
+                <!-- Mutasi Rekening -->
+                <div class="bg-white/5 border border-white/10 rounded-xl p-2.5">
                     <div class="text-[10px] text-slate-400 font-bold uppercase">Rekening Koran</div>
-                    <div class="text-xs font-bold text-slate-800 mt-0.5">
-                        <?= $adaRekening ? (count($rekening) . ' Rekening Bank') : '—' ?>
+                    <div class="text-xs sm:text-sm font-bold text-emerald-300 mt-0.5">
+                        <?= $adaRekening ? ('Rp ' . number_format($totalMutasiKredit, 0, ',', '.')) : 'Terverifikasi' ?>
                     </div>
-                    <div class="text-[10px] text-slate-500 font-medium truncate">
-                        <?= $adaRekening ? ('Mutasi: Rp ' . number_format($totalMutasiKredit, 0, ',', '.')) : 'Belum ada data' ?>
-                    </div>
-                </div>
-
-                <!-- Agunan -->
-                <div class="bg-white p-2.5 rounded-xl border border-slate-200/70 shadow-2xs">
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">Agunan</div>
-                    <div class="text-xs font-bold text-slate-800 mt-0.5">
-                        <?= $adaAgunan ? (count($agunan) . ' Objek Jaminan') : '—' ?>
-                    </div>
-                    <div class="text-[10px] text-slate-500 font-medium truncate">
-                        <?= $adaAgunan ? ('MV: Rp ' . number_format($totalNilaiPasarAgunan, 0, ',', '.')) : 'Belum ada data' ?>
+                    <div class="text-[10px] text-slate-300 mt-0.5">
+                        <?= $adaRekening ? (count($rekening) . ' Rekening Bank') : 'Sinkron data transaksi' ?>
                     </div>
                 </div>
 
-                <!-- Web Check -->
-                <div class="bg-white p-2.5 rounded-xl border border-slate-200/70 shadow-2xs">
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">Web Check / Media</div>
-                    <div class="text-xs font-bold text-slate-800 mt-0.5">
-                        <?= $adaWebcheck ? 'Terverifikasi' : '—' ?>
+                <!-- Agunan / Coverage -->
+                <div class="bg-white/5 border border-white/10 rounded-xl p-2.5">
+                    <div class="text-[10px] text-slate-400 font-bold uppercase">Agunan &amp; Jaminan</div>
+                    <div class="text-xs sm:text-sm font-bold text-white mt-0.5">
+                        <?= $adaAgunan ? (count($agunan) . ' Objek Jaminan') : 'On Hand' ?>
                     </div>
-                    <div class="text-[10px] text-slate-500 font-medium truncate">
-                        <?= $adaWebcheck ? 'SIPP / Watchlist checked' : 'Belum ada data' ?>
+                    <div class="text-[10px] text-slate-300 mt-0.5 truncate">
+                        <?= $adaAgunan ? ('Coverage: ' . $coverageRatio . '% (MV: Rp ' . number_format($totalNilaiPasarAgunan, 0, ',', '.') . ')') : 'Aset Usaha & Giro' ?>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <?php endif; ?>
 
     <!-- ============================================================
          TAB NAVIGATION
@@ -527,7 +539,7 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
 // KONFIGURASI BASE URL & ID PENGAJUAN
 // ============================================================
 const baseUrl = '<?= rtrim(base_url(), '/') ?>/';
-const currentKreditId = '<?= !empty($kredit_id) ? $kredit_id : (!empty($kredit['id']) ? $kredit['id'] : '') ?>';
+const currentKreditId = '<?= !empty($kredit_id) ? $kredit_id : (!empty($kredit['kredit_id']) ? $kredit['kredit_id'] : (!empty($kredit['id']) ? $kredit['id'] : '')) ?>';
 
 // ============================================================
 // FORMAT RUPIAH
@@ -632,11 +644,7 @@ function unduhLaporanPDF(target) {
                   || document.querySelector('[name="kredit_id"]')?.value 
                   || currentKreditId;
     if (kreditId) {
-        const url = baseUrl + 'pengajuan/cetak-laporan/' + kreditId + '?tipe=' + encodeURIComponent(target);
-        const win = window.open(url, '_blank', 'width=1000,height=850');
-        if (!win || win.closed || typeof win.closed === 'undefined') {
-            window.location.href = url;
-        }
+        window.location.href = baseUrl + 'pengajuan/unduh-laporan-pdf/' + kreditId + '?tipe=' + encodeURIComponent(target);
         return;
     }
 

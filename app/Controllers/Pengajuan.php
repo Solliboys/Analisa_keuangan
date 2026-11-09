@@ -2225,7 +2225,7 @@ class Pengajuan extends BaseController
     }
 
     /**
-     * Server-side Cetak / Unduh PDF Laporan Keuangan Estimasi
+     * Server-side Cetak / Preview Laporan Keuangan Konsolidasi Lengkap
      */
     public function cetakLaporan($id = null)
     {
@@ -2251,6 +2251,14 @@ class Pengajuan extends BaseController
             $hasil = json_decode($laporan['json_laporan'], true);
         }
 
+        // Load semua data pendukung untuk laporan konsolidasi
+        $dataSlik     = $this->slikModel->where('kredit_id', $id)->findAll();
+        $dataRekening = $this->rekeningModel->where('kredit_id', $id)->findAll();
+        $dataAgunan   = $this->agunanModel->where('kredit_id', $id)->findAll();
+        $dataWebcheck = $this->webcheckModel->where('kredit_id', $id)->first();
+        $dataAnalisa  = $this->analisaModel->where('kredit_id', $id)->first();
+        $dataKeuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+
         $tipeTarget = $this->request->getGet('tipe') ?? 'semua';
 
         return view('pengajuan/cetak_laporan_keuangan', [
@@ -2258,11 +2266,78 @@ class Pengajuan extends BaseController
             'hasil'        => $hasil,
             'tipeTarget'   => $tipeTarget,
             'tipePemohon'  => $tipePemohon,
+            'dataSlik'     => $dataSlik,
+            'dataRekening' => $dataRekening,
+            'dataAgunan'   => $dataAgunan,
+            'dataWebcheck' => $dataWebcheck,
+            'dataAnalisa'  => $dataAnalisa,
+            'dataKeuangan' => $dataKeuangan,
         ]);
     }
 
     /**
-     * Server-side Unduh Excel Laporan Keuangan Estimasi
+     * Server-side Langsung Download File PDF Laporan Keuangan Konsolidasi
+     * Mengembalikan file PDF binary dengan Content-Disposition: attachment sehingga langsung terdownload
+     */
+    public function unduhLaporanPdf($id = null)
+    {
+        if ($redirect = $this->cekAuth()) return $redirect;
+
+        $kredit = $this->kreditModel->find($id);
+        if (!$kredit) {
+            return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan');
+        }
+
+        $laporanModel = new KreditLaporanKeuanganModel();
+        $laporan = $laporanModel->where('kredit_id', $id)->first();
+
+        $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
+        $tipePemohon = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
+
+        if (!$laporan || empty($laporan['json_laporan'])) {
+            $keuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+            $service = new LaporanKeuanganService();
+            $calcInput = array_merge($keuangan, ['daftar_karyawan' => $kredit['daftar_karyawan'] ?? '[]']);
+            $hasil = $service->hitungLaporan($calcInput, $tipePemohon);
+        } else {
+            $hasil = json_decode($laporan['json_laporan'], true);
+        }
+
+        // Load semua data pendukung untuk laporan konsolidasi
+        $dataSlik     = $this->slikModel->where('kredit_id', $id)->findAll();
+        $dataRekening = $this->rekeningModel->where('kredit_id', $id)->findAll();
+        $dataAgunan   = $this->agunanModel->where('kredit_id', $id)->findAll();
+        $dataWebcheck = $this->webcheckModel->where('kredit_id', $id)->first();
+        $dataAnalisa  = $this->analisaModel->where('kredit_id', $id)->first();
+        $dataKeuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+
+        $tipeTarget = $this->request->getGet('tipe') ?? 'semua';
+
+        $extra = [
+            'dataSlik'     => $dataSlik,
+            'dataRekening' => $dataRekening,
+            'dataAgunan'   => $dataAgunan,
+            'dataWebcheck' => $dataWebcheck,
+            'dataAnalisa'  => $dataAnalisa,
+            'dataKeuangan' => $dataKeuangan,
+        ];
+
+        $pdfLib = new \App\Libraries\LaporanKeuanganPdf($kredit, $hasil, $tipeTarget, $extra);
+        $pdfContent = $pdfLib->generate();
+
+        $namaDebitur = $kredit['nama_debitur'] ?? 'Debitur';
+        $safeName    = preg_replace('/[^a-zA-Z0-9_-]/', '_', $namaDebitur);
+        $filename    = 'Laporan_Konsolidasi_' . $safeName . '_' . date('Ymd') . '.pdf';
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setHeader('Content-Length', (string)strlen($pdfContent))
+            ->setBody($pdfContent);
+    }
+
+    /**
+     * Server-side Unduh Excel Laporan Keuangan Konsolidasi
      */
     public function unduhLaporanExcel($id = null)
     {
@@ -2288,14 +2363,28 @@ class Pengajuan extends BaseController
             $hasil = json_decode($laporan['json_laporan'], true);
         }
 
+        // Load semua data pendukung untuk laporan konsolidasi
+        $dataSlik     = $this->slikModel->where('kredit_id', $id)->findAll();
+        $dataRekening = $this->rekeningModel->where('kredit_id', $id)->findAll();
+        $dataAgunan   = $this->agunanModel->where('kredit_id', $id)->findAll();
+        $dataWebcheck = $this->webcheckModel->where('kredit_id', $id)->first();
+        $dataAnalisa  = $this->analisaModel->where('kredit_id', $id)->first();
+        $dataKeuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+
         $namaDebitur = $kredit['nama_debitur'] ?? 'Debitur';
         $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $namaDebitur);
-        $filename = 'Laporan_Keuangan_' . $safeName . '_' . date('Ymd') . '.xls';
+        $filename = 'Laporan_Konsolidasi_' . $safeName . '_' . date('Ymd') . '.xls';
 
         return view('pengajuan/unduh_laporan_excel', [
-            'kredit'   => $kredit,
-            'hasil'    => $hasil,
-            'filename' => $filename,
+            'kredit'       => $kredit,
+            'hasil'        => $hasil,
+            'filename'     => $filename,
+            'dataSlik'     => $dataSlik,
+            'dataRekening' => $dataRekening,
+            'dataAgunan'   => $dataAgunan,
+            'dataWebcheck' => $dataWebcheck,
+            'dataAnalisa'  => $dataAnalisa,
+            'dataKeuangan' => $dataKeuangan,
         ]);
     }
 }

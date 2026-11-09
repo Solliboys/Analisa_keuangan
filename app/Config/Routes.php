@@ -50,6 +50,7 @@ $routes->group('pengajuan', static function ($routes) {
     $routes->post('upload-dokumen-slik', 'Pengajuan::uploadDokumenSlik');
     $routes->get('cetak/(:num)', 'Pengajuan::cetak/$1');
     $routes->get('cetak-laporan/(:num)', 'Pengajuan::cetakLaporan/$1');
+    $routes->get('unduh-laporan-pdf/(:num)', 'Pengajuan::unduhLaporanPdf/$1');
     $routes->get('unduh-laporan-excel/(:num)', 'Pengajuan::unduhLaporanExcel/$1');
     $routes->post('generate-laporan', 'Pengajuan::generateLaporan');
 });
