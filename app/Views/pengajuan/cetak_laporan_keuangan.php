@@ -232,10 +232,6 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
              LEMBAR 1: RINGKASAN PROFIL, FASILITAS, SLIK, REKENING, AGUNAN, WEB CHECK
              ============================================================ -->
         <div class="sheet-page page-break">
-            <div class="doc-header">
-                <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; LAPORAN ANALISA KREDIT &amp; KEUANGAN</span>
-                <span class="doc-ref"><?= esc($refDokumen) ?></span>
-            </div>
             <div class="doc-title-box">
                 <h1 class="doc-main-title">LAPORAN LENGKAP ANALISA KREDIT &amp; KEUANGAN</h1>
                 <div class="doc-sub-title">Ringkasan Profil Usaha, Riwayat Pinjaman Bank, Mutasi Rekening &amp; Jaminan</div>
@@ -392,10 +388,6 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
              LEMBAR 2: LAPORAN LABA RUGI & ARUS KAS
              ============================================================ -->
         <div class="sheet-page <?= ($totalHalaman > 1) ? 'page-break' : '' ?>">
-            <div class="doc-header">
-                <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; LAPORAN ANALISA KREDIT &amp; KEUANGAN</span>
-                <span class="doc-ref"><?= esc($refDokumen) ?></span>
-            </div>
             <div class="doc-title-box">
                 <h1 class="doc-main-title">LAPORAN LABA RUGI &amp; ARUS KAS</h1>
                 <div class="doc-sub-title">Laporan Laba Rugi Usaha &amp; Aliran Arus Kas (Periode 1 Tahun)</div>
@@ -456,10 +448,6 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
              LEMBAR 3: NERACA KEUANGAN, RASIO & PENGESAHAN
              ============================================================ -->
         <div class="sheet-page">
-            <div class="doc-header">
-                <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; LAPORAN ANALISA KREDIT &amp; KEUANGAN</span>
-                <span class="doc-ref"><?= esc($refDokumen) ?></span>
-            </div>
             <div class="doc-title-box">
                 <h1 class="doc-main-title">NERACA KEUANGAN &amp; ANALISA KELAYAKAN</h1>
                 <div class="doc-sub-title">Neraca Seimbang, Analisa Rasio Finansial &amp; Lembar Pengesahan Komite Kredit</div>

@@ -684,10 +684,6 @@ function unduhLaporanPDF(target) {
 
         page1HTML = `
             <div class="sheet-page ${totalHalaman === 2 ? 'page-break' : ''}">
-                <div class="doc-header">
-                    <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; DOKUMEN ESTIMASI FINANSIAL</span>
-                    <span class="doc-ref">${refDokumen}</span>
-                </div>
                 <div class="doc-title-box">
                     <h1 class="doc-main-title">LAPORAN KEUANGAN (ESTIMASI)</h1>
                     <div class="doc-sub-title">Badan Usaha, Periode 1 Tahun</div>
@@ -712,10 +708,6 @@ function unduhLaporanPDF(target) {
 
         page2HTML = `
             <div class="sheet-page">
-                <div class="doc-header">
-                    <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; DOKUMEN ESTIMASI FINANSIAL</span>
-                    <span class="doc-ref">${refDokumen}</span>
-                </div>
                 <div class="doc-title-box">
                     <h1 class="doc-main-title">LAPORAN KEUANGAN (ESTIMASI)</h1>
                     <div class="doc-sub-title">Badan Usaha, Periode 1 Tahun</div>
