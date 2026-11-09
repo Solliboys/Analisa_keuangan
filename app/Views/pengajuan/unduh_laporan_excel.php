@@ -43,7 +43,7 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
 </head>
 <body>
     <table>
-        <tr><td colspan="4" class="title-row">LAPORAN KONSOLIDASI ANALISA KREDIT &amp; KEUANGAN</td></tr>
+        <tr><td colspan="4" class="title-row">LAPORAN LENGKAP ANALISA KREDIT &amp; KEUANGAN</td></tr>
         <tr><td colspan="4" class="sub-title">Perusahaan: <strong><?= esc($namaDebitur) ?></strong> | No. Aplikasi: <?= esc($noApp) ?> | Periode: <?= esc($tahun) ?></td></tr>
         <tr><td colspan="4">&nbsp;</td></tr>
     </table>

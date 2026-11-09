@@ -14,9 +14,9 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
     <div class="px-6 sm:px-8 pt-6 sm:pt-8 pb-4 border-b border-slate-100">
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div>
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Laporan Keuangan Konsolidasi</h2>
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Laporan Keuangan Lengkap</h2>
                 <p class="text-[12px] text-slate-500 mt-1 max-w-xl">
-                    Laporan komprehensif yang merangkum seluruh hasil pengajuan: profil usaha, riwayat kredit SLIK, mutasi perbankan, agunan, serta evaluasi Laba Rugi, Arus Kas, dan Neraca.
+                    Ringkasan lengkap hasil analisa pengajuan: profil usaha, pinjaman bank (SLIK), mutasi rekening, jaminan (agunan), serta Laba Rugi, Arus Kas, dan Neraca.
                 </p>
             </div>
             <div class="flex items-center gap-2 flex-wrap relative">
@@ -49,7 +49,7 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                             FORMAT DOKUMEN
                         </div>
 
-                        <!-- Item 1: Unduh Laporan Konsolidasi (PDF) -->
+                        <!-- Item 1: Unduh Laporan Lengkap (PDF) -->
                         <button type="button" onclick="unduhLaporanPDF('semua')"
                                 class="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between transition group">
                             <div class="flex items-center gap-2.5 min-w-0">
@@ -57,8 +57,8 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                                     <span class="text-[9px] font-black text-rose-600">PDF</span>
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="text-xs font-bold text-slate-800 leading-tight">Unduh Laporan Konsolidasi (PDF)</div>
-                                    <div class="text-[10px] text-slate-400">Rangkuman semua tahap (Profil, SLIK, Rekening, Agunan, LapKeu)</div>
+                                    <div class="text-xs font-bold text-slate-800 leading-tight">Unduh Laporan Lengkap (PDF)</div>
+                                    <div class="text-[10px] text-slate-400">Rangkuman semua tahap (Profil, SLIK, Rekening, Jaminan, LapKeu)</div>
                                 </div>
                             </div>
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold text-rose-700 bg-rose-100">PDF</span>

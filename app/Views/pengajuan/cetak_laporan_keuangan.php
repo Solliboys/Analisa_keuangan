@@ -85,7 +85,7 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <title>Laporan Konsolidasi Analisa Kredit &amp; Keuangan - <?= esc($namaDebitur) ?></title>
+    <title>Laporan Lengkap Analisa Kredit &amp; Keuangan - <?= esc($namaDebitur) ?></title>
     <style>
         @page {
             size: A4 portrait;
@@ -206,7 +206,7 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
 <body>
     <div class="toolbar-screen no-print">
         <div style="font-weight: 800; font-size: 13px; display: flex; align-items: center; gap: 8px;">
-            <span style="background: #2563eb; padding: 2px 8px; border-radius: 4px; font-size: 11px;">LAPORAN KONSOLIDASI</span>
+            <span style="background: #2563eb; padding: 2px 8px; border-radius: 4px; font-size: 11px;">LAPORAN LENGKAP</span>
             <span><?= esc($namaDebitur) ?> &mdash; <?= esc($refDokumen) ?></span>
         </div>
         <div style="display: flex; gap: 10px;">
@@ -233,12 +233,12 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
              ============================================================ -->
         <div class="sheet-page page-break">
             <div class="doc-header">
-                <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; LAPORAN ANALISA KREDIT KONSOLIDASI</span>
+                <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; LAPORAN ANALISA KREDIT &amp; KEUANGAN</span>
                 <span class="doc-ref"><?= esc($refDokumen) ?></span>
             </div>
             <div class="doc-title-box">
-                <h1 class="doc-main-title">LAPORAN KONSOLIDASI ANALISA KREDIT &amp; KEUANGAN</h1>
-                <div class="doc-sub-title">Ringkasan Eksekutif Profil Debitur, Verifikasi Legalitas &amp; Analisa Agunan</div>
+                <h1 class="doc-main-title">LAPORAN LENGKAP ANALISA KREDIT &amp; KEUANGAN</h1>
+                <div class="doc-sub-title">Ringkasan Profil Usaha, Riwayat Pinjaman Bank, Mutasi Rekening &amp; Jaminan</div>
             </div>
 
             <!-- I. Profil Debitur & Fasilitas -->
@@ -381,7 +381,7 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
             </div>
 
             <div class="doc-footer">
-                <div class="doc-footer-left">Dokumen Resmi Sistem CAM OTW Kredit &mdash; Ringkasan Konsolidasi Lengkap</div>
+                <div class="doc-footer-left">Dokumen Resmi Sistem CAM OTW Kredit &mdash; Ringkasan Laporan Lengkap</div>
                 <div class="doc-footer-right">Halaman 1 dari <?= $totalHalaman ?></div>
             </div>
         </div>
@@ -393,12 +393,12 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
              ============================================================ -->
         <div class="sheet-page <?= ($totalHalaman > 1) ? 'page-break' : '' ?>">
             <div class="doc-header">
-                <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; LAPORAN ANALISA KREDIT KONSOLIDASI</span>
+                <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; LAPORAN ANALISA KREDIT &amp; KEUANGAN</span>
                 <span class="doc-ref"><?= esc($refDokumen) ?></span>
             </div>
             <div class="doc-title-box">
-                <h1 class="doc-main-title">LAPORAN KEUANGAN KONSOLIDASI</h1>
-                <div class="doc-sub-title">Laporan Laba Rugi Komprehensif &amp; Arus Kas Usaha (Periode 1 Tahun)</div>
+                <h1 class="doc-main-title">LAPORAN LABA RUGI &amp; ARUS KAS</h1>
+                <div class="doc-sub-title">Laporan Laba Rugi Usaha &amp; Aliran Arus Kas (Periode 1 Tahun)</div>
             </div>
 
             <?php if ($showLR): ?>
@@ -457,7 +457,7 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
              ============================================================ -->
         <div class="sheet-page">
             <div class="doc-header">
-                <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; LAPORAN ANALISA KREDIT KONSOLIDASI</span>
+                <span class="doc-brand">OTW KREDIT &nbsp;|&nbsp; LAPORAN ANALISA KREDIT &amp; KEUANGAN</span>
                 <span class="doc-ref"><?= esc($refDokumen) ?></span>
             </div>
             <div class="doc-title-box">

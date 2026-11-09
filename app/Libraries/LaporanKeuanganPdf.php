@@ -127,12 +127,12 @@ class LaporanKeuanganPdf
         $tahun      = date('Y');
         $refDokumen = 'REF: CAM-KONS/' . $tahun . '/' . (strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $noApp), -6)) ?: 'BU-8921');
 
-        $this->text(15, 14, 'OTW KREDIT  |  LAPORAN ANALISA KREDIT KONSOLIDASI', 8.5, true, 100, 116, 139);
+        $this->text(15, 14, 'OTW KREDIT  |  LAPORAN ANALISA KREDIT & KEUANGAN', 8.5, true, 100, 116, 139);
         $this->text(130, 14, $refDokumen, 8.5, true, 30, 64, 175, 'R', 65);
 
         $this->line(15, 17, 195, 17, 226, 232, 240, 0.5);
 
-        $this->text(15, 25, 'LAPORAN KONSOLIDASI ANALISA KREDIT & KEUANGAN', 15, true, 15, 23, 42);
+        $this->text(15, 25, 'LAPORAN LENGKAP ANALISA KREDIT & KEUANGAN', 15, true, 15, 23, 42);
         $this->text(15, 30.5, $sub, 9.0, false, 71, 85, 105);
 
         return 34;
@@ -141,7 +141,7 @@ class LaporanKeuanganPdf
     protected function renderFooter(int $page, int $totalPages): void
     {
         $this->line(15, 282, 195, 282, 226, 232, 240, 0.5);
-        $this->text(15, 287, 'Laporan Konsolidasi Sistem Analisa Keuangan & Kredit (Dokumen Rahasia & Resmi)', 8.0, false, 100, 116, 139);
+        $this->text(15, 287, 'Laporan Lengkap Sistem Analisa Keuangan & Kredit (Dokumen Rahasia & Resmi)', 8.0, false, 100, 116, 139);
         $footerRight = 'Halaman ' . $page . ' dari ' . $totalPages . ' - Sistem OTW Kredit';
         $this->text(115, 287, $footerRight, 8.0, false, 100, 116, 139, 'R', 80);
     }
