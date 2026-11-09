@@ -524,6 +524,12 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
 
 <script>
 // ============================================================
+// KONFIGURASI BASE URL & ID PENGAJUAN
+// ============================================================
+const baseUrl = '<?= rtrim(base_url(), '/') ?>/';
+const currentKreditId = '<?= !empty($kredit_id) ? $kredit_id : (!empty($kredit['id']) ? $kredit['id'] : '') ?>';
+
+// ============================================================
 // FORMAT RUPIAH
 // ============================================================
 function rpFmt(val) {
@@ -622,9 +628,15 @@ function unduhLaporanPDF(target) {
     const chevron = document.getElementById('chevronUnduh');
     if (chevron) chevron.style.transform = '';
 
-    const kreditId = document.getElementById('kredit_id')?.value || document.querySelector('[name="kredit_id"]')?.value;
+    const kreditId = document.getElementById('kredit_id')?.value 
+                  || document.querySelector('[name="kredit_id"]')?.value 
+                  || currentKreditId;
     if (kreditId) {
-        window.open(baseUrl + 'pengajuan/cetak-laporan/' + kreditId + '?tipe=' + target, '_blank', 'width=1000,height=850');
+        const url = baseUrl + 'pengajuan/cetak-laporan/' + kreditId + '?tipe=' + encodeURIComponent(target);
+        const win = window.open(url, '_blank', 'width=1000,height=850');
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+            window.location.href = url;
+        }
         return;
     }
 
@@ -1277,7 +1289,9 @@ function unduhLaporanExcel() {
     const chevron = document.getElementById('chevronUnduh');
     if (chevron) chevron.style.transform = '';
 
-    const kreditId = document.getElementById('kredit_id')?.value || document.querySelector('[name="kredit_id"]')?.value;
+    const kreditId = document.getElementById('kredit_id')?.value 
+                  || document.querySelector('[name="kredit_id"]')?.value 
+                  || currentKreditId;
     if (kreditId) {
         window.location.href = baseUrl + 'pengajuan/unduh-laporan-excel/' + kreditId;
         return;

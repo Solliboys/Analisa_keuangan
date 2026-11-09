@@ -137,6 +137,7 @@ $sudahGenerate = !empty($lk['updated_at']) && !empty($lkJ);
 </style>
 
 <script>
+const baseUrl = '<?= rtrim(base_url(), '/') ?>/';
 function switchTabLaporan(tab) {
     document.querySelectorAll('.tabPanelPR').forEach(p => p.classList.add('hidden'));
     document.querySelectorAll('.tabNavPR').forEach(b => b.classList.remove('active'));
