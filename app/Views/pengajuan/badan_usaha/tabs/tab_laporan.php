@@ -21,8 +21,13 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
             </div>
             <div class="flex items-center gap-2 flex-wrap relative">
                 <span class="px-3 py-1 rounded-full text-[11px] font-bold text-blue-700 bg-blue-100">Badan Usaha</span>
-                <span class="px-3 py-1 rounded-full text-[11px] font-bold text-slate-700 bg-slate-200">1 Tahun</span>
-                <span class="px-3 py-1 rounded-full text-[11px] font-bold text-emerald-700 bg-emerald-100">● Konsolidasi Lengkap</span>
+
+                <!-- BUTTON HITUNG ULANG -->
+                <button type="button" onclick="generateLaporanKeuangan()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <span>Hitung Ulang</span>
+                </button>
 
                 <!-- DROPDOWN UNDUH LAPORAN -->
                 <div class="relative inline-block text-left" id="wrapperDropdownUnduh">
@@ -399,26 +404,6 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                 <span class="text-xs text-slate-600" id="infoRasioNR">Selisih matematis: Rp 0 (Validasi mesin risiko lulus)</span>
             </div>
             <div class="text-xs font-bold text-emerald-800" id="statusNR">Status: Sinkron 100%</div>
-        </div>
-    </div>
-
-    <!-- ============================================================
-         FOOTER: ID DOKUMEN & SIMPAN & LANJUT
-         ============================================================ -->
-    <div class="px-6 sm:px-8 py-4 border-t border-slate-100 flex items-center justify-between gap-3">
-        <div class="text-[12px] text-slate-400 font-medium">
-            ID Dokumen: <span class="font-mono text-slate-600"><?= !empty($kredit['nomor_aplikasi']) ? esc($kredit['nomor_aplikasi']) : 'NC-' . date('Y') . '-AK' . str_pad($kredit_id ?? 0, 4, '0', STR_PAD_LEFT) ?></span>
-        </div>
-        <div class="flex items-center gap-3">
-            <button type="button" onclick="generateLaporanKeuangan()"
-                    class="px-4 py-2.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition">
-                🔄 Hitung Ulang
-            </button>
-            <button type="button" onclick="if(typeof tabNav === 'function') { tabNav(1); } else { nextTab(); }"
-                    class="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
-                <span>Simpan &amp; Lanjut</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-            </button>
         </div>
     </div>
 
