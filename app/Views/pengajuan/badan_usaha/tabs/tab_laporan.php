@@ -119,111 +119,6 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
         </div>
     </div>
 
-    <?php
-    $adaSlik = !empty($slik);
-    $adaRekening = !empty($rekening);
-    $adaAgunan = !empty($agunan);
-    $adaWebcheck = !empty($webcheck) && (!empty($webcheck['sipp_keterangan']) || !empty($webcheck['internet_keterangan']));
-    $hasTahapLain = $adaSlik || $adaRekening || $adaAgunan || $adaWebcheck;
-
-    $totalBakiDebetSlik = 0;
-    $kolTerburuk = 1;
-    if ($adaSlik) {
-        foreach ($slik as $s) {
-            $totalBakiDebetSlik += (float)($s['outstanding'] ?? 0);
-            $k = (int)preg_replace('/[^0-9]/', '', $s['kelancaran'] ?? '1');
-            if ($k > $kolTerburuk) $kolTerburuk = $k;
-        }
-    }
-
-    $totalMutasiKredit = 0;
-    if ($adaRekening) {
-        foreach ($rekening as $r) {
-            $totalMutasiKredit += (float)($r['total_mutasi_kredit'] ?? 0);
-        }
-    }
-
-    $totalNilaiPasarAgunan = 0;
-    if ($adaAgunan) {
-        foreach ($agunan as $a) {
-            $totalNilaiPasarAgunan += (float)($a['nilai_pasar_mv'] ?? 0);
-        }
-    }
-    ?>
-
-    <?php
-    $plafonPengajuan = (float)($kredit['plafon_pengajuan'] ?? 0);
-    $coverageRatio   = ($plafonPengajuan > 0 && $totalNilaiPasarAgunan > 0) ? round(($totalNilaiPasarAgunan / $plafonPengajuan) * 100, 1) : 0;
-    ?>
-
-    <!-- ============================================================
-         RINGKASAN EKSEKUTIF SELURUH DATA PENGAJUAN (TAHAP 1 - 8)
-         ============================================================ -->
-    <div class="px-6 sm:px-8 pt-5">
-        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-2xl p-4 text-white shadow-sm mb-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
-                <div class="flex items-center gap-2.5">
-                    <span class="w-7 h-7 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-sm">📋</span>
-                    <div>
-                        <div class="text-xs font-bold uppercase tracking-wider text-blue-300">Ringkasan Eksekutif Pengajuan</div>
-                        <div class="text-sm font-black text-white"><?= esc($kredit['nama_debitur'] ?? 'PT Sumber Makmur Sejahtera') ?></div>
-                    </div>
-                </div>
-                <div class="text-left sm:text-right text-[11px] text-slate-300">
-                    <span>No. Registrasi: <strong class="text-white"><?= esc($kredit['nomor_aplikasi'] ?? 'NC-2024-AK8921') ?></strong></span>
-                    <span class="mx-1.5 text-white/30">&bull;</span>
-                    <span>Tujuan: <strong class="text-blue-300"><?= esc($kredit['tujuan_pembiayaan'] ?? 'Modal Kerja') ?></strong></span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
-                <!-- Fasilitas Kredit -->
-                <div class="bg-white/5 border border-white/10 rounded-xl p-2.5">
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">Plafon Pengajuan</div>
-                    <div class="text-xs sm:text-sm font-black text-amber-300 mt-0.5">
-                        Rp <?= number_format($plafonPengajuan, 0, ',', '.') ?>
-                    </div>
-                    <div class="text-[10px] text-slate-300 mt-0.5">
-                        <?= (int)($kredit['tenor_bulan'] ?? 12) ?> Bulan &bull; <?= (float)($kredit['bunga_per_tahun'] ?? 0) ?>% p.a
-                    </div>
-                </div>
-
-                <!-- SLIK OJK -->
-                <div class="bg-white/5 border border-white/10 rounded-xl p-2.5">
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">Riwayat SLIK OJK</div>
-                    <div class="text-xs sm:text-sm font-bold text-white mt-0.5">
-                        <?= $adaSlik ? (count($slik) . ' Fasilitas (Kol ' . $kolTerburuk . ')') : 'Bersih / Nihil' ?>
-                    </div>
-                    <div class="text-[10px] text-slate-300 mt-0.5 truncate">
-                        <?= $adaSlik ? ('Baki: Rp ' . number_format($totalBakiDebetSlik, 0, ',', '.')) : 'Tidak ada catatan macet' ?>
-                    </div>
-                </div>
-
-                <!-- Mutasi Rekening -->
-                <div class="bg-white/5 border border-white/10 rounded-xl p-2.5">
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">Rekening Koran</div>
-                    <div class="text-xs sm:text-sm font-bold text-emerald-300 mt-0.5">
-                        <?= $adaRekening ? ('Rp ' . number_format($totalMutasiKredit, 0, ',', '.')) : 'Terverifikasi' ?>
-                    </div>
-                    <div class="text-[10px] text-slate-300 mt-0.5">
-                        <?= $adaRekening ? (count($rekening) . ' Rekening Bank') : 'Sinkron data transaksi' ?>
-                    </div>
-                </div>
-
-                <!-- Agunan / Coverage -->
-                <div class="bg-white/5 border border-white/10 rounded-xl p-2.5">
-                    <div class="text-[10px] text-slate-400 font-bold uppercase">Agunan &amp; Jaminan</div>
-                    <div class="text-xs sm:text-sm font-bold text-white mt-0.5">
-                        <?= $adaAgunan ? (count($agunan) . ' Objek Jaminan') : 'On Hand' ?>
-                    </div>
-                    <div class="text-[10px] text-slate-300 mt-0.5 truncate">
-                        <?= $adaAgunan ? ('Coverage: ' . $coverageRatio . '% (MV: Rp ' . number_format($totalNilaiPasarAgunan, 0, ',', '.') . ')') : 'Aset Usaha & Giro' ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- ============================================================
          TAB NAVIGATION
          ============================================================ -->
@@ -1439,8 +1334,7 @@ function isiDataLaporanBU(data) {
     document.getElementById('bu_lr_hpp').textContent          = rpFmtParen(lr.hpp);
     document.getElementById('bu_lr_laba_kotor').textContent   = rpFmt(lr.laba_kotor);
 
-    const karyawanJumlah = window._jumlahKaryawan || 2;
-    document.getElementById('labelBebanGaji').textContent     = 'Beban Gaji (' + karyawanJumlah + ' karyawan)';
+    document.getElementById('labelBebanGaji').textContent     = 'Beban Gaji';
     document.getElementById('bu_lr_beban_gaji').textContent   = rpFmtParen(lr.beban_gaji);
     document.getElementById('bu_lr_beban_op').textContent     = rpFmtParen(lr.beban_operasional);
     document.getElementById('bu_lr_penyusutan').textContent   = rpFmtParen(lr.beban_penyusutan);
