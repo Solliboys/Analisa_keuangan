@@ -242,11 +242,11 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
             </div>
 
             <!-- I. Profil Debitur & Fasilitas -->
-            <div class="section-banner">I. PROFIL DEBITUR &amp; STRUKTUR FASILITAS PENGAJUAN</div>
+            <div class="section-banner">I. DATA PEMOHON &amp; PINJAMAN YANG DIAJUKAN</div>
             <div class="info-card-grid">
                 <div class="info-box">
                     <table>
-                        <tr><td>Nama Debitur</td><td>: <strong><?= esc($namaDebitur) ?></strong></td></tr>
+                        <tr><td>Nama Pemohon</td><td>: <strong><?= esc($namaDebitur) ?></strong></td></tr>
                         <tr><td>Bentuk Usaha</td><td>: <?= esc($kredit['jenis_debitur'] ?? 'Badan Usaha') ?> (<?= esc($kredit['bidang_usaha'] ?? 'Perdagangan & Distribusi') ?>)</td></tr>
                         <tr><td>NPWP Usaha</td><td>: <?= esc($kredit['npwp_usaha'] ?? $kredit['npwp_pribadi'] ?? '01.234.567.8-901.000') ?></td></tr>
                         <tr><td>Alamat Usaha</td><td>: <?= esc($kredit['alamat_usaha'] ?? $kredit['alamat_domisili'] ?? 'Jakarta Barat') ?></td></tr>
@@ -254,23 +254,23 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                 </div>
                 <div class="info-box">
                     <table>
-                        <tr><td>Plafon Pengajuan</td><td>: <strong style="color: #1d4ed8; font-size: 11px;"><?= rpFmt($plafonPengajuan) ?></strong></td></tr>
-                        <tr><td>Jangka Waktu</td><td>: <?= $tenorBulan ?> Bulan (Bunga <?= $bungaPertahun ?>% p.a)</td></tr>
-                        <tr><td>Tujuan Kredit</td><td>: <?= esc(substr($tujuanKredit, 0, 35)) ?></td></tr>
-                        <tr><td>Status Aplikasi</td><td>: <span style="color: #15803d; font-weight: 800;">Terverifikasi Lengkap</span></td></tr>
+                        <tr><td>Jumlah Pinjaman Diajukan</td><td>: <strong style="color: #1d4ed8; font-size: 11px;"><?= rpFmt($plafonPengajuan) ?></strong></td></tr>
+                        <tr><td>Jangka Waktu</td><td>: <?= $tenorBulan ?> Bulan (Bunga <?= $bungaPertahun ?>% per tahun)</td></tr>
+                        <tr><td>Tujuan Pinjaman</td><td>: <?= esc(substr($tujuanKredit, 0, 35)) ?></td></tr>
+                        <tr><td>Status Data</td><td>: <span style="color: #15803d; font-weight: 800;">Lengkap &amp; Terverifikasi</span></td></tr>
                     </table>
                 </div>
             </div>
 
             <!-- II. SLIK OJK -->
-            <div class="section-banner">II. REKAPITULASI FASILITAS KREDIT &amp; SLIK OJK (TAHAP 4)</div>
+            <div class="section-banner">II. CATATAN PINJAMAN DI BANK LAIN (SLIK OJK)</div>
             <table class="report-table">
                 <thead>
                     <tr>
-                        <th style="width: 28%;">Bank / Lembaga</th>
-                        <th style="width: 20%; text-align: right;">Plafon Awal</th>
-                        <th style="width: 20%; text-align: right;">Baki Debet</th>
-                        <th style="width: 16%;">Kolektibilitas</th>
+                        <th style="width: 28%;">Nama Bank / Lembaga</th>
+                        <th style="width: 20%; text-align: right;">Plafon Pinjaman</th>
+                        <th style="width: 20%; text-align: right;">Sisa Utang</th>
+                        <th style="width: 16%;">Kelancaran Bayar</th>
                         <th style="width: 16%;">Keterangan</th>
                     </tr>
                 </thead>
@@ -288,27 +288,27 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                     <?php else: ?>
                         <tr>
                             <td colspan="5" style="text-align: center; color: #64748b; font-style: italic; padding: 6px;">
-                                Tidak ada fasilitas kredit bank lain tercatat pada SLIK OJK (Status Debitur Bersih)
+                                Tidak ada pinjaman bank lain tercatat pada SLIK OJK (Status Bersih)
                             </td>
                         </tr>
                     <?php endif; ?>
                     <tr class="row-total-accent">
-                        <td colspan="2">TOTAL BAKI DEBET SLIK EKSISTING</td>
+                        <td colspan="2">TOTAL SISA UTANG BANK LAIN</td>
                         <td class="col-val font-black"><?= rpFmt($totBakiSlik) ?></td>
-                        <td colspan="2" style="font-size: 9.5px;">Kol Terburuk: Kol <?= $maxKolSlik ?> (Lancar)</td>
+                        <td colspan="2" style="font-size: 9.5px;">Status: Kol <?= $maxKolSlik ?> (Lancar)</td>
                     </tr>
                 </tbody>
             </table>
 
             <!-- III. Rekening Koran -->
-            <div class="section-banner">III. ANALISA ARUS KAS REKENING KORAN BANK (TAHAP 6)</div>
+            <div class="section-banner">III. REKAP MUTASI REKENING KORAN BANK</div>
             <table class="report-table">
                 <thead>
                     <tr>
-                        <th style="width: 25%;">Bank Operasional</th>
+                        <th style="width: 25%;">Nama Bank</th>
                         <th style="width: 25%;">Nomor Rekening</th>
-                        <th style="width: 25%; text-align: right;">Total Mutasi Kredit</th>
-                        <th style="width: 25%; text-align: right;">Rata-rata Kredit/Bulan</th>
+                        <th style="width: 25%; text-align: right;">Total Uang Masuk</th>
+                        <th style="width: 25%; text-align: right;">Rata-rata Masuk per Bulan</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -324,12 +324,12 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                     <?php else: ?>
                         <tr>
                             <td colspan="4" style="text-align: center; color: #64748b; font-style: italic; padding: 6px;">
-                                Rekapitulasi arus kas bank mengikuti omzet Laba Rugi usaha (<?= rpFmt($totMutasiKredit) ?>)
+                                Rekapitulasi uang masuk bank mengikuti omzet usaha (<?= rpFmt($totMutasiKredit) ?>)
                             </td>
                         </tr>
                     <?php endif; ?>
                     <tr class="row-total-accent">
-                        <td colspan="2">TOTAL ARUS KAS MASUK (MUTASI KREDIT)</td>
+                        <td colspan="2">TOTAL UANG MASUK (MUTASI PENJUALAN)</td>
                         <td class="col-val font-black"><?= rpFmt($totMutasiKredit) ?></td>
                         <td class="col-val font-black"><?= rpFmt($totRataKredit) ?></td>
                     </tr>
@@ -337,14 +337,14 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
             </table>
 
             <!-- IV. Agunan & Coverage Ratio -->
-            <div class="section-banner">IV. PENILAIAN AGUNAN &amp; COVERAGE RATIO (TAHAP 7)</div>
+            <div class="section-banner">IV. JAMINAN (AGUNAN) &amp; NILAI PERLINDUNGAN</div>
             <table class="report-table">
                 <thead>
                     <tr>
-                        <th style="width: 28%;">Jenis Agunan</th>
-                        <th style="width: 24%;">Sertifikat / Bukti</th>
-                        <th style="width: 24%; text-align: right;">Nilai Pasar (MV)</th>
-                        <th style="width: 24%; text-align: right;">Nilai Likuidasi (LV)</th>
+                        <th style="width: 28%;">Jenis Jaminan</th>
+                        <th style="width: 24%;">Bukti Kepemilikan</th>
+                        <th style="width: 24%; text-align: right;">Taksiran Harga Pasar</th>
+                        <th style="width: 24%; text-align: right;">Taksiran Jual Cepat (Likuidasi)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -360,12 +360,12 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                     <?php else: ?>
                         <tr>
                             <td colspan="4" style="text-align: center; color: #64748b; font-style: italic; padding: 6px;">
-                                Pembiayaan tanpa agunan fisik terdaftar / fasilitas kredit berbasis arus kas operasional (Clean Loan)
+                                Pembiayaan tanpa jaminan fisik / berbasis perputaran arus kas usaha (Clean Loan)
                             </td>
                         </tr>
                     <?php endif; ?>
                     <tr class="row-total-accent">
-                        <td colspan="2">TOTAL NILAI AGUNAN (COVERAGE: <?= $coverageRatio ?>%)</td>
+                        <td colspan="2">TOTAL NILAI JAMINAN (PERLINDUNGAN: <?= $coverageRatio ?>%)</td>
                         <td class="col-val font-black"><?= rpFmt($totMvAgunan) ?></td>
                         <td class="col-val font-black"><?= rpFmt($totLvAgunan) ?></td>
                     </tr>
@@ -373,7 +373,7 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
             </table>
 
             <!-- V. Web Check & Legalitas -->
-            <div class="section-banner">V. HASIL CEK LEGALITAS, REPUTASI &amp; WEB CHECK (TAHAP 3 &amp; 5)</div>
+            <div class="section-banner">V. CEK KEABSAHAN DOKUMEN &amp; LEGALITAS USAHA</div>
             <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 8px 12px; font-size: 9.5px; color: #166534; line-height: 1.6;">
                 <div>● <strong>Mahkamah Agung (MA) &amp; SIPP:</strong> Bebas dari perkara kepailitan, penundaan kewajiban pembayaran utang (PKPU) dan sengketa perdata beresiko.</div>
                 <div>● <strong>Pencarian Internet &amp; Berita:</strong> Reputasi usaha positif, tidak ditemukan pemberitaan negatif terkait operasional maupun pengurus.</div>
@@ -402,45 +402,45 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
             </div>
 
             <?php if ($showLR): ?>
-            <div class="section-banner">VI. LAPORAN LABA RUGI KOMPREHENSIF (TAHAP 9)</div>
+            <div class="section-banner">VI. LAPORAN LABA RUGI USAHA</div>
             <table class="report-table">
-                <tr><td class="col-desc">Pendapatan Usaha (Penjualan Bersih)</td><td class="col-val"><?= rpFmt($lr['pendapatan'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Harga Pokok Penjualan (HPP)</td><td class="col-val"><?= rpFmtParen($lr['hpp'] ?? 0) ?></td></tr>
-                <tr class="row-highlight"><td class="col-desc font-bold">Laba Kotor (Gross Profit)</td><td class="col-val font-bold"><?= rpFmt($lr['laba_kotor'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Beban Gaji Karyawan (<?= $karyawanJml ?> orang)</td><td class="col-val"><?= rpFmtParen($lr['beban_gaji'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Sewa, Utilitas, Operasional &amp; Pemasaran</td><td class="col-val"><?= rpFmtParen($lr['beban_operasional'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Beban Penyusutan / Depresiasi Aset</td><td class="col-val"><?= rpFmtParen($lr['beban_penyusutan'] ?? 0) ?></td></tr>
-                <tr class="row-highlight"><td class="col-desc font-bold">Laba Operasional (Operating Profit / EBIT)</td><td class="col-val font-bold"><?= rpFmt($lr['laba_operasional'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Beban Bunga Pinjaman Bank</td><td class="col-val"><?= rpFmtParen($lr['beban_bunga'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Beban Pajak Penghasilan (PPh)</td><td class="col-val"><?= rpFmtParen($lr['pajak'] ?? 0) ?></td></tr>
-                <tr class="row-total-accent"><td class="col-desc font-black">LABA BERSIH (NET PROFIT)</td><td class="col-val font-black"><?= rpFmt($lr['laba_bersih'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Pendapatan Usaha (Penjualan / Omzet)</td><td class="col-val"><?= rpFmt($lr['pendapatan'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Biaya Modal / Kulakan Produk (HPP)</td><td class="col-val"><?= rpFmtParen($lr['hpp'] ?? 0) ?></td></tr>
+                <tr class="row-highlight"><td class="col-desc font-bold">Keuntungan Kotor</td><td class="col-val font-bold"><?= rpFmt($lr['laba_kotor'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Beban Gaji Karyawan</td><td class="col-val"><?= rpFmtParen($lr['beban_gaji'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Biaya Sewa, Listrik, Operasional &amp; Promosi</td><td class="col-val"><?= rpFmtParen($lr['beban_operasional'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Penyusutan Nilai Alat &amp; Mesin Usaha</td><td class="col-val"><?= rpFmtParen($lr['beban_penyusutan'] ?? 0) ?></td></tr>
+                <tr class="row-highlight"><td class="col-desc font-bold">Keuntungan Operasional Usaha</td><td class="col-val font-bold"><?= rpFmt($lr['laba_operasional'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Biaya Bunga Pinjaman Bank</td><td class="col-val"><?= rpFmtParen($lr['beban_bunga'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Pajak Usaha</td><td class="col-val"><?= rpFmtParen($lr['pajak'] ?? 0) ?></td></tr>
+                <tr class="row-total-accent"><td class="col-desc font-black">KEUNTUNGAN BERSIH AKHIR (LABA BERSIH)</td><td class="col-val font-black"><?= rpFmt($lr['laba_bersih'] ?? 0) ?></td></tr>
             </table>
             <?php endif; ?>
 
             <?php if ($showAK): ?>
-            <div class="section-banner" <?= $showLR ? 'style="margin-top: 14px;"' : '' ?>>VII. LAPORAN ARUS KAS (CASH FLOW STATEMENT)</div>
+            <div class="section-banner" <?= $showLR ? 'style="margin-top: 14px;"' : '' ?>>VII. LAPORAN ARUS KAS (KELUAR MASUK UANG KAS)</div>
             <table class="report-table">
-                <tr class="sub-header-row"><td colspan="2">AKTIVITAS OPERASIONAL</td></tr>
-                <tr><td class="col-desc">Laba Bersih</td><td class="col-val"><?= rpFmt($ak['laba_bersih'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Penyusutan Non-Kas</td><td class="col-val"><?= rpFmt($ak['penyusutan'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Perubahan Piutang Usaha</td><td class="col-val"><?= rpFmtParen($ak['kenaikan_piutang'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Perubahan Persediaan</td><td class="col-val"><?= rpFmtParen($ak['kenaikan_persediaan'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Perubahan Utang Usaha</td><td class="col-val"><?= rpFmt($ak['kenaikan_utang_usaha'] ?? 0) ?></td></tr>
-                <tr class="row-highlight"><td class="col-desc font-bold">Kas Bersih dari Aktivitas Operasi</td><td class="col-val font-bold"><?= rpFmt($ak['kas_operasional'] ?? 0) ?></td></tr>
+                <tr class="sub-header-row"><td colspan="2">1. ARUS KAS DARI KEGIATAN USAHA (OPERASIONAL)</td></tr>
+                <tr><td class="col-desc">Keuntungan Bersih (Laba Bersih)</td><td class="col-val"><?= rpFmt($ak['laba_bersih'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Ditambah Penyusutan Non-Kas</td><td class="col-val"><?= rpFmt($ak['penyusutan'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Perubahan Tagihan ke Pelanggan (Piutang)</td><td class="col-val"><?= rpFmtParen($ak['kenaikan_piutang'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Perubahan Stok Barang Usaha</td><td class="col-val"><?= rpFmtParen($ak['kenaikan_persediaan'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Perubahan Utang ke Supplier (Pemasok)</td><td class="col-val"><?= rpFmt($ak['kenaikan_utang_usaha'] ?? 0) ?></td></tr>
+                <tr class="row-highlight"><td class="col-desc font-bold">Total Sisa Kas dari Kegiatan Usaha</td><td class="col-val font-bold"><?= rpFmt($ak['kas_operasional'] ?? 0) ?></td></tr>
 
-                <tr class="sub-header-row"><td colspan="2">AKTIVITAS INVESTASI</td></tr>
-                <tr><td class="col-desc">Pembelian Aset Tetap (Capex)</td><td class="col-val"><?= rpFmtParen($ak['pembelian_aset_tetap'] ?? 0) ?></td></tr>
-                <tr class="row-highlight"><td class="col-desc font-bold">Kas Bersih untuk Aktivitas Investasi</td><td class="col-val font-bold"><?= rpFmtParen(abs($ak['kas_investasi'] ?? 0)) ?></td></tr>
+                <tr class="sub-header-row"><td colspan="2">2. ARUS KAS BELANJA ASET (INVESTASI)</td></tr>
+                <tr><td class="col-desc">Beli Alat, Mesin atau Kendaraan (Capex)</td><td class="col-val"><?= rpFmtParen($ak['pembelian_aset_tetap'] ?? 0) ?></td></tr>
+                <tr class="row-highlight"><td class="col-desc font-bold">Total Kas untuk Belanja Aset</td><td class="col-val font-bold"><?= rpFmtParen(abs($ak['kas_investasi'] ?? 0)) ?></td></tr>
 
-                <tr class="sub-header-row"><td colspan="2">AKTIVITAS PENDANAAN</td></tr>
-                <tr><td class="col-desc">Pembayaran Pokok Pinjaman Bank</td><td class="col-val"><?= rpFmtParen($ak['cicilan_pokok'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Prive / Penarikan Dividen</td><td class="col-val"><?= rpFmtParen($ak['prive_dividen'] ?? 0) ?></td></tr>
-                <tr class="row-highlight"><td class="col-desc font-bold">Kas Bersih untuk Aktivitas Pendanaan</td><td class="col-val font-bold"><?= rpFmtParen(abs($ak['kas_pendanaan'] ?? 0)) ?></td></tr>
+                <tr class="sub-header-row"><td colspan="2">3. ARUS KAS PINJAMAN &amp; MODAL (PENDANAAN)</td></tr>
+                <tr><td class="col-desc">Bayar Pokok Pinjaman ke Bank</td><td class="col-val"><?= rpFmtParen($ak['cicilan_pokok'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Tarik Uang Pribadi / Bagi Hasil (Prive / Dividen)</td><td class="col-val"><?= rpFmtParen($ak['prive_dividen'] ?? 0) ?></td></tr>
+                <tr class="row-highlight"><td class="col-desc font-bold">Total Kas Pendanaan &amp; Modal</td><td class="col-val font-bold"><?= rpFmtParen(abs($ak['kas_pendanaan'] ?? 0)) ?></td></tr>
 
-                <tr class="sub-header-row"><td colspan="2">REKONSILIASI SALDO KAS</td></tr>
-                <tr><td class="col-desc">Kenaikan (Penurunan) Kas Bersih</td><td class="col-val"><?= rpFmt($ak['kenaikan_bersih_kas'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Saldo Kas Awal Periode</td><td class="col-val"><?= rpFmt($ak['saldo_awal_kas'] ?? 0) ?></td></tr>
-                <tr class="row-total-accent"><td class="col-desc font-black">SALDO KAS AKHIR PERIODE</td><td class="col-val font-black"><?= rpFmt($ak['kas_akhir'] ?? 0) ?></td></tr>
+                <tr class="sub-header-row"><td colspan="2">4. REKAP SALDO KAS</td></tr>
+                <tr><td class="col-desc">Kenaikan (Penurunan) Kas Bersih Tahun Ini</td><td class="col-val"><?= rpFmt($ak['kenaikan_bersih_kas'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Uang Kas di Awal Tahun</td><td class="col-val"><?= rpFmt($ak['saldo_awal_kas'] ?? 0) ?></td></tr>
+                <tr class="row-total-accent"><td class="col-desc font-black">SISA UANG KAS DI AKHIR TAHUN</td><td class="col-val font-black"><?= rpFmt($ak['kas_akhir'] ?? 0) ?></td></tr>
             </table>
             <?php endif; ?>
 
@@ -465,53 +465,53 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                 <div class="doc-sub-title">Neraca Seimbang, Analisa Rasio Finansial &amp; Lembar Pengesahan Komite Kredit</div>
             </div>
 
-            <div class="section-banner">VIII. NERACA KEUANGAN SEIMBANG (BALANCE SHEET)</div>
+            <div class="section-banner">VIII. NERACA KEUANGAN (HARTA, UTANG &amp; MODAL)</div>
 
             <div class="neraca-grid">
                 <!-- AKTIVA -->
                 <div class="neraca-col">
-                    <div class="col-section-title">AKTIVA / ASET</div>
-                    <div class="group-title">Aset Lancar</div>
+                    <div class="col-section-title">HARTA PERUSAHAAN (ASET)</div>
+                    <div class="group-title">Harta Lancar (Kas, Tagihan &amp; Stok)</div>
                     <table class="report-table">
-                        <tr><td class="col-desc">Kas &amp; Setara Kas</td><td class="col-val"><?= rpFmt($nr['kas_bank'] ?? 0) ?></td></tr>
-                        <tr><td class="col-desc">Piutang Usaha</td><td class="col-val"><?= rpFmt($nr['piutang_usaha'] ?? 0) ?></td></tr>
-                        <tr><td class="col-desc">Persediaan Barang</td><td class="col-val"><?= rpFmt($nr['persediaan'] ?? 0) ?></td></tr>
-                        <tr class="row-highlight"><td class="col-desc font-bold">Total Aset Lancar</td><td class="col-val font-bold"><?= rpFmt($nr['total_aset_lancar'] ?? 0) ?></td></tr>
+                        <tr><td class="col-desc">Uang Kas &amp; Saldo Bank</td><td class="col-val"><?= rpFmt($nr['kas_bank'] ?? 0) ?></td></tr>
+                        <tr><td class="col-desc">Tagihan ke Pelanggan (Piutang)</td><td class="col-val"><?= rpFmt($nr['piutang_usaha'] ?? 0) ?></td></tr>
+                        <tr><td class="col-desc">Stok Barang Dagang (Persediaan)</td><td class="col-val"><?= rpFmt($nr['persediaan'] ?? 0) ?></td></tr>
+                        <tr class="row-highlight"><td class="col-desc font-bold">Total Harta Lancar</td><td class="col-val font-bold"><?= rpFmt($nr['total_aset_lancar'] ?? 0) ?></td></tr>
                     </table>
 
-                    <div class="group-title" style="margin-top: 8px;">Aset Tetap</div>
+                    <div class="group-title" style="margin-top: 8px;">Harta Tetap (Alat, Mesin &amp; Bangunan)</div>
                     <table class="report-table">
-                        <tr><td class="col-desc">Aset Tetap Neto</td><td class="col-val"><?= rpFmt($nr['aset_tetap_neto'] ?? 0) ?></td></tr>
-                        <tr class="row-highlight"><td class="col-desc font-bold">Total Aset Tetap</td><td class="col-val font-bold"><?= rpFmt($nr['aset_tetap_neto'] ?? 0) ?></td></tr>
+                        <tr><td class="col-desc">Nilai Sisa Aset Tetap Saat Ini (Neto)</td><td class="col-val"><?= rpFmt($nr['aset_tetap_neto'] ?? 0) ?></td></tr>
+                        <tr class="row-highlight"><td class="col-desc font-bold">Total Nilai Aset Tetap</td><td class="col-val font-bold"><?= rpFmt($nr['aset_tetap_neto'] ?? 0) ?></td></tr>
                     </table>
                 </div>
 
                 <!-- PASIVA -->
                 <div class="neraca-col">
-                    <div class="col-section-title">PASIVA / LIABILITAS &amp; EKUITAS</div>
-                    <div class="group-title">Liabilitas</div>
+                    <div class="col-section-title">UTANG &amp; MODAL SENDIRI</div>
+                    <div class="group-title">Utang Usaha &amp; Bank</div>
                     <table class="report-table">
-                        <tr><td class="col-desc">Utang Usaha</td><td class="col-val"><?= rpFmt($nr['utang_usaha'] ?? 0) ?></td></tr>
-                        <tr><td class="col-desc">Utang Bank (Lancar &amp; Panjang)</td><td class="col-val"><?= rpFmt(($nr['utang_bank_pendek'] ?? 0) + ($nr['utang_jangka_panjang'] ?? 0)) ?></td></tr>
-                        <tr class="row-highlight"><td class="col-desc font-bold">Total Liabilitas</td><td class="col-val font-bold"><?= rpFmt($nr['total_liabilitas'] ?? 0) ?></td></tr>
+                        <tr><td class="col-desc">Utang Pembelian ke Supplier</td><td class="col-val"><?= rpFmt($nr['utang_usaha'] ?? 0) ?></td></tr>
+                        <tr><td class="col-desc">Utang Pinjaman ke Bank</td><td class="col-val"><?= rpFmt(($nr['utang_bank_pendek'] ?? 0) + ($nr['utang_jangka_panjang'] ?? 0)) ?></td></tr>
+                        <tr class="row-highlight"><td class="col-desc font-bold">Total Seluruh Utang</td><td class="col-val font-bold"><?= rpFmt($nr['total_liabilitas'] ?? 0) ?></td></tr>
                     </table>
 
-                    <div class="group-title" style="margin-top: 8px;">Ekuitas</div>
+                    <div class="group-title" style="margin-top: 8px;">Modal Sendiri</div>
                     <table class="report-table">
-                        <tr><td class="col-desc">Modal Disetor</td><td class="col-val"><?= rpFmt($nr['modal_disetor'] ?? 0) ?></td></tr>
-                        <tr><td class="col-desc">Laba Ditahan</td><td class="col-val"><?= rpFmt($nr['laba_ditahan_akhir'] ?? 0) ?></td></tr>
-                        <tr class="row-highlight"><td class="col-desc font-bold">Total Ekuitas</td><td class="col-val font-bold"><?= rpFmt($nr['total_ekuitas'] ?? 0) ?></td></tr>
+                        <tr><td class="col-desc">Modal yang Disetor Pemilik</td><td class="col-val"><?= rpFmt($nr['modal_disetor'] ?? 0) ?></td></tr>
+                        <tr><td class="col-desc">Sisa Keuntungan Bersih (Laba Ditahan)</td><td class="col-val"><?= rpFmt($nr['laba_ditahan_akhir'] ?? 0) ?></td></tr>
+                        <tr class="row-highlight"><td class="col-desc font-bold">Total Modal Sendiri</td><td class="col-val font-bold"><?= rpFmt($nr['total_ekuitas'] ?? 0) ?></td></tr>
                     </table>
                 </div>
             </div>
 
             <div class="total-banner-grid">
                 <div class="total-banner-cell">
-                    <span class="total-banner-label">TOTAL ASET</span>
+                    <span class="total-banner-label">TOTAL KESELURUHAN HARTA</span>
                     <span class="total-banner-value"><?= rpFmt($nr['total_aset'] ?? 0) ?></span>
                 </div>
                 <div class="total-banner-cell">
-                    <span class="total-banner-label">TOTAL LIABILITAS &amp; EKUITAS</span>
+                    <span class="total-banner-label">TOTAL UTANG + MODAL SENDIRI</span>
                     <span class="total-banner-value"><?= rpFmt($nr['total_liabilitas_ekuitas'] ?? 0) ?></span>
                 </div>
             </div>
@@ -519,33 +519,33 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
             <div class="validation-status-box">
                 <div class="validation-status-text">
                     <span style="color: #16a34a; font-size: 13px;">●</span>
-                    <span>Neraca Seimbang: Selisih Rp 0 (Validasi Sistem Lulus 100%)</span>
+                    <span>Perhitungan Seimbang: Total Harta sama persis dengan Total Utang + Modal Sendiri (Cocok 100%)</span>
                 </div>
                 <div class="validation-badge-text">TERVERIFIKASI SISTEM</div>
             </div>
 
             <!-- IX. Rasio Keuangan Utama (NO DSCR) -->
-            <div class="section-banner">IX. ANALISA RASIO KEUANGAN UTAMA (PROFITABILITAS &amp; SOLVABILITAS)</div>
+            <div class="section-banner">IX. KESEHATAN KEUANGAN USAHA (RASIO KEUANGAN)</div>
             <div class="ratio-cards-grid">
                 <div class="ratio-card">
-                    <div class="ratio-title">Margin Laba Bersih (NPM)</div>
+                    <div class="ratio-title">Persentase Keuntungan Bersih (NPM)</div>
                     <div class="ratio-value" style="color: #1d4ed8;"><?= $npmVal ?> %</div>
-                    <div class="ratio-note">Benchmark Sehat: &ge; 10.0%</div>
+                    <div class="ratio-note">Standar Sehat: minimal 10.0%</div>
                 </div>
                 <div class="ratio-card">
-                    <div class="ratio-title">Current Ratio (Rasio Lancar)</div>
+                    <div class="ratio-title">Kemampuan Bayar Utang Lancar (Current Ratio)</div>
                     <div class="ratio-value" style="color: #15803d;"><?= $crVal ?> %</div>
-                    <div class="ratio-note">Benchmark Likuiditas: &ge; 120.0%</div>
+                    <div class="ratio-note">Standar Likuiditas: minimal 120.0%</div>
                 </div>
                 <div class="ratio-card">
-                    <div class="ratio-title">Debt to Equity Ratio (DER)</div>
+                    <div class="ratio-title">Rasio Utang terhadap Modal Sendiri (DER)</div>
                     <div class="ratio-value" style="color: #b45309;"><?= $derVal ?> x</div>
-                    <div class="ratio-note">Batas Maksimum Solvabilitas: &le; 3.0x</div>
+                    <div class="ratio-note">Batas Maksimal Aman: maksimal 3.0x</div>
                 </div>
             </div>
 
             <!-- X. Lembar Rekomendasi & Pengesahan -->
-            <div class="section-banner" style="background: #334155;">X. LEMBAR REKOMENDASI &amp; PENGESAHAN ANALISA KREDIT</div>
+            <div class="section-banner" style="background: #334155;">X. LEMBAR PENGESAHAN &amp; TANDA TANGAN</div>
             <div class="signature-grid">
                 <div class="signature-box">
                     <div>

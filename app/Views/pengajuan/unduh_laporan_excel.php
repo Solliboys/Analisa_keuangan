@@ -50,33 +50,33 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
 
     <!-- RINGKASAN PROFIL & FASILITAS -->
     <table>
-        <tr class="header-section"><td colspan="4">I. PROFIL DEBITUR &amp; STRUKTUR FASILITAS PENGAJUAN</td></tr>
+        <tr class="header-section"><td colspan="4">I. DATA PEMOHON &amp; PINJAMAN YANG DIAJUKAN</td></tr>
         <tr>
-            <td style="width: 25%; background: #f8fafc;">Nama Debitur</td><td style="width: 25%; font-weight: bold;"><?= esc($namaDebitur) ?></td>
-            <td style="width: 25%; background: #f8fafc;">Plafon Pengajuan</td><td style="width: 25%; font-weight: bold; color: #1d4ed8;"><?= v($kredit['plafon_pengajuan'] ?? 0) ?></td>
+            <td style="width: 25%; background: #f8fafc;">Nama Pemohon</td><td style="width: 25%; font-weight: bold;"><?= esc($namaDebitur) ?></td>
+            <td style="width: 25%; background: #f8fafc;">Jumlah Pinjaman Diajukan</td><td style="width: 25%; font-weight: bold; color: #1d4ed8;"><?= v($kredit['plafon_pengajuan'] ?? 0) ?></td>
         </tr>
         <tr>
             <td style="background: #f8fafc;">Bentuk Badan Usaha</td><td><?= esc($kredit['jenis_debitur'] ?? 'Badan Usaha') ?></td>
-            <td style="background: #f8fafc;">Jangka Waktu</td><td><?= esc($kredit['tenor_bulan'] ?? 12) ?> Bulan (Bunga <?= esc($kredit['bunga_per_tahun'] ?? 12) ?>% p.a)</td>
+            <td style="background: #f8fafc;">Jangka Waktu</td><td><?= esc($kredit['tenor_bulan'] ?? 12) ?> Bulan (Bunga <?= esc($kredit['bunga_per_tahun'] ?? 12) ?>% per tahun)</td>
         </tr>
         <tr>
             <td style="background: #f8fafc;">NPWP Usaha</td><td><?= esc($kredit['npwp_usaha'] ?? $kredit['npwp_pribadi'] ?? '-') ?></td>
-            <td style="background: #f8fafc;">Tujuan Pembiayaan</td><td><?= esc($kredit['tujuan_pembiayaan'] ?? 'Modal Kerja Operasional') ?></td>
+            <td style="background: #f8fafc;">Tujuan Pinjaman</td><td><?= esc($kredit['tujuan_pembiayaan'] ?? 'Modal Kerja Operasional') ?></td>
         </tr>
         <tr>
             <td style="background: #f8fafc;">Bidang Usaha</td><td><?= esc($kredit['bidang_usaha'] ?? 'Perdagangan & Distribusi') ?></td>
-            <td style="background: #f8fafc;">Status Verifikasi</td><td style="color: #15803d; font-weight: bold;">Terverifikasi Lengkap</td>
+            <td style="background: #f8fafc;">Status Data</td><td style="color: #15803d; font-weight: bold;">Lengkap &amp; Terverifikasi</td>
         </tr>
     </table>
 
     <!-- SLIK OJK -->
     <table>
-        <tr class="header-section"><td colspan="4">II. REKAPITULASI FASILITAS KREDIT &amp; SLIK OJK (TAHAP 4)</td></tr>
+        <tr class="header-section"><td colspan="4">II. CATATAN PINJAMAN DI BANK LAIN (SLIK OJK)</td></tr>
         <tr style="background: #f1f5f9; font-weight: bold;">
-            <td>Bank / Lembaga</td>
-            <td class="num-right">Plafon</td>
-            <td class="num-right">Baki Debet</td>
-            <td>Kolektibilitas</td>
+            <td>Nama Bank / Lembaga</td>
+            <td class="num-right">Plafon Pinjaman</td>
+            <td class="num-right">Sisa Utang</td>
+            <td>Kelancaran Bayar</td>
         </tr>
         <?php 
         $totBaki = 0;
@@ -96,7 +96,7 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         </tr>
         <?php endif; ?>
         <tr class="highlight-row">
-            <td colspan="2">TOTAL BAKI DEBET SLIK</td>
+            <td colspan="2">TOTAL SISA UTANG BANK LAIN</td>
             <td class="num-right"><?= v($totBaki) ?></td>
             <td>Lancar</td>
         </tr>
@@ -104,12 +104,12 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
 
     <!-- REKENING KORAN -->
     <table>
-        <tr class="header-section"><td colspan="4">III. ANALISA ARUS KAS REKENING KORAN BANK (TAHAP 6)</td></tr>
+        <tr class="header-section"><td colspan="4">III. REKAP MUTASI REKENING KORAN BANK</td></tr>
         <tr style="background: #f1f5f9; font-weight: bold;">
-            <td>Bank Operasional</td>
+            <td>Nama Bank</td>
             <td>Nomor Rekening</td>
-            <td class="num-right">Total Mutasi Kredit</td>
-            <td class="num-right">Rata-rata Kredit / Bulan</td>
+            <td class="num-right">Total Uang Masuk</td>
+            <td class="num-right">Rata-rata Masuk per Bulan</td>
         </tr>
         <?php 
         $totMutasi = 0; $totRata = 0;
@@ -131,7 +131,7 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         </tr>
         <?php endif; ?>
         <tr class="highlight-row">
-            <td colspan="2">TOTAL MUTASI ARUS KAS MASUK</td>
+            <td colspan="2">TOTAL UANG MASUK (MUTASI PENJUALAN)</td>
             <td class="num-right"><?= v($totMutasi) ?></td>
             <td class="num-right"><?= v($totRata) ?></td>
         </tr>
@@ -139,12 +139,12 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
 
     <!-- AGUNAN -->
     <table>
-        <tr class="header-section"><td colspan="4">IV. PENILAIAN AGUNAN &amp; COVERAGE RATIO (TAHAP 7)</td></tr>
+        <tr class="header-section"><td colspan="4">IV. JAMINAN (AGUNAN) &amp; NILAI PERLINDUNGAN</td></tr>
         <tr style="background: #f1f5f9; font-weight: bold;">
-            <td>Jenis Agunan</td>
+            <td>Jenis Jaminan</td>
             <td>Bukti Kepemilikan</td>
-            <td class="num-right">Nilai Pasar (MV)</td>
-            <td class="num-right">Nilai Likuidasi (LV)</td>
+            <td class="num-right">Taksiran Harga Pasar</td>
+            <td class="num-right">Taksiran Jual Cepat (Likuidasi)</td>
         </tr>
         <?php 
         $totMv = 0; $totLv = 0;
@@ -166,7 +166,7 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         </tr>
         <?php endif; ?>
         <tr class="highlight-row">
-            <td colspan="2">TOTAL AGUNAN</td>
+            <td colspan="2">TOTAL NILAI JAMINAN</td>
             <td class="num-right"><?= v($totMv) ?></td>
             <td class="num-right"><?= v($totLv) ?></td>
         </tr>
@@ -174,74 +174,74 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
 
     <!-- V. LABA RUGI -->
     <table>
-        <tr class="header-section"><td colspan="2">V. LAPORAN LABA RUGI KOMPREHENSIF (TAHAP 9)</td></tr>
-        <tr><td>Pendapatan Usaha (Penjualan Bersih)</td><td class="num-right"><?= v($lr['pendapatan'] ?? 0) ?></td></tr>
-        <tr><td>Harga Pokok Penjualan (HPP)</td><td class="num-right"><?= vParen($lr['hpp'] ?? 0) ?></td></tr>
-        <tr class="highlight-row"><td>Laba Kotor (Gross Profit)</td><td class="num-right"><?= v($lr['laba_kotor'] ?? 0) ?></td></tr>
+        <tr class="header-section"><td colspan="2">V. LAPORAN LABA RUGI USAHA</td></tr>
+        <tr><td>Pendapatan Usaha (Penjualan / Omzet)</td><td class="num-right"><?= v($lr['pendapatan'] ?? 0) ?></td></tr>
+        <tr><td>Biaya Modal / Kulakan Produk (HPP)</td><td class="num-right"><?= vParen($lr['hpp'] ?? 0) ?></td></tr>
+        <tr class="highlight-row"><td>Keuntungan Kotor</td><td class="num-right"><?= v($lr['laba_kotor'] ?? 0) ?></td></tr>
         <tr><td>Beban Gaji Karyawan</td><td class="num-right"><?= vParen($lr['beban_gaji'] ?? 0) ?></td></tr>
-        <tr><td>Sewa, Utilitas &amp; Pemasaran</td><td class="num-right"><?= vParen($lr['beban_operasional'] ?? 0) ?></td></tr>
-        <tr><td>Penyusutan / Depresiasi Aset</td><td class="num-right"><?= vParen($lr['beban_penyusutan'] ?? 0) ?></td></tr>
-        <tr class="highlight-row"><td>Laba Operasional (EBIT)</td><td class="num-right"><?= v($lr['laba_operasional'] ?? 0) ?></td></tr>
-        <tr><td>Beban Bunga Pinjaman Bank</td><td class="num-right"><?= vParen($lr['beban_bunga'] ?? 0) ?></td></tr>
-        <tr><td>Pajak Penghasilan (PPh)</td><td class="num-right"><?= vParen($lr['pajak'] ?? 0) ?></td></tr>
-        <tr class="total-row"><td>LABA BERSIH (NET PROFIT)</td><td class="num-right"><?= v($lr['laba_bersih'] ?? 0) ?></td></tr>
+        <tr><td>Biaya Sewa, Listrik, Operasional &amp; Promosi</td><td class="num-right"><?= vParen($lr['beban_operasional'] ?? 0) ?></td></tr>
+        <tr><td>Penyusutan Nilai Alat &amp; Mesin Usaha</td><td class="num-right"><?= vParen($lr['beban_penyusutan'] ?? 0) ?></td></tr>
+        <tr class="highlight-row"><td>Keuntungan Operasional Usaha</td><td class="num-right"><?= v($lr['laba_operasional'] ?? 0) ?></td></tr>
+        <tr><td>Biaya Bunga Pinjaman Bank</td><td class="num-right"><?= vParen($lr['beban_bunga'] ?? 0) ?></td></tr>
+        <tr><td>Pajak Usaha</td><td class="num-right"><?= vParen($lr['pajak'] ?? 0) ?></td></tr>
+        <tr class="total-row"><td>KEUNTUNGAN BERSIH AKHIR (LABA BERSIH)</td><td class="num-right"><?= v($lr['laba_bersih'] ?? 0) ?></td></tr>
     </table>
 
     <!-- VI. ARUS KAS -->
     <table>
-        <tr class="header-section"><td colspan="2">VI. LAPORAN ARUS KAS (CASH FLOW STATEMENT)</td></tr>
-        <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Aktivitas Operasi</td></tr>
-        <tr><td>Laba Bersih</td><td class="num-right"><?= v($ak['laba_bersih'] ?? 0) ?></td></tr>
-        <tr><td>Penyusutan Non-Kas</td><td class="num-right"><?= v($ak['penyusutan'] ?? 0) ?></td></tr>
-        <tr><td>Perubahan Piutang Usaha</td><td class="num-right"><?= vParen($ak['kenaikan_piutang'] ?? 0) ?></td></tr>
-        <tr><td>Perubahan Persediaan</td><td class="num-right"><?= vParen($ak['kenaikan_persediaan'] ?? 0) ?></td></tr>
-        <tr><td>Perubahan Utang Usaha</td><td class="num-right"><?= v($ak['kenaikan_utang_usaha'] ?? 0) ?></td></tr>
-        <tr class="highlight-row"><td>Kas Bersih Aktivitas Operasi</td><td class="num-right"><?= v($ak['kas_operasional'] ?? 0) ?></td></tr>
+        <tr class="header-section"><td colspan="2">VI. LAPORAN ARUS KAS (KELUAR MASUK UANG KAS)</td></tr>
+        <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">1. Arus Kas dari Kegiatan Usaha (Operasional)</td></tr>
+        <tr><td>Keuntungan Bersih (Laba Bersih)</td><td class="num-right"><?= v($ak['laba_bersih'] ?? 0) ?></td></tr>
+        <tr><td>Ditambah Penyusutan Non-Kas</td><td class="num-right"><?= v($ak['penyusutan'] ?? 0) ?></td></tr>
+        <tr><td>Perubahan Tagihan ke Pelanggan (Piutang)</td><td class="num-right"><?= vParen($ak['kenaikan_piutang'] ?? 0) ?></td></tr>
+        <tr><td>Perubahan Stok Barang Usaha</td><td class="num-right"><?= vParen($ak['kenaikan_persediaan'] ?? 0) ?></td></tr>
+        <tr><td>Perubahan Utang ke Supplier (Pemasok)</td><td class="num-right"><?= v($ak['kenaikan_utang_usaha'] ?? 0) ?></td></tr>
+        <tr class="highlight-row"><td>Total Sisa Kas dari Kegiatan Usaha</td><td class="num-right"><?= v($ak['kas_operasional'] ?? 0) ?></td></tr>
 
-        <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Aktivitas Investasi</td></tr>
-        <tr><td>Pembelian Aset Tetap (Capex)</td><td class="num-right"><?= vParen($ak['pembelian_aset_tetap'] ?? 0) ?></td></tr>
-        <tr class="highlight-row"><td>Kas Bersih Aktivitas Investasi</td><td class="num-right"><?= vParen(abs($ak['kas_investasi'] ?? 0)) ?></td></tr>
+        <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">2. Arus Kas Belanja Aset (Investasi)</td></tr>
+        <tr><td>Beli Alat, Mesin atau Kendaraan (Capex)</td><td class="num-right"><?= vParen($ak['pembelian_aset_tetap'] ?? 0) ?></td></tr>
+        <tr class="highlight-row"><td>Total Kas untuk Belanja Aset</td><td class="num-right"><?= vParen(abs($ak['kas_investasi'] ?? 0)) ?></td></tr>
 
-        <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Aktivitas Pendanaan</td></tr>
-        <tr><td>Pembayaran Pokok Bank</td><td class="num-right"><?= vParen($ak['cicilan_pokok'] ?? 0) ?></td></tr>
-        <tr><td>Prive / Dividen</td><td class="num-right"><?= vParen($ak['prive_dividen'] ?? 0) ?></td></tr>
-        <tr class="highlight-row"><td>Kas Bersih Aktivitas Pendanaan</td><td class="num-right"><?= vParen(abs($ak['kas_pendanaan'] ?? 0)) ?></td></tr>
+        <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">3. Arus Kas Pinjaman &amp; Modal (Pendanaan)</td></tr>
+        <tr><td>Bayar Pokok Pinjaman ke Bank</td><td class="num-right"><?= vParen($ak['cicilan_pokok'] ?? 0) ?></td></tr>
+        <tr><td>Tarik Uang Pribadi / Bagi Hasil (Prive / Dividen)</td><td class="num-right"><?= vParen($ak['prive_dividen'] ?? 0) ?></td></tr>
+        <tr class="highlight-row"><td>Total Kas Pendanaan &amp; Modal</td><td class="num-right"><?= vParen(abs($ak['kas_pendanaan'] ?? 0)) ?></td></tr>
 
-        <tr class="highlight-row"><td>Kenaikan Kas Bersih</td><td class="num-right"><?= v($ak['kenaikan_bersih_kas'] ?? 0) ?></td></tr>
-        <tr><td>Saldo Kas Awal Periode</td><td class="num-right"><?= v($ak['saldo_awal_kas'] ?? 0) ?></td></tr>
-        <tr class="total-row"><td>SALDO KAS AKHIR PERIODE</td><td class="num-right"><?= v($ak['kas_akhir'] ?? 0) ?></td></tr>
+        <tr class="highlight-row"><td>Kenaikan (Penurunan) Kas Bersih Tahun Ini</td><td class="num-right"><?= v($ak['kenaikan_bersih_kas'] ?? 0) ?></td></tr>
+        <tr><td>Uang Kas di Awal Tahun</td><td class="num-right"><?= v($ak['saldo_awal_kas'] ?? 0) ?></td></tr>
+        <tr class="total-row"><td>SISA UANG KAS DI AKHIR TAHUN</td><td class="num-right"><?= v($ak['kas_akhir'] ?? 0) ?></td></tr>
     </table>
 
     <!-- VII. NERACA -->
     <table>
-        <tr class="header-section"><td colspan="2">ASET</td><td colspan="2">LIABILITAS &amp; EKUITAS</td></tr>
+        <tr class="header-section"><td colspan="2">HARTA PERUSAHAAN (ASET)</td><td colspan="2">UTANG &amp; MODAL SENDIRI</td></tr>
         <tr>
-            <td>Kas &amp; Setara Kas</td><td class="num-right"><?= v($nr['kas_bank'] ?? 0) ?></td>
-            <td>Utang Usaha</td><td class="num-right"><?= v($nr['utang_usaha'] ?? 0) ?></td>
+            <td>Uang Kas &amp; Saldo Bank</td><td class="num-right"><?= v($nr['kas_bank'] ?? 0) ?></td>
+            <td>Utang Pembelian ke Supplier</td><td class="num-right"><?= v($nr['utang_usaha'] ?? 0) ?></td>
         </tr>
         <tr>
-            <td>Piutang Usaha</td><td class="num-right"><?= v($nr['piutang_usaha'] ?? 0) ?></td>
-            <td>Utang Bank (Lancar &amp; Panjang)</td><td class="num-right"><?= v(($nr['utang_bank_pendek'] ?? 0) + ($nr['utang_jangka_panjang'] ?? 0)) ?></td>
+            <td>Tagihan ke Pelanggan (Piutang)</td><td class="num-right"><?= v($nr['piutang_usaha'] ?? 0) ?></td>
+            <td>Utang Pinjaman ke Bank</td><td class="num-right"><?= v(($nr['utang_bank_pendek'] ?? 0) + ($nr['utang_jangka_panjang'] ?? 0)) ?></td>
         </tr>
         <tr>
-            <td>Persediaan Barang</td><td class="num-right"><?= v($nr['persediaan'] ?? 0) ?></td>
-            <td class="highlight-row">Total Liabilitas</td><td class="num-right highlight-row"><?= v($nr['total_liabilitas'] ?? 0) ?></td>
+            <td>Stok Barang Dagang</td><td class="num-right"><?= v($nr['persediaan'] ?? 0) ?></td>
+            <td class="highlight-row">Total Seluruh Utang</td><td class="num-right highlight-row"><?= v($nr['total_liabilitas'] ?? 0) ?></td>
         </tr>
         <tr class="highlight-row">
-            <td>Total Aset Lancar</td><td class="num-right"><?= v($nr['total_aset_lancar'] ?? 0) ?></td>
-            <td>Modal Disetor</td><td class="num-right"><?= v($nr['modal_disetor'] ?? 0) ?></td>
+            <td>Total Harta Lancar</td><td class="num-right"><?= v($nr['total_aset_lancar'] ?? 0) ?></td>
+            <td>Modal yang Disetor Pemilik</td><td class="num-right"><?= v($nr['modal_disetor'] ?? 0) ?></td>
         </tr>
         <tr>
-            <td>Aset Tetap Neto</td><td class="num-right"><?= v($nr['aset_tetap_neto'] ?? 0) ?></td>
-            <td>Laba Ditahan Akhir</td><td class="num-right"><?= v($nr['laba_ditahan_akhir'] ?? 0) ?></td>
+            <td>Nilai Sisa Aset Tetap Saat Ini (Neto)</td><td class="num-right"><?= v($nr['aset_tetap_neto'] ?? 0) ?></td>
+            <td>Sisa Keuntungan Bersih (Laba Ditahan)</td><td class="num-right"><?= v($nr['laba_ditahan_akhir'] ?? 0) ?></td>
         </tr>
         <tr>
-            <td class="total-row">TOTAL ASET</td><td class="num-right total-row"><?= v($nr['total_aset'] ?? 0) ?></td>
-            <td class="highlight-row">Total Ekuitas</td><td class="num-right highlight-row"><?= v($nr['total_ekuitas'] ?? 0) ?></td>
+            <td class="total-row">TOTAL KESELURUHAN HARTA</td><td class="num-right total-row"><?= v($nr['total_aset'] ?? 0) ?></td>
+            <td class="highlight-row">Total Modal Sendiri</td><td class="num-right highlight-row"><?= v($nr['total_ekuitas'] ?? 0) ?></td>
         </tr>
         <tr>
             <td>&nbsp;</td><td>&nbsp;</td>
-            <td class="total-row">TOTAL LIABILITAS &amp; EKUITAS</td><td class="num-right total-row"><?= v($nr['total_liabilitas_ekuitas'] ?? 0) ?></td>
+            <td class="total-row">TOTAL UTANG + MODAL SENDIRI</td><td class="num-right total-row"><?= v($nr['total_liabilitas_ekuitas'] ?? 0) ?></td>
         </tr>
     </table>
 
@@ -260,13 +260,13 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
     $der   = ($tEk > 0) ? round($tLiab / $tEk, 2) : 0;
     ?>
     <table>
-        <tr class="header-section"><td colspan="3">VIII. RASIO KEUANGAN UTAMA</td></tr>
+        <tr class="header-section"><td colspan="3">VIII. KESEHATAN KEUANGAN USAHA (RASIO KEUANGAN)</td></tr>
         <tr style="background: #f1f5f9; font-weight: bold;">
-            <td>Rasio</td><td>Nilai</td><td>Keterangan Benchmark</td>
+            <td>Ukuran Kesehatan Finansial</td><td>Nilai</td><td>Keterangan Standar</td>
         </tr>
-        <tr><td>Margin Laba Bersih (NPM)</td><td style="font-weight: bold;"><?= $npm ?> %</td><td>Benchmark Sehat: &ge; 10%</td></tr>
-        <tr><td>Current Ratio (Rasio Lancar)</td><td style="font-weight: bold;"><?= $cr ?> %</td><td>Benchmark Likuiditas: &ge; 120%</td></tr>
-        <tr><td>Debt to Equity Ratio (DER)</td><td style="font-weight: bold;"><?= $der ?> x</td><td>Batas Maksimum Solvabilitas: &le; 3.0x</td></tr>
+        <tr><td>Persentase Keuntungan Bersih (NPM)</td><td style="font-weight: bold;"><?= $npm ?> %</td><td>Standar Sehat: minimal 10%</td></tr>
+        <tr><td>Kemampuan Bayar Utang Lancar (Current Ratio)</td><td style="font-weight: bold;"><?= $cr ?> %</td><td>Standar Likuiditas: minimal 120%</td></tr>
+        <tr><td>Rasio Utang terhadap Modal Sendiri (DER)</td><td style="font-weight: bold;"><?= $der ?> x</td><td>Batas Maksimal Aman: maksimal 3x</td></tr>
     </table>
 </body>
 </html>

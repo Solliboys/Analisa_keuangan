@@ -139,62 +139,62 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
     </div>
 
     <!-- ============================================================
-         TAB 1: LABA RUGI (INCOME STATEMENT)
+         TAB 1: LABA RUGI (PENDAPATAN & BIAYA)
          ============================================================ -->
     <div id="panelBU_lr" class="tabPanelBU px-6 sm:px-8 py-5">
         <!-- Subheader box -->
         <div class="bg-blue-50/70 p-3 rounded-xl flex justify-between items-center text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-4">
-            <span>LABA RUGI (INCOME STATEMENT)</span>
+            <span>LABA RUGI USAHA (PENDAPATAN &amp; PENGELUARAN)</span>
             <span class="text-blue-700 font-semibold normal-case text-[11px]">Periode <?= date('Y') ?></span>
         </div>
 
         <div class="space-y-3 text-xs sm:text-sm">
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Pendapatan Usaha</span>
+                <span class="text-slate-600 font-medium">Pendapatan Usaha (Penjualan / Omzet)</span>
                 <span class="font-bold text-slate-900" id="bu_lr_pendapatan">—</span>
             </div>
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">HPP</span>
+                <span class="text-slate-600 font-medium">Biaya Modal / Kulakan (HPP)</span>
                 <span class="font-bold text-slate-900" id="bu_lr_hpp">—</span>
             </div>
 
             <!-- Highlight: Laba Kotor -->
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Laba Kotor</span>
+                <span>Keuntungan Kotor (Laba Kotor)</span>
                 <span id="bu_lr_laba_kotor" class="text-blue-700 font-black">—</span>
             </div>
 
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium" id="labelBebanGaji">Beban Gaji</span>
+                <span class="text-slate-600 font-medium" id="labelBebanGaji">Beban Gaji Karyawan</span>
                 <span class="font-bold text-slate-900" id="bu_lr_beban_gaji">—</span>
             </div>
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Sewa, Utilitas &amp; Pemasaran</span>
+                <span class="text-slate-600 font-medium">Biaya Sewa, Listrik, Operasional &amp; Promosi</span>
                 <span class="font-bold text-slate-900" id="bu_lr_beban_op">—</span>
             </div>
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Penyusutan</span>
+                <span class="text-slate-600 font-medium">Penyusutan Nilai Alat &amp; Mesin Usaha</span>
                 <span class="font-bold text-slate-900" id="bu_lr_penyusutan">—</span>
             </div>
 
             <!-- Highlight: Laba Operasional -->
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Laba Operasional</span>
+                <span>Keuntungan Operasional Usaha</span>
                 <span id="bu_lr_laba_op" class="text-blue-700 font-black">—</span>
             </div>
 
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Beban Bunga</span>
+                <span class="text-slate-600 font-medium">Biaya Bunga Pinjaman Bank</span>
                 <span class="font-bold text-slate-900" id="bu_lr_beban_bunga">—</span>
             </div>
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Pajak</span>
+                <span class="text-slate-600 font-medium">Pajak Usaha</span>
                 <span class="font-bold text-slate-900" id="bu_lr_pajak">—</span>
             </div>
 
             <!-- Highlight: LABA BERSIH -->
             <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
-                <span class="tracking-wide">LABA BERSIH</span>
+                <span class="tracking-wide">KEUNTUNGAN BERSIH AKHIR (LABA BERSIH)</span>
                 <span id="bu_lr_laba_bersih" class="text-blue-700 font-black">—</span>
             </div>
         </div>
@@ -204,89 +204,89 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
             <div class="flex items-center gap-3">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold text-white bg-emerald-600 shadow-2xs">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                    Neraca Seimbang
+                    Perhitungan Seimbang
                 </span>
-                <span class="text-xs text-slate-600" id="infoRasioLR">Margin Laba Bersih: —</span>
+                <span class="text-xs text-slate-600" id="infoRasioLR">Persentase Keuntungan Bersih: —</span>
             </div>
             <div class="text-xs font-bold text-emerald-800" id="statusLR">Status: Terverifikasi</div>
         </div>
     </div>
 
     <!-- ============================================================
-         TAB 2: ARUS KAS (CASH FLOW STATEMENT)
+         TAB 2: ARUS KAS (KELUAR MASUK UANG KAS)
          ============================================================ -->
     <div id="panelBU_ak" class="tabPanelBU hidden px-6 sm:px-8 py-5">
         <!-- Subheader box -->
         <div class="bg-blue-50/70 p-3 rounded-xl flex justify-between items-center text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-4">
-            <span>ARUS KAS (CASH FLOW STATEMENT)</span>
+            <span>ARUS KAS USAHA (ALIRAN UANG MASUK &amp; KELUAR)</span>
             <span class="text-blue-700 font-semibold normal-case text-[11px]">Periode <?= date('Y') ?></span>
         </div>
 
         <div class="space-y-3 text-xs sm:text-sm">
             <!-- I. Aktivitas Operasi -->
-            <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-1">Aktivitas Operasi</div>
+            <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-1">1. Arus Kas dari Usaha Pokok (Operasional)</div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Laba Bersih</span>
+                <span class="text-slate-600 font-medium">Keuntungan Bersih (Laba Bersih)</span>
                 <span class="font-bold text-slate-900" id="bu_ak_laba_bersih">—</span>
             </div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Penyusutan</span>
+                <span class="text-slate-600 font-medium">Ditambah Penyusutan Non-Kas</span>
                 <span class="font-bold text-slate-900" id="bu_ak_penyusutan">—</span>
             </div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Kenaikan Piutang</span>
+                <span class="text-slate-600 font-medium">Perubahan Tagihan ke Pelanggan (Piutang)</span>
                 <span class="font-bold text-slate-900" id="bu_ak_kenaikan_piutang">—</span>
             </div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Kenaikan Persediaan</span>
+                <span class="text-slate-600 font-medium">Perubahan Stok Barang Usaha (Persediaan)</span>
                 <span class="font-bold text-slate-900" id="bu_ak_kenaikan_persediaan">—</span>
             </div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Kenaikan Utang Usaha</span>
+                <span class="text-slate-600 font-medium">Perubahan Utang ke Supplier (Pemasok)</span>
                 <span class="font-bold text-slate-900" id="bu_ak_kenaikan_utang">—</span>
             </div>
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Kas Operasi</span>
+                <span>Total Sisa Kas dari Usaha Pokok</span>
                 <span id="bu_ak_kas_operasi" class="text-blue-700 font-black">—</span>
             </div>
 
             <!-- II. Aktivitas Investasi -->
-            <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-2">Aktivitas Investasi</div>
+            <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-2">2. Arus Kas Belanja Aset (Investasi)</div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Pembelian Aset Tetap</span>
+                <span class="text-slate-600 font-medium">Beli Alat, Mesin atau Kendaraan Usaha</span>
                 <span class="font-bold text-slate-900" id="bu_ak_beli_aset">—</span>
             </div>
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Kas Bersih Investasi</span>
+                <span>Total Pengeluaran Kas untuk Aset</span>
                 <span id="bu_ak_kas_investasi" class="text-blue-700 font-black">—</span>
             </div>
 
             <!-- III. Aktivitas Pendanaan -->
-            <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-2">Aktivitas Pendanaan</div>
+            <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-2">3. Arus Kas Utang &amp; Modal (Pendanaan)</div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Cicilan Pokok Utang Bank</span>
+                <span class="text-slate-600 font-medium">Bayar Pokok Pinjaman ke Bank</span>
                 <span class="font-bold text-slate-900" id="bu_ak_cicilan">—</span>
             </div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Prive/Dividen</span>
+                <span class="text-slate-600 font-medium">Tarik Uang Pribadi / Bagi Hasil Pemilik (Prive / Dividen)</span>
                 <span class="font-bold text-slate-900" id="bu_ak_prive">—</span>
             </div>
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Kas Pendanaan</span>
+                <span>Total Kas Pendanaan &amp; Pembiayaan</span>
                 <span id="bu_ak_kas_pendanaan" class="text-blue-700 font-black">—</span>
             </div>
 
             <!-- Kenaikan Bersih & Kas Akhir -->
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Kenaikan Kas Bersih</span>
+                <span>Kenaikan (Penurunan) Kas Bersih Tahun Ini</span>
                 <span id="bu_ak_kenaikan_bersih" class="text-blue-700 font-black">—</span>
             </div>
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Saldo Kas Awal Periode</span>
+                <span class="text-slate-600 font-medium">Uang Kas di Awal Tahun</span>
                 <span class="font-bold text-slate-900" id="bu_ak_saldo_awal">—</span>
             </div>
             <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
-                <span class="tracking-wide">SALDO KAS AKHIR PERIODE</span>
+                <span class="tracking-wide">SISA UANG KAS DI AKHIR TAHUN</span>
                 <span id="bu_ak_kas_akhir" class="text-blue-700 font-black">—</span>
             </div>
         </div>
@@ -294,99 +294,99 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
         <!-- Info Sinkronisasi Kas -->
         <div class="mt-5 p-3.5 bg-blue-50/40 rounded-2xl border border-emerald-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
             <div class="text-slate-600" id="teksSinkronAK">
-                Kas Akhir Arus Kas sinkron 100% dengan Kas &amp; Bank Neraca.
+                Uang kas di arus kas sudah sama persis dengan uang kas di neraca.
             </div>
-            <div class="font-bold text-emerald-800 whitespace-nowrap" id="statusAK">Status: Sinkron 100%</div>
+            <div class="font-bold text-emerald-800 whitespace-nowrap" id="statusAK">Status: Cocok 100%</div>
         </div>
     </div>
 
     <!-- ============================================================
-         TAB 3: NERACA (BALANCE SHEET)
+         TAB 3: NERACA (POSISI HARTA, UTANG & MODAL)
          ============================================================ -->
     <div id="panelBU_nr" class="tabPanelBU hidden px-6 sm:px-8 py-5">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 
-            <!-- KOLOM KIRI: ASET -->
+            <!-- KOLOM KIRI: HARTA USAHA -->
             <div>
                 <div class="bg-blue-50/70 p-3 rounded-xl flex justify-between items-center text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-4">
-                    <span>ASET</span>
+                    <span>HARTA USAHA (ASET)</span>
                     <span class="text-blue-700 font-semibold normal-case text-[11px]">Des <?= date('Y') ?></span>
                 </div>
 
                 <div class="space-y-3 text-xs sm:text-sm">
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Kas &amp; Bank</span>
+                        <span class="text-slate-600 font-medium">Uang Kas &amp; Saldo Bank</span>
                         <span class="font-bold text-slate-900" id="bu_nr_kas">—</span>
                     </div>
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Piutang Usaha</span>
+                        <span class="text-slate-600 font-medium">Tagihan ke Pelanggan (Piutang)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_piutang">—</span>
                     </div>
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Persediaan</span>
+                        <span class="text-slate-600 font-medium">Stok Barang Dagang (Persediaan)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_persediaan">—</span>
                     </div>
 
                     <!-- Highlight: Total Aset Lancar -->
                     <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                        <span>Total Aset Lancar</span>
+                        <span>Total Harta Lancar (Kas + Tagihan + Stok)</span>
                         <span id="bu_nr_total_aset_lancar" class="text-blue-700 font-black">—</span>
                     </div>
 
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Aset Tetap Neto</span>
+                        <span class="text-slate-600 font-medium">Nilai Alat, Mesin &amp; Gedung Saat Ini (Neto)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_aset_tetap_neto">—</span>
                     </div>
 
                     <!-- Highlight: TOTAL ASET -->
                     <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
-                        <span class="tracking-wide">TOTAL ASET</span>
+                        <span class="tracking-wide">TOTAL KESELURUHAN HARTA PERUSAHAAN</span>
                         <span id="bu_nr_total_aset" class="text-blue-700 font-black">—</span>
                     </div>
                 </div>
             </div>
 
-            <!-- KOLOM KANAN: LIABILITAS & EKUITAS -->
+            <!-- KOLOM KANAN: UTANG & MODAL -->
             <div>
                 <div class="bg-blue-50/70 p-3 rounded-xl flex justify-between items-center text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-4">
-                    <span>LIABILITAS &amp; EKUITAS</span>
+                    <span>UTANG &amp; MODAL SENDIRI</span>
                     <span class="text-blue-700 font-semibold normal-case text-[11px]">Des <?= date('Y') ?></span>
                 </div>
 
                 <div class="space-y-3 text-xs sm:text-sm">
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Utang Usaha</span>
+                        <span class="text-slate-600 font-medium">Utang ke Supplier (Pemasok)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_utang_usaha">—</span>
                     </div>
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Utang Bank</span>
+                        <span class="text-slate-600 font-medium">Utang Pinjaman ke Bank</span>
                         <span class="font-bold text-slate-900" id="bu_nr_utang_bank">—</span>
                     </div>
 
                     <!-- Highlight: Total Liabilitas -->
                     <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                        <span>Total Liabilitas</span>
+                        <span>Total Seluruh Utang Usaha &amp; Bank</span>
                         <span id="bu_nr_total_liab" class="text-blue-700 font-black">—</span>
                     </div>
 
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Modal Disetor</span>
+                        <span class="text-slate-600 font-medium">Modal Sendiri yang Disetor</span>
                         <span class="font-bold text-slate-900" id="bu_nr_modal">—</span>
                     </div>
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Laba Ditahan</span>
+                        <span class="text-slate-600 font-medium">Sisa Keuntungan yang Disimpan (Laba Ditahan)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_laba_ditahan">—</span>
                     </div>
 
                     <!-- Highlight: Total Ekuitas -->
                     <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                        <span>Total Ekuitas</span>
+                        <span>Total Modal Bersih Sendiri</span>
                         <span id="bu_nr_total_ekuitas" class="text-blue-700 font-black">—</span>
                     </div>
 
                     <!-- Highlight: TOTAL LIABILITAS & EKUITAS -->
                     <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
-                        <span class="tracking-wide">TOTAL LIABILITAS</span>
+                        <span class="tracking-wide">TOTAL UTANG + MODAL SENDIRI</span>
                         <span id="bu_nr_total_liab_ekuitas" class="text-blue-700 font-black">—</span>
                     </div>
                 </div>
@@ -399,11 +399,11 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
             <div class="flex items-center gap-3">
                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold text-white bg-emerald-600 shadow-2xs">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                    Neraca Seimbang
+                    Perhitungan Seimbang
                 </span>
-                <span class="text-xs text-slate-600" id="infoRasioNR">Selisih matematis: Rp 0 (Validasi mesin risiko lulus)</span>
+                <span class="text-xs text-slate-600" id="infoRasioNR">Total Harta sama dengan Total Utang + Modal (Seimbang)</span>
             </div>
-            <div class="text-xs font-bold text-emerald-800" id="statusNR">Status: Sinkron 100%</div>
+            <div class="text-xs font-bold text-emerald-800" id="statusNR">Status: Cocok 100%</div>
         </div>
     </div>
 
