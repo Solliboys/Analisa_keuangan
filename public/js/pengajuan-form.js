@@ -733,6 +733,9 @@ function goToTab(tabIndex) {
     if (currentTab === 6 && typeof sinkronisasiDataDebiturKeSlik === 'function') {
         sinkronisasiDataDebiturKeSlik();
     }
+    if (normalizeTab(currentTab) === 'laporan' && typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 
     // Update Header Judul & Deskripsi
     const meta = getStepMeta(currentTab);
