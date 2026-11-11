@@ -748,9 +748,10 @@ class Pengajuan extends BaseController
         if (isset($input['rekening']) && is_array($input['rekening'])) {
             foreach ($input['rekening'] as $row) {
                 if (empty($row['nama_bank'])) continue;
-                $credit = $this->cleanNumber($row['total_mutasi_kredit'] ?? 0);
-                $debit  = $this->cleanNumber($row['total_mutasi_debit'] ?? 0);
-                $months = max(1, (int)($row['jumlah_bulan'] ?? 6));
+                $saldoAwal = $this->cleanNumber($row['saldo_awal'] ?? 0);
+                $credit    = $this->cleanNumber($row['total_mutasi_kredit'] ?? 0);
+                $debit     = $this->cleanNumber($row['total_mutasi_debit'] ?? 0);
+                $months    = max(1, (int)($row['jumlah_bulan'] ?? 6));
 
                 $this->rekeningModel->insert([
                     'kredit_id'           => $kreditId,
@@ -758,6 +759,7 @@ class Pengajuan extends BaseController
                     'periode'             => $row['periode'] ?? '',
                     'nomor_rekening'      => $row['nomor_rekening'] ?? '',
                     'atas_nama'           => $row['atas_nama'] ?? '',
+                    'saldo_awal'          => $saldoAwal,
                     'total_mutasi_kredit' => $credit,
                     'total_mutasi_debit'  => $debit,
                     'jumlah_bulan'        => $months,
@@ -2155,6 +2157,69 @@ class Pengajuan extends BaseController
         $mergedInput = array_merge($keuangan, $input);
         $mergedInput['daftar_karyawan'] = $kredit['daftar_karyawan'] ?? '[]';
 
+        // Penarikan otomatis Bayar Pokok Pinjaman ke Bank, Utang Bank & Beban Bunga dari SLIK (Tahap 5)
+        $dataSlik = $this->slikModel->where('kredit_id', $kreditId)->where('deleted_at', null)->findAll();
+        $totAngsuranTahun = 0;
+        $totOutstanding   = 0;
+        foreach ($dataSlik as $sl) {
+            $angsuran = (float)($sl['angsuran'] ?? 0);
+            $out      = (float)($sl['outstanding'] ?? 0);
+            $totOutstanding += $out;
+            if ($angsuran > 0) {
+                $totAngsuranTahun += ($angsuran * 12);
+            } elseif ($out > 0) {
+                $totAngsuranTahun += ($out * 0.20);
+            }
+        }
+        if (empty($mergedInput['input_pembayaran_pokok']) || (float)$mergedInput['input_pembayaran_pokok'] <= 0) {
+            if ($totAngsuranTahun > 0) {
+                $mergedInput['input_pembayaran_pokok'] = $totAngsuranTahun;
+            }
+        }
+        if (empty($mergedInput['neraca_utang_bank_panjang']) && empty($mergedInput['neraca_utang_bank_lancar'])) {
+            if ($totOutstanding > 0) {
+                $mergedInput['neraca_utang_bank_panjang'] = $totOutstanding;
+            }
+        }
+        // Penarikan otomatis Biaya Bunga Pinjaman Bank (Laba Rugi) dari SLIK (estimasi 11% / tahun dari baki debet)
+        if (empty($mergedInput['input_beban_bunga']) || (float)$mergedInput['input_beban_bunga'] <= 0) {
+            if ($totOutstanding > 0) {
+                $mergedInput['input_beban_bunga'] = round($totOutstanding * 0.11);
+            }
+        }
+
+        // Penarikan otomatis Uang Kas di Awal Tahun dari Rekening Koran (Tahap 7)
+        $dataRekening = $this->rekeningModel->where('kredit_id', $kreditId)->findAll();
+        $totSaldoAwalRekening = 0;
+        $totAvgKredit         = 0;
+        foreach ($dataRekening as $rek) {
+            $totSaldoAwalRekening += (float)($rek['saldo_awal'] ?? 0);
+            $totAvgKredit         += (float)($rek['rata_rata_kredit'] ?? 0);
+        }
+        if (empty($mergedInput['neraca_awal_kas']) || (float)$mergedInput['neraca_awal_kas'] <= 0) {
+            if ($totSaldoAwalRekening > 0) {
+                $mergedInput['neraca_awal_kas'] = $totSaldoAwalRekening;
+            } elseif ($totAvgKredit > 0) {
+                $mergedInput['neraca_awal_kas'] = round($totAvgKredit * 0.20);
+            }
+        }
+
+        // Cek tujuan pembiayaan di Tahap 1: Jika Investasi, otomatis diisi dari alokasi plafon pinjaman / nilai penambahan aset
+        $tujuanPembiayaan = $kredit['tujuan_pembiayaan'] ?? '';
+        $isInvestasi      = (stripos($tujuanPembiayaan, 'investasi') !== false);
+        if ($isInvestasi) {
+            if (empty($mergedInput['input_capex']) || (float)$mergedInput['input_capex'] <= 0) {
+                $plafonInvestasi = (float)($kredit['plafon_pengajuan'] ?? 0);
+                if ($plafonInvestasi > 0) {
+                    $mergedInput['input_capex'] = $plafonInvestasi;
+                }
+            }
+        }
+
+        // Hapus penarikan uang pribadi / prive / dividen
+        $mergedInput['input_prive_dividen'] = 0;
+        $mergedInput['prive_dividen']       = 0;
+
         // Hitung laporan menggunakan service
         $service = new LaporanKeuanganService();
         $hasil   = $service->hitungLaporan($mergedInput, $tipePemohon);
@@ -2320,6 +2385,65 @@ class Pengajuan extends BaseController
                 $calcInput['neraca_utang_bank_panjang'] = $totSlik;
             }
         }
+
+        // Jika pembayaran pokok pinjaman bank di arus kas kosong, tarik dari SLIK Tahap 5 (akumulasi 1 tahun)
+        if (empty($calcInput['input_pembayaran_pokok']) || (float)$calcInput['input_pembayaran_pokok'] <= 0) {
+            $totAngsuranTahun = 0;
+            foreach ($dataSlik as $sl) {
+                $angsuran = (float)($sl['angsuran'] ?? 0);
+                $out      = (float)($sl['outstanding'] ?? 0);
+                if ($angsuran > 0) {
+                    $totAngsuranTahun += ($angsuran * 12);
+                } elseif ($out > 0) {
+                    $totAngsuranTahun += ($out * 0.20);
+                }
+            }
+            if ($totAngsuranTahun > 0) {
+                $calcInput['input_pembayaran_pokok'] = $totAngsuranTahun;
+            }
+        }
+
+        // Jika beban bunga pinjaman bank di laba rugi kosong, tarik dari SLIK (estimasi 11% / tahun dari baki debet)
+        if (empty($calcInput['input_beban_bunga']) || (float)$calcInput['input_beban_bunga'] <= 0) {
+            $totOutstandingSlik = 0;
+            foreach ($dataSlik as $sl) {
+                $totOutstandingSlik += (float)($sl['outstanding'] ?? 0);
+            }
+            if ($totOutstandingSlik > 0) {
+                $calcInput['input_beban_bunga'] = round($totOutstandingSlik * 0.11);
+            }
+        }
+
+        // Jika uang kas di awal tahun kosong, tarik dari saldo awal rekening koran Tahap 7
+        if (empty($calcInput['neraca_awal_kas']) || (float)$calcInput['neraca_awal_kas'] <= 0) {
+            $totSaldoAwalRekening = 0;
+            $totAvgKredit         = 0;
+            foreach ($dataRekening as $rek) {
+                $totSaldoAwalRekening += (float)($rek['saldo_awal'] ?? 0);
+                $totAvgKredit         += (float)($rek['rata_rata_kredit'] ?? 0);
+            }
+            if ($totSaldoAwalRekening > 0) {
+                $calcInput['neraca_awal_kas'] = $totSaldoAwalRekening;
+            } elseif ($totAvgKredit > 0) {
+                $calcInput['neraca_awal_kas'] = round($totAvgKredit * 0.20);
+            }
+        }
+
+        // Cek tujuan pembiayaan di Tahap 1: Jika Investasi, otomatis diisi dari alokasi plafon pinjaman / nilai penambahan aset
+        $tujuanPembiayaan = $kredit['tujuan_pembiayaan'] ?? '';
+        $isInvestasi      = (stripos($tujuanPembiayaan, 'investasi') !== false);
+        if ($isInvestasi) {
+            if (empty($calcInput['input_capex']) || (float)$calcInput['input_capex'] <= 0) {
+                $plafonInvestasi = (float)($kredit['plafon_pengajuan'] ?? 0);
+                if ($plafonInvestasi > 0) {
+                    $calcInput['input_capex'] = $plafonInvestasi;
+                }
+            }
+        }
+
+        // Hapus penarikan uang pribadi / prive / dividen
+        $calcInput['input_prive_dividen'] = 0;
+        $calcInput['prive_dividen']       = 0;
 
         // Hitung laporan keuangan menggunakan service
         $hasil = $service->hitungLaporan($calcInput, $tipePemohon);

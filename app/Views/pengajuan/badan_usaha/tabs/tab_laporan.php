@@ -164,17 +164,18 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                 <span id="bu_lr_laba_kotor" class="text-blue-700 font-black">—</span>
             </div>
 
-            <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium" id="labelBebanGaji">Beban Gaji Karyawan</span>
-                <span class="font-bold text-slate-900" id="bu_lr_beban_gaji">—</span>
+            <!-- Beban Operasional Pokok Usaha (Gabungan Gaji Karyawan Tetap, Sewa, Listrik, Air & Utilitas) -->
+            <div class="flex justify-between items-start py-1">
+                <div>
+                    <span class="text-slate-700 font-semibold block">Beban Operasional Pokok Usaha (Rp/Bulan)</span>
+                    <span class="text-[11px] text-slate-400 block">Gaji karyawan tetap, sewa kantor/gudang usaha, listrik, air &amp; utilitas operasional</span>
+                </div>
+                <span class="font-bold text-slate-900 shrink-0 ml-4" id="bu_lr_beban_op">—</span>
             </div>
-            <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Biaya Sewa, Listrik, Operasional &amp; Promosi</span>
-                <span class="font-bold text-slate-900" id="bu_lr_beban_op">—</span>
-            </div>
-            <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Penyusutan Nilai Alat &amp; Mesin Usaha</span>
-                <span class="font-bold text-slate-900" id="bu_lr_penyusutan">—</span>
+
+            <!-- Rincian Beban Usaha & Administrasi Dinamis (Ditambah dari Tab 8) -->
+            <div id="containerBebanLainLaporan" class="space-y-1.5 my-1">
+                <!-- Rincian dinamis dari Tab 8 akan dirender di sini via JavaScript -->
             </div>
 
             <!-- Highlight: Laba Operasional -->
@@ -183,7 +184,7 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                 <span id="bu_lr_laba_op" class="text-blue-700 font-black">—</span>
             </div>
 
-            <div class="flex justify-between items-center py-1">
+            <div class="flex justify-between items-center py-1" id="row_bu_lr_beban_bunga">
                 <span class="text-slate-600 font-medium">Biaya Bunga Pinjaman Bank</span>
                 <span class="font-bold text-slate-900" id="bu_lr_beban_bunga">—</span>
             </div>
@@ -230,10 +231,6 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                 <span class="font-bold text-slate-900" id="bu_ak_laba_bersih">—</span>
             </div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Ditambah Penyusutan Non-Kas</span>
-                <span class="font-bold text-slate-900" id="bu_ak_penyusutan">—</span>
-            </div>
-            <div class="flex justify-between items-center py-0.5">
                 <span class="text-slate-600 font-medium">Perubahan Tagihan ke Pelanggan (Piutang)</span>
                 <span class="font-bold text-slate-900" id="bu_ak_kenaikan_piutang">—</span>
             </div>
@@ -250,26 +247,24 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                 <span id="bu_ak_kas_operasi" class="text-blue-700 font-black">—</span>
             </div>
 
-            <!-- II. Aktivitas Investasi -->
-            <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-2">2. Arus Kas Belanja Aset (Investasi)</div>
-            <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Beli Alat, Mesin atau Kendaraan Usaha</span>
-                <span class="font-bold text-slate-900" id="bu_ak_beli_aset">—</span>
-            </div>
-            <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Total Pengeluaran Kas untuk Aset</span>
-                <span id="bu_ak_kas_investasi" class="text-blue-700 font-black">—</span>
+            <!-- II. Aktivitas Investasi (Dinamis: Hanya ditampilkan jika ada belanja aset / pinjaman investasi) -->
+            <div id="container_bu_ak_investasi" style="display: none;" class="space-y-2">
+                <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-2">2. Arus Kas Belanja Aset (Investasi)</div>
+                <div class="flex justify-between items-center py-0.5">
+                    <span class="text-slate-600 font-medium">Beli Alat, Mesin atau Kendaraan Usaha</span>
+                    <span class="font-bold text-slate-900" id="bu_ak_beli_aset">—</span>
+                </div>
+                <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
+                    <span>Total Pengeluaran Kas untuk Aset</span>
+                    <span id="bu_ak_kas_investasi" class="text-blue-700 font-black">—</span>
+                </div>
             </div>
 
             <!-- III. Aktivitas Pendanaan -->
-            <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-2">3. Arus Kas Utang &amp; Modal (Pendanaan)</div>
+            <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-2" id="judul_bu_ak_pendanaan">2. Arus Kas Utang &amp; Modal (Pendanaan)</div>
             <div class="flex justify-between items-center py-0.5">
                 <span class="text-slate-600 font-medium">Bayar Pokok Pinjaman ke Bank</span>
                 <span class="font-bold text-slate-900" id="bu_ak_cicilan">—</span>
-            </div>
-            <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Tarik Uang Pribadi / Bagi Hasil Pemilik (Prive / Dividen)</span>
-                <span class="font-bold text-slate-900" id="bu_ak_prive">—</span>
             </div>
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
                 <span>Total Kas Pendanaan &amp; Pembiayaan</span>
@@ -333,7 +328,7 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                         <span id="bu_nr_total_aset_lancar" class="text-blue-700 font-black">—</span>
                     </div>
 
-                    <div class="flex justify-between items-center py-1">
+                    <div class="flex justify-between items-center py-1" id="row_bu_nr_aset_tetap">
                         <span class="text-slate-600 font-medium">Nilai Alat, Mesin &amp; Gedung Saat Ini (Neto)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_aset_tetap_neto">—</span>
                     </div>
@@ -358,18 +353,18 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                         <span class="text-slate-600 font-medium">Utang ke Supplier (Pemasok)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_utang_usaha">—</span>
                     </div>
-                    <div class="flex justify-between items-center py-1">
+                    <div class="flex justify-between items-center py-1" id="row_bu_nr_utang_bank">
                         <span class="text-slate-600 font-medium">Utang Pinjaman ke Bank</span>
                         <span class="font-bold text-slate-900" id="bu_nr_utang_bank">—</span>
                     </div>
 
                     <!-- Highlight: Total Liabilitas -->
                     <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                        <span>Total Seluruh Utang Usaha &amp; Bank</span>
+                        <span id="lbl_bu_nr_total_liab">Total Seluruh Utang Usaha &amp; Bank</span>
                         <span id="bu_nr_total_liab" class="text-blue-700 font-black">—</span>
                     </div>
 
-                    <div class="flex justify-between items-center py-1">
+                    <div class="flex justify-between items-center py-1" id="row_bu_nr_modal">
                         <span class="text-slate-600 font-medium">Modal Sendiri yang Disetor</span>
                         <span class="font-bold text-slate-900" id="bu_nr_modal">—</span>
                     </div>
@@ -578,25 +573,19 @@ function unduhLaporanPDF(target) {
                         <td class="col-val font-bold">${v('bu_lr_laba_kotor')}</td>
                     </tr>
                     <tr>
-                        <td class="col-desc">Beban Gaji (${karyawanJml} karyawan)</td>
-                        <td class="col-val">${v('bu_lr_beban_gaji')}</td>
-                    </tr>
-                    <tr>
-                        <td class="col-desc">Sewa, Utilitas &amp; Pemasaran</td>
+                        <td class="col-desc">Beban Operasional Pokok (Gaji Karyawan Tetap, Sewa, Listrik &amp; Utilitas)</td>
                         <td class="col-val">${v('bu_lr_beban_op')}</td>
                     </tr>
-                    <tr>
-                        <td class="col-desc">Penyusutan</td>
-                        <td class="col-val">${v('bu_lr_penyusutan')}</td>
-                    </tr>
+                    ${renderBebanLainRowsHtml('pdf')}
                     <tr class="row-highlight">
                         <td class="col-desc font-bold">Laba Operasional</td>
                         <td class="col-val font-bold">${v('bu_lr_laba_op')}</td>
                     </tr>
+                    ${(!v('bu_lr_beban_bunga').includes('—') && !v('bu_lr_beban_bunga').includes('Rp 0') && v('bu_lr_beban_bunga').trim() !== '') ? `
                     <tr>
-                        <td class="col-desc">Beban Bunga</td>
+                        <td class="col-desc">Beban Bunga Pinjaman Bank</td>
                         <td class="col-val">${v('bu_lr_beban_bunga')}</td>
-                    </tr>
+                    </tr>` : ''}
                     <tr>
                         <td class="col-desc">Pajak</td>
                         <td class="col-val">${v('bu_lr_pajak')}</td>
@@ -621,10 +610,6 @@ function unduhLaporanPDF(target) {
                         <td class="col-val">${v('bu_ak_laba_bersih')}</td>
                     </tr>
                     <tr>
-                        <td class="col-desc">Penyusutan</td>
-                        <td class="col-val">${v('bu_ak_penyusutan')}</td>
-                    </tr>
-                    <tr>
                         <td class="col-desc">Kenaikan Piutang</td>
                         <td class="col-val">${v('bu_ak_kenaikan_piutang')}</td>
                     </tr>
@@ -641,6 +626,7 @@ function unduhLaporanPDF(target) {
                         <td class="col-val font-bold">${v('bu_ak_kas_operasi')}</td>
                     </tr>
 
+                    ${(!v('bu_ak_beli_aset').includes('—') && !v('bu_ak_beli_aset').includes('Rp 0') && v('bu_ak_beli_aset').trim() !== '') ? `
                     <tr class="sub-header-row"><td colspan="2">AKTIVITAS INVESTASI</td></tr>
                     <tr>
                         <td class="col-desc">Pembelian Aset Tetap</td>
@@ -649,16 +635,12 @@ function unduhLaporanPDF(target) {
                     <tr class="row-highlight">
                         <td class="col-desc font-bold">Kas Bersih Investasi</td>
                         <td class="col-val font-bold">${v('bu_ak_kas_investasi')}</td>
-                    </tr>
+                    </tr>` : ''}
 
                     <tr class="sub-header-row"><td colspan="2">AKTIVITAS PENDANAAN</td></tr>
                     <tr>
                         <td class="col-desc">Cicilan Pokok Utang Bank</td>
                         <td class="col-val">${v('bu_ak_cicilan')}</td>
-                    </tr>
-                    <tr>
-                        <td class="col-desc">Prive / Dividen</td>
-                        <td class="col-val">${v('bu_ak_prive')}</td>
                     </tr>
                     <tr class="row-highlight">
                         <td class="col-desc font-bold">Kas Pendanaan</td>
@@ -741,6 +723,7 @@ function unduhLaporanPDF(target) {
                             </tr>
                         </table>
 
+                        ${(!v('bu_nr_aset_tetap_neto').includes('—') && !v('bu_nr_aset_tetap_neto').includes('Rp 0') && v('bu_nr_aset_tetap_neto').trim() !== '') ? `
                         <div class="group-title" style="margin-top: 12px;">Aset Tetap</div>
                         <table class="report-table">
                             <tr>
@@ -751,7 +734,7 @@ function unduhLaporanPDF(target) {
                                 <td class="col-desc font-bold">Total Aset Tetap</td>
                                 <td class="col-val font-bold">${v('bu_nr_aset_tetap_neto')}</td>
                             </tr>
-                        </table>
+                        </table>` : ''}
                     </div>
 
                     <!-- KOLOM PASIVA / LIABILITAS & EKUITAS -->
@@ -764,10 +747,11 @@ function unduhLaporanPDF(target) {
                                 <td class="col-desc">Utang Usaha</td>
                                 <td class="col-val">${v('bu_nr_utang_usaha')}</td>
                             </tr>
+                            ${(!v('bu_nr_utang_bank').includes('—') && !v('bu_nr_utang_bank').includes('Rp 0') && v('bu_nr_utang_bank').trim() !== '') ? `
                             <tr>
                                 <td class="col-desc">Utang Bank</td>
                                 <td class="col-val">${v('bu_nr_utang_bank')}</td>
-                            </tr>
+                            </tr>` : ''}
                             <tr class="row-highlight">
                                 <td class="col-desc font-bold">Total Liabilitas</td>
                                 <td class="col-val font-bold">${v('bu_nr_total_liab')}</td>
@@ -776,10 +760,11 @@ function unduhLaporanPDF(target) {
 
                         <div class="group-title" style="margin-top: 12px;">Ekuitas</div>
                         <table class="report-table">
+                            ${(!v('bu_nr_modal').includes('—') && !v('bu_nr_modal').includes('Rp 0') && v('bu_nr_modal').trim() !== '') ? `
                             <tr>
                                 <td class="col-desc">Modal Disetor</td>
                                 <td class="col-val">${v('bu_nr_modal')}</td>
-                            </tr>
+                            </tr>` : ''}
                             <tr>
                                 <td class="col-desc">Laba Ditahan</td>
                                 <td class="col-val">${v('bu_nr_laba_ditahan')}</td>
@@ -1215,11 +1200,11 @@ function unduhLaporanExcel() {
                 <tr><td>Pendapatan Usaha</td><td class="num-right">${v('bu_lr_pendapatan')}</td></tr>
                 <tr><td>HPP</td><td class="num-right">${v('bu_lr_hpp')}</td></tr>
                 <tr class="highlight-row"><td>Laba Kotor</td><td class="num-right">${v('bu_lr_laba_kotor')}</td></tr>
-                <tr><td>Beban Gaji (Karyawan)</td><td class="num-right">${v('bu_lr_beban_gaji')}</td></tr>
-                <tr><td>Sewa, Utilitas &amp; Pemasaran</td><td class="num-right">${v('bu_lr_beban_op')}</td></tr>
-                <tr><td>Penyusutan</td><td class="num-right">${v('bu_lr_penyusutan')}</td></tr>
+                <tr><td>Beban Operasional Pokok (Gaji Karyawan Tetap, Sewa, Listrik &amp; Utilitas)</td><td class="num-right">${v('bu_lr_beban_op')}</td></tr>
+                ${renderBebanLainRowsHtml('print')}
                 <tr class="highlight-row"><td>Laba Operasional</td><td class="num-right">${v('bu_lr_laba_op')}</td></tr>
-                <tr><td>Beban Bunga</td><td class="num-right">${v('bu_lr_beban_bunga')}</td></tr>
+                ${(!v('bu_lr_beban_bunga').includes('—') && !v('bu_lr_beban_bunga').includes('Rp 0') && v('bu_lr_beban_bunga').trim() !== '') ? `
+                <tr><td>Beban Bunga Pinjaman Bank</td><td class="num-right">${v('bu_lr_beban_bunga')}</td></tr>` : ''}
                 <tr><td>Pajak</td><td class="num-right">${v('bu_lr_pajak')}</td></tr>
                 <tr class="total-row"><td>LABA BERSIH</td><td class="num-right">${v('bu_lr_laba_bersih')}</td></tr>
                 <tr><td colspan="2">&nbsp;</td></tr>
@@ -1230,19 +1215,18 @@ function unduhLaporanExcel() {
                 <tr class="header-section"><td colspan="2">II. LAPORAN ARUS KAS (CASH FLOW STATEMENT)</td></tr>
                 <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Aktivitas Operasi</td></tr>
                 <tr><td>Laba Bersih</td><td class="num-right">${v('bu_ak_laba_bersih')}</td></tr>
-                <tr><td>Penyusutan</td><td class="num-right">${v('bu_ak_penyusutan')}</td></tr>
                 <tr><td>Kenaikan Piutang</td><td class="num-right">${v('bu_ak_kenaikan_piutang')}</td></tr>
                 <tr><td>Kenaikan Persediaan</td><td class="num-right">${v('bu_ak_kenaikan_persediaan')}</td></tr>
                 <tr><td>Kenaikan Utang Usaha</td><td class="num-right">${v('bu_ak_kenaikan_utang')}</td></tr>
                 <tr class="highlight-row"><td>Kas Operasi</td><td class="num-right">${v('bu_ak_kas_operasi')}</td></tr>
 
+                ${(!v('bu_ak_beli_aset').includes('—') && !v('bu_ak_beli_aset').includes('Rp 0') && v('bu_ak_beli_aset').trim() !== '') ? `
                 <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Aktivitas Investasi</td></tr>
                 <tr><td>Pembelian Aset Tetap</td><td class="num-right">${v('bu_ak_beli_aset')}</td></tr>
-                <tr class="highlight-row"><td>Kas Bersih Investasi</td><td class="num-right">${v('bu_ak_kas_investasi')}</td></tr>
+                <tr class="highlight-row"><td>Kas Bersih Investasi</td><td class="num-right">${v('bu_ak_kas_investasi')}</td></tr>` : ''}
 
                 <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Aktivitas Pendanaan</td></tr>
                 <tr><td>Cicilan Pokok Utang Bank</td><td class="num-right">${v('bu_ak_cicilan')}</td></tr>
-                <tr><td>Prive/Dividen</td><td class="num-right">${v('bu_ak_prive')}</td></tr>
                 <tr class="highlight-row"><td>Kas Pendanaan</td><td class="num-right">${v('bu_ak_kas_pendanaan')}</td></tr>
 
                 <tr class="highlight-row"><td>Kenaikan Kas Bersih</td><td class="num-right">${v('bu_ak_kenaikan_bersih')}</td></tr>
@@ -1311,12 +1295,49 @@ function isiDataLaporanBU(data) {
     document.getElementById('bu_lr_hpp').textContent          = rpFmtParen(lr.hpp);
     document.getElementById('bu_lr_laba_kotor').textContent   = rpFmt(lr.laba_kotor);
 
-    document.getElementById('labelBebanGaji').textContent     = 'Beban Gaji';
-    document.getElementById('bu_lr_beban_gaji').textContent   = rpFmtParen(lr.beban_gaji);
     document.getElementById('bu_lr_beban_op').textContent     = rpFmtParen(lr.beban_operasional);
-    document.getElementById('bu_lr_penyusutan').textContent   = rpFmtParen(lr.beban_penyusutan);
+
+    // Simpan & render rincian beban usaha dinamis dari Tab 8
+    let listBeban = lr.detail_beban_lainnya || [];
+    if (typeof listBeban === 'string') {
+        try { listBeban = JSON.parse(listBeban); } catch(e) { listBeban = []; }
+    }
+    if (!Array.isArray(listBeban) || listBeban.length === 0) {
+        const rawEl = document.getElementById('detail_beban_lainnya_rk')?.value;
+        if (rawEl) {
+            try { listBeban = JSON.parse(rawEl); } catch(e) { listBeban = []; }
+        }
+    }
+    window._currentDetailBebanLain = Array.isArray(listBeban) ? listBeban : [];
+
+    const contBeban = document.getElementById('containerBebanLainLaporan');
+    if (contBeban) {
+        contBeban.innerHTML = '';
+        if (window._currentDetailBebanLain.length > 0) {
+            window._currentDetailBebanLain.forEach(item => {
+                const nom = parseFloat(item.nominal || 0);
+                if (nom > 0 || (item.nama && item.nama.trim() !== '')) {
+                    const row = document.createElement('div');
+                    row.className = 'flex justify-between items-center py-1 pl-4 border-l-2 border-blue-400 bg-slate-50/70 rounded-r-lg pr-1';
+                    row.innerHTML = `
+                        <span class="text-slate-600 text-xs sm:text-sm font-medium">• ${escapeHtmlText(item.nama || 'Beban Usaha Lainnya')}</span>
+                        <span class="font-bold text-slate-800 text-xs sm:text-sm">${rpFmtParen(nom)}</span>
+                    `;
+                    contBeban.appendChild(row);
+                }
+            });
+        }
+    }
+
+    const elPeny = document.getElementById('bu_lr_penyusutan');
+    if (elPeny) elPeny.textContent = rpFmtParen(lr.beban_penyusutan);
     document.getElementById('bu_lr_laba_op').textContent      = rpFmt(lr.laba_operasional);
-    document.getElementById('bu_lr_beban_bunga').textContent  = rpFmtParen(lr.beban_bunga);
+    const bebanBunga = parseFloat(lr.beban_bunga || 0);
+    const rowBebanBunga = document.getElementById('row_bu_lr_beban_bunga');
+    if (rowBebanBunga) {
+        rowBebanBunga.style.display = (bebanBunga > 0) ? 'flex' : 'none';
+    }
+    document.getElementById('bu_lr_beban_bunga').textContent  = rpFmtParen(bebanBunga);
     document.getElementById('bu_lr_pajak').textContent        = rpFmtParen(lr.pajak);
     document.getElementById('bu_lr_laba_bersih').textContent  = rpFmt(lr.laba_bersih);
 
@@ -1325,18 +1346,37 @@ function isiDataLaporanBU(data) {
 
     // --- TAB ARUS KAS ---
     document.getElementById('bu_ak_laba_bersih').textContent    = rpFmt(ak.laba_bersih);
-    document.getElementById('bu_ak_penyusutan').textContent      = rpFmt(ak.penyusutan);
+    if (document.getElementById('bu_ak_penyusutan')) {
+        document.getElementById('bu_ak_penyusutan').textContent  = rpFmt(ak.penyusutan);
+    }
     document.getElementById('bu_ak_kenaikan_piutang').textContent = rpFmtParen(ak.kenaikan_piutang);
     document.getElementById('bu_ak_kenaikan_persediaan').textContent = rpFmtParen(ak.kenaikan_persediaan);
     document.getElementById('bu_ak_kenaikan_utang').textContent = rpFmt(ak.kenaikan_utang_usaha);
     document.getElementById('bu_ak_kas_operasi').textContent    = rpFmt(ak.kas_operasional);
 
-    document.getElementById('bu_ak_beli_aset').textContent      = rpFmtParen(ak.pembelian_aset_tetap);
-    document.getElementById('bu_ak_kas_investasi').textContent  = rpFmtParen(Math.abs(ak.kas_investasi));
+    const capex = parseFloat(ak.pembelian_aset_tetap || 0);
+    const contInvestasi = document.getElementById('container_bu_ak_investasi');
+    const judulPendanaan = document.getElementById('judul_bu_ak_pendanaan');
+    if (capex > 0) {
+        if (contInvestasi) contInvestasi.style.display = 'block';
+        if (judulPendanaan) judulPendanaan.textContent = '3. Arus Kas Utang & Modal (Pendanaan)';
+        if (document.getElementById('bu_ak_beli_aset')) {
+            document.getElementById('bu_ak_beli_aset').textContent = rpFmtParen(capex);
+        }
+        if (document.getElementById('bu_ak_kas_investasi')) {
+            document.getElementById('bu_ak_kas_investasi').textContent = rpFmtParen(Math.abs(ak.kas_investasi));
+        }
+    } else {
+        if (contInvestasi) contInvestasi.style.display = 'none';
+        if (judulPendanaan) judulPendanaan.textContent = '2. Arus Kas Utang & Modal (Pendanaan)';
+    }
 
-    document.getElementById('bu_ak_cicilan').textContent        = rpFmtParen(ak.cicilan_pokok);
-    document.getElementById('bu_ak_prive').textContent          = rpFmtParen(ak.prive_dividen);
-    document.getElementById('bu_ak_kas_pendanaan').textContent  = rpFmtParen(Math.abs(ak.kas_pendanaan));
+    if (document.getElementById('bu_ak_cicilan')) {
+        document.getElementById('bu_ak_cicilan').textContent = rpFmtParen(ak.cicilan_pokok);
+    }
+    if (document.getElementById('bu_ak_kas_pendanaan')) {
+        document.getElementById('bu_ak_kas_pendanaan').textContent = rpFmtParen(Math.abs(ak.kas_pendanaan));
+    }
 
     document.getElementById('bu_ak_kenaikan_bersih').textContent = rpFmt(ak.kenaikan_bersih_kas);
     document.getElementById('bu_ak_saldo_awal').textContent     = rpFmt(ak.saldo_awal_kas);
@@ -1350,14 +1390,37 @@ function isiDataLaporanBU(data) {
     document.getElementById('bu_nr_piutang').textContent           = rpFmt(nr.piutang_usaha);
     document.getElementById('bu_nr_persediaan').textContent        = rpFmt(nr.persediaan);
     document.getElementById('bu_nr_total_aset_lancar').textContent = rpFmt(nr.total_aset_lancar);
-    document.getElementById('bu_nr_aset_tetap_neto').textContent   = rpFmt(nr.aset_tetap_neto);
+
+    const asetTetapNeto = parseFloat(nr.aset_tetap_neto || 0);
+    document.getElementById('bu_nr_aset_tetap_neto').textContent   = rpFmt(asetTetapNeto);
+    const rowAsetTetap = document.getElementById('row_bu_nr_aset_tetap');
+    if (rowAsetTetap) {
+        rowAsetTetap.style.display = (asetTetapNeto > 0) ? 'flex' : 'none';
+    }
+
     document.getElementById('bu_nr_total_aset').textContent        = rpFmt(nr.total_aset);
 
     document.getElementById('bu_nr_utang_usaha').textContent       = rpFmt(nr.utang_usaha);
     const totalUtangBank = (parseFloat(nr.utang_bank_pendek || 0) + parseFloat(nr.utang_jangka_panjang || 0));
     document.getElementById('bu_nr_utang_bank').textContent        = rpFmt(totalUtangBank);
+    const rowUtangBank = document.getElementById('row_bu_nr_utang_bank');
+    if (rowUtangBank) {
+        rowUtangBank.style.display = (totalUtangBank > 0) ? 'flex' : 'none';
+    }
+    const lblTotalLiab = document.getElementById('lbl_bu_nr_total_liab');
+    if (lblTotalLiab) {
+        lblTotalLiab.textContent = (totalUtangBank > 0) ? 'Total Seluruh Utang Usaha & Bank' : 'Total Seluruh Utang Usaha';
+    }
+
     document.getElementById('bu_nr_total_liab').textContent        = rpFmt(nr.total_liabilitas);
-    document.getElementById('bu_nr_modal').textContent             = rpFmt(nr.modal_disetor);
+
+    const modalDisetor = parseFloat(nr.modal_disetor || 0);
+    document.getElementById('bu_nr_modal').textContent             = rpFmt(modalDisetor);
+    const rowModal = document.getElementById('row_bu_nr_modal');
+    if (rowModal) {
+        rowModal.style.display = (modalDisetor > 0) ? 'flex' : 'none';
+    }
+
     document.getElementById('bu_nr_laba_ditahan').textContent      = rpFmt(nr.laba_ditahan_akhir);
     document.getElementById('bu_nr_total_ekuitas').textContent     = rpFmt(nr.total_ekuitas);
     document.getElementById('bu_nr_total_liab_ekuitas').textContent= rpFmt(nr.total_liabilitas_ekuitas);
@@ -1367,6 +1430,29 @@ function isiDataLaporanBU(data) {
         tabValidationStatus['laporan'] = true;
         if (typeof updateStepperVisuals === 'function') updateStepperVisuals();
     }
+}
+
+function escapeHtmlText(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+}
+
+function renderBebanLainRowsHtml(mode = 'pdf') {
+    const list = window._currentDetailBebanLain || [];
+    if (!Array.isArray(list) || list.length === 0) return '';
+    let html = '';
+    list.forEach(item => {
+        const nom = parseFloat(item.nominal || 0);
+        if (nom > 0 || (item.nama && item.nama.trim() !== '')) {
+            const nama = escapeHtmlText(item.nama || 'Beban Usaha Lainnya');
+            if (mode === 'pdf') {
+                html += `<tr><td class="col-desc" style="padding-left: 20px; color: #475569;">• ${nama}</td><td class="col-val">${rpFmtParen(nom)}</td></tr>`;
+            } else {
+                html += `<tr><td style="padding-left: 20px; color: #475569;">• ${nama}</td><td class="num-right">${rpFmtParen(nom)}</td></tr>`;
+            }
+        }
+    });
+    return html;
 }
 
 // ============================================================
@@ -1387,11 +1473,17 @@ function generateLaporanKeuangan() {
     const csrf = document.querySelector('[name="csrf_token"]');
     if (csrf) payload.append(csrf.name, csrf.value);
 
-    // Ambil data dari Tahap 9 yang sedang ada di form
-    ['pendapatan_rk', 'hpp_persen_rk', 'biaya_hidup_nominal_rk', 'beban_lainnya_nominal_rk'].forEach(name => {
+    // Ambil data dari Tahap 8 yang sedang ada di form
+    ['pendapatan_rk', 'hpp_persen_rk', 'hpp_nominal_rk', 'biaya_hidup_nominal_rk', 'beban_lainnya_nominal_rk'].forEach(name => {
         const el = document.querySelector('[name="' + name + '"]');
         if (el) payload.append(name, el.value.replace(/\./g, '').replace(',', '.'));
     });
+
+    // Ambil rincian beban usaha dinamis dari Tab 8 (dalam format JSON murni)
+    const elDetailBeban = document.querySelector('[name="detail_beban_lainnya_rk"]') || document.getElementById('detail_beban_lainnya_rk');
+    if (elDetailBeban && elDetailBeban.value) {
+        payload.append('detail_beban_lainnya_rk', elDetailBeban.value);
+    }
 
     // Ambil data neraca di collapsible Tahap 9 jika ada
     ['neraca_awal_kas','input_piutang_akhir','input_persediaan_akhir','neraca_awal_piutang','neraca_awal_persediaan',
@@ -1399,8 +1491,18 @@ function generateLaporanKeuangan() {
      'input_utang_usaha_akhir','neraca_utang_bank_lancar','neraca_utang_bank_panjang','input_pembayaran_pokok','neraca_awal_utang_usaha',
      'neraca_modal_disetor','neraca_awal_laba_ditahan','input_prive_dividen','input_beban_bunga','input_beban_pajak'].forEach(name => {
         const el = document.querySelector('[name="' + name + '"]');
-        if (el) payload.append(name, el.value.replace(/\./g, '').replace(',', '.'));
+        if (el && el.value) payload.append(name, el.value.replace(/\./g, '').replace(',', '.'));
     });
+
+    // Ambil total saldo awal rekening koran langsung dari input Tahap 7 jika tersedia di form
+    let sumSaldoAwalDOM = 0;
+    document.querySelectorAll('.rek-saldo-awal').forEach(el => {
+        const val = parseFloat((el.value || '').replace(/\./g, '').replace(',', '.')) || 0;
+        sumSaldoAwalDOM += val;
+    });
+    if (sumSaldoAwalDOM > 0 && (!payload.get('neraca_awal_kas') || parseFloat(payload.get('neraca_awal_kas')) <= 0)) {
+        payload.set('neraca_awal_kas', sumSaldoAwalDOM);
+    }
 
     Swal.fire({
         title: 'Menghitung Laporan...',

@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initDaftarBuktiPendapatanLain();
     initDaftarBebanLain();
     initDaftarPendapatan();
+    initAutoSave();
     // Sesuaikan metadata jika form perorangan (fokus pekerjaan)
     const step3El = document.getElementById('step-title-3');
     if (step3El && step3El.innerText.toLowerCase().includes('pekerjaan')) {
@@ -1295,7 +1296,13 @@ function tambahBarisRekening() {
                         </div>
                     </div>
                     <!-- Baris 2: Mutasi & Kalkulasi Rata-rata -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-slate-100">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t border-slate-100">
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5 h-8 flex items-end">Saldo Awal Rekening (Rp)</label>
+                            <input type="text" name="rekening[${count}][saldo_awal]" placeholder="0" 
+                                   class="w-full text-xs font-bold text-emerald-700 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input rek-saldo-awal h-[38px]" 
+                                   oninput="formatRupiah(this);">
+                        </div>
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5 h-8 flex items-end">Total Mutasi Kredit (Masuk)</label>
                             <input type="text" name="rekening[${count}][total_mutasi_kredit]" placeholder="0" 
@@ -1346,9 +1353,10 @@ function hitungLabaRugi() {
         document.getElementById('pendapatan_rk').value = pRK;
     }
 
+    const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
     const hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 0);
-    const nomHppRK = 0; // Perorangan/karyawan tidak ada HPP
-    const grossRK = pRK;
+    const nomHppRK = isBU ? Math.round(pRK * (hppPctRK / 100)) : 0;
+    const grossRK = isBU ? Math.max(0, pRK - nomHppRK) : pRK;
 
     // Biaya Hidup (langsung nominal rupiah tanpa %)
     const nomBhRK = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 0);
@@ -1386,11 +1394,15 @@ function hitungLabaRugi() {
     const surplusPR = totalPenghasilanPR - totalPengeluaranPR;
 
     // nettRK & totalCashflow untuk kompatibilitas dengan field-field lain
-    const nettRK = pRK - nomBhRK - nomBlRK;
-    const totalCashflow = surplusPR;
+    const nettRK = isBU ? (grossRK - nomBhRK - nomBlRK) : (pRK - nomBhRK - nomBlRK);
+    const totalCashflow = isBU ? nettRK : surplusPR;
 
-    if (document.getElementById('nomHppRK')) document.getElementById('nomHppRK').innerText = formatRupiahString(0);
-    if (document.getElementById('grossRK')) document.getElementById('grossRK').innerText = formatRupiahString(pRK);
+    if (document.getElementById('nomHppRK')) document.getElementById('nomHppRK').innerText = formatRupiahString(nomHppRK);
+    const inputNomHpp = document.getElementById('nomHppRKInput');
+    if (inputNomHpp && document.activeElement !== inputNomHpp) {
+        inputNomHpp.value = formatRupiahString(nomHppRK);
+    }
+    if (document.getElementById('grossRK')) document.getElementById('grossRK').innerText = formatRupiahString(grossRK);
     if (document.getElementById('nomBiayaHidupRK')) document.getElementById('nomBiayaHidupRK').innerText = formatRupiahString(nomBhRK);
     if (document.getElementById('nomBebanLainRK')) document.getElementById('nomBebanLainRK').innerText = formatRupiahString(nomBlRK);
     if (document.getElementById('nettRK')) document.getElementById('nettRK').innerText = formatRupiahString(nettRK);
@@ -1435,6 +1447,24 @@ function hitungLabaRugi() {
 
     hitungRasioDSC();
 }
+
+// Sinkronisasi dua arah saat user mengetik Nominal HPP langsung
+function syncHppNominalKePersen() {
+    const inputNom = document.getElementById('nomHppRKInput');
+    const inputPct = document.getElementById('hpp_persen_rk');
+    const inputOmzet = document.getElementById('pendapatan_rk');
+    if (!inputNom || !inputPct) return;
+
+    const nomHpp = parseNominal(inputNom.value || 0);
+    const omzet = parseNominal(inputOmzet?.value || 0);
+
+    if (omzet > 0) {
+        const pct = Math.min(100, Math.max(0, Math.round((nomHpp / omzet) * 1000) / 10));
+        inputPct.value = pct;
+    }
+    hitungLabaRugi();
+}
+window.syncHppNominalKePersen = syncHppNominalKePersen;
 
 // ============================================================
 // Inisialisasi & Manajemen Rincian Pendapatan Pokok / Utama (Dinamis: Tambah/Hapus)
@@ -2320,8 +2350,52 @@ async function ubahKategoriDokumen(docId, kategoriBaru) {
     }
 }
 
+// =========================================================================
+// AUTO-SAVE SYSTEM (DEBOUNCED UNTUK SELURUH ISIAN FORMULIR)
+// =========================================================================
+let autoSaveTimer = null;
+let isAutoSaving = false;
+
+function triggerAutoSave(delay = 1500) {
+    const ind = document.getElementById('saveStatusIndicator');
+    if (ind && !isAutoSaving) {
+        ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-slate-300"></span> Menyimpan perubahan...';
+    }
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(async () => {
+        isAutoSaving = true;
+        try {
+            await simpanForm(false, false);
+        } finally {
+            isAutoSaving = false;
+        }
+    }, delay);
+}
+
+function initAutoSave() {
+    const form = document.getElementById('camForm');
+    if (!form) return;
+
+    // Listener input untuk teks, angka, textarea (debounce 1.5 detik)
+    form.addEventListener('input', (e) => {
+        if (!e.target || e.target.type === 'file' || e.target.type === 'password') return;
+        triggerAutoSave(1500);
+    });
+
+    // Listener change untuk select, checkbox, radio (debounce 400ms)
+    form.addEventListener('change', (e) => {
+        if (!e.target || e.target.type === 'file' || e.target.type === 'password') return;
+        triggerAutoSave(400);
+    });
+}
+
 // Simpan Form Data via AJAX
 async function simpanForm(isComplete = false, showNotification = true) {
+    if (autoSaveTimer) {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = null;
+    }
+
     if (isComplete) {
         const nama = document.getElementById('nama_debitur')?.value.trim() || document.getElementById('nama_debitur_tab2')?.value.trim();
         if (!nama) {
@@ -2356,9 +2430,18 @@ async function simpanForm(isComplete = false, showNotification = true) {
     }
 
     const form = document.getElementById('camForm');
+    if (!form) return;
     const formData = new FormData(form);
     if (isComplete) {
         formData.set('status_pengajuan', 'Diajukan');
+    }
+
+    const btnDraft = document.getElementById('btnSimpanDraft');
+    const originalDraftHtml = btnDraft ? btnDraft.innerHTML : null;
+    if (btnDraft && showNotification && !isComplete) {
+        btnDraft.disabled = true;
+        btnDraft.classList.add('opacity-70', 'cursor-not-allowed');
+        btnDraft.innerHTML = '<span class="inline-block animate-spin mr-1">&#9696;</span> Menyimpan...';
     }
 
     // Update save indicator
@@ -2374,12 +2457,13 @@ async function simpanForm(isComplete = false, showNotification = true) {
 
         if (data.status) {
             if (data.kredit_id) {
-                document.getElementById('kredit_id').value = data.kredit_id;
+                const kid = document.getElementById('kredit_id');
+                if (kid) kid.value = data.kredit_id;
             }
-            if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-blue-500"></span> Tersimpan di database';
+            if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Otomatis tersimpan';
 
             if (showNotification) {
-                showToast(data.message || (isComplete ? 'Pengajuan berhasil diajukan ke Reviewer!' : 'Data berhasil disimpan'), 'success');
+                showToast(data.message || (isComplete ? 'Pengajuan berhasil diajukan ke Reviewer!' : 'Draft berhasil disimpan'), 'success');
             }
 
             if (isComplete) {
@@ -2394,6 +2478,12 @@ async function simpanForm(isComplete = false, showNotification = true) {
     } catch (err) {
         if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Error koneksi';
         if (showNotification) showToast('Gagal terhubung ke server database', 'error');
+    } finally {
+        if (btnDraft && originalDraftHtml) {
+            btnDraft.disabled = false;
+            btnDraft.classList.remove('opacity-70', 'cursor-not-allowed');
+            btnDraft.innerHTML = originalDraftHtml;
+        }
     }
 }
 

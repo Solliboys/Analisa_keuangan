@@ -182,7 +182,9 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         <tr><td>Biaya Sewa, Listrik, Operasional &amp; Promosi</td><td class="num-right"><?= vParen($lr['beban_operasional'] ?? 0) ?></td></tr>
         <tr><td>Penyusutan Nilai Alat &amp; Mesin Usaha</td><td class="num-right"><?= vParen($lr['beban_penyusutan'] ?? 0) ?></td></tr>
         <tr class="highlight-row"><td>Keuntungan Operasional Usaha</td><td class="num-right"><?= v($lr['laba_operasional'] ?? 0) ?></td></tr>
+        <?php if (!empty($lr['beban_bunga']) && (float)$lr['beban_bunga'] > 0): ?>
         <tr><td>Biaya Bunga Pinjaman Bank</td><td class="num-right"><?= vParen($lr['beban_bunga'] ?? 0) ?></td></tr>
+        <?php endif; ?>
         <tr><td>Pajak Usaha</td><td class="num-right"><?= vParen($lr['pajak'] ?? 0) ?></td></tr>
         <tr class="total-row"><td>KEUNTUNGAN BERSIH AKHIR (LABA BERSIH)</td><td class="num-right"><?= v($lr['laba_bersih'] ?? 0) ?></td></tr>
     </table>
@@ -192,19 +194,20 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         <tr class="header-section"><td colspan="2">VI. LAPORAN ARUS KAS (KELUAR MASUK UANG KAS)</td></tr>
         <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">1. Arus Kas dari Kegiatan Usaha (Operasional)</td></tr>
         <tr><td>Keuntungan Bersih (Laba Bersih)</td><td class="num-right"><?= v($ak['laba_bersih'] ?? 0) ?></td></tr>
-        <tr><td>Ditambah Penyusutan Non-Kas</td><td class="num-right"><?= v($ak['penyusutan'] ?? 0) ?></td></tr>
         <tr><td>Perubahan Tagihan ke Pelanggan (Piutang)</td><td class="num-right"><?= vParen($ak['kenaikan_piutang'] ?? 0) ?></td></tr>
         <tr><td>Perubahan Stok Barang Usaha</td><td class="num-right"><?= vParen($ak['kenaikan_persediaan'] ?? 0) ?></td></tr>
         <tr><td>Perubahan Utang ke Supplier (Pemasok)</td><td class="num-right"><?= v($ak['kenaikan_utang_usaha'] ?? 0) ?></td></tr>
         <tr class="highlight-row"><td>Total Sisa Kas dari Kegiatan Usaha</td><td class="num-right"><?= v($ak['kas_operasional'] ?? 0) ?></td></tr>
 
+        <?php $hasCapex = !empty($ak['pembelian_aset_tetap']) && (float)$ak['pembelian_aset_tetap'] > 0; ?>
+        <?php if ($hasCapex): ?>
         <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">2. Arus Kas Belanja Aset (Investasi)</td></tr>
         <tr><td>Beli Alat, Mesin atau Kendaraan (Capex)</td><td class="num-right"><?= vParen($ak['pembelian_aset_tetap'] ?? 0) ?></td></tr>
         <tr class="highlight-row"><td>Total Kas untuk Belanja Aset</td><td class="num-right"><?= vParen(abs($ak['kas_investasi'] ?? 0)) ?></td></tr>
+        <?php endif; ?>
 
-        <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">3. Arus Kas Pinjaman &amp; Modal (Pendanaan)</td></tr>
+        <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2"><?= $hasCapex ? '3' : '2' ?>. Arus Kas Pinjaman &amp; Modal (Pendanaan)</td></tr>
         <tr><td>Bayar Pokok Pinjaman ke Bank</td><td class="num-right"><?= vParen($ak['cicilan_pokok'] ?? 0) ?></td></tr>
-        <tr><td>Tarik Uang Pribadi / Bagi Hasil (Prive / Dividen)</td><td class="num-right"><?= vParen($ak['prive_dividen'] ?? 0) ?></td></tr>
         <tr class="highlight-row"><td>Total Kas Pendanaan &amp; Modal</td><td class="num-right"><?= vParen(abs($ak['kas_pendanaan'] ?? 0)) ?></td></tr>
 
         <tr class="highlight-row"><td>Kenaikan (Penurunan) Kas Bersih Tahun Ini</td><td class="num-right"><?= v($ak['kenaikan_bersih_kas'] ?? 0) ?></td></tr>

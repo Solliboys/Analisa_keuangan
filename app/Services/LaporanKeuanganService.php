@@ -49,43 +49,42 @@ class LaporanKeuanganService
         }
         $labaKotor = max(0, $pendapatan - $hppNom);
 
-        // Beban Gaji Karyawan
-        $bebanGaji = $this->cleanNumber($input['beban_gaji'] ?? 0);
-        if ($bebanGaji == 0 && !empty($input['daftar_karyawan'])) {
-            $karyawanList = is_array($input['daftar_karyawan'])
-                ? $input['daftar_karyawan']
-                : json_decode($input['daftar_karyawan'], true);
-            if (is_array($karyawanList)) {
-                foreach ($karyawanList as $k) {
-                    $bebanGaji += $this->cleanNumber($k['gaji'] ?? $k['nominal_gaji'] ?? 0);
-                }
-            }
-        }
-
-        // Sewa, utilitas, pemasaran (beban operasional pokok)
-        $bebanSewa = $this->cleanNumber($input['beban_sewa'] ?? 0);
+        // Beban Operasional Pokok Usaha (Gaji karyawan tetap, sewa kantor/gudang usaha, listrik, air & utilitas operasional)
         $bebanOperasional = $this->cleanNumber($input['beban_operasional'] ?? $input['biaya_hidup_nominal_rk'] ?? 0);
+        $bebanSewa = $this->cleanNumber($input['beban_sewa'] ?? 0);
         if ($bebanSewa > 0 && $bebanOperasional == 0) {
             $bebanOperasional = $bebanSewa;
         }
 
+        // Rincian Beban Usaha & Administrasi Lainnya (Dinamis dari Tab 8)
+        $detailBebanList = [];
+        if (!empty($input['detail_beban_lainnya_rk'])) {
+            $rawDetail = is_array($input['detail_beban_lainnya_rk'])
+                ? $input['detail_beban_lainnya_rk']
+                : json_decode($input['detail_beban_lainnya_rk'], true);
+            if (is_array($rawDetail)) {
+                $detailBebanList = $rawDetail;
+            }
+        }
+
         $bebanLainnya = $this->cleanNumber($input['beban_lainnya'] ?? $input['beban_lainnya_nominal_rk'] ?? 0);
+        if (!empty($detailBebanList)) {
+            $sumDetail = 0;
+            foreach ($detailBebanList as $item) {
+                $sumDetail += $this->cleanNumber($item['nominal'] ?? 0);
+            }
+            if ($sumDetail > 0) {
+                $bebanLainnya = $sumDetail;
+            }
+        }
 
-        // Penyusutan Aset Tetap
-        $hargaPerolehanAset = $this->cleanNumber($input['neraca_aset_tetap_bruto'] ?? $input['harga_perolehan_aset_tetap'] ?? $input['harga_perolehan'] ?? 0);
-        $umurEkonomis       = max(1, (int)($input['input_capex_umur_ekonomis'] ?? $input['umur_ekonomis_tahun'] ?? 5));
-        
-        $penyusutanInput = isset($input['beban_depresiasi']) && $input['beban_depresiasi'] !== ''
-            ? $this->cleanNumber($input['beban_depresiasi'])
-            : (isset($input['beban_penyusutan']) && $input['beban_penyusutan'] !== ''
-                ? $this->cleanNumber($input['beban_penyusutan'])
-                : (isset($input['penyusutan']) && $input['penyusutan'] !== '' ? $this->cleanNumber($input['penyusutan']) : null));
+        // Beban gaji karyawan telah digabung ke beban operasional pokok usaha
+        $bebanGaji = 0;
 
-        $penyusutanTahunan = ($penyusutanInput !== null)
-            ? $penyusutanInput
-            : ($hargaPerolehanAset > 0 ? round($hargaPerolehanAset / $umurEkonomis, 2) : 0);
+        // Penyusutan Aset Tetap (Dihapus dari Laba Rugi Operasional sesuai instruksi)
+        $penyusutanTahunan = 0;
 
-        $totalBebanOp = $bebanGaji + $bebanOperasional + $bebanLainnya + $penyusutanTahunan;
+        $totalBebanOp = $bebanOperasional + $bebanLainnya;
         $labaOperasional = $labaKotor - $totalBebanOp;
 
         // Badan Usaha: TIDAK ADA pendapatan lain-lain
@@ -112,9 +111,10 @@ class LaporanKeuanganService
             'laba_kotor'         => $labaKotor,
             'beban_gaji'         => $bebanGaji,
             'beban_sewa'         => $bebanSewa,
-            'beban_operasional'  => $bebanOperasional,
-            'beban_lainnya'      => $bebanLainnya,
-            'beban_penyusutan'   => $penyusutanTahunan,
+            'beban_operasional'    => $bebanOperasional,
+            'beban_lainnya'        => $bebanLainnya,
+            'detail_beban_lainnya' => $detailBebanList,
+            'beban_penyusutan'     => $penyusutanTahunan,
             'total_beban_op'     => $totalBebanOp,
             'laba_operasional'   => $labaOperasional,
             'pendapatan_lain'    => 0,
@@ -165,8 +165,13 @@ class LaporanKeuanganService
             : round(($dpo / 365) * $hppNom, 2);
         $utangUsahaSumber = ($utangUsahaInput !== null) ? 'input' : 'estimasi';
 
-        // Pembelian Aset Tetap (CAPEX)
+        // Pembelian & Nilai Aset Tetap (Neraca)
+        $hargaPerolehanAset = $this->cleanNumber($input['neraca_aset_tetap_bruto'] ?? $input['harga_perolehan_aset_tetap'] ?? $input['harga_perolehan'] ?? 0);
+        $umurEkonomis       = max(1, (int)($input['input_capex_umur_ekonomis'] ?? $input['umur_ekonomis_tahun'] ?? 5));
         $pembelianAsetTetap = $this->cleanNumber($input['input_capex'] ?? $input['pembelian_aset_tetap'] ?? 0);
+        if ($pembelianAsetTetap <= 0 && !empty($input['tujuan_pembiayaan']) && stripos($input['tujuan_pembiayaan'], 'investasi') !== false) {
+            $pembelianAsetTetap = $this->cleanNumber($input['plafon_pengajuan'] ?? $input['plafon'] ?? 0);
+        }
 
         // Total Aset Tetap Bruto Akhir
         if ($hargaPerolehanAset > 0) {

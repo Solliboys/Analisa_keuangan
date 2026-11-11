@@ -17,6 +17,7 @@ class KreditRekeningModel extends Model
         'periode',
         'nomor_rekening',
         'atas_nama',
+        'saldo_awal',
         'total_mutasi_kredit',
         'total_mutasi_debit',
         'jumlah_bulan',
