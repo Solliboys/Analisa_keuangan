@@ -406,7 +406,6 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                 <?php if (!empty($lr['beban_bunga']) && (float)$lr['beban_bunga'] > 0): ?>
                 <tr><td class="col-desc">Biaya Bunga Pinjaman Bank</td><td class="col-val"><?= rpFmtParen($lr['beban_bunga'] ?? 0) ?></td></tr>
                 <?php endif; ?>
-                <tr><td class="col-desc">Pajak Usaha</td><td class="col-val"><?= rpFmtParen($lr['pajak'] ?? 0) ?></td></tr>
                 <tr class="row-total-accent"><td class="col-desc font-black">KEUNTUNGAN BERSIH AKHIR (LABA BERSIH)</td><td class="col-val font-black"><?= rpFmt($lr['laba_bersih'] ?? 0) ?></td></tr>
             </table>
             <?php endif; ?>

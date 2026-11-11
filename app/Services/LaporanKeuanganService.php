@@ -93,16 +93,9 @@ class LaporanKeuanganService
         $bebanBunga = $this->cleanNumber($input['input_beban_bunga'] ?? $input['beban_bunga'] ?? 0);
         $labaSebelumPjk = $labaOperasional + $pendapatanLain - $bebanBunga;
 
-        // Pajak
-        if (isset($input['input_beban_pajak']) && $input['input_beban_pajak'] !== '') {
-            $pajakNom = $this->cleanNumber($input['input_beban_pajak']);
-        } elseif (isset($input['pajak']) && $input['pajak'] !== '') {
-            $pajakNom = $this->cleanNumber($input['pajak']);
-        } else {
-            $pajakNom = round(max(0, $labaSebelumPjk * 0.05), 2);
-        }
-
-        $labaBersih = $labaSebelumPjk - $pajakNom;
+        // Pajak Usaha Badan Usaha ditiadakan / dihapus
+        $pajakNom = 0;
+        $labaBersih = $labaSebelumPjk;
 
         $labaRugi = [
             'pendapatan'         => $pendapatan,

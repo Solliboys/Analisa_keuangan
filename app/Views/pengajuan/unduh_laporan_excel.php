@@ -185,7 +185,6 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         <?php if (!empty($lr['beban_bunga']) && (float)$lr['beban_bunga'] > 0): ?>
         <tr><td>Biaya Bunga Pinjaman Bank</td><td class="num-right"><?= vParen($lr['beban_bunga'] ?? 0) ?></td></tr>
         <?php endif; ?>
-        <tr><td>Pajak Usaha</td><td class="num-right"><?= vParen($lr['pajak'] ?? 0) ?></td></tr>
         <tr class="total-row"><td>KEUNTUNGAN BERSIH AKHIR (LABA BERSIH)</td><td class="num-right"><?= v($lr['laba_bersih'] ?? 0) ?></td></tr>
     </table>
 

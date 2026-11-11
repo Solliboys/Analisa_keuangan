@@ -194,10 +194,6 @@ $showBebanBunga = !empty($lrData['beban_bunga']) && (float)$lrData['beban_bunga'
                 <span class="text-slate-600 font-medium">Biaya Bunga Pinjaman Bank</span>
                 <span class="font-bold text-slate-900" id="bu_lr_beban_bunga">—</span>
             </div>
-            <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Pajak Usaha</span>
-                <span class="font-bold text-slate-900" id="bu_lr_pajak">—</span>
-            </div>
 
             <!-- Highlight: LABA BERSIH -->
             <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
@@ -592,10 +588,6 @@ function unduhLaporanPDF(target) {
                         <td class="col-desc">Beban Bunga Pinjaman Bank</td>
                         <td class="col-val">${v('bu_lr_beban_bunga')}</td>
                     </tr>` : ''}
-                    <tr>
-                        <td class="col-desc">Pajak</td>
-                        <td class="col-val">${v('bu_lr_pajak')}</td>
-                    </tr>
                     <tr class="row-total-accent">
                         <td class="col-desc font-black">LABA BERSIH</td>
                         <td class="col-val font-black">${v('bu_lr_laba_bersih')}</td>
@@ -1211,7 +1203,6 @@ function unduhLaporanExcel() {
                 <tr class="highlight-row"><td>Laba Operasional</td><td class="num-right">${v('bu_lr_laba_op')}</td></tr>
                 ${(!v('bu_lr_beban_bunga').includes('—') && !v('bu_lr_beban_bunga').includes('Rp 0') && v('bu_lr_beban_bunga').trim() !== '') ? `
                 <tr><td>Beban Bunga Pinjaman Bank</td><td class="num-right">${v('bu_lr_beban_bunga')}</td></tr>` : ''}
-                <tr><td>Pajak</td><td class="num-right">${v('bu_lr_pajak')}</td></tr>
                 <tr class="total-row"><td>LABA BERSIH</td><td class="num-right">${v('bu_lr_laba_bersih')}</td></tr>
                 <tr><td colspan="2">&nbsp;</td></tr>
             </table>
@@ -1344,7 +1335,9 @@ function isiDataLaporanBU(data) {
         rowBebanBunga.style.display = (bebanBunga > 0) ? 'flex' : 'none';
     }
     document.getElementById('bu_lr_beban_bunga').textContent  = rpFmtParen(bebanBunga);
-    document.getElementById('bu_lr_pajak').textContent        = rpFmtParen(lr.pajak);
+    if (document.getElementById('bu_lr_pajak')) {
+        document.getElementById('bu_lr_pajak').textContent = rpFmtParen(lr.pajak);
+    }
     document.getElementById('bu_lr_laba_bersih').textContent  = rpFmt(lr.laba_bersih);
 
     const marginPct = nr.margin_laba_bersih !== undefined ? nr.margin_laba_bersih : (lr.pendapatan > 0 ? ((lr.laba_bersih / lr.pendapatan) * 100).toFixed(2) : '18.75');

@@ -380,7 +380,6 @@ class LaporanKeuanganPdf
             $lrRows[] = ['desc' => 'Beban Bunga Pinjaman Bank', 'val' => $this->rpParen($lr['beban_bunga'] ?? 0), 'type' => 'normal'];
         }
 
-        $lrRows[] = ['desc' => 'Beban Pajak Penghasilan (PPh)', 'val' => $this->rpParen($lr['pajak'] ?? 0), 'type' => 'normal'];
         $lrRows[] = ['desc' => 'LABA BERSIH (NET PROFIT)', 'val' => $this->rp($lr['laba_bersih'] ?? 0), 'type' => 'total'];
 
         foreach ($lrRows as $r) {
@@ -725,7 +724,6 @@ class LaporanKeuanganPdf
             $lrRows[] = ['desc' => 'Beban Bunga Pinjaman Bank', 'val' => $this->rpParen($lr['beban_bunga'] ?? 0), 'type' => 'normal'];
         }
 
-        $lrRows[] = ['desc' => 'Pajak Penghasilan (PPh)', 'val' => $this->rpParen($lr['pajak'] ?? 0), 'type' => 'normal'];
         $lrRows[] = ['desc' => 'LABA BERSIH (NET PROFIT)', 'val' => $this->rp($lr['laba_bersih'] ?? 0), 'type' => 'total'];
 
         foreach ($lrRows as $r) {

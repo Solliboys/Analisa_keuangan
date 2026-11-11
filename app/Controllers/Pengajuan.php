@@ -2216,9 +2216,11 @@ class Pengajuan extends BaseController
             }
         }
 
-        // Hapus penarikan uang pribadi / prive / dividen
+        // Hapus penarikan uang pribadi / prive / dividen dan pajak usaha badan usaha
         $mergedInput['input_prive_dividen'] = 0;
         $mergedInput['prive_dividen']       = 0;
+        $mergedInput['input_beban_pajak']   = 0;
+        $mergedInput['pajak']               = 0;
 
         // Hitung laporan menggunakan service
         $service = new LaporanKeuanganService();
@@ -2441,9 +2443,11 @@ class Pengajuan extends BaseController
             }
         }
 
-        // Hapus penarikan uang pribadi / prive / dividen
+        // Hapus penarikan uang pribadi / prive / dividen dan pajak usaha badan usaha
         $calcInput['input_prive_dividen'] = 0;
         $calcInput['prive_dividen']       = 0;
+        $calcInput['input_beban_pajak']   = 0;
+        $calcInput['pajak']               = 0;
 
         // Hitung laporan keuangan menggunakan service
         $hasil = $service->hitungLaporan($calcInput, $tipePemohon);
