@@ -83,13 +83,14 @@ $sudahGenerate = !empty($lk['updated_at']) && !empty($lkJ);
             </div>
             <table class="w-full text-sm">
                 <tbody class="divide-y divide-slate-100">
-                    <tr><td class="py-3 text-slate-600 font-medium">Penghasilan Utama</td><td class="py-3 text-right font-semibold text-slate-800" id="pr_lr_pendapatan">—</td></tr>
-                    <tr><td class="py-3 text-slate-600 font-medium">Pendapatan Lain-Lain</td><td class="py-3 text-right font-semibold text-emerald-600" id="pr_lr_pend_lain">—</td></tr>
+                    <tr><td class="py-3 text-slate-600 font-medium">Penghasilan Utama (Gaji / Pendapatan Pokok)</td><td class="py-3 text-right font-semibold text-slate-800" id="pr_lr_pendapatan">—</td></tr>
+                    <tr id="rowPR_lr_pend_lain"><td class="py-3 text-slate-600 font-medium">Pendapatan Lain-Lain (Usaha Sampingan, dll)</td><td class="py-3 text-right font-semibold text-emerald-600" id="pr_lr_pend_lain">—</td></tr>
                     <tr class="bg-blue-50/60"><td class="py-3 pl-3 font-extrabold text-blue-900 rounded-l">Total Penghasilan</td><td class="py-3 pr-3 text-right font-extrabold text-blue-700 rounded-r" id="pr_lr_total">—</td></tr>
-                    <tr><td class="py-3 text-slate-600 font-medium">Pengeluaran Rumah Tangga</td><td class="py-3 text-right font-semibold text-slate-600" id="pr_lr_beban_op">—</td></tr>
-                    <tr><td class="py-3 text-slate-600 font-medium">Beban Bunga</td><td class="py-3 text-right font-semibold text-slate-600" id="pr_lr_beban_bunga">—</td></tr>
+                    <tr><td class="py-3 text-slate-600 font-medium">Pengeluaran Kebutuhan Pokok / Rumah Tangga</td><td class="py-3 text-right font-semibold text-slate-600" id="pr_lr_beban_op">—</td></tr>
+                    <tr id="rowPR_lr_beban_lain"><td class="py-3 text-slate-600 font-medium">Biaya &amp; Beban Lainnya (Asuransi, dll)</td><td class="py-3 text-right font-semibold text-slate-600" id="pr_lr_beban_lain">—</td></tr>
+                    <tr><td class="py-3 text-slate-600 font-medium">Biaya Bunga / Cicilan Pinjaman</td><td class="py-3 text-right font-semibold text-slate-600" id="pr_lr_beban_bunga">—</td></tr>
                     <tr><td class="py-3 text-slate-600 font-medium">Pajak (Estimasi)</td><td class="py-3 text-right font-semibold text-slate-600" id="pr_lr_pajak">—</td></tr>
-                    <tr class="bg-blue-600 text-white"><td class="py-4 pl-3 font-extrabold text-base rounded-l">SURPLUS / LABA BERSIH</td><td class="py-4 pr-3 text-right font-black text-base rounded-r" id="pr_lr_laba_bersih">—</td></tr>
+                    <tr class="bg-blue-600 text-white"><td class="py-4 pl-3 font-extrabold text-base rounded-l">SISA SURPLUS / KEUNTUNGAN BERSIH</td><td class="py-4 pr-3 text-right font-black text-base rounded-r" id="pr_lr_laba_bersih">—</td></tr>
                 </tbody>
             </table>
         </div>
@@ -106,8 +107,9 @@ $sudahGenerate = !empty($lk['updated_at']) && !empty($lkJ);
                     <tr><td class="py-2.5 pl-4 text-slate-600 font-medium">Penghasilan Utama</td><td class="py-2.5 text-right font-semibold text-emerald-600" id="pr_ak_pendapatan">—</td></tr>
                     <tr><td class="py-2.5 pl-4 text-slate-600 font-medium">Pendapatan Lain-Lain</td><td class="py-2.5 text-right font-semibold text-emerald-600" id="pr_ak_pend_lain">—</td></tr>
                     <tr class="bg-blue-50/50"><td colspan="2" class="py-2.5 pl-2 font-extrabold text-blue-800 text-xs uppercase tracking-wider">Arus Keluar</td></tr>
-                    <tr><td class="py-2.5 pl-4 text-slate-600 font-medium">Pengeluaran Rumah Tangga</td><td class="py-2.5 text-right font-semibold text-rose-600" id="pr_ak_beban_op">—</td></tr>
-                    <tr><td class="py-2.5 pl-4 text-slate-600 font-medium">Beban Bunga</td><td class="py-2.5 text-right font-semibold text-rose-600" id="pr_ak_bunga">—</td></tr>
+                    <tr><td class="py-2.5 pl-4 text-slate-600 font-medium">Pengeluaran Kebutuhan Pokok</td><td class="py-2.5 text-right font-semibold text-rose-600" id="pr_ak_beban_op">—</td></tr>
+                    <tr><td class="py-2.5 pl-4 text-slate-600 font-medium">Biaya &amp; Beban Lainnya</td><td class="py-2.5 text-right font-semibold text-rose-600" id="pr_ak_beban_lain">—</td></tr>
+                    <tr><td class="py-2.5 pl-4 text-slate-600 font-medium">Beban Bunga / Cicilan</td><td class="py-2.5 text-right font-semibold text-rose-600" id="pr_ak_bunga">—</td></tr>
                     <tr><td class="py-2.5 pl-4 text-slate-600 font-medium">Pajak</td><td class="py-2.5 text-right font-semibold text-rose-600" id="pr_ak_pajak">—</td></tr>
                     <tr><td class="py-2.5 pl-4 text-slate-600 font-medium">Prive / Penarikan</td><td class="py-2.5 text-right font-semibold text-rose-600" id="pr_ak_prive">—</td></tr>
                     <tr class="border-t-2 border-slate-200"><td class="py-3 pl-2 font-bold text-slate-700">Kenaikan Kas Bersih</td><td class="py-3 text-right font-bold text-slate-700" id="pr_ak_kenaikan">—</td></tr>
@@ -164,6 +166,9 @@ function isiDataLaporanPR(data) {
     document.getElementById('pr_lr_pend_lain').textContent   = rpFmt(lr.pendapatan_lain);
     document.getElementById('pr_lr_total').textContent       = rpFmt(total);
     document.getElementById('pr_lr_beban_op').textContent    = lr.beban_operasional > 0 ? '(' + rpFmt(lr.beban_operasional) + ')' : 'Rp 0';
+    if (document.getElementById('pr_lr_beban_lain')) {
+        document.getElementById('pr_lr_beban_lain').textContent = (lr.beban_lainnya > 0) ? '(' + rpFmt(lr.beban_lainnya) + ')' : 'Rp 0';
+    }
     document.getElementById('pr_lr_beban_bunga').textContent = lr.beban_bunga > 0 ? '(' + rpFmt(lr.beban_bunga) + ')' : 'Rp 0';
     document.getElementById('pr_lr_pajak').textContent       = lr.pajak > 0 ? '(' + rpFmt(lr.pajak) + ')' : 'Rp 0';
     document.getElementById('pr_lr_laba_bersih').textContent = rpFmt(lr.laba_bersih);
@@ -171,6 +176,9 @@ function isiDataLaporanPR(data) {
     document.getElementById('pr_ak_pendapatan').textContent  = rpFmt(lr.pendapatan);
     document.getElementById('pr_ak_pend_lain').textContent   = rpFmt(lr.pendapatan_lain);
     document.getElementById('pr_ak_beban_op').textContent    = lr.beban_operasional > 0 ? '(' + rpFmt(lr.beban_operasional) + ')' : 'Rp 0';
+    if (document.getElementById('pr_ak_beban_lain')) {
+        document.getElementById('pr_ak_beban_lain').textContent = (lr.beban_lainnya > 0) ? '(' + rpFmt(lr.beban_lainnya) + ')' : 'Rp 0';
+    }
     document.getElementById('pr_ak_bunga').textContent       = lr.beban_bunga > 0 ? '(' + rpFmt(lr.beban_bunga) + ')' : 'Rp 0';
     document.getElementById('pr_ak_pajak').textContent       = lr.pajak > 0 ? '(' + rpFmt(lr.pajak) + ')' : 'Rp 0';
     document.getElementById('pr_ak_prive').textContent       = ak.prive_dividen > 0 ? '(' + rpFmt(ak.prive_dividen) + ')' : 'Rp 0';
@@ -190,6 +198,23 @@ function generateLaporanKeuanganPR() {
     payload.append('saldo_awal_kas', getV('lkp_saldo_awal_kas'));
     payload.append('prive_dividen',  getV('lkp_prive_dividen'));
     payload.append('beban_bunga',    getV('lkp_beban_bunga'));
+
+    // Ambil data langsung dari Tab 9 Form jika tersedia
+    const pEl = document.getElementById('pendapatan_rk');
+    if (pEl) payload.append('pendapatan_rk', pEl.value.replace(/\./g, '').replace(',', '.'));
+    const dpEl = document.getElementById('detail_pendapatan_rk');
+    if (dpEl) payload.append('detail_pendapatan_rk', dpEl.value);
+    const adaLain = document.getElementById('ada_bukti_pendapatan_lain_rk');
+    if (adaLain) payload.append('ada_bukti_pendapatan_lain_rk', adaLain.checked ? 1 : 0);
+    const pLainEl = document.getElementById('pendapatan_lain_rk');
+    if (pLainEl) payload.append('pendapatan_lain_rk', pLainEl.value.replace(/\./g, '').replace(',', '.'));
+    const bhEl = document.getElementById('biaya_hidup_nominal_rk');
+    if (bhEl) payload.append('biaya_hidup_nominal_rk', bhEl.value.replace(/\./g, '').replace(',', '.'));
+    const blEl = document.getElementById('beban_lainnya_nominal_rk');
+    if (blEl) payload.append('beban_lainnya_nominal_rk', blEl.value.replace(/\./g, '').replace(',', '.'));
+    const dblEl = document.getElementById('detail_beban_lainnya_rk');
+    if (dblEl) payload.append('detail_beban_lainnya_rk', dblEl.value);
+
     const csrf = document.querySelector('[name="csrf_token"]');
     if (csrf) payload.append(csrf.name, csrf.value);
 
@@ -230,6 +255,12 @@ function generateLaporanKeuanganPR() {
     switchTabLaporan('lr');
 })();
 <?php else: ?>
-switchTabLaporan('lr');
+(function() {
+    const kId = document.getElementById('kredit_id')?.value || '<?= $kredit_id ?? '' ?>';
+    if (kId) {
+        generateLaporanKeuanganPR();
+    }
+    switchTabLaporan('lr');
+})();
 <?php endif; ?>
 </script>

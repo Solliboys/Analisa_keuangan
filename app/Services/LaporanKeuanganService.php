@@ -336,14 +336,51 @@ class LaporanKeuanganService
      */
     private function hitungLaporanPerorangan(array $input): array
     {
+        // Rincian pendapatan dinamis (Gaji pokok, bonus, lembur, dll)
+        $detailPendapatan = [];
+        $totalPendapatanDinamis = 0;
+        if (!empty($input['detail_pendapatan_rk'])) {
+            $rawDetailP = is_array($input['detail_pendapatan_rk'])
+                ? $input['detail_pendapatan_rk']
+                : json_decode($input['detail_pendapatan_rk'], true);
+            if (is_array($rawDetailP)) {
+                $detailPendapatan = $rawDetailP;
+                foreach ($rawDetailP as $dp) {
+                    $totalPendapatanDinamis += $this->cleanNumber($dp['nominal'] ?? 0);
+                }
+            }
+        }
+
         // Penghasilan utama (gaji pokok, tunjangan, bonus)
-        $penghasilanUtama = $this->cleanNumber($input['penghasilan_utama'] ?? $input['pendapatan'] ?? $input['pendapatan_rk'] ?? $input['pendapatan_iv'] ?? 0);
-        // Pendapatan lain-lain (hanya dipakai di tipe ini)
+        if ($totalPendapatanDinamis > 0) {
+            $penghasilanUtama = $totalPendapatanDinamis;
+        } else {
+            $penghasilanUtama = $this->cleanNumber($input['penghasilan_utama'] ?? $input['pendapatan'] ?? $input['pendapatan_rk'] ?? $input['pendapatan_iv'] ?? 0);
+        }
+
+        // Pendapatan lain-lain (hanya dipakai di tipe perorangan/karyawan, misal usaha sampingan)
         $pendapatanLain   = $this->cleanNumber($input['pendapatan_lain'] ?? $input['pendapatan_lain_rk'] ?? 0);
         $totalPenghasilan = $penghasilanUtama + $pendapatanLain;
 
-        // Pengeluaran rumah tangga
+        // Pengeluaran kebutuhan hidup / rumah tangga
         $pengeluaranHidup = $this->cleanNumber($input['input_pengeluaran_hidup'] ?? $input['pengeluaran_rumah_tangga'] ?? $input['beban_operasional'] ?? $input['biaya_hidup_nominal_rk'] ?? $input['biaya_hidup_nominal_iv'] ?? 0);
+
+        // Beban lainnya bebas (rincian dinamis: asuransi, biaya tak terduga, dll)
+        $bebanLainnya = $this->cleanNumber($input['beban_lainnya'] ?? $input['beban_lainnya_nominal_rk'] ?? 0);
+        $detailBeban = [];
+        if (!empty($input['detail_beban_lainnya_rk'])) {
+            $rawDetailB = is_array($input['detail_beban_lainnya_rk'])
+                ? $input['detail_beban_lainnya_rk']
+                : json_decode($input['detail_beban_lainnya_rk'], true);
+            if (is_array($rawDetailB)) {
+                $detailBeban = $rawDetailB;
+                if ($bebanLainnya == 0) {
+                    foreach ($rawDetailB as $db) {
+                        $bebanLainnya += $this->cleanNumber($db['nominal'] ?? 0);
+                    }
+                }
+            }
+        }
 
         // Cicilan berjalan / pinjaman
         $cicilanBerjalan  = $this->cleanNumber($input['cicilan_berjalan'] ?? $input['cicilan_pokok'] ?? $input['beban_bunga'] ?? 0);
@@ -351,22 +388,28 @@ class LaporanKeuanganService
         // Pajak jika ada
         $pajakNom = isset($input['pajak']) && $input['pajak'] !== '' ? $this->cleanNumber($input['pajak']) : 0;
 
+        // Total pengeluaran rutin
+        $totalPengeluaran = $pengeluaranHidup + $bebanLainnya;
+
         // Surplus / Laba Bersih
-        $surplus = $totalPenghasilan - $pengeluaranHidup - $cicilanBerjalan - $pajakNom;
+        $surplus = $totalPenghasilan - $totalPengeluaran - $cicilanBerjalan - $pajakNom;
 
         $labaRugi = [
             'pendapatan'         => $penghasilanUtama,
             'pendapatan_lain'    => $pendapatanLain,
             'total_penghasilan'  => $totalPenghasilan,
+            'detail_pendapatan'  => $detailPendapatan,
             'hpp'                => 0,
             'laba_kotor'         => $totalPenghasilan,
             'beban_operasional'  => $pengeluaranHidup,
             'beban_gaji'         => 0,
-            'beban_lainnya'      => 0,
+            'beban_lainnya'      => $bebanLainnya,
+            'detail_beban'       => $detailBeban,
+            'total_pengeluaran'  => $totalPengeluaran,
             'beban_penyusutan'   => 0,
             'beban_bunga'        => $cicilanBerjalan,
-            'laba_operasional'   => $totalPenghasilan - $pengeluaranHidup,
-            'laba_sebelum_pajak' => $totalPenghasilan - $pengeluaranHidup - $cicilanBerjalan,
+            'laba_operasional'   => $totalPenghasilan - $totalPengeluaran,
+            'laba_sebelum_pajak' => $totalPenghasilan - $totalPengeluaran - $cicilanBerjalan,
             'pajak'              => $pajakNom,
             'laba_bersih'        => $surplus,
         ];
@@ -376,7 +419,7 @@ class LaporanKeuanganService
         $prive        = $this->cleanNumber($input['prive_dividen'] ?? $input['input_prive_dividen'] ?? 0);
 
         $arusMasuk  = $totalPenghasilan;
-        $arusKeluar = $pengeluaranHidup + $cicilanBerjalan + $pajakNom + $prive;
+        $arusKeluar = $totalPengeluaran + $cicilanBerjalan + $pajakNom + $prive;
         $kasBersih  = $arusMasuk - $arusKeluar;
         $kasAkhir   = $saldoAwalKas + $kasBersih;
 

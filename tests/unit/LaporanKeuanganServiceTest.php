@@ -166,4 +166,45 @@ final class LaporanKeuanganServiceTest extends CIUnitTestCase
         $this->assertEquals('Tidak Berlaku (Karyawan)', $hasil['validasi']['status_neraca']);
         $this->assertTrue($hasil['validasi']['is_seimbang']);
     }
+
+    /**
+     * Test 5: Perorangan / Karyawan dengan Pendapatan Dinamis (Gaji + Bonus + Lembur) & Beban Bebas
+     * Contoh: Gaji Pokok 10jt, Bonus 2jt, Pendapatan Lain (Usaha Sampingan) 3jt -> Total Penghasilan 15jt
+     * Biaya Hidup 6jt, Beban Bebas (Asuransi) 1jt, Cicilan 3jt -> Total Pengeluaran + Cicilan 10jt
+     * Surplus = 15jt - 6jt - 1jt - 3jt = 5jt
+     */
+    public function testPeroranganPendapatanDinamisDanBebanBebas(): void
+    {
+        $input = [
+            'detail_pendapatan_rk'       => json_encode([
+                ['nama' => 'Gaji Pokok', 'nominal' => 10000000],
+                ['nama' => 'Bonus',      'nominal' => 2000000],
+            ]),
+            'pendapatan_lain_rk'         => 3000000,
+            'biaya_hidup_nominal_rk'     => 6000000,
+            'detail_beban_lainnya_rk'    => json_encode([
+                ['nama' => 'Premi Asuransi', 'nominal' => 1000000],
+            ]),
+            'cicilan_berjalan'           => 3000000,
+            'saldo_awal_kas'             => 10000000,
+        ];
+
+        $hasil = $this->service->hitungLaporan($input, 'karyawan');
+
+        // Total Penghasilan Pokok dari rincian = 12.000.000
+        $this->assertEquals(12000000, $hasil['laba_rugi']['pendapatan']);
+        // Pendapatan Lain-lain (Usaha Sampingan) = 3.000.000
+        $this->assertEquals(3000000, $hasil['laba_rugi']['pendapatan_lain']);
+        // Total Penghasilan = 15.000.000
+        $this->assertEquals(15000000, $hasil['laba_rugi']['total_penghasilan']);
+        // Beban Pokok = 6.000.000, Beban Lainnya = 1.000.000, Total Pengeluaran = 7.000.000
+        $this->assertEquals(6000000, $hasil['laba_rugi']['beban_operasional']);
+        $this->assertEquals(1000000, $hasil['laba_rugi']['beban_lainnya']);
+        $this->assertEquals(7000000, $hasil['laba_rugi']['total_pengeluaran']);
+        // Surplus = 15jt - 7jt - 3jt (cicilan) = 5.000.000
+        $this->assertEquals(5000000, $hasil['laba_rugi']['laba_bersih']);
+
+        // Arus Kas Akhir = Saldo Awal (10jt) + Surplus (5jt) = 15.000.000
+        $this->assertEquals(15000000, $hasil['arus_kas']['kas_akhir']);
+    }
 }

@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hitungDisbursement();
     initDaftarBuktiPendapatanLain();
     initDaftarBebanLain();
+    initDaftarPendapatan();
     // Sesuaikan metadata jika form perorangan (fokus pekerjaan)
     const step3El = document.getElementById('step-title-3');
     if (step3El && step3El.innerText.toLowerCase().includes('pekerjaan')) {
@@ -1375,6 +1376,21 @@ function hitungLabaRugi() {
     if (document.getElementById('totalCashflowBersih')) {
         document.getElementById('totalCashflowBersih').innerText = formatRupiahString(totalCashflow);
     }
+    if (document.getElementById('nomTotalPendapatanUtama')) {
+        document.getElementById('nomTotalPendapatanUtama').innerText = formatRupiahString(pRK);
+    }
+    const totalPengeluaranPR = nomBhRK + nomBlRK;
+    if (document.getElementById('nomTotalPengeluaranPR')) {
+        document.getElementById('nomTotalPengeluaranPR').innerText = formatRupiahString(totalPengeluaranPR);
+    }
+    const totalPenghasilanPR = pRK + pLainRK;
+    if (document.getElementById('nomTotalPenghasilanPR')) {
+        document.getElementById('nomTotalPenghasilanPR').innerText = formatRupiahString(totalPenghasilanPR);
+    }
+    const surplusPR = totalPenghasilanPR - totalPengeluaranPR;
+    if (document.getElementById('nomSurplusPR')) {
+        document.getElementById('nomSurplusPR').innerText = formatRupiahString(surplusPR);
+    }
 
     // Track 2: IV
     const pIV = parseNominal(document.getElementById('pendapatan_iv')?.value || 0);
@@ -1399,6 +1415,145 @@ function hitungLabaRugi() {
     hitungRasioDSC();
 }
 
+// ============================================================
+// Inisialisasi & Manajemen Rincian Pendapatan Pokok / Utama (Dinamis: Tambah/Hapus)
+// ============================================================
+let daftarPendapatan = [];
+
+function initDaftarPendapatan() {
+    const raw = document.getElementById('detail_pendapatan_rk')?.value;
+    daftarPendapatan = [];
+    if (raw && raw !== '[]' && raw !== '') {
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                daftarPendapatan = parsed;
+            }
+        } catch (e) {
+            console.error('Error parse detail_pendapatan_rk', e);
+        }
+    }
+
+    if (daftarPendapatan.length === 0) {
+        const nomLama = parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
+        if (nomLama > 0) {
+            daftarPendapatan = [{ nama: 'Gaji Pokok', nominal: nomLama }];
+        } else {
+            daftarPendapatan = [{ nama: 'Gaji Pokok', nominal: 0 }];
+        }
+    }
+
+    renderListPendapatan();
+}
+window.initDaftarPendapatan = initDaftarPendapatan;
+
+function renderListPendapatan() {
+    const container = document.getElementById('containerPendapatanDinamis');
+    if (!container) return;
+
+    if (daftarPendapatan.length === 0) {
+        daftarPendapatan.push({ nama: 'Gaji Pokok', nominal: 0 });
+    }
+
+    let html = '';
+    daftarPendapatan.forEach((item, index) => {
+        const safeNama = (item.nama || '').replace(/"/g, '&quot;');
+        const nomVal = parseInt(item.nominal, 10) || 0;
+        const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+        html += `
+            <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
+                <div class="flex-1 min-w-0">
+                    <input type="text" value="${safeNama}" 
+                           placeholder="Nama pendapatan (cth: Gaji Pokok, Bonus, Lembur)" 
+                           class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                           oninput="updateItemPendapatan(${index}, 'nama', this.value)">
+                </div>
+                <div class="w-32 sm:w-40 shrink-0">
+                    <div class="relative flex items-center">
+                        <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                        <input type="text" value="${nomStr}" 
+                               placeholder="0" 
+                               class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
+                               oninput="formatRupiah(this); updateItemPendapatan(${index}, 'nominal', this.value)">
+                    </div>
+                </div>
+                <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
+                        class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+
+    let total = 0;
+    daftarPendapatan.forEach(item => {
+        total += parseNominal(item.nominal || 0);
+    });
+
+    const hiddenDetail = document.getElementById('detail_pendapatan_rk');
+    if (hiddenDetail) {
+        hiddenDetail.value = JSON.stringify(daftarPendapatan);
+    }
+    const nomTotalEl = document.getElementById('nomTotalPendapatanDinamis');
+    if (nomTotalEl) {
+        nomTotalEl.innerText = formatRupiahString(total);
+    }
+    const inputPRK = document.getElementById('pendapatan_rk');
+    if (inputPRK) {
+        inputPRK.value = formatRupiahString(total);
+    }
+
+    hitungLabaRugi();
+}
+window.renderListPendapatan = renderListPendapatan;
+
+function tambahPendapatan(nama = '', nominal = 0) {
+    daftarPendapatan.push({ nama: nama, nominal: nominal });
+    renderListPendapatan();
+}
+window.tambahPendapatan = tambahPendapatan;
+
+function hapusPendapatan(index) {
+    if (index >= 0 && index < daftarPendapatan.length) {
+        daftarPendapatan.splice(index, 1);
+        if (daftarPendapatan.length === 0) {
+            daftarPendapatan.push({ nama: '', nominal: 0 });
+        }
+        renderListPendapatan();
+    }
+}
+window.hapusPendapatan = hapusPendapatan;
+
+function updateItemPendapatan(index, field, val) {
+    if (!daftarPendapatan[index]) return;
+    if (field === 'nominal') {
+        daftarPendapatan[index].nominal = parseNominal(val);
+    } else {
+        daftarPendapatan[index].nama = val;
+    }
+
+    let total = 0;
+    daftarPendapatan.forEach(item => {
+        total += parseNominal(item.nominal || 0);
+    });
+
+    const hiddenDetail = document.getElementById('detail_pendapatan_rk');
+    if (hiddenDetail) {
+        hiddenDetail.value = JSON.stringify(daftarPendapatan);
+    }
+    const nomTotalEl = document.getElementById('nomTotalPendapatanDinamis');
+    if (nomTotalEl) {
+        nomTotalEl.innerText = formatRupiahString(total);
+    }
+    const inputPRK = document.getElementById('pendapatan_rk');
+    if (inputPRK) {
+        inputPRK.value = formatRupiahString(total);
+    }
+
+    hitungLabaRugi();
+}
+window.updateItemPendapatan = updateItemPendapatan;
 
 // Inisialisasi & Manajemen Rincian Beban Lain-Lain (Dinamis: Tambah/Hapus)
 let daftarBebanLain = [];
@@ -1421,6 +1576,8 @@ function initDaftarBebanLain() {
         const nomLama = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
         if (nomLama > 0) {
             daftarBebanLain = [{ nama: 'Beban Lain-Lain', nominal: nomLama }];
+        } else {
+            daftarBebanLain = [{ nama: '', nominal: 0 }];
         }
     }
 
@@ -1448,7 +1605,7 @@ function renderListBebanLain() {
                         <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
                             <div class="flex-1 min-w-0">
                                 <input type="text" value="${safeNama}" 
-                                       placeholder="Nama beban (cth: Biaya Sekolah)" 
+                                       placeholder="Keterangan beban (cth: Premi Asuransi, Biaya Tak Terduga)" 
                                        class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
                                        oninput="updateItemBebanLain(${index}, 'nama', this.value)">
                             </div>
@@ -1492,6 +1649,9 @@ window.tambahBebanLain = tambahBebanLain;
 function hapusBebanLain(index) {
     if (index >= 0 && index < daftarBebanLain.length) {
         daftarBebanLain.splice(index, 1);
+        if (daftarBebanLain.length === 0) {
+            daftarBebanLain.push({ nama: '', nominal: 0 });
+        }
         renderListBebanLain();
     }
 }

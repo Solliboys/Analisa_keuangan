@@ -13,8 +13,9 @@ class KreditKeuanganDscModel extends Model
     protected $protectFields    = true;
     protected $allowedFields    = [
         'kredit_id',
-        // === LABA RUGI REKENING KORAN (Badan Usaha) ===
+        // === LABA RUGI REKENING KORAN (Badan Usaha & Perorangan) ===
         'pendapatan_rk',
+        'detail_pendapatan_rk',
         'pendapatan_lain_rk',
         'keterangan_pendapatan_lain_rk',
         'ada_bukti_pendapatan_lain_rk',

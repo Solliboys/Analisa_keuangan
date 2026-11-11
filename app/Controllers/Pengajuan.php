@@ -771,6 +771,8 @@ class Pengajuan extends BaseController
     private function simpanKeuangan($kreditId, $input)
     {
         $pRK   = $this->cleanNumber($input['pendapatan_rk'] ?? 0);
+        $detailPendapatanRK = !empty($input['detail_pendapatan_rk']) ? $input['detail_pendapatan_rk'] : null;
+        if ($detailPendapatanRK === '[]') $detailPendapatanRK = null;
         $hppPctRK = (float)($input['hpp_persen_rk'] ?? 60);
         $hppNomRK = $pRK * ($hppPctRK / 100);
         $grossRK  = $pRK - $hppNomRK;
@@ -826,6 +828,7 @@ class Pengajuan extends BaseController
         $dataKeu = [
             'kredit_id'                     => $kreditId,
             'pendapatan_rk'                 => $pRK,
+            'detail_pendapatan_rk'          => $detailPendapatanRK,
             'pendapatan_lain_rk'            => $pLainRK,
             'keterangan_pendapatan_lain_rk' => $ketLainRK,
             'ada_bukti_pendapatan_lain_rk'  => $adaPendapatanLain,
