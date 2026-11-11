@@ -1329,10 +1329,26 @@ function tambahBarisRekening() {
 // Kalkulasi Laba Rugi (RK & Wawancara)
 function hitungLabaRugi() {
     // Track 1: RK
-    const pRK = parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
-    const hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 60);
-    const nomHppRK = Math.round(pRK * (hppPctRK / 100));
-    const grossRK = pRK - nomHppRK;
+    // ── Pendapatan Pokok: pakai daftarPendapatan (dinamis) jika tersedia ──
+    let totalPendapatanDinamis = 0;
+    if (Array.isArray(daftarPendapatan) && daftarPendapatan.length > 0) {
+        daftarPendapatan.forEach(item => {
+            totalPendapatanDinamis += parseNominal(item.nominal || 0);
+        });
+    }
+    // Fallback ke hidden input lama jika daftarPendapatan kosong
+    const pRK = totalPendapatanDinamis > 0
+        ? totalPendapatanDinamis
+        : parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
+
+    // Sync hidden input pendapatan_rk agar form submit dan generate-laporan konsisten
+    if (document.getElementById('pendapatan_rk')) {
+        document.getElementById('pendapatan_rk').value = pRK;
+    }
+
+    const hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 0);
+    const nomHppRK = 0; // Perorangan/karyawan tidak ada HPP
+    const grossRK = pRK;
 
     // Biaya Hidup (langsung nominal rupiah tanpa %)
     const nomBhRK = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 0);
@@ -1340,7 +1356,7 @@ function hitungLabaRugi() {
         document.getElementById('biaya_hidup_persen_rk').value = (Math.round((nomBhRK / pRK) * 1000) / 10);
     }
 
-    // Beban Lain (dihitung dari total rincian beban)
+    // Beban Lain (dihitung dari total rincian beban dinamis)
     let totalBebanLain = 0;
     if (Array.isArray(daftarBebanLain) && daftarBebanLain.length > 0) {
         daftarBebanLain.forEach(item => {
@@ -1358,15 +1374,23 @@ function hitungLabaRugi() {
     }
     const nomBlRK = totalBebanLain;
 
-    const nettRK = grossRK - nomBhRK - nomBlRK;
-
-    // Pendapatan Lain-lain
+    // Pendapatan Lain-lain (usaha sampingan — khusus perorangan/karyawan)
     const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
     const pLainRK = isAdaLain ? parseNominal(document.getElementById('pendapatan_lain_rk')?.value || 0) : 0;
-    const totalCashflow = nettRK + pLainRK;
 
-    if (document.getElementById('nomHppRK')) document.getElementById('nomHppRK').innerText = formatRupiahString(nomHppRK);
-    if (document.getElementById('grossRK')) document.getElementById('grossRK').innerText = formatRupiahString(grossRK);
+    // Total Penghasilan & Pengeluaran
+    const totalPenghasilanPR = pRK + pLainRK;
+    const totalPengeluaranPR = nomBhRK + nomBlRK;
+
+    // Surplus = Penghasilan - Pengeluaran (live preview, tanpa cicilan — cicilan diinput di Tab Laporan)
+    const surplusPR = totalPenghasilanPR - totalPengeluaranPR;
+
+    // nettRK & totalCashflow untuk kompatibilitas dengan field-field lain
+    const nettRK = pRK - nomBhRK - nomBlRK;
+    const totalCashflow = surplusPR;
+
+    if (document.getElementById('nomHppRK')) document.getElementById('nomHppRK').innerText = formatRupiahString(0);
+    if (document.getElementById('grossRK')) document.getElementById('grossRK').innerText = formatRupiahString(pRK);
     if (document.getElementById('nomBiayaHidupRK')) document.getElementById('nomBiayaHidupRK').innerText = formatRupiahString(nomBhRK);
     if (document.getElementById('nomBebanLainRK')) document.getElementById('nomBebanLainRK').innerText = formatRupiahString(nomBlRK);
     if (document.getElementById('nettRK')) document.getElementById('nettRK').innerText = formatRupiahString(nettRK);
@@ -1379,15 +1403,12 @@ function hitungLabaRugi() {
     if (document.getElementById('nomTotalPendapatanUtama')) {
         document.getElementById('nomTotalPendapatanUtama').innerText = formatRupiahString(pRK);
     }
-    const totalPengeluaranPR = nomBhRK + nomBlRK;
     if (document.getElementById('nomTotalPengeluaranPR')) {
         document.getElementById('nomTotalPengeluaranPR').innerText = formatRupiahString(totalPengeluaranPR);
     }
-    const totalPenghasilanPR = pRK + pLainRK;
     if (document.getElementById('nomTotalPenghasilanPR')) {
         document.getElementById('nomTotalPenghasilanPR').innerText = formatRupiahString(totalPenghasilanPR);
     }
-    const surplusPR = totalPenghasilanPR - totalPengeluaranPR;
     if (document.getElementById('nomSurplusPR')) {
         document.getElementById('nomSurplusPR').innerText = formatRupiahString(surplusPR);
     }
@@ -1501,7 +1522,7 @@ function renderListPendapatan() {
     }
     const inputPRK = document.getElementById('pendapatan_rk');
     if (inputPRK) {
-        inputPRK.value = formatRupiahString(total);
+        inputPRK.value = total; // angka mentah agar parseNominal konsisten
     }
 
     hitungLabaRugi();
@@ -1548,7 +1569,7 @@ function updateItemPendapatan(index, field, val) {
     }
     const inputPRK = document.getElementById('pendapatan_rk');
     if (inputPRK) {
-        inputPRK.value = formatRupiahString(total);
+        inputPRK.value = total; // angka mentah agar parseNominal konsisten
     }
 
     hitungLabaRugi();
