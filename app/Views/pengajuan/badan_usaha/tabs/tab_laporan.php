@@ -5,6 +5,12 @@ $lkJ = !empty($lk['json_laporan']) ? json_decode($lk['json_laporan'], true) : nu
 $sudahAda = !empty($lkJ);
 $statusNeraca = $lkJ['validasi']['status_neraca'] ?? 'Seimbang';
 $isSeimbang = ($statusNeraca === 'Seimbang');
+$nrData = $lkJ['neraca'] ?? [];
+$lrData = $lkJ['laba_rugi'] ?? [];
+$showAsetTetap = !empty($nrData['aset_tetap_neto']) && (float)$nrData['aset_tetap_neto'] > 0;
+$showUtangBank = (!empty($nrData['utang_bank_pendek']) && (float)$nrData['utang_bank_pendek'] > 0) || (!empty($nrData['utang_jangka_panjang']) && (float)$nrData['utang_jangka_panjang'] > 0);
+$showModalDisetor = !empty($nrData['modal_disetor']) && (float)$nrData['modal_disetor'] > 0;
+$showBebanBunga = !empty($lrData['beban_bunga']) && (float)$lrData['beban_bunga'] > 0;
 ?>
 <div id="tab-laporan" class="tab-panel bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
 
@@ -184,7 +190,7 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                 <span id="bu_lr_laba_op" class="text-blue-700 font-black">—</span>
             </div>
 
-            <div class="flex justify-between items-center py-1" id="row_bu_lr_beban_bunga">
+            <div class="flex justify-between items-center py-1" id="row_bu_lr_beban_bunga" style="display: <?= $showBebanBunga ? 'flex' : 'none' ?>;">
                 <span class="text-slate-600 font-medium">Biaya Bunga Pinjaman Bank</span>
                 <span class="font-bold text-slate-900" id="bu_lr_beban_bunga">—</span>
             </div>
@@ -328,7 +334,7 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                         <span id="bu_nr_total_aset_lancar" class="text-blue-700 font-black">—</span>
                     </div>
 
-                    <div class="flex justify-between items-center py-1" id="row_bu_nr_aset_tetap">
+                    <div class="flex justify-between items-center py-1" id="row_bu_nr_aset_tetap" style="display: <?= $showAsetTetap ? 'flex' : 'none' ?>;">
                         <span class="text-slate-600 font-medium">Nilai Alat, Mesin &amp; Gedung Saat Ini (Neto)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_aset_tetap_neto">—</span>
                     </div>
@@ -353,7 +359,7 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                         <span class="text-slate-600 font-medium">Utang ke Supplier (Pemasok)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_utang_usaha">—</span>
                     </div>
-                    <div class="flex justify-between items-center py-1" id="row_bu_nr_utang_bank">
+                    <div class="flex justify-between items-center py-1" id="row_bu_nr_utang_bank" style="display: <?= $showUtangBank ? 'flex' : 'none' ?>;">
                         <span class="text-slate-600 font-medium">Utang Pinjaman ke Bank</span>
                         <span class="font-bold text-slate-900" id="bu_nr_utang_bank">—</span>
                     </div>
@@ -364,7 +370,7 @@ $isSeimbang = ($statusNeraca === 'Seimbang');
                         <span id="bu_nr_total_liab" class="text-blue-700 font-black">—</span>
                     </div>
 
-                    <div class="flex justify-between items-center py-1" id="row_bu_nr_modal">
+                    <div class="flex justify-between items-center py-1" id="row_bu_nr_modal" style="display: <?= $showModalDisetor ? 'flex' : 'none' ?>;">
                         <span class="text-slate-600 font-medium">Modal Sendiri yang Disetor</span>
                         <span class="font-bold text-slate-900" id="bu_nr_modal">—</span>
                     </div>
