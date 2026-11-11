@@ -41,7 +41,7 @@ class CreateUsersTable extends Migration
             'terakhir_login' => [
                 'type' => 'DATETIME',
                 'null' => true,
-            ],`
+            ],
             'created_at' => [
                 'type' => 'DATETIME',
                 'null' => true,

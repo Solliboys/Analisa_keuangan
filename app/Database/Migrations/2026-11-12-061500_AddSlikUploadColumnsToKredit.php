@@ -90,3 +90,4 @@ class AddSlikUploadColumnsToKredit extends Migration
         }
     }
 }
+
