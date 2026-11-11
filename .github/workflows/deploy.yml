@@ -1,0 +1,45 @@
+name: Auto Deploy ke VPS (SFTP)
+
+on:
+  push:
+    branches:
+      - main
+      - solli
+
+jobs:
+  deploy:
+    name: Deploy Otomatis ke otwapproved.gusaha.id
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout kode terbaru dari GitHub
+        uses: actions/checkout@v4
+
+      - name: Install LFTP untuk transfer SFTP
+        run: sudo apt-get update && sudo apt-get install -y lftp
+
+      - name: Siapkan Private SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "${{ secrets.VPS_PORT || '22' }}" -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sinkronkan file ke VPS via SFTP
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+        run: |
+          lftp -c "
+            set cmd:fail-exit yes;
+            set net:max-retries 2;
+            set sftp:auto-confirm yes;
+            set sftp:connect-program \"ssh -a -x -o BatchMode=yes -o StrictHostKeyChecking=no -i $HOME/.ssh/deploy_key\";
+            open -p ${VPS_PORT} sftp://${VPS_USER}@${VPS_HOST};
+            mirror --reverse --delete --parallel=4 --verbose app /web/otwapproved.gusaha.id/public_html/app;
+            mirror --reverse --parallel=4 --verbose --exclude-glob \"uploads/\" --exclude-glob \"uploads/*\" public /web/otwapproved.gusaha.id/public_html/public;
+            cd /web/otwapproved.gusaha.id/public_html;
+            mput composer.json composer.lock preload.php spark;
+            bye;
+          "
