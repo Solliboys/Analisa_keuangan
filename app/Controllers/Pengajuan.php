@@ -498,6 +498,12 @@ class Pengajuan extends BaseController
         }
 
         try {
+            // Filter kolom agar hanya menyimpan kolom yang benar-benar ada di tabel database (mencegah error Unknown Column di VPS)
+            $tableCols = $this->kreditModel->db->getFieldNames('kredit');
+            if (!empty($tableCols)) {
+                $dataKredit = array_intersect_key($dataKredit, array_flip($tableCols));
+            }
+
             if ($kreditId) {
                 $this->kreditModel->update($kreditId, $dataKredit);
             } else {
@@ -756,6 +762,7 @@ class Pengajuan extends BaseController
     private function simpanRekening($kreditId, $input)
     {
         $this->rekeningModel->where('kredit_id', $kreditId)->delete();
+        $rekCols = $this->rekeningModel->db->getFieldNames('kredit_rekening');
         if (isset($input['rekening']) && is_array($input['rekening'])) {
             foreach ($input['rekening'] as $row) {
                 if (empty($row['nama_bank'])) continue;
@@ -764,7 +771,7 @@ class Pengajuan extends BaseController
                 $debit     = $this->cleanNumber($row['total_mutasi_debit'] ?? 0);
                 $months    = max(1, (int)($row['jumlah_bulan'] ?? 6));
 
-                $this->rekeningModel->insert([
+                $dataRek = [
                     'kredit_id'           => $kreditId,
                     'nama_bank'           => $row['nama_bank'] ?? '',
                     'periode'             => $row['periode'] ?? '',
@@ -776,7 +783,11 @@ class Pengajuan extends BaseController
                     'jumlah_bulan'        => $months,
                     'rata_rata_kredit'    => round($credit / $months, 2),
                     'rata_rata_debit'     => round($debit / $months, 2)
-                ]);
+                ];
+                if (!empty($rekCols)) {
+                    $dataRek = array_intersect_key($dataRek, array_flip($rekCols));
+                }
+                $this->rekeningModel->insert($dataRek);
             }
         }
     }
@@ -901,6 +912,11 @@ class Pengajuan extends BaseController
             'input_setoran_modal'           => $this->cleanNumber($input['input_setoran_modal'] ?? 0),
             'neraca_hari_stok_dio'          => !empty($input['neraca_hari_stok_dio']) ? (int)$input['neraca_hari_stok_dio'] : 45,
         ];
+
+        $keuCols = $this->keuanganModel->db->getFieldNames('kredit_keuangan_dsc');
+        if (!empty($keuCols)) {
+            $dataKeu = array_intersect_key($dataKeu, array_flip($keuCols));
+        }
 
         $cek = $this->keuanganModel->where('kredit_id', $kreditId)->first();
         if ($cek) {
