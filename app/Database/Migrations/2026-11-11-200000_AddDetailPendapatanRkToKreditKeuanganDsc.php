@@ -26,3 +26,4 @@ class AddDetailPendapatanRkToKreditKeuanganDsc extends Migration
         }
     }
 }
+
