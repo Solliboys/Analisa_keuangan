@@ -416,7 +416,7 @@ $valNamaUsaha = $kredit['nama_usaha'] ?? ($kredit['nama_debitur'] ?? '');
         const debHid = document.getElementById('nama_debitur_hidden');
         if (debHid) debHid.value = val;
         const mainDeb = document.getElementById('nama_debitur');
-        if (mainDeb && !mainDeb.value) mainDeb.value = val;
+        if (mainDeb) mainDeb.value = val;
     }
 
     function syncDirekturUtama(val) {

@@ -2472,8 +2472,12 @@ async function simpanForm(isComplete = false, showNotification = true) {
                 }, 1200);
             }
         } else {
-            if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Gagal menyimpan';
-            if (showNotification) showToast(data.message || 'Gagal menyimpan data', 'error');
+            const pesanGagal = data.message || 'Gagal menyimpan data';
+            if (ind) {
+                ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Gagal menyimpan';
+                ind.title = pesanGagal;
+            }
+            showToast(pesanGagal, 'error');
         }
     } catch (err) {
         if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Error koneksi';

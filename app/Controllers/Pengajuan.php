@@ -454,7 +454,8 @@ class Pengajuan extends BaseController
         // Jika terdapat input karyawan (Badan Usaha), update data penanggung jawab dari karyawan pertama
         if (!empty($input['karyawan']) && is_array($input['karyawan'])) {
             $firstKaryawan = $input['karyawan'][0] ?? [];
-            if (!empty($firstKaryawan['nama'])) {
+            // Untuk Badan Usaha, nama_debitur adalah nama perusahaan. Hanya fallback jika nama_debitur belum ada
+            if (empty($dataKredit['nama_debitur']) && !empty($firstKaryawan['nama'])) {
                 $dataKredit['nama_debitur'] = $firstKaryawan['nama'];
             }
             if (!empty($firstKaryawan['nik'])) {
@@ -496,43 +497,53 @@ class Pengajuan extends BaseController
             $dataKredit['slik_permohonan_nik'] = $input['slik_permohonan_nik'];
         }
 
-        if ($kreditId) {
-            $this->kreditModel->update($kreditId, $dataKredit);
-        } else {
-            $kreditId = $this->kreditModel->insert($dataKredit);
-        }
+        try {
+            if ($kreditId) {
+                $this->kreditModel->update($kreditId, $dataKredit);
+            } else {
+                $kreditId = $this->kreditModel->insert($dataKredit);
+            }
 
-        if (!$kreditId) {
-            return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyimpan data induk kredit']);
-        }
+            if (!$kreditId) {
+                $errs = $this->kreditModel->errors();
+                $errMsg = !empty($errs) ? implode(', ', $errs) : 'Gagal menyimpan data induk kredit';
+                return $this->response->setJSON(['status' => false, 'message' => $errMsg]);
+            }
 
-        // 0. Simpan Daftar Usaha (Multi Usaha Dinamis)
-        $this->simpanUsaha($kreditId, $input);
+            // 0. Simpan Daftar Usaha (Multi Usaha Dinamis)
+            $this->simpanUsaha($kreditId, $input);
 
-        // 1. Simpan Agunan
-        $this->simpanAgunan($kreditId, $input);
+            // 1. Simpan Agunan
+            $this->simpanAgunan($kreditId, $input);
 
-        // 2. Simpan SLIK
-        $this->simpanSlik($kreditId, $input);
+            // 2. Simpan SLIK
+            $this->simpanSlik($kreditId, $input);
 
-        // 3. Simpan Web Check
-        $this->simpanWebcheck($kreditId, $input);
+            // 3. Simpan Web Check
+            $this->simpanWebcheck($kreditId, $input);
 
-        // 4. Simpan Analisa (Tab 8)
-        $this->simpanAnalisa($kreditId, $input);
+            // 4. Simpan Analisa (Tab 8)
+            $this->simpanAnalisa($kreditId, $input);
 
-        // 5. Simpan Rekening Koran (Tab 9)
-        $this->simpanRekening($kreditId, $input);
+            // 5. Simpan Rekening Koran (Tab 9)
+            $this->simpanRekening($kreditId, $input);
 
-        // 6. Simpan Laba Rugi & Repayment DSC (Tab 10 & 11)
-        $this->simpanKeuangan($kreditId, $input);
+            // 6. Simpan Laba Rugi & Repayment DSC (Tab 10 & 11)
+            $this->simpanKeuangan($kreditId, $input);
 
-        // 7. Simpan Disbursement (Tab 12)
-        $this->simpanDisbursement($kreditId, $input);
+            // 7. Simpan Disbursement (Tab 12)
+            $this->simpanDisbursement($kreditId, $input);
 
-        // 8. Simpan Approval Komite (HANYA boleh disimpan oleh Reviewer / Komite / Superadmin, BUKAN oleh pengusul)
-        if ($isReviewer) {
-            $this->simpanKomite($kreditId, $input);
+            // 8. Simpan Approval Komite (HANYA boleh disimpan oleh Reviewer / Komite / Superadmin, BUKAN oleh pengusul)
+            if ($isReviewer) {
+                $this->simpanKomite($kreditId, $input);
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Gagal simpan pengajuan: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'status'  => false,
+                'message' => 'Gagal menyimpan: ' . $e->getMessage()
+            ]);
         }
 
         // Catat ke log aktivitas sistem
