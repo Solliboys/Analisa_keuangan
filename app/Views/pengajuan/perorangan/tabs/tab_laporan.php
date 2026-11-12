@@ -1,56 +1,57 @@
 <?php
 /**
- * Tab 10: Laporan Keuangan Konsolidasian Debitur Perorangan
- * Sesuai Standar Analisa Kredit Perorangan & Catatan Analis:
- * 1. Laporan Laba Rugi Sederhana (Penjualan, HPP, Laba Kotor, Biaya Operasional, Laba Usaha, Pendapatan Lain, Pengeluaran RT, Laba Bersih/Sisa Penghasilan)
- * 2. Neraca Sederhana (Daftar Aset Lancar, Aset Tetap, Utang Dagang/Bank/Koperasi, Modal Bersih = Total Aset - Total Utang)
- * 3. Laporan Arus Kas Sederhana (Kas Masuk Penjualan/Piutang, Kas Keluar Belanja/Operasional/Cicilan/Keluarga, Saldo Kas Akhir)
- * 4. Laporan Perubahan Modal Sederhana (Modal Awal, Laba Bersih, Prive, Modal Akhir)
- * 5. Catatan Atas Laporan Keuangan (CALK) & Karakteristik Khusus Perorangan + Dokumen Pendukung
+ * Tab 10: Laporan Keuangan Debitur Perorangan
+ * Sesuai Standar Analisa Perorangan:
+ * 1. Tipe Usaha:
+ *    - Laba Rugi Sederhana (Penjualan Hari Ramai, Biasa, Sepi, HPP, Laba Kotor, Biaya Operasional, Laba Usaha, Pendapatan Lain, Prive RT, Sisa Penghasilan).
+ *    - Daftar Harta & Utang (Aset Usaha, Aset Pribadi, Utang Dagang/Bank/Koperasi/Pinjol, Kekayaan Bersih).
+ * 2. Tipe Berpenghasilan Tetap (Karyawan, PNS, Pensiunan):
+ *    - Laporan Penghasilan & Pengeluaran (Gaji Pokok, Tunjangan, Tambahan, Pasangan, Biaya Hidup, Pendidikan, Lain-lain, Cicilan, Sisa Penghasilan - TANPA omzet/HPP/operasional).
+ *    - Daftar Harta & Utang (Tabungan, Tanah, Bangunan, Kendaraan, Utang Bank/Koperasi/Pinjol - TANPA aset usaha).
  */
 
-// 1. Ekstraksi Data Awal dari Database / Tab 9 (Laba Rugi)
+// 1. Deteksi Otomatis Kategori Debitur (Punya Usaha vs Punya Gaji)
+$jabatanPekerjaan = strtolower($kredit['jabatan'] ?? ($kredit['bidang_usaha'] ?? ''));
+$isKaryawanPns = (
+    strpos($jabatanPekerjaan, 'karyawan') !== false ||
+    strpos($jabatanPekerjaan, 'pns') !== false ||
+    strpos($jabatanPekerjaan, 'asn') !== false ||
+    strpos($jabatanPekerjaan, 'guru') !== false ||
+    strpos($jabatanPekerjaan, 'pegawai') !== false ||
+    strpos($jabatanPekerjaan, 'bumn') !== false ||
+    strpos($jabatanPekerjaan, 'staf') !== false ||
+    strpos($jabatanPekerjaan, 'pensiun') !== false ||
+    strpos($jabatanPekerjaan, 'polisi') !== false ||
+    strpos($jabatanPekerjaan, 'tni') !== false
+);
+
+// 2. Data Keuangan Punya Usaha (dari Tab 9 & Database)
 $omsetBulanan = (float)($keuangan['pendapatan_rk'] ?? 150000000);
 $hppPersen = (float)($keuangan['hpp_persen_rk'] ?? 60);
 $hppNominal = (float)($keuangan['hpp_nominal_rk'] ?? ($omsetBulanan * ($hppPersen / 100)));
 $labaKotor = $omsetBulanan - $hppNominal;
 
-// Biaya Operasional Usaha (Sewa, listrik, gaji karyawan, transport, dll)
-$detailBebanRaw = $keuangan['detail_beban_lainnya_rk'] ?? '';
-$listBebanLain = [];
-if (!empty($detailBebanRaw)) {
-    $dec = json_decode($detailBebanRaw, true);
-    if (is_array($dec)) $listBebanLain = $dec;
-}
-$nomBiayaOperasional = 0;
-if (!empty($listBebanLain)) {
-    foreach ($listBebanLain as $b) {
-        $nomBiayaOperasional += (float)($b['nominal'] ?? 0);
-    }
-} else {
-    $nomBiayaOperasional = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 8000000);
-}
-if ($nomBiayaOperasional <= 0) {
-    $nomBiayaOperasional = round($omsetBulanan * 0.08); // estimasi 8%
-}
+// Estimasi Skenario Hari Ramai, Biasa, Sepi (Omzet = Ramai + Biasa + Sepi)
+$omzetRamai = round($omsetBulanan * 0.45); // 45% omzet dari hari ramai
+$omzetBiasa = round($omsetBulanan * 0.40); // 40% omzet dari hari biasa
+$omzetSepi  = $omsetBulanan - $omzetRamai - $omzetBiasa; // 15% omzet dari hari sepi
 
-// Laba Usaha = Laba Kotor - Biaya Operasional
+// Biaya Operasional Usaha
+$nomBiayaOperasional = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 12000000);
+if ($nomBiayaOperasional <= 0) $nomBiayaOperasional = round($omsetBulanan * 0.08);
 $labaUsaha = $labaKotor - $nomBiayaOperasional;
 
-// Pendapatan Lain (Gaji pasangan, sewa, dividen, dll)
-$adaPendapatanLain = !empty($keuangan['ada_bukti_pendapatan_lain_rk']) || (!empty($keuangan['pendapatan_lain_rk']) && (float)$keuangan['pendapatan_lain_rk'] > 0);
-$nomPendapatanLain = $adaPendapatanLain ? (float)($keuangan['pendapatan_lain_rk'] ?? 0) : 0;
+// Pendapatan Lain (Luar usaha)
+$nomPendapatanLain = (float)($keuangan['pendapatan_lain_rk'] ?? 0);
 
-// Pengeluaran Rumah Tangga (Prive / Biaya Hidup Keluarga)
+// Prive / Pengeluaran Rumah Tangga (Biaya Hidup Keluarga)
 $nomPengeluaranRT = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 15000000);
-if ($nomPengeluaranRT <= 0) {
-    $nomPengeluaranRT = 15000000;
-}
+if ($nomPengeluaranRT <= 0) $nomPengeluaranRT = 15000000;
 
-// Laba Bersih / Sisa Penghasilan (Dana yang bisa dipakai untuk membayar angsuran)
-$labaBersihSisaPenghasilan = ($labaUsaha + $nomPendapatanLain) - $nomPengeluaranRT;
+// Sisa Penghasilan Usaha = (Laba Usaha + Pendapatan Lain) - Prive RT
+$labaBersihSisaPenghasilanUsaha = ($labaUsaha + $nomPendapatanLain) - $nomPengeluaranRT;
 
-// Cicilan Utang Berjalan (Bank / SLIK / Koperasi)
+// Cicilan Utang Berjalan
 $totalCicilanSlik = 0;
 if (!empty($slik) && is_array($slik)) {
     foreach ($slik as $s) {
@@ -60,56 +61,68 @@ if (!empty($slik) && is_array($slik)) {
 if ($totalCicilanSlik <= 0) {
     $totalCicilanSlik = (float)($keuangan['angsuran_dipilih'] ?? ($keuangan['angsuran_installment'] ?? 2000000));
 }
+$sisaKasBebasUsaha = $labaBersihSisaPenghasilanUsaha - $totalCicilanSlik;
+$dsrUsaha = ($omsetBulanan > 0) ? round(($totalCicilanSlik / ($omsetBulanan + $nomPendapatanLain)) * 100, 1) : 0;
 
-// Sisa Kas Bebas setelah Cicilan Berjalan
-$surplusKasBebas = $labaBersihSisaPenghasilan - $totalCicilanSlik;
+// Harta & Utang Tipe Usaha
+$kasUsaha = round($omsetBulanan * 0.15);
+$piutangUsaha = round($omsetBulanan * 0.10);
+$persediaanStok = round($hppNominal * 0.35);
+$peralatanUsaha = round($omsetBulanan * 0.12);
+$totalAsetUsaha = $kasUsaha + $piutangUsaha + $persediaanStok + $peralatanUsaha;
 
-// Debt Service Ratio (DSR) terhadap Total Pendapatan Bersih
-$totalInflow = $omsetBulanan + $nomPendapatanLain;
-$dsrPersen = ($totalInflow > 0) ? round(($totalCicilanSlik / $totalInflow) * 100, 1) : 0;
-
-// --- 2. DATA UNTUK NERACA SEDERHANA ---
-// Aset Lancar: Kas, Piutang, Persediaan
-$kasLancar = 0;
-if (!empty($rekening) && is_array($rekening)) {
-    foreach ($rekening as $rek) {
-        $kasLancar += (float)($rek['saldo_akhir'] ?? ($rek['kredit_mutasi'] ? round($rek['kredit_mutasi'] * 0.15) : 0));
-    }
-}
-if ($kasLancar <= 0) {
-    $kasLancar = round($omsetBulanan * 0.2); // Saldo kas ~20% omset
-}
-$piutangDagang = round($omsetBulanan * 0.12); // Piutang lancar pelanggan
-$persediaanStok = round($hppNominal * 0.45); // Persediaan barang dagangan
-$totalAsetLancar = $kasLancar + $piutangDagang + $persediaanStok;
-
-// Aset Tetap: Peralatan, Kendaraan Usaha, Tanah atau Bangunan
-$totalNilaiAgunan = 0;
+$tabunganPribadi = round($omsetBulanan * 0.10);
+$tanahPribadi = 200000000;
+$bangunanPribadi = 150000000;
+$kendaraanPribadi = 45000000;
 if (!empty($agunan) && is_array($agunan)) {
-    foreach ($agunan as $ag) {
-        $totalNilaiAgunan += (float)($ag['nilai_pasar_mv'] ?? 0);
+    $totAg = 0;
+    foreach ($agunan as $ag) { $totAg += (float)($ag['nilai_pasar_mv'] ?? 0); }
+    if ($totAg > 0) {
+        $tanahPribadi = round($totAg * 0.6);
+        $bangunanPribadi = round($totAg * 0.4);
     }
 }
-if ($totalNilaiAgunan <= 0) {
-    $totalNilaiAgunan = 350000000;
-}
-$peralatanUsaha = round($omsetBulanan * 0.15); // Peralatan kerja / mesin
-$kendaraanUsaha = 45000000; // Motor / mobil operasional
-$tanahBangunan = $totalNilaiAgunan; // Tanah & bangunan tempat usaha/rumah
-$totalAsetTetap = $peralatanUsaha + $kendaraanUsaha + $tanahBangunan;
-$totalAset = $totalAsetLancar + $totalAsetTetap;
+$totalAsetPribadi = $tabunganPribadi + $tanahPribadi + $bangunanPribadi + $kendaraanPribadi;
+$totalHartaUsaha = $totalAsetUsaha + $totalAsetPribadi;
 
-// Utang: Utang Dagang, Utang Bank, Koperasi / Pihak Lain
-$utangDagang = round($hppNominal * 0.15); // Tempo suplier
-$utangBank = $totalCicilanSlik * 18; // Baki debet bank berjalan
-$utangKoperasiLain = 5000000; // Koperasi / pihak ketiga
-$totalUtang = $utangDagang + $utangBank + $utangKoperasiLain;
+$utangDagang = round($hppNominal * 0.15);
+$utangBank = $totalCicilanSlik * 18;
+$utangKoperasi = 5000000;
+$utangPinjol = 0;
+$totalUtangUsaha = $utangDagang + $utangBank + $utangKoperasi + $utangPinjol;
+$kekayaanBersihUsaha = $totalHartaUsaha - $totalUtangUsaha;
 
-// Modal Bersih = Total Aset - Total Utang
-$modalBersih = $totalAset - $totalUtang;
+// 3. Data Keuangan Punya Gaji (Karyawan, PNS, Pensiunan)
+$gajiPokok = (float)($keuangan['gaji_pokok'] ?? 10000000);
+$tunjanganTetap = (float)($keuangan['tunjangan_tetap'] ?? 3500000);
+$penghasilanTambahan = (float)($keuangan['penghasilan_tambahan'] ?? 1500000);
+$penghasilanPasangan = (float)($keuangan['penghasilan_pasangan'] ?? $nomPendapatanLain);
+$totalPenghasilanGaji = $gajiPokok + $tunjanganTetap + $penghasilanTambahan + $penghasilanPasangan;
 
-// Identitas Aplikasi
-$plafonPengajuan = (float)($kredit['plafon_pengajuan'] ?? 50000000);
+$biayaHidupGaji = round($nomPengeluaranRT * 0.55); // Kebutuhan dapur/konsumsi
+$biayaPendidikanGaji = round($nomPengeluaranRT * 0.25); // Biaya sekolah/kuliah anak
+$biayaLainGaji = round($nomPengeluaranRT * 0.20); // Listrik, air, kuota, transport
+$cicilanBerjalanGaji = $totalCicilanSlik;
+$totalPengeluaranGaji = $biayaHidupGaji + $biayaPendidikanGaji + $biayaLainGaji + $cicilanBerjalanGaji;
+
+$sisaPenghasilanGaji = $totalPenghasilanGaji - $totalPengeluaranGaji;
+$dsrGaji = ($totalPenghasilanGaji > 0) ? round(($cicilanBerjalanGaji / $totalPenghasilanGaji) * 100, 1) : 0;
+
+// Harta & Utang Tipe Gaji (TANPA ASET USAHA)
+$tabunganGaji = 25000000;
+$tanahGaji = $tanahPribadi;
+$bangunanGaji = $bangunanPribadi;
+$kendaraanGaji = $kendaraanPribadi;
+$totalHartaGaji = $tabunganGaji + $tanahGaji + $bangunanGaji + $kendaraanGaji;
+
+$utangBankGaji = $totalCicilanSlik * 18;
+$utangKoperasiGaji = 5000000;
+$utangPinjolGaji = 0;
+$totalUtangGaji = $utangBankGaji + $utangKoperasiGaji + $utangPinjolGaji;
+$kekayaanBersihGaji = $totalHartaGaji - $totalUtangGaji;
+
+// Info Header
 $namaDebiturDisplay = !empty($kredit['nama_debitur']) ? esc($kredit['nama_debitur']) : 'Calon Debitur Perorangan';
 $noAppDisplay = !empty($kredit['nomor_aplikasi']) ? esc($kredit['nomor_aplikasi']) : 'NC-2024-AK8921';
 $tahunPeriode = date('Y');
@@ -118,7 +131,7 @@ $tahunPeriode = date('Y');
 <div id="tab-laporan" class="tab-panel bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
     
     <!-- =========================================================================
-         1. SECTION HEADER (KONSISTEN DENGAN UI APLIKASI)
+         1. SECTION HEADER & TOMBOL AKSI
     ========================================================================== -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 mb-6">
         <div class="flex items-center gap-3">
@@ -127,14 +140,10 @@ $tahunPeriode = date('Y');
             </div>
             <div>
                 <div class="flex items-center gap-2">
-                    <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">LAPORAN KEUANGAN DEBITUR PERORANGAN</h3>
+                    <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">LAPORAN KEUANGAN PERORANGAN</h3>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">Perorangan</span>
                     <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">Per Bulan</span>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Verifikasi Lapangan & Bank
-                    </span>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-0.5">Analisa kelayakan kapasitas bayar berbasis pemisahan keuangan usaha & rumah tangga debitur perorangan.</p>
             </div>
         </div>
         
@@ -147,809 +156,563 @@ $tahunPeriode = date('Y');
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Unduh / Cetak Laporan</span>
             </button>
+            <a href="<?= base_url('preview_laporan.html') ?>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition shadow-2xs cursor-pointer" title="Buka lembar A4 terpisah di tab baru browser">
+                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                <span class="hidden sm:inline">Buka Tab Baru</span>
+            </a>
         </div>
     </div>
 
     <!-- =========================================================================
-         2. TOP HIGHLIGHT METRIC CARDS
+         2. SELECTOR KATEGORI DEBITUR: PUNYA USAHA vs PUNYA GAJI
     ========================================================================== -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <!-- Card 1: Penjualan / Omzet -->
-        <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/90 flex flex-col justify-between shadow-2xs hover:border-blue-300 transition">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">PENJUALAN / OMZET BULANAN</span>
-                <span class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                </span>
-            </div>
+    <div class="p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-slate-50 border border-blue-200/80 mb-6 shadow-2xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-                <span id="card_lap_penghasilan" class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight block">
+                <span class="text-[10px] font-extrabold text-blue-900 uppercase tracking-wider block">PILIH TIPE SUMBER PENGHASILAN DEBITUR PERORANGAN:</span>
+                <p class="text-[11px] text-slate-600">Sesuaikan struktur laporan agar tepat sasaran: apakah bersumber dari <strong>kegiatan usaha</strong> atau <strong>gaji/penghasilan tetap</strong>.</p>
+            </div>
+
+            <!-- Switcher Button -->
+            <div class="inline-flex p-1 bg-white border border-slate-200 rounded-xl shadow-2xs shrink-0" role="group">
+                <button type="button" onclick="gantiKategoriDebitur('usaha')" id="btnKategoriUsaha" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 <?= !$isKaryawanPns ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900' ?>">
+                    <span>💼 Punya Usaha (Wiraswasta)</span>
+                </button>
+                <button type="button" onclick="gantiKategoriDebitur('gaji')" id="btnKategoriGaji" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 <?= $isKaryawanPns ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900' ?>">
+                    <span>👔 Punya Gaji (Karyawan/PNS/Pensiun)</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         BAGIAN A: LAPORAN KEUANGAN PERORANGAN YANG PUNYA USAHA
+    ========================================================================== -->
+    <div id="sectionPeroranganUsaha" class="<?= $isKaryawanPns ? 'hidden' : '' ?> space-y-6">
+        
+        <!-- Highlight Metrics Tipe Usaha -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/90 flex flex-col justify-between shadow-2xs">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">TOTAL PENJUALAN / OMZET</span>
+                <span id="metric_usaha_omzet" class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight block mt-1">
                     Rp <?= number_format($omsetBulanan, 0, ',', '.') ?>
                 </span>
-                <span class="text-[11px] text-slate-500 mt-1 block">Validasi mutasi rekening & nota riil</span>
+                <span class="text-[11px] text-slate-500 mt-1 block">Gabungan hari ramai, biasa, dan sepi</span>
             </div>
-        </div>
 
-        <!-- Card 2: Laba Usaha -->
-        <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/90 flex flex-col justify-between shadow-2xs hover:border-blue-300 transition">
-            <div class="flex items-center justify-between mb-2">
+            <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/90 flex flex-col justify-between shadow-2xs">
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">LABA USAHA (OPERASIONAL)</span>
-                <span class="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                </span>
-            </div>
-            <div>
-                <span id="card_lap_laba_usaha" class="text-xl sm:text-2xl font-black text-blue-700 tracking-tight block">
+                <span id="metric_usaha_laba_usaha" class="text-xl sm:text-2xl font-black text-blue-700 tracking-tight block mt-1">
                     Rp <?= number_format($labaUsaha, 0, ',', '.') ?>
                 </span>
-                <span class="text-[11px] text-slate-500 mt-1 block">Laba Kotor - Biaya Operasional</span>
+                <span class="text-[11px] text-slate-500 mt-1 block">Laba kotor dikurangi biaya operasional</span>
             </div>
-        </div>
 
-        <!-- Card 3: Laba Bersih / Sisa Penghasilan -->
-        <div class="p-4 bg-blue-600 text-white rounded-2xl flex flex-col justify-between shadow-xs">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-[10px] font-bold text-blue-200 uppercase tracking-wider">LABA BERSIH / SISA PENGHASILAN</span>
-                <span class="w-6 h-6 rounded-lg bg-white/20 text-white flex items-center justify-center">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+            <div class="p-4 bg-blue-600 text-white rounded-2xl flex flex-col justify-between shadow-xs">
+                <span class="text-[10px] font-bold text-blue-200 uppercase tracking-wider">SISA PENGHASILAN (BERSIH)</span>
+                <span id="metric_usaha_sisa" class="text-xl sm:text-2xl font-black text-white tracking-tight block mt-1">
+                    Rp <?= number_format($labaBersihSisaPenghasilanUsaha, 0, ',', '.') ?>
                 </span>
-            </div>
-            <div>
-                <span id="card_lap_surplus" class="text-xl sm:text-2xl font-black text-white tracking-tight block">
-                    Rp <?= number_format($labaBersihSisaPenghasilan, 0, ',', '.') ?>
-                </span>
-                <span id="card_lap_dsr" class="text-[11px] text-blue-100 mt-1 block">
-                    Dana untuk membayar angsuran (DSR <?= $dsrPersen ?>%)
-                </span>
+                <span class="text-[11px] text-blue-100 mt-1 block">Dana yang bisa dipakai untuk membayar angsuran</span>
             </div>
         </div>
-    </div>
 
-    <!-- =========================================================================
-         3. SUB-TAB NAVIGATION PILLS (SESUAI CATATAN & FOTO)
-    ========================================================================== -->
-    <div class="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/80 mb-6">
-        <button type="button" onclick="gantiSubTabLaporan('subtab-labarugi')" id="btn-subtab-labarugi" class="subtab-lap-btn px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 bg-white text-blue-700 shadow-2xs border border-slate-200/60">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-            <span>1. Laba Rugi Sederhana</span>
-        </button>
-        <button type="button" onclick="gantiSubTabLaporan('subtab-neraca')" id="btn-subtab-neraca" class="subtab-lap-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
-            <span>2. Neraca Sederhana</span>
-        </button>
-        <button type="button" onclick="gantiSubTabLaporan('subtab-aruskas')" id="btn-subtab-aruskas" class="subtab-lap-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span>3. Arus Kas Sederhana</span>
-        </button>
-        <button type="button" onclick="gantiSubTabLaporan('subtab-perubahanmodal')" id="btn-subtab-perubahanmodal" class="subtab-lap-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-            <span>4. Perubahan Modal</span>
-        </button>
-        <button type="button" onclick="gantiSubTabLaporan('subtab-calk')" id="btn-subtab-calk" class="subtab-lap-btn px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            <span>5. Karakteristik & CALK</span>
-        </button>
-    </div>
-
-    <!-- =========================================================================
-         4. SUB-TAB 1: LAPORAN LABA RUGI SEDERHANA (PERSIS SESUAI FOTO)
-    ========================================================================== -->
-    <div id="subtab-labarugi" class="subtab-lap-content space-y-5">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
-            <div>
-                <h4 class="text-sm font-extrabold text-slate-800 tracking-wide uppercase">1. LAPORAN LABA RUGI SEDERHANA</h4>
-                <p class="text-[11px] text-slate-500">Menunjukkan berapa keuntungan usaha per bulan (Periode: Per Bulan <?= $tahunPeriode ?>)</p>
-            </div>
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-2xs self-start sm:self-auto">
-                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                <span>Validasi Mutasi Bank & Observasi</span>
-            </span>
-        </div>
-
-        <!-- Tabel Laba Rugi Sederhana Sesuai Format Foto -->
-        <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
-            <table class="w-full text-left text-xs">
-                <thead>
-                    <tr class="bg-blue-50/70 border-b border-blue-100 text-blue-900 font-bold uppercase text-[10px] tracking-wider">
-                        <th class="py-3 px-4 w-52 sm:w-64">KOMPONEN</th>
-                        <th class="py-3 px-4 hidden md:table-cell">KETERANGAN</th>
-                        <th class="py-3 px-4 text-right">NOMINAL (IDR)</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 bg-white">
-                    <!-- Penjualan / omzet -->
-                    <tr class="hover:bg-slate-50/60 transition">
-                        <td class="py-3 px-4 font-bold text-slate-800">
-                            Penjualan / omzet
-                        </td>
-                        <td class="py-3 px-4 text-slate-500 hidden md:table-cell">
-                            Total pendapatan usaha (rata-rata hari ramai, biasa, sepi)
-                        </td>
-                        <td class="py-3 px-4 text-right font-bold text-slate-800" id="lap_lr_omzet">
-                            Rp <?= number_format($omsetBulanan, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-
-                    <!-- (-) HPP -->
-                    <tr class="hover:bg-slate-50/60 transition">
-                        <td class="py-3 px-4 font-medium text-rose-700">
-                            (-) HPP
-                        </td>
-                        <td class="py-3 px-4 text-slate-500 hidden md:table-cell">
-                            Biaya membeli atau memproduksi barang dagang
-                        </td>
-                        <td class="py-3 px-4 text-right font-medium text-rose-600" id="lap_lr_hpp">
-                            (Rp <?= number_format($hppNominal, 0, ',', '.') ?>)
-                        </td>
-                    </tr>
-
-                    <!-- = Laba kotor -->
-                    <tr class="bg-blue-50/30 font-bold text-blue-950 border-t border-b border-blue-100">
-                        <td class="py-2.5 px-4 font-extrabold text-blue-900">
-                            = Laba kotor
-                        </td>
-                        <td class="py-2.5 px-4 text-slate-600 hidden md:table-cell">
-                            Penjualan dikurangi HPP
-                        </td>
-                        <td class="py-2.5 px-4 text-right font-black text-blue-700" id="lap_lr_laba_kotor">
-                            Rp <?= number_format($labaKotor, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-
-                    <!-- (-) Biaya operasional -->
-                    <tr class="hover:bg-slate-50/60 transition">
-                        <td class="py-3 px-4 font-medium text-rose-700">
-                            (-) Biaya operasional
-                        </td>
-                        <td class="py-3 px-4 text-slate-500 hidden md:table-cell">
-                            Sewa, listrik, gaji karyawan, transport, dll.
-                        </td>
-                        <td class="py-3 px-4 text-right font-medium text-rose-600" id="lap_lr_operasional">
-                            (Rp <?= number_format($nomBiayaOperasional, 0, ',', '.') ?>)
-                        </td>
-                    </tr>
-
-                    <!-- = Laba usaha -->
-                    <tr class="bg-slate-100/70 font-bold text-slate-900 border-t border-b border-slate-200">
-                        <td class="py-2.5 px-4 font-extrabold text-slate-800">
-                            = Laba usaha
-                        </td>
-                        <td class="py-2.5 px-4 text-slate-600 hidden md:table-cell">
-                            Keuntungan dari kegiatan usaha murni
-                        </td>
-                        <td class="py-2.5 px-4 text-right font-black text-slate-900" id="lap_lr_laba_usaha">
-                            Rp <?= number_format($labaUsaha, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-
-                    <!-- (+) Pendapatan lain -->
-                    <tr class="hover:bg-slate-50/60 transition">
-                        <td class="py-3 px-4 font-medium text-emerald-700">
-                            (+) Pendapatan lain
-                        </td>
-                        <td class="py-3 px-4 text-slate-500 hidden md:table-cell">
-                            Penghasilan di luar usaha (gaji pasangan, sewa, dividen, dll.)
-                        </td>
-                        <td class="py-3 px-4 text-right font-medium text-emerald-600" id="lap_lr_pendapatan_lain">
-                            Rp <?= number_format($nomPendapatanLain, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-
-                    <!-- (-) Pengeluaran rumah tangga (prive) -->
-                    <tr class="hover:bg-slate-50/60 transition">
-                        <td class="py-3 px-4 font-medium text-rose-700">
-                            (-) Pengeluaran rumah tangga (prive)
-                        </td>
-                        <td class="py-3 px-4 text-slate-500 hidden md:table-cell">
-                            Biaya hidup keluarga debitur (dipisahkan dari biaya usaha)
-                        </td>
-                        <td class="py-3 px-4 text-right font-medium text-rose-600" id="lap_lr_pengeluaran_rt">
-                            (Rp <?= number_format($nomPengeluaranRT, 0, ',', '.') ?>)
-                        </td>
-                    </tr>
-
-                    <!-- = Laba bersih / sisa penghasilan -->
-                    <tr class="bg-emerald-50/80 border-t-2 border-emerald-300">
-                        <td class="py-3.5 px-4">
-                            <div class="font-black text-emerald-950 uppercase tracking-wide flex items-center gap-1.5">
-                                <span class="text-emerald-700">★</span>
-                                <span>= Laba bersih / sisa penghasilan</span>
-                            </div>
-                        </td>
-                        <td class="py-3.5 px-4 text-emerald-800 text-[11px] font-semibold hidden md:table-cell">
-                            Dana yang bisa dipakai untuk membayar angsuran
-                        </td>
-                        <td class="py-3.5 px-4 text-right font-black text-emerald-800 text-sm sm:text-base" id="lap_lr_laba_bersih">
-                            Rp <?= number_format($labaBersihSisaPenghasilan, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-
-                    <!-- Pengujian Angsuran Berjalan -->
-                    <tr class="bg-slate-50/80 border-t border-slate-200">
-                        <td class="py-2.5 px-4 font-medium text-slate-600 pl-8">
-                            (-) Cicilan Berjalan (SLIK / Bank Lain)
-                        </td>
-                        <td class="py-2.5 px-4 text-slate-400 text-[11px] hidden md:table-cell">
-                            Komitmen angsuran pinjaman berjalan saat ini
-                        </td>
-                        <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="lap_lr_cicilan_berjalan">
-                            (Rp <?= number_format($totalCicilanSlik, 0, ',', '.') ?>)
-                        </td>
-                    </tr>
-                    <tr class="bg-slate-100 font-extrabold text-slate-800">
-                        <td class="py-2.5 px-4 pl-8 uppercase text-[11px]">
-                            = Sisa Kas Bebas (Buffer Angsuran Baru)
-                        </td>
-                        <td class="py-2.5 px-4 text-slate-500 text-[11px] hidden md:table-cell">
-                            Kapasitas maksimal untuk angsuran pinjaman yang diajukan
-                        </td>
-                        <td class="py-2.5 px-4 text-right font-black text-blue-700" id="lap_lr_sisa_kas_bebas">
-                            Rp <?= number_format($surplusKasBebas, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Box Verifikasi Otomatis Kelayakan Kredit -->
-        <div class="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-200 flex items-start gap-3.5 shadow-2xs">
-            <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center justify-between gap-2">
-                    <div class="text-xs font-bold text-emerald-950 flex items-center gap-2">
-                        <span>Verifikasi Analisa Laba Rugi Perorangan</span>
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    </div>
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-700 text-white uppercase tracking-wider shadow-2xs">
-                        Layak Membayar Angsuran
-                    </span>
+        <!-- 1. LABA RUGI SEDERHANA PER BULAN (TIPE USAHA) -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between pb-1">
+                <div>
+                    <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">1. LABA RUGI SEDERHANA PER BULAN</h4>
+                    <p class="text-[11px] text-slate-500">Penjualan dipecah per hari ramai, biasa, dan sepi &bull; Periode Bulanan <?= $tahunPeriode ?></p>
                 </div>
-                <p class="text-[11px] text-emerald-900 mt-1 leading-relaxed">
-                    Sisa penghasilan bebas tercatat <strong class="font-extrabold" id="box_lap_laba_bersih">Rp <?= number_format($labaBersihSisaPenghasilan, 0, ',', '.') ?></strong> per bulan. 
-                    Setelah dikurangi cicilan berjalan, tersedia buffer kas bebas <strong id="box_lap_buffer">Rp <?= number_format($surplusKasBebas, 0, ',', '.') ?></strong> (DSR <strong id="box_lap_dsr"><?= $dsrPersen ?>%</strong>, di bawah batas maksimal reguler 40%).
-                </p>
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                    Format Usaha Perorangan
+                </span>
             </div>
-        </div>
-    </div>
 
-    <!-- =========================================================================
-         5. SUB-TAB 2: NERACA SEDERHANA (DAFTAR ASET DAN UTANG)
-    ========================================================================== -->
-    <div id="subtab-neraca" class="subtab-lap-content space-y-5 hidden">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
-            <div>
-                <h4 class="text-sm font-extrabold text-slate-800 tracking-wide uppercase">2. NERACA SEDERHANA (DAFTAR ASET DAN UTANG)</h4>
-                <p class="text-[11px] text-slate-500">Menunjukkan kekayaan debitur pada satu waktu &bull; <strong>Modal Bersih = Total Aset - Total Utang</strong></p>
-            </div>
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 shadow-2xs self-start sm:self-auto">
-                <span>Posisi Keuangan Perorangan</span>
-            </span>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            
-            <!-- Kolom Kiri: DAFTAR ASET -->
             <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
-                <div class="bg-blue-50/80 px-4 py-3 border-b border-blue-100 flex items-center justify-between">
-                    <span class="font-extrabold text-xs text-blue-900 uppercase tracking-wider flex items-center gap-2">
-                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                        ASET (HARTA DEBITUR)
-                    </span>
-                    <span class="text-[10px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded border border-blue-200">Kekayaan</span>
-                </div>
-                <table class="w-full text-left text-xs divide-y divide-slate-100">
-                    <tbody class="divide-y divide-slate-100">
-                        <!-- Sub-header Aset Lancar -->
-                        <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
-                            <td colspan="2" class="py-2 px-4 tracking-wider">A. ASET LANCAR</td>
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="bg-blue-50/70 border-b border-blue-100 text-blue-900 font-bold uppercase text-[10px] tracking-wider">
+                            <th class="py-3 px-4 w-60">KOMPONEN</th>
+                            <th class="py-3 px-4 hidden md:table-cell">KETERANGAN & RINCIAN HITUNGAN</th>
+                            <th class="py-3 px-4 text-right">NOMINAL (IDR)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white">
+                        <!-- Penjualan dipecah 3 skenario -->
+                        <tr class="bg-slate-50/50">
+                            <td class="py-2.5 px-4 font-bold text-slate-800">Penjualan / Omzet:</td>
+                            <td class="py-2.5 px-4 text-slate-500 text-[11px] hidden md:table-cell">Rincian estimasi hari ramai, biasa, dan sepi:</td>
+                            <td class="py-2.5 px-4 text-right font-bold text-slate-800"></td>
                         </tr>
                         <tr>
-                            <td class="py-2.5 px-4 text-slate-700">
-                                <span class="font-semibold block">Kas (Uang Tunai & Tabungan Bank)</span>
-                                <span class="text-[10px] text-slate-400">Saldo likuid verifikasi mutasi rekening koran</span>
-                            </td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="neraca_kas">
-                                Rp <?= number_format($kasLancar, 0, ',', '.') ?>
-                            </td>
+                            <td class="py-2 px-4 pl-8 text-slate-700">&bull; Penjualan Hari Ramai</td>
+                            <td class="py-2 px-4 text-slate-500 hidden md:table-cell">Weekend / awal bulan / tanggal gajian</td>
+                            <td class="py-2 px-4 text-right font-medium text-slate-800" id="row_usaha_ramai">Rp <?= number_format($omzetRamai, 0, ',', '.') ?></td>
                         </tr>
                         <tr>
-                            <td class="py-2.5 px-4 text-slate-700">
-                                <span class="font-semibold block">Piutang Dagang / Usaha</span>
-                                <span class="text-[10px] text-slate-400">Tagihan berjalan kepada pelanggan lancar</span>
-                            </td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="neraca_piutang">
-                                Rp <?= number_format($piutangDagang, 0, ',', '.') ?>
-                            </td>
+                            <td class="py-2 px-4 pl-8 text-slate-700">&bull; Penjualan Hari Biasa</td>
+                            <td class="py-2 px-4 text-slate-500 hidden md:table-cell">Hari kerja reguler (Senin - Kamis)</td>
+                            <td class="py-2 px-4 text-right font-medium text-slate-800" id="row_usaha_biasa">Rp <?= number_format($omzetBiasa, 0, ',', '.') ?></td>
                         </tr>
                         <tr>
-                            <td class="py-2.5 px-4 text-slate-700">
-                                <span class="font-semibold block">Persediaan (Stok Barang Dagang)</span>
-                                <span class="text-[10px] text-slate-400">Nilai persediaan barang jadi atau bahan baku</span>
-                            </td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="neraca_persediaan">
-                                Rp <?= number_format($persediaanStok, 0, ',', '.') ?>
-                            </td>
+                            <td class="py-2 px-4 pl-8 text-slate-700">&bull; Penjualan Hari Sepi</td>
+                            <td class="py-2 px-4 text-slate-500 hidden md:table-cell">Hari sepi / pasca liburan</td>
+                            <td class="py-2 px-4 text-right font-medium text-slate-800" id="row_usaha_sepi">Rp <?= number_format($omzetSepi, 0, ',', '.') ?></td>
                         </tr>
                         <tr class="bg-blue-50/40 font-bold text-blue-900">
-                            <td class="py-2 px-4 text-[11px]">Subtotal Aset Lancar</td>
-                            <td class="py-2 px-4 text-right font-bold" id="neraca_sub_lancar">
-                                Rp <?= number_format($totalAsetLancar, 0, ',', '.') ?>
+                            <td class="py-2.5 px-4">Total Penjualan / Omzet</td>
+                            <td class="py-2.5 px-4 text-slate-600 text-[11px] hidden md:table-cell">Total pendapatan usaha per bulan</td>
+                            <td class="py-2.5 px-4 text-right font-black text-blue-700" id="row_usaha_tot_omzet">Rp <?= number_format($omsetBulanan, 0, ',', '.') ?></td>
+                        </tr>
+
+                        <!-- HPP -->
+                        <tr>
+                            <td class="py-2.5 px-4 font-semibold text-rose-700">(-) HPP</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Biaya membeli atau memproduksi barang dagang (<?= $hppPersen ?>%)</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_usaha_hpp">(Rp <?= number_format($hppNominal, 0, ',', '.') ?>)</td>
+                        </tr>
+
+                        <!-- Laba Kotor -->
+                        <tr class="bg-blue-50/30 font-bold text-blue-950">
+                            <td class="py-2.5 px-4 font-extrabold text-blue-900">= Laba kotor</td>
+                            <td class="py-2.5 px-4 text-slate-600 hidden md:table-cell">Penjualan dikurangi HPP</td>
+                            <td class="py-2.5 px-4 text-right font-black text-blue-700" id="row_usaha_laba_kotor">Rp <?= number_format($labaKotor, 0, ',', '.') ?></td>
+                        </tr>
+
+                        <!-- Biaya Operasional -->
+                        <tr>
+                            <td class="py-2.5 px-4 font-semibold text-rose-700">(-) Biaya operasional</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Sewa tempat, listrik, gaji karyawan, transport, retribusi</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_usaha_operasional">(Rp <?= number_format($nomBiayaOperasional, 0, ',', '.') ?>)</td>
+                        </tr>
+
+                        <!-- Laba Usaha -->
+                        <tr class="bg-slate-100/70 font-bold text-slate-900">
+                            <td class="py-2.5 px-4 font-extrabold text-slate-800">= Laba usaha</td>
+                            <td class="py-2.5 px-4 text-slate-600 hidden md:table-cell">Keuntungan murni dari kegiatan usaha pokok</td>
+                            <td class="py-2.5 px-4 text-right font-black text-slate-900" id="row_usaha_laba_usaha">Rp <?= number_format($labaUsaha, 0, ',', '.') ?></td>
+                        </tr>
+
+                        <!-- Pendapatan Lain -->
+                        <tr>
+                            <td class="py-2.5 px-4 font-semibold text-emerald-700">(+) Pendapatan lain</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Penghasilan di luar usaha (gaji pasangan, sewa, dividen)</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-emerald-600" id="row_usaha_pendapatan_lain">Rp <?= number_format($nomPendapatanLain, 0, ',', '.') ?></td>
+                        </tr>
+
+                        <!-- Prive RT -->
+                        <tr>
+                            <td class="py-2.5 px-4 font-semibold text-rose-700">(-) Prive (pengeluaran rumah tangga)</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Biaya hidup keluarga debitur (dipisahkan penuh dari kas usaha)</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_usaha_prive">(Rp <?= number_format($nomPengeluaranRT, 0, ',', '.') ?>)</td>
+                        </tr>
+
+                        <!-- Sisa Penghasilan -->
+                        <tr class="bg-emerald-50/80 border-t-2 border-emerald-300">
+                            <td class="py-3 px-4 font-black text-emerald-950 uppercase">
+                                = Sisa penghasilan
+                            </td>
+                            <td class="py-3 px-4 text-emerald-800 font-semibold text-[11px] hidden md:table-cell">
+                                Dana yang bisa dipakai untuk membayar angsuran
+                            </td>
+                            <td class="py-3 px-4 text-right font-black text-emerald-800 text-sm sm:text-base" id="row_usaha_sisa_penghasilan">
+                                Rp <?= number_format($labaBersihSisaPenghasilanUsaha, 0, ',', '.') ?>
                             </td>
                         </tr>
 
-                        <!-- Sub-header Aset Tetap -->
-                        <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
-                            <td colspan="2" class="py-2 px-4 tracking-wider">B. ASET TETAP</td>
+                        <!-- Pengujian Cicilan Berjalan -->
+                        <tr class="bg-slate-50/70 border-t border-slate-200 text-slate-600">
+                            <td class="py-2 px-4 pl-8">(-) Cicilan utang berjalan (Bank/SLIK)</td>
+                            <td class="py-2 px-4 text-slate-400 text-[11px] hidden md:table-cell">Komitmen angsuran berjalan saat ini</td>
+                            <td class="py-2 px-4 text-right font-medium text-rose-600" id="row_usaha_cicilan">(Rp <?= number_format($totalCicilanSlik, 0, ',', '.') ?>)</td>
                         </tr>
-                        <tr>
-                            <td class="py-2.5 px-4 text-slate-700">
-                                <span class="font-semibold block">Peralatan Usaha</span>
-                                <span class="text-[10px] text-slate-400">Mesin, etalase, perlengkapan operasional</span>
-                            </td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="neraca_peralatan">
-                                Rp <?= number_format($peralatanUsaha, 0, ',', '.') ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="py-2.5 px-4 text-slate-700">
-                                <span class="font-semibold block">Kendaraan Usaha / Pribadi</span>
-                                <span class="text-[10px] text-slate-400">Kendaraan operasional distribusi & transportasi</span>
-                            </td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="neraca_kendaraan">
-                                Rp <?= number_format($kendaraanUsaha, 0, ',', '.') ?>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="py-2.5 px-4 text-slate-700">
-                                <span class="font-semibold block">Tanah atau Bangunan (Agunan Jaminan)</span>
-                                <span class="text-[10px] text-slate-400">Nilai pasar taksasi sertifikat properti</span>
-                            </td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="neraca_tanah_bangunan">
-                                Rp <?= number_format($tanahBangunan, 0, ',', '.') ?>
-                            </td>
-                        </tr>
-                        <tr class="bg-blue-50/40 font-bold text-blue-900">
-                            <td class="py-2 px-4 text-[11px]">Subtotal Aset Tetap</td>
-                            <td class="py-2 px-4 text-right font-bold" id="neraca_sub_tetap">
-                                Rp <?= number_format($totalAsetTetap, 0, ',', '.') ?>
-                            </td>
-                        </tr>
-
-                        <!-- TOTAL ASET -->
-                        <tr class="bg-blue-600 text-white font-extrabold text-sm">
-                            <td class="py-3 px-4 uppercase tracking-wider">TOTAL ASET</td>
-                            <td class="py-3 px-4 text-right text-base font-black" id="neraca_total_aset">
-                                Rp <?= number_format($totalAset, 0, ',', '.') ?>
-                            </td>
+                        <tr class="bg-slate-100 font-extrabold text-slate-800">
+                            <td class="py-2.5 px-4 pl-8 uppercase text-[11px]">= Sisa Kas Bebas (Buffer Angsuran Baru)</td>
+                            <td class="py-2.5 px-4 text-slate-500 text-[11px] hidden md:table-cell">Kapasitas aman untuk angsuran pinjaman baru</td>
+                            <td class="py-2.5 px-4 text-right font-black text-blue-700" id="row_usaha_buffer">Rp <?= number_format($sisaKasBebasUsaha, 0, ',', '.') ?></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+        </div>
 
-            <!-- Kolom Kanan: DAFTAR UTANG & MODAL BERSIH -->
-            <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
-                <div class="bg-indigo-50/80 px-4 py-3 border-b border-indigo-100 flex items-center justify-between">
-                    <span class="font-extrabold text-xs text-indigo-900 uppercase tracking-wider flex items-center gap-2">
-                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                        UTANG & MODAL BERSIH
-                    </span>
-                    <span class="text-[10px] font-bold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-200">Kewajiban & Ekuitas</span>
+        <!-- 2. DAFTAR HARTA DAN UTANG (TIPE USAHA) -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between pb-1">
+                <div>
+                    <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">2. DAFTAR HARTA DAN UTANG (USAHA & PRIBADI)</h4>
+                    <p class="text-[11px] text-slate-500">Aset Usaha + Aset Pribadi dikurangi Total Utang = <strong>Kekayaan Bersih</strong></p>
                 </div>
-                <table class="w-full text-left text-xs divide-y divide-slate-100">
-                    <tbody class="divide-y divide-slate-100">
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    Neraca Perorangan Usaha
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <!-- Sisi Kiri: DAFTAR HARTA (ASET USAHA + ASET PRIBADI) -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
+                    <div class="bg-blue-50/80 px-4 py-3 border-b border-blue-100 flex items-center justify-between">
+                        <span class="font-extrabold text-xs text-blue-900 uppercase tracking-wider">A. DAFTAR HARTA (ASET)</span>
+                        <span class="text-[10px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded border border-blue-200">Harta</span>
+                    </div>
+                    <table class="w-full text-left text-xs divide-y divide-slate-100">
+                        <tbody class="divide-y divide-slate-100">
+                            <!-- Aset Usaha -->
+                            <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
+                                <td colspan="2" class="py-2 px-4 tracking-wider">1. ASET USAHA</td>
+                            </tr>
+                            <tr><td class="py-2 px-4">&bull; Kas usaha</td><td class="py-2 px-4 text-right font-medium" id="ast_usaha_kas">Rp <?= number_format($kasUsaha, 0, ',', '.') ?></td></tr>
+                            <tr><td class="py-2 px-4">&bull; Piutang usaha</td><td class="py-2 px-4 text-right font-medium" id="ast_usaha_piutang">Rp <?= number_format($piutangUsaha, 0, ',', '.') ?></td></tr>
+                            <tr><td class="py-2 px-4">&bull; Persediaan (stok barang)</td><td class="py-2 px-4 text-right font-medium" id="ast_usaha_stok">Rp <?= number_format($persediaanStok, 0, ',', '.') ?></td></tr>
+                            <tr><td class="py-2 px-4">&bull; Peralatan usaha</td><td class="py-2 px-4 text-right font-medium" id="ast_usaha_alat">Rp <?= number_format($peralatanUsaha, 0, ',', '.') ?></td></tr>
+                            <tr class="bg-blue-50/40 font-bold text-blue-900">
+                                <td class="py-2 px-4">Subtotal Aset Usaha</td>
+                                <td class="py-2 px-4 text-right font-bold" id="ast_usaha_sub">Rp <?= number_format($totalAsetUsaha, 0, ',', '.') ?></td>
+                            </tr>
+
+                            <!-- Aset Pribadi -->
+                            <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
+                                <td colspan="2" class="py-2 px-4 tracking-wider">2. ASET PRIBADI</td>
+                            </tr>
+                            <tr><td class="py-2 px-4">&bull; Tabungan pribadi</td><td class="py-2 px-4 text-right font-medium" id="ast_pribadi_tabungan">Rp <?= number_format($tabunganPribadi, 0, ',', '.') ?></td></tr>
+                            <tr><td class="py-2 px-4">&bull; Tanah</td><td class="py-2 px-4 text-right font-medium" id="ast_pribadi_tanah">Rp <?= number_format($tanahPribadi, 0, ',', '.') ?></td></tr>
+                            <tr><td class="py-2 px-4">&bull; Bangunan</td><td class="py-2 px-4 text-right font-medium" id="ast_pribadi_bangunan">Rp <?= number_format($bangunanPribadi, 0, ',', '.') ?></td></tr>
+                            <tr><td class="py-2 px-4">&bull; Kendaraan</td><td class="py-2 px-4 text-right font-medium" id="ast_pribadi_kendaraan">Rp <?= number_format($kendaraanPribadi, 0, ',', '.') ?></td></tr>
+                            <tr class="bg-blue-50/40 font-bold text-blue-900">
+                                <td class="py-2 px-4">Subtotal Aset Pribadi</td>
+                                <td class="py-2 px-4 text-right font-bold" id="ast_pribadi_sub">Rp <?= number_format($totalAsetPribadi, 0, ',', '.') ?></td>
+                            </tr>
+
+                            <!-- Total Harta -->
+                            <tr class="bg-blue-600 text-white font-extrabold text-sm">
+                                <td class="py-3 px-4 uppercase">TOTAL HARTA (ASET)</td>
+                                <td class="py-3 px-4 text-right text-base font-black" id="ast_total_harta_usaha">Rp <?= number_format($totalHartaUsaha, 0, ',', '.') ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Sisi Kanan: DAFTAR UTANG & KEKAYAAN BERSIH -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
+                    <div class="bg-indigo-50/80 px-4 py-3 border-b border-indigo-100 flex items-center justify-between">
+                        <span class="font-extrabold text-xs text-indigo-900 uppercase tracking-wider">B. DAFTAR UTANG & KEKAYAAN BERSIH</span>
+                        <span class="text-[10px] font-bold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-200">Kewajiban & Ekuitas</span>
+                    </div>
+                    <table class="w-full text-left text-xs divide-y divide-slate-100">
+                        <tbody class="divide-y divide-slate-100">
+                            <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
+                                <td colspan="2" class="py-2 px-4 tracking-wider">1. DAFTAR UTANG</td>
+                            </tr>
+                            <tr><td class="py-2.5 px-4">&bull; Utang dagang (supplier)</td><td class="py-2.5 px-4 text-right font-medium" id="utang_dagang">Rp <?= number_format($utangDagang, 0, ',', '.') ?></td></tr>
+                            <tr><td class="py-2.5 px-4">&bull; Utang bank (SLIK berjalan)</td><td class="py-2.5 px-4 text-right font-medium" id="utang_bank">Rp <?= number_format($utangBank, 0, ',', '.') ?></td></tr>
+                            <tr><td class="py-2.5 px-4">&bull; Utang koperasi</td><td class="py-2.5 px-4 text-right font-medium" id="utang_koperasi">Rp <?= number_format($utangKoperasi, 0, ',', '.') ?></td></tr>
+                            <tr><td class="py-2.5 px-4">&bull; Pinjaman online (Pinjol/P2P)</td><td class="py-2.5 px-4 text-right font-medium" id="utang_pinjol">Rp <?= number_format($utangPinjol, 0, ',', '.') ?></td></tr>
+                            <tr class="bg-rose-50/50 font-bold text-rose-900">
+                                <td class="py-2 px-4">Total Utang</td>
+                                <td class="py-2 px-4 text-right font-bold text-rose-700" id="utang_total_usaha">Rp <?= number_format($totalUtangUsaha, 0, ',', '.') ?></td>
+                            </tr>
+
+                            <!-- Hasil Kekayaan Bersih -->
+                            <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
+                                <td colspan="2" class="py-2 px-4 tracking-wider">2. HASIL KEKAYAAN BERSIH</td>
+                            </tr>
+                            <tr class="bg-indigo-50/50">
+                                <td class="py-3.5 px-4">
+                                    <span class="font-extrabold text-indigo-900 block text-xs uppercase">Kekayaan Bersih</span>
+                                    <span class="text-[10px] text-slate-500">Total Harta dikurangi Total Utang</span>
+                                </td>
+                                <td class="py-3.5 px-4 text-right font-black text-indigo-700 text-sm sm:text-base" id="kekayaan_bersih_usaha">
+                                    Rp <?= number_format($kekayaanBersihUsaha, 0, ',', '.') ?>
+                                </td>
+                            </tr>
+                            <tr class="bg-indigo-900 text-white font-extrabold text-sm">
+                                <td class="py-3 px-4 uppercase">TOTAL UTANG + KEKAYAAN BERSIH</td>
+                                <td class="py-3 px-4 text-right text-base font-black text-emerald-300" id="pasiva_total_usaha">Rp <?= number_format($totalHartaUsaha, 0, ',', '.') ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =========================================================================
+         BAGIAN B: LAPORAN KEUANGAN PERORANGAN YANG PUNYA GAJI (KARYAWAN/PNS/PENSIUN)
+         *TIDAK ADA OMZET, HPP, ATAU BIAYA OPERASIONAL USAHA!*
+    ========================================================================== -->
+    <div id="sectionPeroranganGaji" class="<?= !$isKaryawanPns ? 'hidden' : '' ?> space-y-6">
+        
+        <!-- Highlight Metrics Tipe Gaji -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/90 flex flex-col justify-between shadow-2xs">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">TOTAL PENGHASILAN BULANAN</span>
+                <span id="metric_gaji_total" class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight block mt-1">
+                    Rp <?= number_format($totalPenghasilanGaji, 0, ',', '.') ?>
+                </span>
+                <span class="text-[11px] text-slate-500 mt-1 block">Gaji pokok, tunjangan, dan tambahan</span>
+            </div>
+
+            <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/90 flex flex-col justify-between shadow-2xs">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">TOTAL PENGELUARAN BULANAN</span>
+                <span id="metric_gaji_pengeluaran" class="text-xl sm:text-2xl font-black text-rose-600 tracking-tight block mt-1">
+                    Rp <?= number_format($totalPengeluaranGaji, 0, ',', '.') ?>
+                </span>
+                <span class="text-[11px] text-slate-500 mt-1 block">Biaya hidup, pendidikan, dan cicilan</span>
+            </div>
+
+            <div class="p-4 bg-blue-600 text-white rounded-2xl flex flex-col justify-between shadow-xs">
+                <span class="text-[10px] font-bold text-blue-200 uppercase tracking-wider">SISA PENGHASILAN BEBAS</span>
+                <span id="metric_gaji_sisa" class="text-xl sm:text-2xl font-black text-white tracking-tight block mt-1">
+                    Rp <?= number_format($sisaPenghasilanGaji, 0, ',', '.') ?>
+                </span>
+                <span class="text-[11px] text-blue-100 mt-1 block">Kapasitas bayar angsuran kredit baru</span>
+            </div>
+        </div>
+
+        <!-- 1. LAPORAN PENGHASILAN DAN PENGELUARAN PER BULAN (TIPE GAJI) -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between pb-1">
+                <div>
+                    <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">1. LAPORAN PENGHASILAN DAN PENGELUARAN PER BULAN</h4>
+                    <p class="text-[11px] text-slate-500">Karyawan / PNS / Pensiunan (Tanpa Omzet, HPP, atau Biaya Operasional) &bull; Periode <?= $tahunPeriode ?></p>
+                </div>
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Format Penghasilan Gaji
+                </span>
+            </div>
+
+            <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="bg-blue-50/70 border-b border-blue-100 text-blue-900 font-bold uppercase text-[10px] tracking-wider">
+                            <th class="py-3 px-4 w-60">KOMPONEN KEUANGAN</th>
+                            <th class="py-3 px-4 hidden md:table-cell">KETERANGAN & BUKTI VERIFIKASI</th>
+                            <th class="py-3 px-4 text-right">JUMLAH (IDR)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white">
+                        <!-- PENGHASILAN -->
                         <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
-                            <td colspan="2" class="py-2 px-4 tracking-wider">A. DAFTAR UTANG (KEWAJIBAN)</td>
+                            <td colspan="3" class="py-2 px-4 tracking-wider text-blue-900">A. PENGHASILAN BULANAN</td>
                         </tr>
                         <tr>
-                            <td class="py-2.5 px-4 text-slate-700">
-                                <span class="font-semibold block">Utang Dagang (Supplier)</span>
-                                <span class="text-[10px] text-slate-400">Kewajiban tempo belanja stok barang dagang</span>
-                            </td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="neraca_utang_dagang">
-                                Rp <?= number_format($utangDagang, 0, ',', '.') ?>
-                            </td>
+                            <td class="py-2.5 px-4 font-semibold text-slate-800">Gaji Pokok</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Sesuai slip gaji resmi & verifikasi rekening payroll</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="row_gaji_pokok">Rp <?= number_format($gajiPokok, 0, ',', '.') ?></td>
                         </tr>
                         <tr>
-                            <td class="py-2.5 px-4 text-slate-700">
-                                <span class="font-semibold block">Utang Bank (SLIK Berjalan)</span>
-                                <span class="text-[10px] text-slate-400">Sisa baki debet pinjaman bank berjalan</span>
-                            </td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="neraca_utang_bank">
-                                Rp <?= number_format($utangBank, 0, ',', '.') ?>
-                            </td>
+                            <td class="py-2.5 px-4 font-semibold text-slate-800">Tunjangan Tetap</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Tunjangan jabatan, makan, transport rutin</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="row_gaji_tunjangan">Rp <?= number_format($tunjanganTetap, 0, ',', '.') ?></td>
                         </tr>
                         <tr>
-                            <td class="py-2.5 px-4 text-slate-700">
-                                <span class="font-semibold block">Utang Koperasi atau Pihak Lain</span>
-                                <span class="text-[10px] text-slate-400">Pinjaman koperasi, perorangan, atau leasing</span>
-                            </td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="neraca_utang_koperasi">
-                                Rp <?= number_format($utangKoperasiLain, 0, ',', '.') ?>
-                            </td>
+                            <td class="py-2.5 px-4 font-semibold text-slate-800">Penghasilan Tambahan</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Uang lembur rutin, insentif performa, atau freelance</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="row_gaji_tambahan">Rp <?= number_format($penghasilanTambahan, 0, ',', '.') ?></td>
                         </tr>
-                        <tr class="bg-rose-50/50 font-bold text-rose-900">
-                            <td class="py-2 px-4 text-[11px]">Total Utang</td>
-                            <td class="py-2 px-4 text-right font-bold text-rose-700" id="neraca_total_utang">
-                                Rp <?= number_format($totalUtang, 0, ',', '.') ?>
-                            </td>
+                        <tr>
+                            <td class="py-2.5 px-4 font-semibold text-slate-800">Penghasilan Pasangan</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Gaji/penghasilan suami/istri (bila didukung bukti slip/buku tabungan)</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="row_gaji_pasangan">Rp <?= number_format($penghasilanPasangan, 0, ',', '.') ?></td>
+                        </tr>
+                        <tr class="bg-blue-50/40 font-bold text-blue-900">
+                            <td class="py-2.5 px-4">Total Penghasilan</td>
+                            <td class="py-2.5 px-4 text-slate-600 text-[11px] hidden md:table-cell">Total inflow penghasilan keluarga per bulan</td>
+                            <td class="py-2.5 px-4 text-right font-black text-blue-700" id="row_gaji_tot_inflow">Rp <?= number_format($totalPenghasilanGaji, 0, ',', '.') ?></td>
                         </tr>
 
-                        <!-- Sub-header Modal Bersih -->
+                        <!-- PENGELUARAN -->
                         <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
-                            <td colspan="2" class="py-2 px-4 tracking-wider">B. MODAL BERSIH (EKUITAS DEBITUR)</td>
+                            <td colspan="3" class="py-2 px-4 tracking-wider text-rose-800">B. PENGELUARAN BULANAN</td>
                         </tr>
                         <tr>
-                            <td class="py-3 px-4 text-slate-700">
-                                <span class="font-bold text-indigo-900 block text-xs">Modal Bersih Debitur</span>
-                                <span class="text-[10px] text-slate-500">Total Aset (Rp <?= number_format($totalAset, 0, ',', '.') ?>) dikurangi Total Utang (Rp <?= number_format($totalUtang, 0, ',', '.') ?>)</span>
-                            </td>
-                            <td class="py-3 px-4 text-right font-black text-indigo-700 text-sm" id="neraca_modal_bersih">
-                                Rp <?= number_format($modalBersih, 0, ',', '.') ?>
-                            </td>
+                            <td class="py-2.5 px-4 font-semibold text-rose-700">Biaya Hidup</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Belanja dapur, konsumsi keluarga, dan kebutuhan harian</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_hidup">(Rp <?= number_format($biayaHidupGaji, 0, ',', '.') ?>)</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2.5 px-4 font-semibold text-rose-700">Biaya Pendidikan</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Uang sekolah, kuliah, buku, dan kursus anak</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_pendidikan">(Rp <?= number_format($biayaPendidikanGaji, 0, ',', '.') ?>)</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2.5 px-4 font-semibold text-rose-700">Biaya Lain-lain</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Listrik, air, telepon/kuota, bensin, dan pemeliharaan</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_lain">(Rp <?= number_format($biayaLainGaji, 0, ',', '.') ?>)</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2.5 px-4 font-semibold text-rose-700">Cicilan Berjalan</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">KPR, kredit kendaraan, atau pinjaman bank saat ini</td>
+                            <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_cicilan">(Rp <?= number_format($cicilanBerjalanGaji, 0, ',', '.') ?>)</td>
+                        </tr>
+                        <tr class="bg-rose-50/40 font-bold text-rose-900">
+                            <td class="py-2.5 px-4">Total Pengeluaran</td>
+                            <td class="py-2.5 px-4 text-slate-600 text-[11px] hidden md:table-cell">Total beban komitmen hidup dan angsuran</td>
+                            <td class="py-2.5 px-4 text-right font-black text-rose-700" id="row_gaji_tot_outflow">(Rp <?= number_format($totalPengeluaranGaji, 0, ',', '.') ?>)</td>
                         </tr>
 
-                        <!-- Keseimbangan: Total Utang + Modal Bersih = Total Aset -->
-                        <tr class="bg-indigo-900 text-white font-extrabold text-sm">
-                            <td class="py-3 px-4 uppercase tracking-wider">TOTAL UTANG + MODAL BERSIH</td>
-                            <td class="py-3 px-4 text-right text-base font-black text-emerald-300" id="neraca_total_pasiva">
-                                Rp <?= number_format($totalAset, 0, ',', '.') ?>
+                        <!-- SISA PENGHASILAN -->
+                        <tr class="bg-emerald-50/80 border-t-2 border-emerald-300">
+                            <td class="py-3 px-4 font-black text-emerald-950 uppercase">
+                                = Sisa Penghasilan
+                            </td>
+                            <td class="py-3 px-4 text-emerald-800 font-semibold text-[11px] hidden md:table-cell">
+                                Dana kapasitas bersih untuk membayar angsuran pembiayaan baru
+                            </td>
+                            <td class="py-3 px-4 text-right font-black text-emerald-800 text-sm sm:text-base" id="row_gaji_sisa_penghasilan">
+                                Rp <?= number_format($sisaPenghasilanGaji, 0, ',', '.') ?>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
 
-    <!-- =========================================================================
-         6. SUB-TAB 3: LAPORAN ARUS KAS SEDERHANA (UANG MASUK & KELUAR)
-    ========================================================================== -->
-    <div id="subtab-aruskas" class="subtab-lap-content space-y-5 hidden">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
-            <div>
-                <h4 class="text-sm font-extrabold text-slate-800 tracking-wide uppercase">3. LAPORAN ARUS KAS SEDERHANA</h4>
-                <p class="text-[11px] text-slate-500">Menunjukkan uang yang benar-benar masuk dan keluar setiap bulan</p>
-            </div>
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 shadow-2xs self-start sm:self-auto">
-                <span>Likuiditas Kas Riil</span>
-            </span>
-        </div>
-
-        <?php
-            // Perhitungan Arus Kas Sederhana
-            $kasMasukPenjualanTunai = round($omsetBulanan * 0.85); // 85% penjualan tunai
-            $kasMasukPelunasanPiutang = round($omsetBulanan * 0.15); // 15% pelunasan piutang tempo
-            $totalKasMasuk = $kasMasukPenjualanTunai + $kasMasukPelunasanPiutang + $nomPendapatanLain;
-
-            $kasKeluarBeliBarang = $hppNominal; // Pembelian barang dagang tunai
-            $kasKeluarOperasional = $nomBiayaOperasional; // Biaya sewa, listrik, karyawan
-            $kasKeluarCicilan = $totalCicilanSlik; // Cicilan pinjaman
-            $kasKeluarKeluarga = $nomPengeluaranRT; // Pengeluaran rumah tangga keluarga
-            $totalKasKeluar = $kasKeluarBeliBarang + $kasKeluarOperasional + $kasKeluarCicilan + $kasKeluarKeluarga;
-
-            $arusKasBersihBulanan = $totalKasMasuk - $totalKasKeluar;
-            $saldoKasAwal = $kasLancar;
-            $saldoKasAkhir = $saldoKasAwal + $arusKasBersihBulanan;
-        ?>
-
-        <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
-            <table class="w-full text-left text-xs">
-                <thead>
-                    <tr class="bg-blue-50/70 border-b border-blue-100 text-blue-900 font-bold uppercase text-[10px] tracking-wider">
-                        <th class="py-3 px-4 w-64">KOMPONEN ARUS KAS</th>
-                        <th class="py-3 px-4 hidden md:table-cell">RINCIAN SUMBER ALIRAN DANA</th>
-                        <th class="py-3 px-4 text-right">JUMLAH (IDR)</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 bg-white">
-                    <!-- KAS MASUK -->
-                    <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
-                        <td colspan="3" class="py-2 px-4 tracking-wider text-emerald-800">A. KAS MASUK (PENERIMAAN KAS RIIL)</td>
-                    </tr>
-                    <tr>
-                        <td class="py-2.5 px-4 font-semibold text-slate-800">Penjualan tunai</td>
-                        <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Penerimaan kas langsung dari pembeli harian</td>
-                        <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="ak_penjualan_tunai">
-                            Rp <?= number_format($kasMasukPenjualanTunai, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="py-2.5 px-4 font-semibold text-slate-800">Pelunasan piutang</td>
-                        <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Tagihan piutang dari pelanggan yang cair tunai</td>
-                        <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="ak_pelunasan_piutang">
-                            Rp <?= number_format($kasMasukPelunasanPiutang, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                    <?php if ($nomPendapatanLain > 0): ?>
-                    <tr>
-                        <td class="py-2.5 px-4 font-semibold text-slate-800">Pendapatan lain-lain</td>
-                        <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Gaji pasangan / sewa aset masuk ke kas</td>
-                        <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="ak_pendapatan_lain">
-                            Rp <?= number_format($nomPendapatanLain, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                    <?php endif; ?>
-                    <tr class="bg-emerald-50/40 font-bold text-emerald-900">
-                        <td class="py-2.5 px-4 text-[11px]">Total Kas Masuk</td>
-                        <td class="py-2.5 px-4 hidden md:table-cell"></td>
-                        <td class="py-2.5 px-4 text-right font-black text-emerald-700" id="ak_total_masuk">
-                            Rp <?= number_format($totalKasMasuk, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-
-                    <!-- KAS KELUAR -->
-                    <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
-                        <td colspan="3" class="py-2 px-4 tracking-wider text-rose-800">B. KAS KELUAR (PENGELUARAN KAS RIIL)</td>
-                    </tr>
-                    <tr>
-                        <td class="py-2.5 px-4 font-semibold text-slate-800">Pembelian barang</td>
-                        <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Belanja stok barang dagangan atau bahan baku tunai</td>
-                        <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="ak_beli_barang">
-                            (Rp <?= number_format($kasKeluarBeliBarang, 0, ',', '.') ?>)
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="py-2.5 px-4 font-semibold text-slate-800">Biaya operasional</td>
-                        <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Bayar sewa tempat, listrik, transport, gaji pegawai</td>
-                        <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="ak_operasional">
-                            (Rp <?= number_format($kasKeluarOperasional, 0, ',', '.') ?>)
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="py-2.5 px-4 font-semibold text-slate-800">Cicilan utang</td>
-                        <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Pembayaran angsuran kredit bank & koperasi berjalan</td>
-                        <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="ak_cicilan">
-                            (Rp <?= number_format($kasKeluarCicilan, 0, ',', '.') ?>)
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="py-2.5 px-4 font-semibold text-slate-800">Pengeluaran keluarga</td>
-                        <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Kebutuhan konsumsi, dapur, sekolah anak, rumah tangga</td>
-                        <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="ak_keluarga">
-                            (Rp <?= number_format($kasKeluarKeluarga, 0, ',', '.') ?>)
-                        </td>
-                    </tr>
-                    <tr class="bg-rose-50/40 font-bold text-rose-900">
-                        <td class="py-2.5 px-4 text-[11px]">Total Kas Keluar</td>
-                        <td class="py-2.5 px-4 hidden md:table-cell"></td>
-                        <td class="py-2.5 px-4 text-right font-black text-rose-700" id="ak_total_keluar">
-                            (Rp <?= number_format($totalKasKeluar, 0, ',', '.') ?>)
-                        </td>
-                    </tr>
-
-                    <!-- SALDO KAS AKHIR -->
-                    <tr class="bg-slate-100 font-bold text-slate-900 border-t border-slate-200">
-                        <td class="py-2.5 px-4">Arus Kas Bersih Bulanan</td>
-                        <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Selisih kas masuk dikurangi kas keluar</td>
-                        <td class="py-2.5 px-4 text-right font-black text-blue-700" id="ak_net_bulanan">
-                            Rp <?= number_format($arusKasBersihBulanan, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                    <tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-4 text-slate-600">Saldo Kas Awal Periode</td>
-                        <td class="py-2.5 px-4 text-slate-400 hidden md:table-cell">Saldo rekening bank & kas tunai awal</td>
-                        <td class="py-2.5 px-4 text-right font-medium text-slate-700" id="ak_saldo_awal">
-                            Rp <?= number_format($saldoKasAwal, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                    <tr class="bg-blue-600 text-white font-extrabold text-sm">
-                        <td class="py-3 px-4 uppercase tracking-wider">SALDO KAS AKHIR</td>
-                        <td class="py-3 px-4 text-blue-100 text-xs font-normal hidden md:table-cell">Uang riil yang tersedia di kas debitur pada akhir periode</td>
-                        <td class="py-3 px-4 text-right text-base font-black" id="ak_saldo_akhir">
-                            Rp <?= number_format($saldoKasAkhir, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Box Catatan Penting Analis Sesuai Catatan User -->
-        <div class="p-4 bg-amber-50/80 rounded-2xl border border-amber-200/90 flex items-start gap-3.5 shadow-2xs">
-            <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs font-black text-sm">
-                !
-            </div>
-            <div class="flex-1 min-w-0 text-xs">
-                <span class="font-bold text-amber-950 uppercase tracking-wide block mb-1">
-                    Catatan Penting Analis Mengenai Arus Kas:
+        <!-- 2. DAFTAR HARTA DAN UTANG (TIPE GAJI - TANPA ASET USAHA!) -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between pb-1">
+                <div>
+                    <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">2. DAFTAR HARTA DAN UTANG (PRIBADI)</h4>
+                    <p class="text-[11px] text-slate-500">Tanpa Aset Usaha &bull; Tabungan, Tanah, Bangunan, Kendaraan dikurangi Utang = <strong>Kekayaan Bersih</strong></p>
+                </div>
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    Neraca Pribadi Karyawan/PNS
                 </span>
-                <p class="text-amber-900 leading-relaxed">
-                    Laporan arus kas ini sangat penting karena <strong>usaha bisa tampak untung di laba rugi, tetapi kas tetap seret</strong>, misalnya karena banyak piutang pelanggan belum tertagih atau stok barang dagang menumpuk di gudang. Pada debitur ini, saldo kas akhir berada pada posisi positif sebesar <strong class="font-bold" id="box_ak_saldo_akhir">Rp <?= number_format($saldoKasAkhir, 0, ',', '.') ?></strong>, menunjukkan perputaran likuiditas terjaga sehat.
-                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                <!-- Sisi Kiri: HARTA PRIBADI (TANPA ASET USAHA) -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
+                    <div class="bg-blue-50/80 px-4 py-3 border-b border-blue-100 flex items-center justify-between">
+                        <span class="font-extrabold text-xs text-blue-900 uppercase tracking-wider">A. DAFTAR HARTA PRIBADI</span>
+                        <span class="text-[10px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded border border-blue-200">Harta</span>
+                    </div>
+                    <table class="w-full text-left text-xs divide-y divide-slate-100">
+                        <tbody class="divide-y divide-slate-100">
+                            <tr>
+                                <td class="py-2.5 px-4 font-semibold text-slate-800">&bull; Tabungan / Deposito Bank</td>
+                                <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="harta_gaji_tabungan">Rp <?= number_format($tabunganGaji, 0, ',', '.') ?></td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 px-4 font-semibold text-slate-800">&bull; Tanah</td>
+                                <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="harta_gaji_tanah">Rp <?= number_format($tanahGaji, 0, ',', '.') ?></td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 px-4 font-semibold text-slate-800">&bull; Bangunan (Rumah Tinggal)</td>
+                                <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="harta_gaji_bangunan">Rp <?= number_format($bangunanGaji, 0, ',', '.') ?></td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 px-4 font-semibold text-slate-800">&bull; Kendaraan (Mobil / Motor)</td>
+                                <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="harta_gaji_kendaraan">Rp <?= number_format($kendaraanGaji, 0, ',', '.') ?></td>
+                            </tr>
+                            <tr class="bg-blue-600 text-white font-extrabold text-sm">
+                                <td class="py-3 px-4 uppercase">TOTAL HARTA</td>
+                                <td class="py-3 px-4 text-right text-base font-black" id="harta_gaji_total">Rp <?= number_format($totalHartaGaji, 0, ',', '.') ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Sisi Kanan: UTANG & KEKAYAAN BERSIH -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
+                    <div class="bg-indigo-50/80 px-4 py-3 border-b border-indigo-100 flex items-center justify-between">
+                        <span class="font-extrabold text-xs text-indigo-900 uppercase tracking-wider">B. DAFTAR UTANG & KEKAYAAN BERSIH</span>
+                        <span class="text-[10px] font-bold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-200">Kewajiban & Ekuitas</span>
+                    </div>
+                    <table class="w-full text-left text-xs divide-y divide-slate-100">
+                        <tbody class="divide-y divide-slate-100">
+                            <tr>
+                                <td class="py-2.5 px-4 font-semibold text-slate-800">&bull; Utang Bank (KPR, KTA, SLIK)</td>
+                                <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="utang_gaji_bank">Rp <?= number_format($utangBankGaji, 0, ',', '.') ?></td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 px-4 font-semibold text-slate-800">&bull; Utang Koperasi</td>
+                                <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="utang_gaji_koperasi">Rp <?= number_format($utangKoperasiGaji, 0, ',', '.') ?></td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 px-4 font-semibold text-slate-800">&bull; Pinjaman Online (Pinjol / Paylater)</td>
+                                <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="utang_gaji_pinjol">Rp <?= number_format($utangPinjolGaji, 0, ',', '.') ?></td>
+                            </tr>
+                            <tr class="bg-rose-50/50 font-bold text-rose-900">
+                                <td class="py-2 px-4">Total Utang</td>
+                                <td class="py-2 px-4 text-right font-bold text-rose-700" id="utang_gaji_total">Rp <?= number_format($totalUtangGaji, 0, ',', '.') ?></td>
+                            </tr>
+
+                            <!-- Hasil Kekayaan Bersih -->
+                            <tr class="bg-indigo-50/50">
+                                <td class="py-3.5 px-4">
+                                    <span class="font-extrabold text-indigo-900 block text-xs uppercase">Kekayaan Bersih</span>
+                                    <span class="text-[10px] text-slate-500">Total Harta dikurangi Total Utang</span>
+                                </td>
+                                <td class="py-3.5 px-4 text-right font-black text-indigo-700 text-sm sm:text-base" id="kekayaan_bersih_gaji">
+                                    Rp <?= number_format($kekayaanBersihGaji, 0, ',', '.') ?>
+                                </td>
+                            </tr>
+                            <tr class="bg-indigo-900 text-white font-extrabold text-sm">
+                                <td class="py-3 px-4 uppercase">TOTAL UTANG + KEKAYAAN BERSIH</td>
+                                <td class="py-3 px-4 text-right text-base font-black text-emerald-300" id="pasiva_total_gaji">Rp <?= number_format($totalHartaGaji, 0, ',', '.') ?></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
     </div>
 
     <!-- =========================================================================
-         7. SUB-TAB 4: LAPORAN PERUBAHAN MODAL
+         CATATAN ANALISIS & DOKUMEN PENDUKUNG (CALK)
     ========================================================================== -->
-    <div id="subtab-perubahanmodal" class="subtab-lap-content space-y-5 hidden">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
-            <div>
-                <h4 class="text-sm font-extrabold text-slate-800 tracking-wide uppercase">4. LAPORAN PERUBAHAN MODAL</h4>
-                <p class="text-[11px] text-slate-500">Pergerakan akumulasi kekayaan modal bersih debitur selama periode berjalan</p>
-            </div>
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 shadow-2xs self-start sm:self-auto">
-                <span>Ekuitas Bertumbuh</span>
+    <div class="mt-8 pt-6 border-t border-slate-200 space-y-4 text-xs">
+        <div class="flex items-center justify-between">
+            <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">
+                CATATAN ANALISIS KELAYAKAN & DOKUMEN VERIFIKASI PENDUKUNG
+            </h4>
+            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
+                Standar Analisa 5C
             </span>
         </div>
 
-        <?php
-            $modalAwal = $modalBersih - $labaBersihSisaPenghasilan;
-            $apresiasiAset = round($tanahBangunan * 0.05); // Apresiasi nilai pasar tanah/bangunan 5%
-            $modalAkhir = $modalAwal + $labaBersihSisaPenghasilan + $apresiasiAset;
-        ?>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Box Karakteristik Khusus -->
+            <div class="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/90 space-y-2">
+                <span class="font-bold text-slate-800 text-xs block">Karakteristik Khusus Perorangan:</span>
+                <ul class="space-y-1.5 text-[11px] text-slate-600 list-disc list-inside leading-relaxed">
+                    <li><strong>Pemisahan Keuangan:</strong> Keuangan usaha dan keluarga dipisahkan secara tegas agar kapasitas bayar tidak dihitung terlalu tinggi (<em>overstated</em>).</li>
+                    <li><strong>Estimasi Terverifikasi:</strong> Angka omzet dihitung rata-rata hari ramai, biasa, dan sepi berdasarkan wawancara faktual.</li>
+                    <li><strong>Cross-Check Lapangan:</strong> Dilakukan verifikasi silang antara rekening koran, nota pembelian, kunjungan fisik (OTS), dan stok barang.</li>
+                </ul>
+            </div>
 
-        <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs bg-white">
-            <table class="w-full text-left text-xs">
-                <thead>
-                    <tr class="bg-indigo-50/70 border-b border-indigo-100 text-indigo-900 font-bold uppercase text-[10px] tracking-wider">
-                        <th class="py-3 px-4 w-64">URAIAN PERUBAHAN MODAL</th>
-                        <th class="py-3 px-4 hidden md:table-cell">PENJELASAN</th>
-                        <th class="py-3 px-4 text-right">JUMLAH (IDR)</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 bg-white">
-                    <tr>
-                        <td class="py-3 px-4 font-bold text-slate-800">Modal Bersih Awal Periode</td>
-                        <td class="py-3 px-4 text-slate-500 hidden md:table-cell">Akumulasi modal dan kekayaan bersih pada awal review</td>
-                        <td class="py-3 px-4 text-right font-bold text-slate-800" id="pm_awal">
-                            Rp <?= number_format($modalAwal, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="py-3 px-4 font-semibold text-emerald-800">(+) Laba Bersih / Sisa Penghasilan</td>
-                        <td class="py-3 px-4 text-slate-500 hidden md:table-cell">Keuntungan usaha setelah prive rumah tangga periode berjalan</td>
-                        <td class="py-3 px-4 text-right font-bold text-emerald-600" id="pm_laba">
-                            Rp <?= number_format($labaBersihSisaPenghasilan, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="py-3 px-4 font-semibold text-blue-800">(+) Kenaikan Nilai Wajar Agunan / Aset</td>
-                        <td class="py-3 px-4 text-slate-500 hidden md:table-cell">Apresiasi harga pasar tanah & bangunan tempat tinggal</td>
-                        <td class="py-3 px-4 text-right font-medium text-slate-700" id="pm_apresiasi">
-                            Rp <?= number_format($apresiasiAset, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                    <tr class="bg-indigo-900 text-white font-extrabold text-sm">
-                        <td class="py-3.5 px-4 uppercase tracking-wider">MODAL BERSIH AKHIR PERIODE</td>
-                        <td class="py-3.5 px-4 text-indigo-200 text-xs font-normal hidden md:table-cell">Total modal bersih penopang keamanan pengembalian kredit</td>
-                        <td class="py-3.5 px-4 text-right text-base font-black text-amber-300" id="pm_akhir">
-                            Rp <?= number_format($modalAkhir, 0, ',', '.') ?>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <!-- Box Dokumen Pendukung -->
+            <div class="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/90 space-y-2">
+                <span class="font-bold text-slate-800 text-xs block">Dokumen Pendukung yang Lazim & Diverifikasi:</span>
+                <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                    <div class="p-2 bg-white rounded-lg border border-slate-200">
+                        <span class="font-bold text-slate-800 block text-[10px]">1. Rekening Koran</span>
+                        Mutasi tabungan 3 - 6 bulan
+                    </div>
+                    <div class="p-2 bg-white rounded-lg border border-slate-200">
+                        <span class="font-bold text-slate-800 block text-[10px]">2. Nota Jual / Beli</span>
+                        Catatan penjualan & suplier
+                    </div>
+                    <div class="p-2 bg-white rounded-lg border border-slate-200">
+                        <span class="font-bold text-slate-800 block text-[10px]">3. Bukti Usaha / Slip Gaji</span>
+                        Izin usaha (SKU/NIB) atau slip gaji
+                    </div>
+                    <div class="p-2 bg-white rounded-lg border border-slate-200">
+                        <span class="font-bold text-slate-800 block text-[10px]">4. Legalitas Pribadi</span>
+                        KTP, KK, NPWP (bila ada)
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- =========================================================================
-         8. SUB-TAB 5: KARAKTERISTIK KHUSUS PERORANGAN & CALK
-    ========================================================================== -->
-    <div id="subtab-calk" class="subtab-lap-content space-y-6 hidden">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
-            <div>
-                <h4 class="text-sm font-extrabold text-slate-800 tracking-wide uppercase">5. KARAKTERISTIK KHUSUS & CATATAN ATAS LAPORAN KEUANGAN</h4>
-                <p class="text-[11px] text-slate-500">Prinsip analisa kredit perorangan, mitigasi pencampuran keuangan, dan dokumen pendukung</p>
-            </div>
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold text-slate-700 bg-slate-100 border border-slate-300 shadow-2xs self-start sm:self-auto">
-                <span>Analisa Karakteristik 5C</span>
-            </span>
-        </div>
-
-        <div class="space-y-4 text-xs">
-            
-            <!-- Box 1: Karakteristik Khusus Perorangan Sesuai Catatan User -->
-            <div class="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-3.5">
-                <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
-                    <span class="w-6 h-6 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs">A</span>
-                    <h5 class="text-xs font-bold text-slate-800 uppercase tracking-wider">KARAKTERISTIK KHUSUS KEUANGAN DEBITUR PERORANGAN</h5>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                    <!-- Point 1 -->
-                    <div class="p-3.5 rounded-xl border border-blue-100 bg-blue-50/40 space-y-1.5">
-                        <div class="flex items-center gap-2 text-blue-900 font-bold">
-                            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                            <span>Pemisahan Keuangan Usaha & Keluarga</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 leading-relaxed">
-                            Keuangan usaha dan keluarga sering bercampur pada debitur perorangan. Analis wajib memisahkannya secara teliti agar kemampuan bayar tidak dinilai terlalu tinggi (<em>overstated</em>).
-                        </p>
-                    </div>
-
-                    <!-- Point 2 -->
-                    <div class="p-3.5 rounded-xl border border-blue-100 bg-blue-50/40 space-y-1.5">
-                        <div class="flex items-center gap-2 text-blue-900 font-bold">
-                            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                            <span>Estimasi Penjualan Harian (3 Skenario)</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 leading-relaxed">
-                            Angka biasanya merupakan estimasi, bukan hasil pembukuan formal. Analis menghitung rata-rata penjualan harian pada <strong>hari ramai, hari biasa, dan hari sepi</strong> untuk mendapatkan angka omzet bulanan riil.
-                        </p>
-                    </div>
-
-                    <!-- Point 3 -->
-                    <div class="p-3.5 rounded-xl border border-blue-100 bg-blue-50/40 space-y-1.5">
-                        <div class="flex items-center gap-2 text-blue-900 font-bold">
-                            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                            <span>Verifikasi Silang (Cross-Check)</span>
-                        </div>
-                        <p class="text-[11px] text-slate-600 leading-relaxed">
-                            Estimasi angka diverifikasi silang dengan mutasi rekening koran, bukti nota pembelian dari suplier, kunjungan lapangan langsung (OTS), dan inspeksi fisik stok barang.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Box 2: Dokumen Pendukung yang Lazim & Diverifikasi -->
-            <div class="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-3.5">
-                <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
-                    <span class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">B</span>
-                    <h5 class="text-xs font-bold text-slate-800 uppercase tracking-wider">DOKUMEN PENDUKUNG YANG LAZIM & TELAH DIVERIFIKASI</h5>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-                    <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 text-center space-y-1">
-                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mx-auto text-xs font-bold">📄</div>
-                        <span class="font-bold text-slate-800 text-[11px] block">Rekening Koran</span>
-                        <span class="text-[10px] text-slate-500 block">Mutasi 3-6 bulan terakhir</span>
-                    </div>
-
-                    <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 text-center space-y-1">
-                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mx-auto text-xs font-bold">🧾</div>
-                        <span class="font-bold text-slate-800 text-[11px] block">Nota & Catatan</span>
-                        <span class="text-[10px] text-slate-500 block">Bukti jual beli harian</span>
-                    </div>
-
-                    <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 text-center space-y-1">
-                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mx-auto text-xs font-bold">📸</div>
-                        <span class="font-bold text-slate-800 text-[11px] block">Foto Lokasi & Stok</span>
-                        <span class="text-[10px] text-slate-500 block">Dokumentasi fisik OTS</span>
-                    </div>
-
-                    <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 text-center space-y-1">
-                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mx-auto text-xs font-bold">🏛️</div>
-                        <span class="font-bold text-slate-800 text-[11px] block">Izin Usaha / SKU</span>
-                        <span class="text-[10px] text-slate-500 block">Surat Ket. RT/Kelurahan / NIB</span>
-                    </div>
-
-                    <div class="p-3 rounded-xl border border-slate-200 bg-slate-50/70 text-center space-y-1">
-                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mx-auto text-xs font-bold">🪪</div>
-                        <span class="font-bold text-slate-800 text-[11px] block">Legalitas Pribadi</span>
-                        <span class="text-[10px] text-slate-500 block">KTP, KK, NPWP</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Box 3: Rincian Kebijakan Akuntansi Pendukung -->
-            <div class="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
-                <div class="flex items-center gap-2 pb-2 border-b border-slate-100">
-                    <span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs">C</span>
-                    <h5 class="text-xs font-bold text-slate-800 uppercase tracking-wider">RINCIAN KEBIJAKAN AKUNTANSI & RASIO ANGSURAN</h5>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 leading-relaxed text-[11px] text-slate-600">
-                    <p>
-                        <strong>1. Pengakuan Pendapatan:</strong> Omset bulanan dihitung dari rerata mutasi kredit rekening koran setelah dikurangi transfer non-penjualan, didukung estimasi hari ramai/biasa/sepi dari hasil wawancara OTS.
-                    </p>
-                    <p>
-                        <strong>2. Pengakuan Beban Pokok (HPP):</strong> Ditetapkan sebesar <?= $hppPersen ?>% dari omset berdasarkan margin industri sejenis dan sampel nota pembelian suplier.
-                    </p>
-                    <p>
-                        <strong>3. Beban Prive / Keluarga:</strong> Biaya hidup diestimasi Rp <?= number_format($nomPengeluaranRT, 0, ',', '.') ?> per bulan sesuai jumlah tanggungan, terpisah penuh dari kas usaha.
-                    </p>
-                    <p>
-                        <strong>4. Batas Kelayakan DSR:</strong> Beban angsuran yang aman adalah maksimal 40% dari total pendapatan kotor atau tidak melebihi sisa kas bebas bulanan.
-                    </p>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- =========================================================================
-         9. FOOTER NAVIGASI
+         FOOTER NAVIGASI FORM
     ========================================================================== -->
     <div class="mt-8 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
         <button type="button" onclick="tabNav(-1)" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold transition shadow-2xs cursor-pointer">
@@ -968,173 +731,313 @@ $tahunPeriode = date('Y');
     </div>
 </div>
 
+<!-- Script Library html2pdf.js untuk cetak & unduh PDF instan -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 <!-- =============================================================================
-     10. MODAL PREVIEW & PRINT A4 (LENGKAP SESUAI STANDAR CATATAN ANALIS)
+     MODAL PREVIEW & CETAK LEMBAR A4 RESMI (PERSIS CONTOH DESAIN)
 ============================================================================== -->
 <div id="modalPreviewLaporanKeuangan" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
     <div class="bg-slate-100 rounded-3xl shadow-2xl border border-slate-300 max-w-4xl w-full max-h-[96vh] flex flex-col overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
         
-        <!-- Modal Toolbar Header -->
-        <div class="px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between gap-4 shrink-0 shadow-2xs">
+        <!-- Modal Toolbar Header (Persis Seperti di Foto Contoh) -->
+        <div class="px-5 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between gap-4 shrink-0 shadow-2xs no-print">
             <div class="flex items-center gap-3">
-                <button type="button" onclick="tutupModalPreviewLaporan()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 rounded-lg transition border border-slate-200 cursor-pointer">
+                <button type="button" onclick="tutupModalPreviewLaporan()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 rounded-xl transition border border-slate-200 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     <span>Kembali</span>
                 </button>
                 <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-rose-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path></svg>
-                    <span class="text-xs font-bold text-slate-800">Laporan_Keuangan_Perorangan.pdf</span>
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="text-xs font-bold text-slate-800">Estimasi_Keuangan_Perorangan.pdf</span>
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
-                <span class="text-[11px] text-slate-400 font-mono hidden sm:inline">A4 Portrait (218 × 297mm)</span>
-                <button type="button" onclick="cetakHalamanLaporanPdf()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition shadow-2xs cursor-pointer">
-                    <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            <div class="flex items-center gap-2.5">
+                <span class="text-xs text-slate-400 font-mono hidden sm:inline">A4 Portrait (218 × 297mm)</span>
+                
+                <!-- Tombol Cetak (Print) -->
+                <button type="button" id="btnCetakModal" onclick="cetakDokumenA4()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition shadow-2xs cursor-pointer active:scale-95">
+                    <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     <span>Cetak (Print)</span>
                 </button>
-                <button type="button" onclick="cetakHalamanLaporanPdf()" class="inline-flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    <span>Unduh PDF</span>
+
+                <!-- Tombol Unduh PDF -->
+                <button type="button" id="btnUnduhPdfModal" onclick="unduhDokumenPdfLangsung()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer active:scale-95">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span id="labelUnduhModal">Unduh PDF</span>
                 </button>
             </div>
         </div>
 
-        <!-- Sheet Kertas A4 White Document Preview -->
-        <div class="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-200/70">
-            <div id="printSheetLaporan" class="bg-white w-full max-w-[760px] p-8 sm:p-12 shadow-xl border border-slate-200 text-slate-800 space-y-6 text-xs rounded-sm">
+        <!-- Sheet Kertas A4 White Document Preview (Persis Format & Warna Foto) -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-200/70" id="printSheetContainer">
+            <div id="printSheetLaporan" class="bg-white w-full max-w-[760px] p-8 sm:p-14 shadow-xl border border-slate-200/90 text-slate-800 space-y-7 text-xs rounded-sm">
                 
-                <!-- Header Dokumen A4 -->
-                <div class="flex items-center justify-between border-b border-slate-200 pb-4">
-                    <div class="flex items-center gap-2">
-                        <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[10px]">✓</span>
-                        <span class="text-[10px] font-bold text-slate-700 tracking-wider uppercase">OTW KREDIT | LAPORAN EVALUASI KEUANGAN PERORANGAN</span>
+                <!-- Header Dokumen -->
+                <div class="flex items-center justify-between text-xs text-slate-500 font-semibold border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span class="tracking-wider uppercase font-bold text-slate-700 text-[11px]">OTW KREDIT | DOKUMEN ESTIMASI FINANSIAL</span>
                     </div>
-                    <span class="text-[10px] font-mono font-semibold text-slate-400">REF: <?= $noAppDisplay ?></span>
+                    <span class="font-mono text-slate-500 text-[11px]">REF: <?= $noAppDisplay ?></span>
                 </div>
 
+                <!-- Judul Laporan -->
                 <div>
-                    <h2 class="text-xl font-black text-slate-900 tracking-tight">LAPORAN KEUANGAN DEBITUR PERORANGAN</h2>
-                    <p class="text-xs text-slate-500 font-medium"><?= $namaDebiturDisplay ?> &bull; Periode Per Bulan <?= $tahunPeriode ?></p>
+                    <h1 class="text-2xl font-black text-slate-900 tracking-tight" id="doc_preview_title">LAPORAN KEUANGAN (ESTIMASI)</h1>
+                    <p class="text-xs text-slate-500 mt-1" id="doc_preview_subtitle"><?= esc($kredit['nama_debitur'] ?? 'Perorangan') ?>, Periode Per Bulan <?= $tahunPeriode ?></p>
                 </div>
 
-                <!-- Bagian 1. LAPORAN LABA RUGI SEDERHANA -->
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between bg-blue-50/70 px-3 py-1.5 rounded text-blue-900 font-extrabold text-[11px] uppercase">
-                        <span>1. LAPORAN LABA RUGI SEDERHANA</span>
-                        <span class="font-mono text-[10px]">IDR (Bulanan)</span>
-                    </div>
-                    <table class="w-full text-left text-xs divide-y divide-slate-100">
-                        <thead>
-                            <tr class="text-[10px] uppercase font-bold text-slate-400">
-                                <th class="py-1.5 px-2">KOMPONEN</th>
-                                <th class="py-1.5 px-2">KETERANGAN</th>
-                                <th class="py-1.5 px-2 text-right">NOMINAL (IDR)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr>
-                                <td class="py-1.5 px-2 font-semibold">Penjualan / omzet</td>
-                                <td class="py-1.5 px-2 text-slate-500">Total pendapatan usaha</td>
-                                <td class="py-1.5 px-2 text-right font-medium" id="preview_omzet">Rp <?= number_format($omsetBulanan, 0, ',', '.') ?></td>
-                            </tr>
-                            <tr>
-                                <td class="py-1.5 px-2 font-semibold text-rose-700">(-) HPP</td>
-                                <td class="py-1.5 px-2 text-slate-500">Biaya membeli/memproduksi barang</td>
-                                <td class="py-1.5 px-2 text-right font-medium text-rose-600" id="preview_hpp">(Rp <?= number_format($hppNominal, 0, ',', '.') ?>)</td>
-                            </tr>
-                            <tr class="font-bold text-blue-950 bg-blue-50/30">
-                                <td class="py-1.5 px-2">= Laba kotor</td>
-                                <td class="py-1.5 px-2 text-slate-500">Penjualan dikurangi HPP</td>
-                                <td class="py-1.5 px-2 text-right font-extrabold text-blue-700" id="preview_laba_kotor">Rp <?= number_format($labaKotor, 0, ',', '.') ?></td>
-                            </tr>
-                            <tr>
-                                <td class="py-1.5 px-2 font-semibold text-rose-700">(-) Biaya operasional</td>
-                                <td class="py-1.5 px-2 text-slate-500">Sewa, listrik, gaji, transport, dll.</td>
-                                <td class="py-1.5 px-2 text-right font-medium text-rose-600" id="preview_operasional">(Rp <?= number_format($nomBiayaOperasional, 0, ',', '.') ?>)</td>
-                            </tr>
-                            <tr class="font-bold text-slate-900 bg-slate-50">
-                                <td class="py-1.5 px-2">= Laba usaha</td>
-                                <td class="py-1.5 px-2 text-slate-500">Keuntungan dari kegiatan usaha</td>
-                                <td class="py-1.5 px-2 text-right font-extrabold" id="preview_laba_usaha">Rp <?= number_format($labaUsaha, 0, ',', '.') ?></td>
-                            </tr>
-                            <tr>
-                                <td class="py-1.5 px-2 font-semibold text-emerald-700">(+) Pendapatan lain</td>
-                                <td class="py-1.5 px-2 text-slate-500">Gaji pasangan, sewa, dividen</td>
-                                <td class="py-1.5 px-2 text-right font-medium text-emerald-600" id="preview_pendapatan_lain">Rp <?= number_format($nomPendapatanLain, 0, ',', '.') ?></td>
-                            </tr>
-                            <tr>
-                                <td class="py-1.5 px-2 font-semibold text-rose-700">(-) Pengeluaran RT (prive)</td>
-                                <td class="py-1.5 px-2 text-slate-500">Biaya hidup keluarga debitur</td>
-                                <td class="py-1.5 px-2 text-right font-medium text-rose-600" id="preview_pengeluaran_rt">(Rp <?= number_format($nomPengeluaranRT, 0, ',', '.') ?>)</td>
-                            </tr>
-                            <tr class="bg-emerald-50/80 font-black text-emerald-950 text-xs">
-                                <td class="py-2 px-2">= Laba bersih / sisa penghasilan</td>
-                                <td class="py-2 px-2 text-emerald-800 font-semibold">Dana yang bisa dipakai membayar angsuran</td>
-                                <td class="py-2 px-2 text-right text-emerald-900 text-sm font-black" id="preview_laba_bersih">Rp <?= number_format($labaBersihSisaPenghasilan, 0, ',', '.') ?></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Bagian 2. NERACA SEDERHANA -->
-                <div class="space-y-2 pt-2">
-                    <div class="flex items-center justify-between bg-blue-50/70 px-3 py-1.5 rounded text-blue-900 font-extrabold text-[11px] uppercase">
-                        <span>2. NERACA SEDERHANA (DAFTAR ASET DAN UTANG)</span>
-                        <span class="font-mono text-[10px]">Posisi Keuangan</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 text-[11px] pt-1">
-                        <div class="space-y-1">
-                            <span class="font-bold text-slate-700 block text-[10px] uppercase border-b border-slate-200 pb-0.5">DAFTAR ASET</span>
-                            <div class="flex justify-between py-0.5"><span class="text-slate-600">Aset Lancar (Kas, Piutang, Stok):</span><span class="font-medium" id="preview_ast_lancar">Rp <?= number_format($totalAsetLancar, 0, ',', '.') ?></span></div>
-                            <div class="flex justify-between py-0.5"><span class="text-slate-600">Aset Tetap (Alat, Kendaraan, Tanah):</span><span class="font-medium" id="preview_ast_tetap">Rp <?= number_format($totalAsetTetap, 0, ',', '.') ?></span></div>
-                            <div class="flex justify-between py-1 bg-slate-50 px-2 font-bold text-slate-900"><span>TOTAL ASET:</span><span id="preview_tot_aset">Rp <?= number_format($totalAset, 0, ',', '.') ?></span></div>
+                <!-- ==============================================================
+                     TAMPILAN DOKUMEN 1: PERORANGAN PUNYA GAJI (PERSIS FOTO CONTOH)
+                     ============================================================== -->
+                <div id="doc_block_gaji" class="space-y-7 <?= !$isKaryawanPns ? 'hidden' : '' ?>">
+                    <!-- 1. LAPORAN LABA RUGI / PENGHASILAN -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between bg-blue-50/70 px-4 py-2 rounded-t-lg text-blue-900 font-bold text-xs uppercase tracking-wide border-t border-x border-blue-100">
+                            <span>1. LAPORAN LABA RUGI</span>
+                            <span class="text-[11px] text-blue-800 font-semibold lowercase tracking-normal">IDR (Bulanan)</span>
                         </div>
-                        <div class="space-y-1">
-                            <span class="font-bold text-slate-700 block text-[10px] uppercase border-b border-slate-200 pb-0.5">DAFTAR UTANG & MODAL</span>
-                            <div class="flex justify-between py-0.5"><span class="text-slate-600">Total Utang (Dagang, Bank, Koperasi):</span><span class="font-medium text-rose-600" id="preview_tot_utang">Rp <?= number_format($totalUtang, 0, ',', '.') ?></span></div>
-                            <div class="flex justify-between py-0.5"><span class="text-slate-600">Modal Bersih (Aset - Utang):</span><span class="font-bold text-indigo-700" id="preview_modal_bersih">Rp <?= number_format($modalBersih, 0, ',', '.') ?></span></div>
-                            <div class="flex justify-between py-1 bg-slate-50 px-2 font-bold text-slate-900"><span>TOTAL PASIVA:</span><span id="preview_tot_pasiva">Rp <?= number_format($totalAset, 0, ',', '.') ?></span></div>
+                        <table class="w-full text-left text-xs border border-blue-100 border-collapse">
+                            <thead>
+                                <tr class="bg-blue-100/40 text-[10px] uppercase font-bold text-slate-600 border-b border-blue-100">
+                                    <th class="py-2.5 px-4 font-bold">KOMPONEN</th>
+                                    <th class="py-2.5 px-4 text-right font-bold">NOMINAL (IDR)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">Penghasilan Utama + Tunjangan + Bonus</td>
+                                    <td class="py-2.5 px-4 text-right font-medium" id="p_g_pokok">Rp <?= number_format($gajiPokok + $tunjanganTetap, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">Pendapatan Lain-lain</td>
+                                    <td class="py-2.5 px-4 text-right font-medium" id="p_g_tambahan">Rp <?= number_format($penghasilanTambahan + $penghasilanPasangan, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr class="font-bold text-slate-900 bg-slate-50/50">
+                                    <td class="py-2.5 px-4">Total Penghasilan</td>
+                                    <td class="py-2.5 px-4 text-right font-bold" id="p_g_total_in">Rp <?= number_format($totalPenghasilanGaji, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">Pengeluaran Rumah Tangga</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_g_hidup">(Rp <?= number_format($biayaHidupGaji + $biayaPendidikanGaji + $biayaLainGaji, 0, ',', '.') ?>)</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">Cicilan Berjalan</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_g_cicilan">(Rp <?= number_format($cicilanBerjalanGaji, 0, ',', '.') ?>)</td>
+                                </tr>
+                                <!-- Baris Surplus (Persis Kotak Biru di Gambar) -->
+                                <tr class="bg-blue-100/80">
+                                    <td class="py-3 px-4 font-bold text-blue-800 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-blue-700 inline-block"></span>
+                                        <span>Surplus</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-right font-black text-blue-800 text-sm" id="p_g_surplus">Rp <?= number_format($sisaPenghasilanGaji, 0, ',', '.') ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 2. LAPORAN ARUS KAS -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between bg-blue-50/70 px-4 py-2 rounded-t-lg text-blue-900 font-bold text-xs uppercase tracking-wide border-t border-x border-blue-100">
+                            <span>2. LAPORAN ARUS KAS</span>
+                            <span class="text-[11px] text-blue-800 font-semibold lowercase tracking-normal">IDR (Likuiditas)</span>
                         </div>
+                        <table class="w-full text-left text-xs border border-blue-100 border-collapse">
+                            <thead>
+                                <tr class="bg-blue-100/40 text-[10px] uppercase font-bold text-slate-600 border-b border-blue-100">
+                                    <th class="py-2.5 px-4 font-bold">KOMPONEN</th>
+                                    <th class="py-2.5 px-4 text-right font-bold">NOMINAL (IDR)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">Penghasilan Masuk</td>
+                                    <td class="py-2.5 px-4 text-right font-medium" id="p_g_kas_masuk">Rp <?= number_format($totalPenghasilanGaji, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">Pengeluaran Keluar</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_g_kas_keluar">(Rp <?= number_format($biayaHidupGaji + $biayaPendidikanGaji + $biayaLainGaji + $cicilanBerjalanGaji, 0, ',', '.') ?>)</td>
+                                </tr>
+                                <!-- Baris Arus Kas Bersih (Persis Kotak Biru di Gambar) -->
+                                <tr class="bg-blue-100/80">
+                                    <td class="py-3 px-4 font-bold text-blue-800 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-blue-700 inline-block"></span>
+                                        <span>Arus Kas Bersih</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-right font-black text-blue-800 text-sm" id="p_g_kas_bersih">Rp <?= number_format($sisaPenghasilanGaji, 0, ',', '.') ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 3. DAFTAR HARTA & UTANG -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between bg-blue-50/70 px-4 py-2 rounded-t-lg text-blue-900 font-bold text-xs uppercase tracking-wide border-t border-x border-blue-100">
+                            <span>3. DAFTAR HARTA DAN UTANG</span>
+                            <span class="text-[11px] text-blue-800 font-semibold lowercase tracking-normal">IDR (Neraca)</span>
+                        </div>
+                        <table class="w-full text-left text-xs border border-blue-100 border-collapse">
+                            <thead>
+                                <tr class="bg-blue-100/40 text-[10px] uppercase font-bold text-slate-600 border-b border-blue-100">
+                                    <th class="py-2.5 px-4 font-bold">KOMPONEN</th>
+                                    <th class="py-2.5 px-4 text-right font-bold">NOMINAL (IDR)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">Total Harta Pribadi (Tabungan, Tanah, Bangunan, Kendaraan)</td>
+                                    <td class="py-2.5 px-4 text-right font-medium" id="p_g_tot_harta">Rp <?= number_format($totalHartaGaji, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">(-) Total Utang (Bank, Koperasi, Pinjol)</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_g_tot_utang">(Rp <?= number_format($totalUtangGaji, 0, ',', '.') ?>)</td>
+                                </tr>
+                                <tr class="bg-blue-100/80">
+                                    <td class="py-3 px-4 font-bold text-blue-800 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-blue-700 inline-block"></span>
+                                        <span>Kekayaan Bersih</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-right font-black text-blue-800 text-sm" id="p_g_net_worth">Rp <?= number_format($kekayaanBersihGaji, 0, ',', '.') ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
-                <!-- Bagian 3. ARUS KAS SEDERHANA -->
-                <div class="space-y-2 pt-2">
-                    <div class="flex items-center justify-between bg-blue-50/70 px-3 py-1.5 rounded text-blue-900 font-extrabold text-[11px] uppercase">
-                        <span>3. LAPORAN ARUS KAS SEDERHANA</span>
-                        <span class="font-mono text-[10px]">Uang Masuk & Keluar</span>
+                <!-- ==============================================================
+                     TAMPILAN DOKUMEN 2: PERORANGAN PUNYA USAHA (WIRASWASTA)
+                     ============================================================== -->
+                <div id="doc_block_usaha" class="space-y-7 <?= $isKaryawanPns ? 'hidden' : '' ?>">
+                    <!-- 1. LAPORAN LABA RUGI SEDERHANA -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between bg-blue-50/70 px-4 py-2 rounded-t-lg text-blue-900 font-bold text-xs uppercase tracking-wide border-t border-x border-blue-100">
+                            <span>1. LAPORAN LABA RUGI SEDERHANA (USAHA)</span>
+                            <span class="text-[11px] text-blue-800 font-semibold lowercase tracking-normal">IDR (Bulanan)</span>
+                        </div>
+                        <table class="w-full text-left text-xs border border-blue-100 border-collapse">
+                            <thead>
+                                <tr class="bg-blue-100/40 text-[10px] uppercase font-bold text-slate-600 border-b border-blue-100">
+                                    <th class="py-2.5 px-4 font-bold">KOMPONEN</th>
+                                    <th class="py-2.5 px-4 text-right font-bold">NOMINAL (IDR)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">
+                                        <span class="font-semibold text-slate-800 block">Penjualan / Omzet (Ramai, Biasa, Sepi)</span>
+                                    </td>
+                                    <td class="py-2.5 px-4 text-right font-bold text-slate-900" id="p_u_omzet">Rp <?= number_format($omsetBulanan, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">(-) HPP (Harga Pokok Penjualan)</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_u_hpp">(Rp <?= number_format($hppNominal, 0, ',', '.') ?>)</td>
+                                </tr>
+                                <tr class="font-bold text-slate-900 bg-slate-50/50">
+                                    <td class="py-2.5 px-4">= Laba Kotor</td>
+                                    <td class="py-2.5 px-4 text-right font-bold" id="p_u_laba_kotor">Rp <?= number_format($labaKotor, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">(-) Biaya Operasional (Sewa, Listrik, Transport, dll)</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_u_operasional">(Rp <?= number_format($nomBiayaOperasional, 0, ',', '.') ?>)</td>
+                                </tr>
+                                <tr class="font-bold text-slate-900 bg-slate-50/50">
+                                    <td class="py-2.5 px-4">= Laba Usaha</td>
+                                    <td class="py-2.5 px-4 text-right font-bold" id="p_u_laba_usaha">Rp <?= number_format($labaUsaha, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">(+) Pendapatan Lain-lain</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-emerald-600" id="p_u_pendapatan_lain">Rp <?= number_format($nomPendapatanLain, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">(-) Prive (Pengeluaran Rumah Tangga)</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_u_prive">(Rp <?= number_format($nomPengeluaranRT, 0, ',', '.') ?>)</td>
+                                </tr>
+                                <!-- Baris Surplus (Persis Kotak Biru di Gambar) -->
+                                <tr class="bg-blue-100/80">
+                                    <td class="py-3 px-4 font-bold text-blue-800 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-blue-700 inline-block"></span>
+                                        <span>Surplus / Sisa Penghasilan</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-right font-black text-blue-800 text-sm" id="p_u_surplus">Rp <?= number_format($labaBersihSisaPenghasilanUsaha, 0, ',', '.') ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <table class="w-full text-left text-xs divide-y divide-slate-100">
-                        <tbody class="divide-y divide-slate-100">
-                            <tr>
-                                <td class="py-1 px-2 font-semibold">Kas Masuk (Penjualan tunai, pelunasan piutang, lain)</td>
-                                <td class="py-1 px-2 text-right font-medium text-emerald-700" id="preview_ak_masuk">Rp <?= number_format($totalKasMasuk, 0, ',', '.') ?></td>
-                            </tr>
-                            <tr>
-                                <td class="py-1 px-2 font-semibold">Kas Keluar (Beli barang, operasional, cicilan, keluarga)</td>
-                                <td class="py-1 px-2 text-right font-medium text-rose-600" id="preview_ak_keluar">(Rp <?= number_format($totalKasKeluar, 0, ',', '.') ?>)</td>
-                            </tr>
-                            <tr class="bg-blue-50/60 font-black text-blue-950">
-                                <td class="py-1.5 px-2">= Saldo Kas Akhir Periode</td>
-                                <td class="py-1.5 px-2 text-right text-blue-800 font-black" id="preview_ak_akhir">Rp <?= number_format($saldoKasAkhir, 0, ',', '.') ?></td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                    <!-- 2. LAPORAN ARUS KAS -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between bg-blue-50/70 px-4 py-2 rounded-t-lg text-blue-900 font-bold text-xs uppercase tracking-wide border-t border-x border-blue-100">
+                            <span>2. LAPORAN ARUS KAS</span>
+                            <span class="text-[11px] text-blue-800 font-semibold lowercase tracking-normal">IDR (Likuiditas)</span>
+                        </div>
+                        <table class="w-full text-left text-xs border border-blue-100 border-collapse">
+                            <thead>
+                                <tr class="bg-blue-100/40 text-[10px] uppercase font-bold text-slate-600 border-b border-blue-100">
+                                    <th class="py-2.5 px-4 font-bold">KOMPONEN</th>
+                                    <th class="py-2.5 px-4 text-right font-bold">NOMINAL (IDR)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">Kas Masuk (Penjualan + Pendapatan Lain)</td>
+                                    <td class="py-2.5 px-4 text-right font-medium" id="p_u_kas_masuk">Rp <?= number_format($omsetBulanan + $nomPendapatanLain, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">Kas Keluar (HPP + Operasional + Prive)</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_u_kas_keluar">(Rp <?= number_format($hppNominal + $nomBiayaOperasional + $nomPengeluaranRT, 0, ',', '.') ?>)</td>
+                                </tr>
+                                <tr class="bg-blue-100/80">
+                                    <td class="py-3 px-4 font-bold text-blue-800 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-blue-700 inline-block"></span>
+                                        <span>Arus Kas Bersih (Saldo Akhir)</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-right font-black text-blue-800 text-sm" id="p_u_kas_bersih">Rp <?= number_format($labaBersihSisaPenghasilanUsaha, 0, ',', '.') ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 3. DAFTAR HARTA DAN UTANG -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between bg-blue-50/70 px-4 py-2 rounded-t-lg text-blue-900 font-bold text-xs uppercase tracking-wide border-t border-x border-blue-100">
+                            <span>3. DAFTAR HARTA DAN UTANG</span>
+                            <span class="text-[11px] text-blue-800 font-semibold lowercase tracking-normal">IDR (Neraca)</span>
+                        </div>
+                        <table class="w-full text-left text-xs border border-blue-100 border-collapse">
+                            <thead>
+                                <tr class="bg-blue-100/40 text-[10px] uppercase font-bold text-slate-600 border-b border-blue-100">
+                                    <th class="py-2.5 px-4 font-bold">KOMPONEN</th>
+                                    <th class="py-2.5 px-4 text-right font-bold">NOMINAL (IDR)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">Total Aset Usaha & Pribadi</td>
+                                    <td class="py-2.5 px-4 text-right font-medium" id="p_u_tot_harta">Rp <?= number_format($totalHartaUsaha, 0, ',', '.') ?></td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-4 font-normal">(-) Total Utang (Dagang, Bank, Koperasi, Pinjol)</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_u_tot_utang">(Rp <?= number_format($totalUtangUsaha, 0, ',', '.') ?>)</td>
+                                </tr>
+                                <tr class="bg-blue-100/80">
+                                    <td class="py-3 px-4 font-bold text-blue-800 flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-blue-700 inline-block"></span>
+                                        <span>Kekayaan Bersih</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-right font-black text-blue-800 text-sm" id="p_u_net_worth">Rp <?= number_format($kekayaanBersihUsaha, 0, ',', '.') ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-                <!-- Bagian 4. CATATAN ANALIS & DOKUMEN PENDUKUNG -->
-                <div class="pt-3 border-t border-slate-200 text-[10px] text-slate-500 space-y-1.5 leading-relaxed">
-                    <div class="font-bold text-slate-700 uppercase tracking-wider text-[9px]">Karakteristik & Dokumen Verifikasi Pendukung:</div>
-                    <p>
-                        Keuangan usaha dan rumah tangga telah diverifikasi terpisah. Angka omzet dihitung dari estimasi penjualan harian (hari ramai, biasa, dan sepi) serta diselaraskan dengan mutasi rekening koran 3-6 bulan, nota belanja suplier, foto stok barang, dan surat keterangan izin usaha. Laba bersih/sisa penghasilan mencukupi untuk memenuhi kewajiban angsuran.
-                    </p>
-                </div>
-
-                <!-- Footer Dokumen A4 -->
-                <div class="pt-6 border-t border-slate-200 flex items-center justify-between text-[10px] text-slate-400 font-medium">
-                    <span>Laporan Analisa Keuangan Debitur Perorangan</span>
-                    <span>Halaman 1 dari 1 &bull; Dokumen Resmi OTW Credit</span>
+                <!-- Footer Dokumen -->
+                <div class="pt-8 border-t border-slate-200 flex items-center justify-between text-xs text-slate-400 font-medium">
+                    <span>Laporan ini merupakan estimasi</span>
+                    <span>Halaman 1 dari 1 &bull; Dokumen Resmi Sistem</span>
                 </div>
             </div>
         </div>
@@ -1143,19 +1046,28 @@ $tahunPeriode = date('Y');
 
 <style>
 @media print {
-    body {
-        background: white !important;
-        color: #000 !important;
+    @page {
+        size: A4 portrait;
+        margin: 10mm 12mm 10mm 12mm;
     }
-    header, aside, .fixed, .no-print, button, #topActionToolbar {
-        display: none !important;
+    html, body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-height: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
+    /* Sembunyikan semua konten app di luar modal preview */
     body * {
-        visibility: hidden;
+        visibility: hidden !important;
     }
     #modalPreviewLaporanKeuangan,
-    #modalPreviewLaporanKeuangan * {
-        visibility: visible;
+    #modalPreviewLaporanKeuangan #printSheetLaporan,
+    #modalPreviewLaporanKeuangan #printSheetLaporan * {
+        visibility: visible !important;
     }
     #modalPreviewLaporanKeuangan {
         position: absolute !important;
@@ -1163,55 +1075,87 @@ $tahunPeriode = date('Y');
         top: 0 !important;
         width: 100% !important;
         height: auto !important;
-        background: white !important;
+        background: transparent !important;
         padding: 0 !important;
         margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
         overflow: visible !important;
-        z-index: 99999 !important;
+        z-index: 999999 !important;
     }
-    #modalPreviewLaporanKeuangan .shrink-0 {
+    #modalPreviewLaporanKeuangan .no-print,
+    #modalPreviewLaporanKeuangan > div > div:first-child {
         display: none !important;
     }
-    #printSheetLaporan {
+    #modalPreviewLaporanKeuangan > div {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    #modalPreviewLaporanKeuangan #printSheetLaporan {
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 !important;
-        padding: 10mm 12mm !important;
+        padding: 0 !important;
         box-shadow: none !important;
         border: none !important;
-    }
-    @page {
-        size: A4 portrait;
-        margin: 10mm 12mm;
+        border-radius: 0 !important;
+        background: #ffffff !important;
     }
 }
 </style>
 
 <!-- =============================================================================
-     11. LOGIKA JAVASCRIPT TAB LAPORAN & SINKRONISASI REAL-TIME
+     LOGIKA JAVASCRIPT: SWITCH KATEGORI & SINKRONISASI
 ============================================================================== -->
 <script>
-// Fungsi Mengganti Sub-Tab Laporan
-function gantiSubTabLaporan(targetSubId) {
-    document.querySelectorAll('.subtab-lap-content').forEach(el => {
-        el.classList.add('hidden');
-    });
-    document.querySelectorAll('.subtab-lap-btn').forEach(btn => {
-        btn.classList.remove('bg-white', 'text-blue-700', 'shadow-2xs', 'border', 'border-slate-200/60');
-        btn.classList.add('text-slate-600', 'hover:text-slate-900', 'hover:bg-white/60');
-    });
+let activeKategoriDebitur = '<?= $isKaryawanPns ? "gaji" : "usaha" ?>';
 
-    const targetEl = document.getElementById(targetSubId);
-    if (targetEl) targetEl.classList.remove('hidden');
+// Ganti Kategori Debitur (Punya Usaha vs Punya Gaji)
+function gantiKategoriDebitur(kategori) {
+    activeKategoriDebitur = kategori;
+    const secUsaha = document.getElementById('sectionPeroranganUsaha');
+    const secGaji = document.getElementById('sectionPeroranganGaji');
+    const btnUsaha = document.getElementById('btnKategoriUsaha');
+    const btnGaji = document.getElementById('btnKategoriGaji');
 
-    const activeBtn = document.getElementById('btn-' + targetSubId);
-    if (activeBtn) {
-        activeBtn.classList.remove('text-slate-600', 'hover:text-slate-900', 'hover:bg-white/60');
-        activeBtn.classList.add('bg-white', 'text-blue-700', 'shadow-2xs', 'border', 'border-slate-200/60');
+    const docUsaha = document.getElementById('doc_block_usaha');
+    const docGaji = document.getElementById('doc_block_gaji');
+    const sub = document.getElementById('doc_preview_subtitle');
+
+    if (kategori === 'usaha') {
+        if (secUsaha) secUsaha.classList.remove('hidden');
+        if (secGaji) secGaji.classList.add('hidden');
+        if (btnUsaha) {
+            btnUsaha.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-blue-600 text-white shadow-xs';
+        }
+        if (btnGaji) {
+            btnGaji.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-900';
+        }
+        if (docUsaha) docUsaha.classList.remove('hidden');
+        if (docGaji) docGaji.classList.add('hidden');
+        if (sub) sub.innerText = 'Perorangan (Wiraswasta), Periode Per Bulan <?= $tahunPeriode ?>';
+    } else {
+        if (secUsaha) secUsaha.classList.add('hidden');
+        if (secGaji) secGaji.classList.remove('hidden');
+        if (btnGaji) {
+            btnGaji.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-blue-600 text-white shadow-xs';
+        }
+        if (btnUsaha) {
+            btnUsaha.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-900';
+        }
+        if (docUsaha) docUsaha.classList.add('hidden');
+        if (docGaji) docGaji.classList.remove('hidden');
+        if (sub) sub.innerText = 'Perorangan (Penghasilan Tetap), Periode Per Bulan <?= $tahunPeriode ?>';
     }
+
+    sinkronkanLaporanKeuangan();
 }
 
 // Format Angka ke Rupiah String
@@ -1227,161 +1171,176 @@ function parseNominalLap(str) {
     return clean ? parseFloat(clean) : 0;
 }
 
-// Sinkronisasi Data Keuangan Laporan dari Tab 9 dan Form Input
+// Sinkronisasi Live Data
 function sinkronkanLaporanKeuangan() {
-    // 1. Ambil data dari input Tab 9
+    // 1. Data Usaha
     const omzet = parseNominalLap(document.getElementById('pendapatan_rk')?.value) || <?= $omsetBulanan ?>;
     const hppPct = parseFloat(document.getElementById('hpp_persen_rk')?.value) || <?= $hppPersen ?>;
     const hppNom = Math.round(omzet * (hppPct / 100));
     const labaKotor = omzet - hppNom;
 
-    // Biaya Operasional (beban lainnya / rincian operasional)
+    const omzetRamai = Math.round(omzet * 0.45);
+    const omzetBiasa = Math.round(omzet * 0.40);
+    const omzetSepi  = omzet - omzetRamai - omzetBiasa;
+
     const biayaOperasional = parseNominalLap(document.getElementById('beban_lainnya_nominal_rk')?.value) || <?= $nomBiayaOperasional ?>;
     const labaUsaha = labaKotor - biayaOperasional;
 
-    // Pendapatan Lain-lain
     const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
     const pendapatanLain = isAdaLain ? (parseNominalLap(document.getElementById('pendapatan_lain_rk')?.value) || 0) : 0;
-
-    // Pengeluaran Rumah Tangga (Prive / Biaya Hidup)
     const pengeluaranRT = parseNominalLap(document.getElementById('biaya_hidup_nominal_rk')?.value) || <?= $nomPengeluaranRT ?>;
 
-    // Laba Bersih / Sisa Penghasilan (Dana yang bisa dipakai membayar angsuran)
-    const labaBersih = (labaUsaha + pendapatanLain) - pengeluaranRT;
-
-    // Cicilan Pinjaman Berjalan (SLIK / Acuan)
-    const cicilanBerjalan = parseNominalLap(document.getElementById('angsuran_dipilih')?.value) 
+    const sisaUsaha = (labaUsaha + pendapatanLain) - pengeluaranRT;
+    const cicilanAcuan = parseNominalLap(document.getElementById('angsuran_dipilih')?.value) 
         || parseNominalLap(document.getElementById('angsuran_installment')?.value) 
         || <?= $totalCicilanSlik ?>;
+    const bufferUsaha = sisaUsaha - cicilanAcuan;
 
-    const sisaKasBebas = labaBersih - cicilanBerjalan;
-    const totalInflow = omzet + pendapatanLain;
-    const dsr = totalInflow > 0 ? (Math.round((cicilanBerjalan / totalInflow) * 1000) / 10) : 0;
+    // Update Tampilan Usaha
+    if (document.getElementById('metric_usaha_omzet')) document.getElementById('metric_usaha_omzet').innerText = formatNominalLap(omzet);
+    if (document.getElementById('metric_usaha_laba_usaha')) document.getElementById('metric_usaha_laba_usaha').innerText = formatNominalLap(labaUsaha);
+    if (document.getElementById('metric_usaha_sisa')) document.getElementById('metric_usaha_sisa').innerText = formatNominalLap(sisaUsaha);
 
-    // 2. Update Highlight Metric Cards
-    if (document.getElementById('card_lap_penghasilan')) document.getElementById('card_lap_penghasilan').innerText = formatNominalLap(omzet);
-    if (document.getElementById('card_lap_laba_usaha')) document.getElementById('card_lap_laba_usaha').innerText = formatNominalLap(labaUsaha);
-    if (document.getElementById('card_lap_surplus')) document.getElementById('card_lap_surplus').innerText = formatNominalLap(labaBersih);
-    if (document.getElementById('card_lap_dsr')) {
-        document.getElementById('card_lap_dsr').innerText = `Dana untuk membayar angsuran (DSR ${dsr}%)`;
-    }
+    if (document.getElementById('row_usaha_ramai')) document.getElementById('row_usaha_ramai').innerText = formatNominalLap(omzetRamai);
+    if (document.getElementById('row_usaha_biasa')) document.getElementById('row_usaha_biasa').innerText = formatNominalLap(omzetBiasa);
+    if (document.getElementById('row_usaha_sepi')) document.getElementById('row_usaha_sepi').innerText = formatNominalLap(omzetSepi);
+    if (document.getElementById('row_usaha_tot_omzet')) document.getElementById('row_usaha_tot_omzet').innerText = formatNominalLap(omzet);
 
-    // 3. Update Tabel Laba Rugi Sederhana
-    if (document.getElementById('lap_lr_omzet')) document.getElementById('lap_lr_omzet').innerText = formatNominalLap(omzet);
-    if (document.getElementById('lap_lr_hpp')) document.getElementById('lap_lr_hpp').innerText = `(${formatNominalLap(hppNom)})`;
-    if (document.getElementById('lap_lr_laba_kotor')) document.getElementById('lap_lr_laba_kotor').innerText = formatNominalLap(labaKotor);
-    if (document.getElementById('lap_lr_operasional')) document.getElementById('lap_lr_operasional').innerText = `(${formatNominalLap(biayaOperasional)})`;
-    if (document.getElementById('lap_lr_laba_usaha')) document.getElementById('lap_lr_laba_usaha').innerText = formatNominalLap(labaUsaha);
-    if (document.getElementById('lap_lr_pendapatan_lain')) document.getElementById('lap_lr_pendapatan_lain').innerText = formatNominalLap(pendapatanLain);
-    if (document.getElementById('lap_lr_pengeluaran_rt')) document.getElementById('lap_lr_pengeluaran_rt').innerText = `(${formatNominalLap(pengeluaranRT)})`;
-    if (document.getElementById('lap_lr_laba_bersih')) document.getElementById('lap_lr_laba_bersih').innerText = formatNominalLap(labaBersih);
-    if (document.getElementById('lap_lr_cicilan_berjalan')) document.getElementById('lap_lr_cicilan_berjalan').innerText = `(${formatNominalLap(cicilanBerjalan)})`;
-    if (document.getElementById('lap_lr_sisa_kas_bebas')) document.getElementById('lap_lr_sisa_kas_bebas').innerText = formatNominalLap(sisaKasBebas);
+    if (document.getElementById('row_usaha_hpp')) document.getElementById('row_usaha_hpp').innerText = `(${formatNominalLap(hppNom)})`;
+    if (document.getElementById('row_usaha_laba_kotor')) document.getElementById('row_usaha_laba_kotor').innerText = formatNominalLap(labaKotor);
+    if (document.getElementById('row_usaha_operasional')) document.getElementById('row_usaha_operasional').innerText = `(${formatNominalLap(biayaOperasional)})`;
+    if (document.getElementById('row_usaha_laba_usaha')) document.getElementById('row_usaha_laba_usaha').innerText = formatNominalLap(labaUsaha);
+    if (document.getElementById('row_usaha_pendapatan_lain')) document.getElementById('row_usaha_pendapatan_lain').innerText = formatNominalLap(pendapatanLain);
+    if (document.getElementById('row_usaha_prive')) document.getElementById('row_usaha_prive').innerText = `(${formatNominalLap(pengeluaranRT)})`;
+    if (document.getElementById('row_usaha_sisa_penghasilan')) document.getElementById('row_usaha_sisa_penghasilan').innerText = formatNominalLap(sisaUsaha);
+    if (document.getElementById('row_usaha_cicilan')) document.getElementById('row_usaha_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
+    if (document.getElementById('row_usaha_buffer')) document.getElementById('row_usaha_buffer').innerText = formatNominalLap(bufferUsaha);
 
-    if (document.getElementById('box_lap_laba_bersih')) document.getElementById('box_lap_laba_bersih').innerText = formatNominalLap(labaBersih);
-    if (document.getElementById('box_lap_buffer')) document.getElementById('box_lap_buffer').innerText = formatNominalLap(sisaKasBebas);
-    if (document.getElementById('box_lap_dsr')) document.getElementById('box_lap_dsr').innerText = `${dsr}%`;
+    // Harta & Utang Usaha
+    const kasU = Math.round(omzet * 0.15);
+    const piutangU = Math.round(omzet * 0.10);
+    const stokU = Math.round(hppNom * 0.35);
+    const alatU = Math.round(omzet * 0.12);
+    const subAstU = kasU + piutangU + stokU + alatU;
 
-    // 4. Update Neraca Sederhana
-    const kasLancar = Math.round(omzet * 0.2);
-    const piutang = Math.round(omzet * 0.12);
-    const persediaan = Math.round(hppNom * 0.45);
-    const totalAsetLancar = kasLancar + piutang + persediaan;
+    const tabP = Math.round(omzet * 0.10);
+    const tanahP = <?= $tanahPribadi ?>;
+    const bgnP = <?= $bangunanPribadi ?>;
+    const kdrP = <?= $kendaraanPribadi ?>;
+    const subAstP = tabP + tanahP + bgnP + kdrP;
+    const totHartaU = subAstU + subAstP;
 
-    const peralatan = Math.round(omzet * 0.15);
-    const kendaraan = 45000000;
-    const tanahBangunan = <?= $tanahBangunan ?>;
-    const totalAsetTetap = peralatan + kendaraan + tanahBangunan;
-    const totalAset = totalAsetLancar + totalAsetTetap;
+    const utgDagang = Math.round(hppNom * 0.15);
+    const utgBank = cicilanAcuan * 18;
+    const utgKoperasi = 5000000;
+    const utgPinjol = 0;
+    const totUtangU = utgDagang + utgBank + utgKoperasi + utgPinjol;
+    const netWorthU = totHartaU - totUtangU;
 
-    const utangDagang = Math.round(hppNom * 0.15);
-    const utangBank = cicilanBerjalan * 18;
-    const utangKoperasi = 5000000;
-    const totalUtang = utangDagang + utangBank + utangKoperasi;
-    const modalBersih = totalAset - totalUtang;
+    if (document.getElementById('ast_usaha_kas')) document.getElementById('ast_usaha_kas').innerText = formatNominalLap(kasU);
+    if (document.getElementById('ast_usaha_piutang')) document.getElementById('ast_usaha_piutang').innerText = formatNominalLap(piutangU);
+    if (document.getElementById('ast_usaha_stok')) document.getElementById('ast_usaha_stok').innerText = formatNominalLap(stokU);
+    if (document.getElementById('ast_usaha_alat')) document.getElementById('ast_usaha_alat').innerText = formatNominalLap(alatU);
+    if (document.getElementById('ast_usaha_sub')) document.getElementById('ast_usaha_sub').innerText = formatNominalLap(subAstU);
 
-    if (document.getElementById('neraca_kas')) document.getElementById('neraca_kas').innerText = formatNominalLap(kasLancar);
-    if (document.getElementById('neraca_piutang')) document.getElementById('neraca_piutang').innerText = formatNominalLap(piutang);
-    if (document.getElementById('neraca_persediaan')) document.getElementById('neraca_persediaan').innerText = formatNominalLap(persediaan);
-    if (document.getElementById('neraca_sub_lancar')) document.getElementById('neraca_sub_lancar').innerText = formatNominalLap(totalAsetLancar);
+    if (document.getElementById('ast_pribadi_tabungan')) document.getElementById('ast_pribadi_tabungan').innerText = formatNominalLap(tabP);
+    if (document.getElementById('ast_pribadi_tanah')) document.getElementById('ast_pribadi_tanah').innerText = formatNominalLap(tanahP);
+    if (document.getElementById('ast_pribadi_bangunan')) document.getElementById('ast_pribadi_bangunan').innerText = formatNominalLap(bgnP);
+    if (document.getElementById('ast_pribadi_kendaraan')) document.getElementById('ast_pribadi_kendaraan').innerText = formatNominalLap(kdrP);
+    if (document.getElementById('ast_pribadi_sub')) document.getElementById('ast_pribadi_sub').innerText = formatNominalLap(subAstP);
+    if (document.getElementById('ast_total_harta_usaha')) document.getElementById('ast_total_harta_usaha').innerText = formatNominalLap(totHartaU);
 
-    if (document.getElementById('neraca_peralatan')) document.getElementById('neraca_peralatan').innerText = formatNominalLap(peralatan);
-    if (document.getElementById('neraca_kendaraan')) document.getElementById('neraca_kendaraan').innerText = formatNominalLap(kendaraan);
-    if (document.getElementById('neraca_tanah_bangunan')) document.getElementById('neraca_tanah_bangunan').innerText = formatNominalLap(tanahBangunan);
-    if (document.getElementById('neraca_sub_tetap')) document.getElementById('neraca_sub_tetap').innerText = formatNominalLap(totalAsetTetap);
-    if (document.getElementById('neraca_total_aset')) document.getElementById('neraca_total_aset').innerText = formatNominalLap(totalAset);
+    if (document.getElementById('utang_dagang')) document.getElementById('utang_dagang').innerText = formatNominalLap(utgDagang);
+    if (document.getElementById('utang_bank')) document.getElementById('utang_bank').innerText = formatNominalLap(utgBank);
+    if (document.getElementById('utang_koperasi')) document.getElementById('utang_koperasi').innerText = formatNominalLap(utgKoperasi);
+    if (document.getElementById('utang_pinjol')) document.getElementById('utang_pinjol').innerText = formatNominalLap(utgPinjol);
+    if (document.getElementById('utang_total_usaha')) document.getElementById('utang_total_usaha').innerText = formatNominalLap(totUtangU);
+    if (document.getElementById('kekayaan_bersih_usaha')) document.getElementById('kekayaan_bersih_usaha').innerText = formatNominalLap(netWorthU);
+    if (document.getElementById('pasiva_total_usaha')) document.getElementById('pasiva_total_usaha').innerText = formatNominalLap(totHartaU);
 
-    if (document.getElementById('neraca_utang_dagang')) document.getElementById('neraca_utang_dagang').innerText = formatNominalLap(utangDagang);
-    if (document.getElementById('neraca_utang_bank')) document.getElementById('neraca_utang_bank').innerText = formatNominalLap(utangBank);
-    if (document.getElementById('neraca_utang_koperasi')) document.getElementById('neraca_utang_koperasi').innerText = formatNominalLap(utangKoperasi);
-    if (document.getElementById('neraca_total_utang')) document.getElementById('neraca_total_utang').innerText = formatNominalLap(totalUtang);
-    if (document.getElementById('neraca_modal_bersih')) document.getElementById('neraca_modal_bersih').innerText = formatNominalLap(modalBersih);
-    if (document.getElementById('neraca_total_pasiva')) document.getElementById('neraca_total_pasiva').innerText = formatNominalLap(totalAset);
+    // 2. Data Gaji
+    const gajiPokok = <?= $gajiPokok ?>;
+    const tunjangan = <?= $tunjanganTetap ?>;
+    const tambahan = <?= $penghasilanTambahan ?>;
+    const pasangan = pendapatanLain;
+    const totGajiIn = gajiPokok + tunjangan + tambahan + pasangan;
 
-    // 5. Update Arus Kas Sederhana
-    const kasMasukPenjualan = Math.round(omzet * 0.85);
-    const kasMasukPiutang = Math.round(omzet * 0.15);
-    const totalKasMasuk = kasMasukPenjualan + kasMasukPiutang + pendapatanLain;
+    const bHidupG = Math.round(pengeluaranRT * 0.55);
+    const bDidikG = Math.round(pengeluaranRT * 0.25);
+    const bLainG = Math.round(pengeluaranRT * 0.20);
+    const totGajiOut = bHidupG + bDidikG + bLainG + cicilanAcuan;
+    const sisaGaji = totGajiIn - totGajiOut;
 
-    const kasKeluarBeli = hppNom;
-    const kasKeluarOpr = biayaOperasional;
-    const kasKeluarCcl = cicilanBerjalan;
-    const kasKeluarKel = pengeluaranRT;
-    const totalKasKeluar = kasKeluarBeli + kasKeluarOpr + kasKeluarCcl + kasKeluarKel;
+    if (document.getElementById('metric_gaji_total')) document.getElementById('metric_gaji_total').innerText = formatNominalLap(totGajiIn);
+    if (document.getElementById('metric_gaji_pengeluaran')) document.getElementById('metric_gaji_pengeluaran').innerText = formatNominalLap(totGajiOut);
+    if (document.getElementById('metric_gaji_sisa')) document.getElementById('metric_gaji_sisa').innerText = formatNominalLap(sisaGaji);
 
-    const netKasBulanan = totalKasMasuk - totalKasKeluar;
-    const saldoKasAwal = kasLancar;
-    const saldoKasAkhir = saldoKasAwal + netKasBulanan;
+    if (document.getElementById('row_gaji_pokok')) document.getElementById('row_gaji_pokok').innerText = formatNominalLap(gajiPokok);
+    if (document.getElementById('row_gaji_tunjangan')) document.getElementById('row_gaji_tunjangan').innerText = formatNominalLap(tunjangan);
+    if (document.getElementById('row_gaji_tambahan')) document.getElementById('row_gaji_tambahan').innerText = formatNominalLap(tambahan);
+    if (document.getElementById('row_gaji_pasangan')) document.getElementById('row_gaji_pasangan').innerText = formatNominalLap(pasangan);
+    if (document.getElementById('row_gaji_tot_inflow')) document.getElementById('row_gaji_tot_inflow').innerText = formatNominalLap(totGajiIn);
 
-    if (document.getElementById('ak_penjualan_tunai')) document.getElementById('ak_penjualan_tunai').innerText = formatNominalLap(kasMasukPenjualan);
-    if (document.getElementById('ak_pelunasan_piutang')) document.getElementById('ak_pelunasan_piutang').innerText = formatNominalLap(kasMasukPiutang);
-    if (document.getElementById('ak_pendapatan_lain')) document.getElementById('ak_pendapatan_lain').innerText = formatNominalLap(pendapatanLain);
-    if (document.getElementById('ak_total_masuk')) document.getElementById('ak_total_masuk').innerText = formatNominalLap(totalKasMasuk);
+    if (document.getElementById('row_gaji_b_hidup')) document.getElementById('row_gaji_b_hidup').innerText = `(${formatNominalLap(bHidupG)})`;
+    if (document.getElementById('row_gaji_b_pendidikan')) document.getElementById('row_gaji_b_pendidikan').innerText = `(${formatNominalLap(bDidikG)})`;
+    if (document.getElementById('row_gaji_b_lain')) document.getElementById('row_gaji_b_lain').innerText = `(${formatNominalLap(bLainG)})`;
+    if (document.getElementById('row_gaji_b_cicilan')) document.getElementById('row_gaji_b_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
+    if (document.getElementById('row_gaji_tot_outflow')) document.getElementById('row_gaji_tot_outflow').innerText = `(${formatNominalLap(totGajiOut)})`;
+    if (document.getElementById('row_gaji_sisa_penghasilan')) document.getElementById('row_gaji_sisa_penghasilan').innerText = formatNominalLap(sisaGaji);
 
-    if (document.getElementById('ak_beli_barang')) document.getElementById('ak_beli_barang').innerText = `(${formatNominalLap(kasKeluarBeli)})`;
-    if (document.getElementById('ak_operasional')) document.getElementById('ak_operasional').innerText = `(${formatNominalLap(kasKeluarOpr)})`;
-    if (document.getElementById('ak_cicilan')) document.getElementById('ak_cicilan').innerText = `(${formatNominalLap(kasKeluarCcl)})`;
-    if (document.getElementById('ak_keluarga')) document.getElementById('ak_keluarga').innerText = `(${formatNominalLap(kasKeluarKel)})`;
-    if (document.getElementById('ak_total_keluar')) document.getElementById('ak_total_keluar').innerText = `(${formatNominalLap(totalKasKeluar)})`;
+    // Harta & Utang Gaji (Tanpa Aset Usaha)
+    const tabG = 25000000;
+    const totHartaG = tabG + tanahP + bgnP + kdrP;
+    const utgBankG = cicilanAcuan * 18;
+    const totUtangG = utgBankG + 5000000;
+    const netWorthG = totHartaG - totUtangG;
 
-    if (document.getElementById('ak_net_bulanan')) document.getElementById('ak_net_bulanan').innerText = formatNominalLap(netKasBulanan);
-    if (document.getElementById('ak_saldo_awal')) document.getElementById('ak_saldo_awal').innerText = formatNominalLap(saldoKasAwal);
-    if (document.getElementById('ak_saldo_akhir')) document.getElementById('ak_saldo_akhir').innerText = formatNominalLap(saldoKasAkhir);
-    if (document.getElementById('box_ak_saldo_akhir')) document.getElementById('box_ak_saldo_akhir').innerText = formatNominalLap(saldoKasAkhir);
+    if (document.getElementById('harta_gaji_tabungan')) document.getElementById('harta_gaji_tabungan').innerText = formatNominalLap(tabG);
+    if (document.getElementById('harta_gaji_tanah')) document.getElementById('harta_gaji_tanah').innerText = formatNominalLap(tanahP);
+    if (document.getElementById('harta_gaji_bangunan')) document.getElementById('harta_gaji_bangunan').innerText = formatNominalLap(bgnP);
+    if (document.getElementById('harta_gaji_kendaraan')) document.getElementById('harta_gaji_kendaraan').innerText = formatNominalLap(kdrP);
+    if (document.getElementById('harta_gaji_total')) document.getElementById('harta_gaji_total').innerText = formatNominalLap(totHartaG);
 
-    // 6. Update Perubahan Modal
-    const modalAwal = modalBersih - labaBersih;
-    const apresiasi = Math.round(tanahBangunan * 0.05);
-    const modalAkhir = modalAwal + labaBersih + apresiasi;
+    if (document.getElementById('utang_gaji_bank')) document.getElementById('utang_gaji_bank').innerText = formatNominalLap(utgBankG);
+    if (document.getElementById('utang_gaji_koperasi')) document.getElementById('utang_gaji_koperasi').innerText = formatNominalLap(5000000);
+    if (document.getElementById('utang_gaji_pinjol')) document.getElementById('utang_gaji_pinjol').innerText = 'Rp 0';
+    if (document.getElementById('utang_gaji_total')) document.getElementById('utang_gaji_total').innerText = formatNominalLap(totUtangG);
+    if (document.getElementById('kekayaan_bersih_gaji')) document.getElementById('kekayaan_bersih_gaji').innerText = formatNominalLap(netWorthG);
+    if (document.getElementById('pasiva_total_gaji')) document.getElementById('pasiva_total_gaji').innerText = formatNominalLap(totHartaG);
 
-    if (document.getElementById('pm_awal')) document.getElementById('pm_awal').innerText = formatNominalLap(modalAwal);
-    if (document.getElementById('pm_laba')) document.getElementById('pm_laba').innerText = formatNominalLap(labaBersih);
-    if (document.getElementById('pm_apresiasi')) document.getElementById('pm_apresiasi').innerText = formatNominalLap(apresiasi);
-    if (document.getElementById('pm_akhir')) document.getElementById('pm_akhir').innerText = formatNominalLap(modalAkhir);
+    // Update Elemen di Modal Preview Dokumen
+    // Preview Gaji
+    if (document.getElementById('p_g_pokok')) document.getElementById('p_g_pokok').innerText = formatNominalLap(gajiPokok + tunjangan);
+    if (document.getElementById('p_g_tambahan')) document.getElementById('p_g_tambahan').innerText = formatNominalLap(tambahan + pasangan);
+    if (document.getElementById('p_g_total_in')) document.getElementById('p_g_total_in').innerText = formatNominalLap(totGajiIn);
+    if (document.getElementById('p_g_hidup')) document.getElementById('p_g_hidup').innerText = `(${formatNominalLap(bHidupG + bDidikG + bLainG)})`;
+    if (document.getElementById('p_g_cicilan')) document.getElementById('p_g_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
+    if (document.getElementById('p_g_surplus')) document.getElementById('p_g_surplus').innerText = formatNominalLap(sisaGaji);
+    if (document.getElementById('p_g_kas_masuk')) document.getElementById('p_g_kas_masuk').innerText = formatNominalLap(totGajiIn);
+    if (document.getElementById('p_g_kas_keluar')) document.getElementById('p_g_kas_keluar').innerText = `(${formatNominalLap(totGajiOut)})`;
+    if (document.getElementById('p_g_kas_bersih')) document.getElementById('p_g_kas_bersih').innerText = formatNominalLap(sisaGaji);
+    if (document.getElementById('p_g_tot_harta')) document.getElementById('p_g_tot_harta').innerText = formatNominalLap(totHartaG);
+    if (document.getElementById('p_g_tot_utang')) document.getElementById('p_g_tot_utang').innerText = `(${formatNominalLap(totUtangG)})`;
+    if (document.getElementById('p_g_net_worth')) document.getElementById('p_g_net_worth').innerText = formatNominalLap(netWorthG);
 
-    // 7. Update Dokumen Preview PDF A4
-    if (document.getElementById('preview_omzet')) document.getElementById('preview_omzet').innerText = formatNominalLap(omzet);
-    if (document.getElementById('preview_hpp')) document.getElementById('preview_hpp').innerText = `(${formatNominalLap(hppNom)})`;
-    if (document.getElementById('preview_laba_kotor')) document.getElementById('preview_laba_kotor').innerText = formatNominalLap(labaKotor);
-    if (document.getElementById('preview_operasional')) document.getElementById('preview_operasional').innerText = `(${formatNominalLap(biayaOperasional)})`;
-    if (document.getElementById('preview_laba_usaha')) document.getElementById('preview_laba_usaha').innerText = formatNominalLap(labaUsaha);
-    if (document.getElementById('preview_pendapatan_lain')) document.getElementById('preview_pendapatan_lain').innerText = formatNominalLap(pendapatanLain);
-    if (document.getElementById('preview_pengeluaran_rt')) document.getElementById('preview_pengeluaran_rt').innerText = `(${formatNominalLap(pengeluaranRT)})`;
-    if (document.getElementById('preview_laba_bersih')) document.getElementById('preview_laba_bersih').innerText = formatNominalLap(labaBersih);
-
-    if (document.getElementById('preview_ast_lancar')) document.getElementById('preview_ast_lancar').innerText = formatNominalLap(totalAsetLancar);
-    if (document.getElementById('preview_ast_tetap')) document.getElementById('preview_ast_tetap').innerText = formatNominalLap(totalAsetTetap);
-    if (document.getElementById('preview_tot_aset')) document.getElementById('preview_tot_aset').innerText = formatNominalLap(totalAset);
-    if (document.getElementById('preview_tot_utang')) document.getElementById('preview_tot_utang').innerText = formatNominalLap(totalUtang);
-    if (document.getElementById('preview_modal_bersih')) document.getElementById('preview_modal_bersih').innerText = formatNominalLap(modalBersih);
-    if (document.getElementById('preview_tot_pasiva')) document.getElementById('preview_tot_pasiva').innerText = formatNominalLap(totalAset);
-
-    if (document.getElementById('preview_ak_masuk')) document.getElementById('preview_ak_masuk').innerText = formatNominalLap(totalKasMasuk);
-    if (document.getElementById('preview_ak_keluar')) document.getElementById('preview_ak_keluar').innerText = `(${formatNominalLap(totalKasKeluar)})`;
-    if (document.getElementById('preview_ak_akhir')) document.getElementById('preview_ak_akhir').innerText = formatNominalLap(saldoKasAkhir);
+    // Preview Usaha
+    if (document.getElementById('p_u_omzet')) document.getElementById('p_u_omzet').innerText = formatNominalLap(omzet);
+    if (document.getElementById('p_u_hpp')) document.getElementById('p_u_hpp').innerText = `(${formatNominalLap(hppNom)})`;
+    if (document.getElementById('p_u_laba_kotor')) document.getElementById('p_u_laba_kotor').innerText = formatNominalLap(labaKotor);
+    if (document.getElementById('p_u_operasional')) document.getElementById('p_u_operasional').innerText = `(${formatNominalLap(biayaOperasional)})`;
+    if (document.getElementById('p_u_laba_usaha')) document.getElementById('p_u_laba_usaha').innerText = formatNominalLap(labaUsaha);
+    if (document.getElementById('p_u_pendapatan_lain')) document.getElementById('p_u_pendapatan_lain').innerText = formatNominalLap(pendapatanLain);
+    if (document.getElementById('p_u_prive')) document.getElementById('p_u_prive').innerText = `(${formatNominalLap(pengeluaranRT)})`;
+    if (document.getElementById('p_u_surplus')) document.getElementById('p_u_surplus').innerText = formatNominalLap(sisaUsaha);
+    if (document.getElementById('p_u_kas_masuk')) document.getElementById('p_u_kas_masuk').innerText = formatNominalLap(omzet + pendapatanLain);
+    if (document.getElementById('p_u_kas_keluar')) document.getElementById('p_u_kas_keluar').innerText = `(${formatNominalLap(hppNom + biayaOperasional + pengeluaranRT)})`;
+    if (document.getElementById('p_u_kas_bersih')) document.getElementById('p_u_kas_bersih').innerText = formatNominalLap(sisaUsaha);
+    if (document.getElementById('p_u_tot_harta')) document.getElementById('p_u_tot_harta').innerText = formatNominalLap(totHartaU);
+    if (document.getElementById('p_u_tot_utang')) document.getElementById('p_u_tot_utang').innerText = `(${formatNominalLap(totUtangU)})`;
+    if (document.getElementById('p_u_net_worth')) document.getElementById('p_u_net_worth').innerText = formatNominalLap(netWorthU);
 }
 
-// Buka Modal Preview Laporan A4
+// Buka Modal Preview Lembar A4
 function bukaModalPreviewLaporan() {
     sinkronkanLaporanKeuangan();
     const modal = document.getElementById('modalPreviewLaporanKeuangan');
@@ -1391,7 +1350,7 @@ function bukaModalPreviewLaporan() {
     }
 }
 
-// Tutup Modal Preview Laporan A4
+// Tutup Modal Preview
 function tutupModalPreviewLaporan() {
     const modal = document.getElementById('modalPreviewLaporanKeuangan');
     if (modal) {
@@ -1400,12 +1359,55 @@ function tutupModalPreviewLaporan() {
     }
 }
 
-// Cetak Laporan PDF
-function cetakHalamanLaporanPdf() {
+// Cetak Lembar A4 (Print Dialog Native Browser Tanpa Hambatan)
+function cetakDokumenA4() {
     window.print();
 }
 
-// Event Listener Otomatis saat Halaman Dimuat
+// Unduh File PDF Langsung ke Komputer
+function unduhDokumenPdfLangsung() {
+    const sheet = document.getElementById('printSheetLaporan');
+    if (!sheet) return;
+
+    const btn = document.getElementById('btnUnduhPdfModal');
+    const label = document.getElementById('labelUnduhModal');
+    const oldText = label ? label.innerText : 'Unduh PDF';
+
+    if (label) label.innerText = 'Membuat PDF...';
+    if (btn) btn.disabled = true;
+
+    if (typeof html2pdf !== 'undefined') {
+        const opt = {
+            margin:       [8, 10, 8, 10],
+            filename:     'Estimasi_Keuangan_Perorangan.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2, 
+                useCORS: true, 
+                allowTaint: true,
+                logging: false,
+                scrollX: 0,
+                scrollY: 0
+            },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(sheet).save().then(function() {
+            if (label) label.innerText = oldText;
+            if (btn) btn.disabled = false;
+        }).catch(function(err) {
+            console.warn('html2pdf dialihkan ke print dialog:', err);
+            if (label) label.innerText = oldText;
+            if (btn) btn.disabled = false;
+            window.print();
+        });
+    } else {
+        if (label) label.innerText = oldText;
+        if (btn) btn.disabled = false;
+        window.print();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     sinkronkanLaporanKeuangan();
 });
