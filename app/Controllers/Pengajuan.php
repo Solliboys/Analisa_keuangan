@@ -16,6 +16,8 @@ use App\Models\KomiteModel;
 use App\Models\LogAktivitasModel;
 use App\Models\SettingReferensiModel;
 use App\Services\GeminiAiService;
+use App\Models\KreditLaporanKeuanganModel;
+use App\Services\LaporanKeuanganService;
 
 class Pengajuan extends BaseController
 {
@@ -147,7 +149,8 @@ class Pengajuan extends BaseController
             'jabatan'           => session()->get('jabatan'),
             'daftar_kredit'     => $daftarKredit,
             'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
-            'pengaturan_sistem' => $pengaturanSistem
+            'pengaturan_sistem' => $pengaturanSistem,
+            'laporan_keuangan'  => [],
         ];
 
         return view('pengajuan/index', $data);
@@ -266,7 +269,8 @@ class Pengajuan extends BaseController
             'dokumen'           => [],
             'komite'            => [],
             'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
-            'pengaturan_sistem' => $pengaturanSistem
+            'pengaturan_sistem' => $pengaturanSistem,
+            'laporan_keuangan'  => [],
         ];
 
         return view('pengajuan/' . $viewFolder . '/form', $data);
@@ -300,6 +304,21 @@ class Pengajuan extends BaseController
         $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
         $viewFolder = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
 
+        $keuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+        $laporanKeuangan = (new KreditLaporanKeuanganModel())->where('kredit_id', $id)->first() ?? [];
+
+        // Hitung hasil laporan aktual yang selalu sinkron dengan input langkah-langkah
+        $rekeningList = $this->rekeningModel->where('kredit_id', $id)->findAll();
+        $slikList     = $this->slikModel->where('kredit_id', $id)->findAll();
+        $hasilAktual  = $this->hitungHasilLaporanAktual($id, $kredit, $viewFolder, $keuangan, $rekeningList, $slikList);
+        $laporanKeuangan = [
+            'kredit_id'    => $id,
+            'tipe_pemohon' => $viewFolder,
+            'json_laporan' => json_encode($hasilAktual),
+            'generated_at' => date('Y-m-d H:i:s'),
+            'status_neraca'=> $hasilAktual['validasi']['status_neraca'] ?? 'Seimbang',
+        ];
+
         $data = [
             'title'             => 'Edit Analisa Kredit - ' . $kredit['nomor_aplikasi'] . ' (' . (($viewFolder === 'badan_usaha') ? 'Badan Usaha' : 'Perorangan') . ')',
             'view_folder'       => $viewFolder,
@@ -315,12 +334,13 @@ class Pengajuan extends BaseController
             'webcheck'          => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],
             'analisa'           => $this->analisaModel->where('kredit_id', $id)->first() ?? [],
             'rekening'          => $this->rekeningModel->where('kredit_id', $id)->findAll(),
-            'keuangan'          => $this->keuanganModel->where('kredit_id', $id)->first() ?? [],
+            'keuangan'          => $keuangan,
             'disbursement'      => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
             'dokumen'           => $this->dokumenModel->where('kredit_id', $id)->findAll(),
             'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
             'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
-            'pengaturan_sistem' => $pengaturanSistem
+            'pengaturan_sistem' => $pengaturanSistem,
+            'laporan_keuangan'  => $laporanKeuangan,
         ];
 
         return view('pengajuan/' . $viewFolder . '/form', $data);
@@ -728,9 +748,10 @@ class Pengajuan extends BaseController
         if (isset($input['rekening']) && is_array($input['rekening'])) {
             foreach ($input['rekening'] as $row) {
                 if (empty($row['nama_bank'])) continue;
-                $credit = $this->cleanNumber($row['total_mutasi_kredit'] ?? 0);
-                $debit  = $this->cleanNumber($row['total_mutasi_debit'] ?? 0);
-                $months = max(1, (int)($row['jumlah_bulan'] ?? 6));
+                $saldoAwal = $this->cleanNumber($row['saldo_awal'] ?? 0);
+                $credit    = $this->cleanNumber($row['total_mutasi_kredit'] ?? 0);
+                $debit     = $this->cleanNumber($row['total_mutasi_debit'] ?? 0);
+                $months    = max(1, (int)($row['jumlah_bulan'] ?? 6));
 
                 $this->rekeningModel->insert([
                     'kredit_id'           => $kreditId,
@@ -738,6 +759,7 @@ class Pengajuan extends BaseController
                     'periode'             => $row['periode'] ?? '',
                     'nomor_rekening'      => $row['nomor_rekening'] ?? '',
                     'atas_nama'           => $row['atas_nama'] ?? '',
+                    'saldo_awal'          => $saldoAwal,
                     'total_mutasi_kredit' => $credit,
                     'total_mutasi_debit'  => $debit,
                     'jumlah_bulan'        => $months,
@@ -751,6 +773,8 @@ class Pengajuan extends BaseController
     private function simpanKeuangan($kreditId, $input)
     {
         $pRK   = $this->cleanNumber($input['pendapatan_rk'] ?? 0);
+        $detailPendapatanRK = !empty($input['detail_pendapatan_rk']) ? $input['detail_pendapatan_rk'] : null;
+        if ($detailPendapatanRK === '[]') $detailPendapatanRK = null;
         $hppPctRK = (float)($input['hpp_persen_rk'] ?? 60);
         $hppNomRK = $pRK * ($hppPctRK / 100);
         $grossRK  = $pRK - $hppNomRK;
@@ -806,6 +830,7 @@ class Pengajuan extends BaseController
         $dataKeu = [
             'kredit_id'                     => $kreditId,
             'pendapatan_rk'                 => $pRK,
+            'detail_pendapatan_rk'          => $detailPendapatanRK,
             'pendapatan_lain_rk'            => $pLainRK,
             'keterangan_pendapatan_lain_rk' => $ketLainRK,
             'ada_bukti_pendapatan_lain_rk'  => $adaPendapatanLain,
@@ -834,7 +859,36 @@ class Pengajuan extends BaseController
             'rasio_dsc_rk'                  => $dscRK,
             'rasio_dsc_iv'                  => $dscIV,
             'status_dsc_rk'                 => $statusRK,
-            'status_dsc_iv'                 => $statusIV
+            'status_dsc_iv'                 => $statusIV,
+
+            // === INPUT NERACA & ARUS KAS TAHAP 9 ===
+            'neraca_awal_kas'               => $this->cleanNumber($input['neraca_awal_kas'] ?? 0),
+            'input_piutang_akhir'           => isset($input['input_piutang_akhir']) && $input['input_piutang_akhir'] !== '' ? $this->cleanNumber($input['input_piutang_akhir']) : null,
+            'input_persediaan_akhir'        => isset($input['input_persediaan_akhir']) && $input['input_persediaan_akhir'] !== '' ? $this->cleanNumber($input['input_persediaan_akhir']) : null,
+            'neraca_awal_piutang'           => $this->cleanNumber($input['neraca_awal_piutang'] ?? 0),
+            'neraca_awal_persediaan'        => $this->cleanNumber($input['neraca_awal_persediaan'] ?? 0),
+            'neraca_aset_tetap_bruto'       => $this->cleanNumber($input['neraca_aset_tetap_bruto'] ?? 0),
+            'neraca_akumulasi_penyusutan'   => $this->cleanNumber($input['neraca_akumulasi_penyusutan'] ?? 0),
+            'input_capex'                   => $this->cleanNumber($input['input_capex'] ?? 0),
+            'input_capex_umur_ekonomis'     => !empty($input['input_capex_umur_ekonomis']) ? (int)$input['input_capex_umur_ekonomis'] : 5,
+            'beban_depresiasi'              => isset($input['beban_depresiasi']) && $input['beban_depresiasi'] !== '' ? $this->cleanNumber($input['beban_depresiasi']) : null,
+            'neraca_awal_aset_tetap'        => $this->cleanNumber($input['neraca_awal_aset_tetap'] ?? 0),
+            'input_utang_usaha_akhir'       => isset($input['input_utang_usaha_akhir']) && $input['input_utang_usaha_akhir'] !== '' ? $this->cleanNumber($input['input_utang_usaha_akhir']) : null,
+            'neraca_utang_bank_lancar'      => $this->cleanNumber($input['neraca_utang_bank_lancar'] ?? 0),
+            'neraca_utang_bank_panjang'     => $this->cleanNumber($input['neraca_utang_bank_panjang'] ?? 0),
+            'input_pembayaran_pokok'        => $this->cleanNumber($input['input_pembayaran_pokok'] ?? 0),
+            'neraca_awal_utang_usaha'       => $this->cleanNumber($input['neraca_awal_utang_usaha'] ?? 0),
+            'neraca_awal_utang_bank'        => $this->cleanNumber($input['neraca_awal_utang_bank'] ?? 0),
+            'neraca_hari_utang_dpo'         => !empty($input['neraca_hari_utang_dpo']) ? (int)$input['neraca_hari_utang_dpo'] : 30,
+            'neraca_modal_disetor'          => $this->cleanNumber($input['neraca_modal_disetor'] ?? 0),
+            'neraca_awal_modal_disetor'     => $this->cleanNumber($input['neraca_modal_disetor'] ?? 0),
+            'neraca_awal_laba_ditahan'      => $this->cleanNumber($input['neraca_awal_laba_ditahan'] ?? 0),
+            'input_prive_dividen'           => $this->cleanNumber($input['input_prive_dividen'] ?? 0),
+            'input_beban_bunga'             => $this->cleanNumber($input['input_beban_bunga'] ?? 0),
+            'input_beban_pajak'             => isset($input['input_beban_pajak']) && $input['input_beban_pajak'] !== '' ? $this->cleanNumber($input['input_beban_pajak']) : null,
+            'input_pinjaman_baru'           => $this->cleanNumber($input['input_pinjaman_baru'] ?? 0),
+            'input_setoran_modal'           => $this->cleanNumber($input['input_setoran_modal'] ?? 0),
+            'neraca_hari_stok_dio'          => !empty($input['neraca_hari_stok_dio']) ? (int)$input['neraca_hari_stok_dio'] : 45,
         ];
 
         $cek = $this->keuanganModel->where('kredit_id', $kreditId)->first();
@@ -842,6 +896,38 @@ class Pengajuan extends BaseController
             $this->keuanganModel->update($cek['keuangan_id'], $dataKeu);
         } else {
             $this->keuanganModel->insert($dataKeu);
+        }
+
+        // Auto-sinkronisasi perhitungan Laporan Keuangan ke tabel kredit_laporan_keuangan
+        try {
+            $kreditData = $this->kreditModel->find($kreditId);
+            $rawJd = $kreditData['jenis_debitur'] ?? 'Perorangan';
+            $tipePemohon = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'karyawan';
+            
+            $service = new LaporanKeuanganService();
+            $calcInput = array_merge($dataKeu, [
+                'daftar_karyawan' => $kreditData['daftar_karyawan'] ?? '[]',
+                'pendapatan'      => $pRK ?: $pIV,
+                'hpp'             => $hppNomRK ?: $hppNomIV,
+            ]);
+            $hasil = $service->hitungLaporan($calcInput, $tipePemohon);
+            
+            $laporanModel = new KreditLaporanKeuanganModel();
+            $laporanExist = $laporanModel->where('kredit_id', $kreditId)->first();
+            $payloadLaporan = [
+                'kredit_id'    => $kreditId,
+                'tipe_pemohon' => $tipePemohon,
+                'json_laporan' => json_encode($hasil),
+                'generated_at' => date('Y-m-d H:i:s'),
+                'status_neraca'=> $hasil['validasi']['status_neraca'] ?? 'Seimbang',
+            ];
+            if ($laporanExist) {
+                $laporanModel->update($laporanExist['id'], $payloadLaporan);
+            } else {
+                $laporanModel->insert($payloadLaporan);
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Error auto-sync laporan keuangan: ' . $e->getMessage());
         }
     }
 
@@ -1208,7 +1294,8 @@ class Pengajuan extends BaseController
             'disbursement'      => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
             'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
             'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
-            'pengaturan_sistem' => $pengaturanSistem
+            'pengaturan_sistem' => $pengaturanSistem,
+            'laporan_keuangan'  => [],
         ];
 
         return view('pengajuan/cetak', $data);
@@ -2036,5 +2123,492 @@ class Pengajuan extends BaseController
     {
         if (is_numeric($val)) return (float)$val;
         return (float)preg_replace('/[^0-9]/', '', (string)$val);
+    }
+
+    // ==========================================
+    // TAHAP 10: GENERATE LAPORAN KEUANGAN ESTIMASI
+    // ==========================================
+    public function generateLaporan()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Sesi berakhir, silakan login ulang.']);
+        }
+
+        $input    = $this->request->getPost();
+        $kreditId = (int)($input['kredit_id'] ?? 0);
+        if ($kreditId <= 0) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID pengajuan tidak valid.']);
+        }
+
+        // Ambil data kredit untuk menentukan tipe pemohon
+        $kredit = $this->kreditModel->find($kreditId);
+        if (!$kredit) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data pengajuan tidak ditemukan.']);
+        }
+
+        $rawJd       = $kredit['jenis_debitur'] ?? 'Perorangan';
+        $tipePemohon = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false)
+            ? 'badan_usaha' : 'karyawan';
+
+        // Ambil data laba rugi dari kredit_keuangan_dsc sebagai base
+        $keuangan = $this->keuanganModel->where('kredit_id', $kreditId)->first() ?? [];
+
+        // Gabungkan data DB dengan input POST (input POST override DB)
+        $mergedInput = array_merge($keuangan, $input);
+        $mergedInput['daftar_karyawan'] = $kredit['daftar_karyawan'] ?? '[]';
+
+        // Penarikan otomatis Bayar Pokok Pinjaman ke Bank, Utang Bank & Beban Bunga dari SLIK (Tahap 5)
+        $dataSlik = $this->slikModel->where('kredit_id', $kreditId)->where('deleted_at', null)->findAll();
+        $totAngsuranTahun = 0;
+        $totOutstanding   = 0;
+        foreach ($dataSlik as $sl) {
+            $angsuran = (float)($sl['angsuran'] ?? 0);
+            $out      = (float)($sl['outstanding'] ?? 0);
+            $totOutstanding += $out;
+            if ($angsuran > 0) {
+                $totAngsuranTahun += ($angsuran * 12);
+            } elseif ($out > 0) {
+                $totAngsuranTahun += ($out * 0.20);
+            }
+        }
+        if (empty($mergedInput['input_pembayaran_pokok']) || (float)$mergedInput['input_pembayaran_pokok'] <= 0) {
+            if ($totAngsuranTahun > 0) {
+                $mergedInput['input_pembayaran_pokok'] = $totAngsuranTahun;
+            }
+        }
+        if (empty($mergedInput['neraca_utang_bank_panjang']) && empty($mergedInput['neraca_utang_bank_lancar'])) {
+            if ($totOutstanding > 0) {
+                $mergedInput['neraca_utang_bank_panjang'] = $totOutstanding;
+            }
+        }
+        // Penarikan otomatis Biaya Bunga Pinjaman Bank (Laba Rugi) dari SLIK (estimasi 11% / tahun dari baki debet)
+        if (empty($mergedInput['input_beban_bunga']) || (float)$mergedInput['input_beban_bunga'] <= 0) {
+            if ($totOutstanding > 0) {
+                $mergedInput['input_beban_bunga'] = round($totOutstanding * 0.11);
+            }
+        }
+
+        // Penarikan otomatis Uang Kas di Awal Tahun dari Rekening Koran (Tahap 7)
+        $dataRekening = $this->rekeningModel->where('kredit_id', $kreditId)->findAll();
+        $totSaldoAwalRekening = 0;
+        $totAvgKredit         = 0;
+        foreach ($dataRekening as $rek) {
+            $totSaldoAwalRekening += (float)($rek['saldo_awal'] ?? 0);
+            $totAvgKredit         += (float)($rek['rata_rata_kredit'] ?? 0);
+        }
+        if (empty($mergedInput['neraca_awal_kas']) || (float)$mergedInput['neraca_awal_kas'] <= 0) {
+            if ($totSaldoAwalRekening > 0) {
+                $mergedInput['neraca_awal_kas'] = $totSaldoAwalRekening;
+            } elseif ($totAvgKredit > 0) {
+                $mergedInput['neraca_awal_kas'] = round($totAvgKredit * 0.20);
+            }
+        }
+
+        // Cek tujuan pembiayaan di Tahap 1: Jika Investasi, otomatis diisi dari alokasi plafon pinjaman / nilai penambahan aset
+        $tujuanPembiayaan = $kredit['tujuan_pembiayaan'] ?? '';
+        $isInvestasi      = (stripos($tujuanPembiayaan, 'investasi') !== false);
+        if ($isInvestasi) {
+            if (empty($mergedInput['input_capex']) || (float)$mergedInput['input_capex'] <= 0) {
+                $plafonInvestasi = (float)($kredit['plafon_pengajuan'] ?? 0);
+                if ($plafonInvestasi > 0) {
+                    $mergedInput['input_capex'] = $plafonInvestasi;
+                }
+            }
+        }
+
+        // Hapus penarikan uang pribadi / prive / dividen dan pajak usaha badan usaha
+        $mergedInput['input_prive_dividen'] = 0;
+        $mergedInput['prive_dividen']       = 0;
+        $mergedInput['input_beban_pajak']   = 0;
+        $mergedInput['pajak']               = 0;
+
+        // Hitung laporan menggunakan service
+        $service = new LaporanKeuanganService();
+        $hasil   = $service->hitungLaporan($mergedInput, $tipePemohon);
+
+        // Validasi keseimbangan neraca (badan usaha)
+        $validasi = $hasil['validasi'];
+        $warningMsg = null;
+        if ($tipePemohon === 'badan_usaha' && !$validasi['is_seimbang']) {
+            $selisih = abs($validasi['selisih_neraca']);
+            $warningMsg = 'Neraca tidak seimbang — Selisih: Rp ' . number_format($selisih, 0, ',', '.') . '. Periksa kembali data input di Tahap 9.';
+        }
+
+        // Simpan ke tabel kredit_laporan_keuangan (upsert by kredit_id)
+        $laporanModel  = new KreditLaporanKeuanganModel();
+        $existingLaporan = $laporanModel->where('kredit_id', $kreditId)->first();
+
+        $labaRugi  = $hasil['laba_rugi'];
+        $arusKas   = $hasil['arus_kas'];
+        $neraca    = $hasil['neraca'] ?? [];
+        $asumsi    = $hasil['asumsi'];
+
+        $dataLaporan = [
+            'kredit_id'                 => $kreditId,
+            'tipe_pemohon'              => $tipePemohon,
+            // Asumsi & Saldo Awal
+            'asumsi_dso'                => $asumsi['dso'] ?? 30,
+            'asumsi_dio'                => $asumsi['dio'] ?? 45,
+            'asumsi_dpo'                => $asumsi['dpo'] ?? 30,
+            'saldo_awal_piutang'        => $asumsi['saldo_awal_piutang'] ?? 0,
+            'saldo_awal_persediaan'     => $asumsi['saldo_awal_persediaan'] ?? 0,
+            'saldo_awal_utang_usaha'    => $asumsi['saldo_awal_utang_usaha'] ?? 0,
+            'saldo_awal_aset_tetap'     => $asumsi['saldo_awal_aset_tetap'] ?? 0,
+            'saldo_awal_kas'            => $asumsi['saldo_awal_kas'] ?? 0,
+            // Input Neraca
+            'kas_bank_neraca'           => $neraca['kas_bank'] ?? ($arusKas['kas_akhir'] ?? 0),
+            'piutang_usaha_neraca'      => $neraca['piutang_usaha'] ?? 0,
+            'persediaan_neraca'         => $neraca['persediaan'] ?? 0,
+            'aset_lancar_lain_neraca'   => $neraca['aset_lancar_lain'] ?? 0,
+            'harga_perolehan_aset_tetap'=> $neraca['harga_perolehan_aset_tetap'] ?? 0,
+            'akumulasi_penyusutan'      => $neraca['akumulasi_penyusutan'] ?? 0,
+            'umur_ekonomis_tahun'       => $neraca['umur_ekonomis_tahun'] ?? 5,
+            'utang_usaha'               => $neraca['utang_usaha'] ?? 0,
+            'utang_bank_pendek'         => $neraca['utang_bank_pendek'] ?? 0,
+            'utang_jangka_panjang'      => $neraca['utang_jangka_panjang'] ?? 0,
+            'modal_disetor'             => $neraca['modal_disetor'] ?? 0,
+            'laba_ditahan_awal'         => $neraca['laba_ditahan_awal'] ?? 0,
+            'laba_ditahan_akhir'        => $neraca['laba_ditahan_akhir'] ?? 0,
+            'prive_dividen'             => $neraca['prive_dividen'] ?? (float)($input['prive_dividen'] ?? $input['input_prive_dividen'] ?? 0),
+            // Laba Rugi Summary
+            'pendapatan'                => $labaRugi['pendapatan'],
+            'hpp'                       => $labaRugi['hpp'],
+            'laba_kotor'                => $labaRugi['laba_kotor'],
+            'beban_gaji'                => $labaRugi['beban_gaji'],
+            'beban_operasional'         => $labaRugi['beban_operasional'],
+            'beban_sewa'                => $labaRugi['beban_sewa'] ?? 0,
+            'beban_lainnya'             => $labaRugi['beban_lainnya'],
+            'beban_penyusutan'          => $labaRugi['beban_penyusutan'] ?? 0,
+            'laba_operasional'          => $labaRugi['laba_operasional'],
+            'pendapatan_lain'           => $labaRugi['pendapatan_lain'],
+            'beban_bunga'               => $labaRugi['beban_bunga'],
+            'laba_sebelum_pajak'        => $labaRugi['laba_sebelum_pajak'],
+            'pajak'                     => $labaRugi['pajak'],
+            'laba_bersih'               => $labaRugi['laba_bersih'],
+            // Arus Kas
+            'kas_operasional'           => $arusKas['kas_operasional'],
+            'kas_investasi'             => $arusKas['kas_investasi'],
+            'kas_pendanaan'             => $arusKas['kas_pendanaan'],
+            'kenaikan_bersih_kas'       => $arusKas['kenaikan_bersih_kas'],
+            'kas_akhir'                 => $arusKas['kas_akhir'],
+            // Neraca Ringkas
+            'total_aset'                => $neraca['total_aset'] ?? 0,
+            'total_liabilitas'          => $neraca['total_liabilitas'] ?? 0,
+            'total_ekuitas'             => $neraca['total_ekuitas'] ?? 0,
+            // Validasi
+            'status_neraca'             => $validasi['status_neraca'],
+            'selisih_neraca'            => $validasi['selisih_neraca'],
+            'status_kas'                => $validasi['status_kas'],
+            'selisih_kas'               => $validasi['selisih_kas'],
+            // Simpan JSON lengkap
+            'json_laporan'              => json_encode($hasil),
+            'generated_at'              => date('Y-m-d H:i:s'),
+            'generated_by'              => session()->get('user_id'),
+        ];
+
+        try {
+            if ($existingLaporan) {
+                $laporanModel->update($existingLaporan['id'], $dataLaporan);
+            } else {
+                $laporanModel->insert($dataLaporan);
+            }
+
+            // Juga update status ke tabel kredit_keuangan_dsc jika ada
+            if ($keuangan && !empty($keuangan['keuangan_id'])) {
+                $this->keuanganModel->update($keuangan['keuangan_id'], [
+                    'is_laporan_generated' => 1,
+                    'laporan_generated_at' => date('Y-m-d H:i:s'),
+                    'laporan_json_data'    => json_encode($hasil),
+                    'neraca_total_aset'    => $neraca['total_aset'] ?? 0,
+                    'cf_kas_akhir'         => $arusKas['kas_akhir'] ?? 0,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyimpan laporan: ' . $e->getMessage()]);
+        }
+
+        // Catat ke log aktivitas
+        try {
+            LogAktivitasModel::catat(
+                'Generate Laporan Keuangan Estimasi untuk pengajuan #' . $kredit['nomor_aplikasi'] . ' (' . ($kredit['nama_debitur'] ?? '-') . ')',
+                'LAPORAN',
+                'SUCCESS',
+                [
+                    'kredit_id'      => $kreditId,
+                    'tipe_pemohon'   => $tipePemohon,
+                    'laba_bersih'    => $labaRugi['laba_bersih'],
+                    'kas_akhir'      => $arusKas['kas_akhir'],
+                    'status_neraca'  => $validasi['status_neraca'],
+                ]
+            );
+        } catch (\Throwable $e) {}
+
+        return $this->response->setJSON([
+            'status'   => true,
+            'warning'  => $warningMsg,
+            'message'  => $warningMsg
+                ? ('Laporan berhasil dibuat. ⚠️ ' . $warningMsg)
+                : 'Laporan Keuangan Estimasi berhasil dibuat.',
+            'data'     => $hasil,
+        ]);
+    }
+
+    /**
+     * Helper kalkulasi Laporan Keuangan Konsolidasi yang selalu sinkron dengan input aktual
+     */
+    private function hitungHasilLaporanAktual($id, $kredit, $tipePemohon, $dataKeuangan, $dataRekening, $dataSlik)
+    {
+        $service = new LaporanKeuanganService();
+
+        // Gabungkan data keuangan dengan daftar karyawan dari Tahap 2 / Profil
+        $calcInput = array_merge($dataKeuangan, [
+            'daftar_karyawan' => $kredit['daftar_karyawan'] ?? '[]',
+        ]);
+
+        // Jika pendapatan di laba rugi kosong, ambil dari total mutasi kredit rekening koran (Tahap 8)
+        if (empty($calcInput['pendapatan']) && empty($calcInput['pendapatan_rk'])) {
+            $totMutasi = 0;
+            foreach ($dataRekening as $r) {
+                $totMutasi += (float)($r['total_mutasi_kredit'] ?? 0);
+            }
+            if ($totMutasi > 0) {
+                $calcInput['pendapatan_rk'] = $totMutasi;
+                $calcInput['pendapatan']    = $totMutasi;
+            }
+        }
+
+        // Jika utang bank di neraca kosong, ambil dari baki debet outstanding SLIK OJK (Tahap 5)
+        if (empty($calcInput['neraca_utang_bank_panjang']) && empty($calcInput['neraca_utang_bank_lancar'])) {
+            $totSlik = 0;
+            foreach ($dataSlik as $sl) {
+                $totSlik += (float)($sl['outstanding'] ?? 0);
+            }
+            if ($totSlik > 0) {
+                $calcInput['neraca_utang_bank_panjang'] = $totSlik;
+            }
+        }
+
+        // Jika pembayaran pokok pinjaman bank di arus kas kosong, tarik dari SLIK Tahap 5 (akumulasi 1 tahun)
+        if (empty($calcInput['input_pembayaran_pokok']) || (float)$calcInput['input_pembayaran_pokok'] <= 0) {
+            $totAngsuranTahun = 0;
+            foreach ($dataSlik as $sl) {
+                $angsuran = (float)($sl['angsuran'] ?? 0);
+                $out      = (float)($sl['outstanding'] ?? 0);
+                if ($angsuran > 0) {
+                    $totAngsuranTahun += ($angsuran * 12);
+                } elseif ($out > 0) {
+                    $totAngsuranTahun += ($out * 0.20);
+                }
+            }
+            if ($totAngsuranTahun > 0) {
+                $calcInput['input_pembayaran_pokok'] = $totAngsuranTahun;
+            }
+        }
+
+        // Jika beban bunga pinjaman bank di laba rugi kosong, tarik dari SLIK (estimasi 11% / tahun dari baki debet)
+        if (empty($calcInput['input_beban_bunga']) || (float)$calcInput['input_beban_bunga'] <= 0) {
+            $totOutstandingSlik = 0;
+            foreach ($dataSlik as $sl) {
+                $totOutstandingSlik += (float)($sl['outstanding'] ?? 0);
+            }
+            if ($totOutstandingSlik > 0) {
+                $calcInput['input_beban_bunga'] = round($totOutstandingSlik * 0.11);
+            }
+        }
+
+        // Jika uang kas di awal tahun kosong, tarik dari saldo awal rekening koran Tahap 7
+        if (empty($calcInput['neraca_awal_kas']) || (float)$calcInput['neraca_awal_kas'] <= 0) {
+            $totSaldoAwalRekening = 0;
+            $totAvgKredit         = 0;
+            foreach ($dataRekening as $rek) {
+                $totSaldoAwalRekening += (float)($rek['saldo_awal'] ?? 0);
+                $totAvgKredit         += (float)($rek['rata_rata_kredit'] ?? 0);
+            }
+            if ($totSaldoAwalRekening > 0) {
+                $calcInput['neraca_awal_kas'] = $totSaldoAwalRekening;
+            } elseif ($totAvgKredit > 0) {
+                $calcInput['neraca_awal_kas'] = round($totAvgKredit * 0.20);
+            }
+        }
+
+        // Cek tujuan pembiayaan di Tahap 1: Jika Investasi, otomatis diisi dari alokasi plafon pinjaman / nilai penambahan aset
+        $tujuanPembiayaan = $kredit['tujuan_pembiayaan'] ?? '';
+        $isInvestasi      = (stripos($tujuanPembiayaan, 'investasi') !== false);
+        if ($isInvestasi) {
+            if (empty($calcInput['input_capex']) || (float)$calcInput['input_capex'] <= 0) {
+                $plafonInvestasi = (float)($kredit['plafon_pengajuan'] ?? 0);
+                if ($plafonInvestasi > 0) {
+                    $calcInput['input_capex'] = $plafonInvestasi;
+                }
+            }
+        }
+
+        // Hapus penarikan uang pribadi / prive / dividen dan pajak usaha badan usaha
+        $calcInput['input_prive_dividen'] = 0;
+        $calcInput['prive_dividen']       = 0;
+        $calcInput['input_beban_pajak']   = 0;
+        $calcInput['pajak']               = 0;
+
+        // Hitung laporan keuangan menggunakan service
+        $hasil = $service->hitungLaporan($calcInput, $tipePemohon);
+
+        // Update cache laporan keuangan di tabel kredit_laporan_keuangan
+        try {
+            $laporanModel = new KreditLaporanKeuanganModel();
+            $laporanExist = $laporanModel->where('kredit_id', $id)->first();
+            $payload = [
+                'kredit_id'    => $id,
+                'tipe_pemohon' => $tipePemohon,
+                'json_laporan' => json_encode($hasil),
+                'generated_at' => date('Y-m-d H:i:s'),
+                'status_neraca'=> $hasil['validasi']['status_neraca'] ?? 'Seimbang',
+            ];
+            if ($laporanExist) {
+                $laporanModel->update($laporanExist['id'], $payload);
+            } else {
+                $laporanModel->insert($payload);
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Error update cache laporan: ' . $e->getMessage());
+        }
+
+        return $hasil;
+    }
+
+    /**
+     * Server-side Cetak / Preview Laporan Keuangan Konsolidasi Lengkap
+     */
+    public function cetakLaporan($id = null)
+    {
+        if ($redirect = $this->cekAuth()) return $redirect;
+
+        $kredit = $this->kreditModel->find($id);
+        if (!$kredit) {
+            return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan');
+        }
+
+        $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
+        $tipePemohon = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
+
+        // Load semua data pendukung untuk laporan konsolidasi
+        $dataKeuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+        $dataSlik     = $this->slikModel->where('kredit_id', $id)->findAll();
+        $dataRekening = $this->rekeningModel->where('kredit_id', $id)->findAll();
+        $dataAgunan   = $this->agunanModel->where('kredit_id', $id)->findAll();
+        $dataWebcheck = $this->webcheckModel->where('kredit_id', $id)->first();
+        $dataAnalisa  = $this->analisaModel->where('kredit_id', $id)->first();
+
+        // Hitung hasil laporan aktual langsung dari data yang diinputkan
+        $hasil = $this->hitungHasilLaporanAktual($id, $kredit, $tipePemohon, $dataKeuangan, $dataRekening, $dataSlik);
+
+        $tipeTarget = $this->request->getGet('tipe') ?? 'semua';
+
+        return view('pengajuan/cetak_laporan_keuangan', [
+            'kredit'       => $kredit,
+            'hasil'        => $hasil,
+            'tipeTarget'   => $tipeTarget,
+            'tipePemohon'  => $tipePemohon,
+            'dataSlik'     => $dataSlik,
+            'dataRekening' => $dataRekening,
+            'dataAgunan'   => $dataAgunan,
+            'dataWebcheck' => $dataWebcheck,
+            'dataAnalisa'  => $dataAnalisa,
+            'dataKeuangan' => $dataKeuangan,
+        ]);
+    }
+
+    /**
+     * Server-side Langsung Download File PDF Laporan Keuangan Konsolidasi
+     * Mengembalikan file PDF binary dengan Content-Disposition: attachment sehingga langsung terdownload
+     */
+    public function unduhLaporanPdf($id = null)
+    {
+        if ($redirect = $this->cekAuth()) return $redirect;
+
+        $kredit = $this->kreditModel->find($id);
+        if (!$kredit) {
+            return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan');
+        }
+
+        $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
+        $tipePemohon = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
+
+        // Load semua data pendukung untuk laporan konsolidasi
+        $dataKeuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+        $dataSlik     = $this->slikModel->where('kredit_id', $id)->findAll();
+        $dataRekening = $this->rekeningModel->where('kredit_id', $id)->findAll();
+        $dataAgunan   = $this->agunanModel->where('kredit_id', $id)->findAll();
+        $dataWebcheck = $this->webcheckModel->where('kredit_id', $id)->first();
+        $dataAnalisa  = $this->analisaModel->where('kredit_id', $id)->first();
+
+        // Hitung hasil laporan aktual langsung dari data yang diinputkan
+        $hasil = $this->hitungHasilLaporanAktual($id, $kredit, $tipePemohon, $dataKeuangan, $dataRekening, $dataSlik);
+
+        $tipeTarget = $this->request->getGet('tipe') ?? 'semua';
+
+        $extra = [
+            'dataSlik'     => $dataSlik,
+            'dataRekening' => $dataRekening,
+            'dataAgunan'   => $dataAgunan,
+            'dataWebcheck' => $dataWebcheck,
+            'dataAnalisa'  => $dataAnalisa,
+            'dataKeuangan' => $dataKeuangan,
+        ];
+
+        $pdfLib = new \App\Libraries\LaporanKeuanganPdf($kredit, $hasil, $tipeTarget, $extra);
+        $pdfContent = $pdfLib->generate();
+
+        $namaDebitur = $kredit['nama_debitur'] ?? 'Debitur';
+        $safeName    = preg_replace('/[^a-zA-Z0-9_-]/', '_', $namaDebitur);
+        $filename    = 'Laporan_Konsolidasi_' . $safeName . '_' . date('Ymd') . '.pdf';
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setHeader('Content-Length', (string)strlen($pdfContent))
+            ->setBody($pdfContent);
+    }
+
+    /**
+     * Server-side Unduh Excel Laporan Keuangan Konsolidasi
+     */
+    public function unduhLaporanExcel($id = null)
+    {
+        if ($redirect = $this->cekAuth()) return $redirect;
+
+        $kredit = $this->kreditModel->find($id);
+        if (!$kredit) {
+            return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan');
+        }
+
+        $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
+        $tipePemohon = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
+
+        // Load semua data pendukung untuk laporan konsolidasi
+        $dataKeuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
+        $dataSlik     = $this->slikModel->where('kredit_id', $id)->findAll();
+        $dataRekening = $this->rekeningModel->where('kredit_id', $id)->findAll();
+        $dataAgunan   = $this->agunanModel->where('kredit_id', $id)->findAll();
+        $dataWebcheck = $this->webcheckModel->where('kredit_id', $id)->first();
+        $dataAnalisa  = $this->analisaModel->where('kredit_id', $id)->first();
+
+        // Hitung hasil laporan aktual langsung dari data yang diinputkan
+        $hasil = $this->hitungHasilLaporanAktual($id, $kredit, $tipePemohon, $dataKeuangan, $dataRekening, $dataSlik);
+
+        $namaDebitur = $kredit['nama_debitur'] ?? 'Debitur';
+        $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $namaDebitur);
+        $filename = 'Laporan_Konsolidasi_' . $safeName . '_' . date('Ymd') . '.xls';
+
+        return view('pengajuan/unduh_laporan_excel', [
+            'kredit'       => $kredit,
+            'hasil'        => $hasil,
+            'filename'     => $filename,
+            'dataSlik'     => $dataSlik,
+            'dataRekening' => $dataRekening,
+            'dataAgunan'   => $dataAgunan,
+            'dataWebcheck' => $dataWebcheck,
+            'dataAnalisa'  => $dataAnalisa,
+            'dataKeuangan' => $dataKeuangan,
+        ]);
     }
 }

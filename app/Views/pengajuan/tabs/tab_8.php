@@ -56,7 +56,13 @@
                                 </div>
                             </div>
                             <!-- Baris 2: Mutasi & Kalkulasi Rata-rata -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-slate-100">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t border-slate-100">
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5 h-8 flex items-end">Saldo Awal Rekening (Rp)</label>
+                                    <input type="text" name="rekening[0][saldo_awal]" placeholder="0" 
+                                           class="w-full text-xs font-bold text-emerald-700 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input rek-saldo-awal h-[38px]" 
+                                           oninput="formatRupiah(this);">
+                                </div>
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5 h-8 flex items-end">Total Mutasi Kredit (Masuk)</label>
                                     <input type="text" name="rekening[0][total_mutasi_kredit]" placeholder="0" 
@@ -122,7 +128,14 @@
                                     </div>
                                 </div>
                                 <!-- Baris 2: Mutasi & Kalkulasi Rata-rata -->
-                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-3 border-t border-slate-100">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t border-slate-100">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5 h-8 flex items-end">Saldo Awal Rekening (Rp)</label>
+                                        <input type="text" name="rekening[<?= $idx ?>][saldo_awal]" 
+                                               value="<?= number_format((float)($r['saldo_awal'] ?? 0), 0, ',', '.') ?>" 
+                                               placeholder="0" class="w-full text-xs font-bold text-emerald-700 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input rek-saldo-awal h-[38px]" 
+                                               oninput="formatRupiah(this);">
+                                    </div>
                                     <div>
                                         <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5 h-8 flex items-end">Total Mutasi Kredit (Masuk)</label>
                                         <input type="text" name="rekening[<?= $idx ?>][total_mutasi_kredit]" 

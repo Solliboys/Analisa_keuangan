@@ -36,19 +36,19 @@ class GeminiAiService
     /**
      * Helper pemanggilan Gemini API dengan dukungan IPv4 & Multi-Model Fallback otomatis
      */
-    protected function panggilGeminiApi(string $prompt, string $apiKey, string $preferredModel = 'gemini-3.6-flash', float $temperature = 0.1): array
+    protected function panggilGeminiApi(string $prompt, string $apiKey, string $preferredModel = 'gemini-3.1-flash-lite', float $temperature = 0.1): array
     {
-        $cleanModel = trim($preferredModel ?: 'gemini-3.6-flash');
+        $cleanModel = trim($preferredModel ?: 'gemini-3.1-flash-lite');
         if (preg_match('/^gemini-(1\.5|2\.0|2\.5)/i', $cleanModel)) {
-            $cleanModel = 'gemini-3.6-flash';
+            $cleanModel = 'gemini-3.1-flash-lite';
         }
 
+        // Urutkan model tercepat & paling stabil di awal (flash-lite responsif 1-2 detik)
         $candidateModels = array_values(array_unique([
-            $cleanModel,
-            'gemini-3.6-flash',
             'gemini-3.1-flash-lite',
+            'gemini-3.6-flash',
             'gemini-3.5-flash',
-            'gemini-3.8-flash'
+            $cleanModel
         ]));
 
         $payload = [
@@ -61,7 +61,8 @@ class GeminiAiService
             ],
             'generationConfig' => [
                 'temperature'      => $temperature,
-                'responseMimeType' => 'application/json'
+                'responseMimeType' => 'application/json',
+                'maxOutputTokens'  => 800
             ]
         ];
 
@@ -75,8 +76,8 @@ class GeminiAiService
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 18);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 8);
 
             $response  = curl_exec($ch);
             $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -157,7 +158,7 @@ class GeminiAiService
         $prompt .= '  "skor_kelayakan": (angka bulat 0 sampai 100),' . "\n";
         $prompt .= '  "rekomendasi_keputusan": (pilih salah satu: "Disetujui Penuh", "Disetujui dengan Penurunan Plafon", "Pertimbangan Khusus", "Tolak"),' . "\n";
         $prompt .= '  "rekomendasi_plafon": (angka nominal rupiah tanpa titik/koma),' . "\n";
-        $prompt .= '  "analisis_risiko": (uraian komprehensif 3-4 paragraf mencakup: profil karakter debitur, kecukupan agunan, kapasitas perputaran kas, serta klausul mitigasi risiko rekomendasi komite)' . "\n";
+        $prompt .= '  "analisis_risiko": (uraian komprehensif 2 paragraf padat & tajam mencakup: evaluasi 5C debitur, kecukupan agunan, kapasitas arus kas, dan klausul rekomendasi komite)' . "\n";
         $prompt .= "}";
 
         $apiRes = $this->panggilGeminiApi($prompt, $apiKey, $model, 0.2);

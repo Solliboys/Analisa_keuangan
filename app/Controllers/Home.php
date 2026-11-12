@@ -8,18 +8,27 @@ class Home extends BaseController
 {
     public function index(): string
     {
-        $db = Database::connect();
-        
-        // Ambil pengaturan sistem dari database
-        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
-        
-        // Ambil pengaturan AI
-        $pengaturanAi = $db->table('pengaturan_ai')->where('id', 1)->get()->getRowArray() ?? [];
+        $pengaturanSistem = [];
+        $pengaturanAi = [];
+        $totalKredit = 0;
+        $totalPlafon = 48500000000;
 
-        // Data statistik agregat untuk live showcase
-        $totalKredit = $db->table('kredit')->countAllResults();
-        $totalPlafonRow = $db->table('kredit')->selectSum('plafon_pengajuan')->get()->getRowArray();
-        $totalPlafon = (float)($totalPlafonRow['plafon_pengajuan'] ?? 48500000000);
+        try {
+            $db = Database::connect();
+            
+            // Ambil pengaturan sistem dari database
+            $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+            
+            // Ambil pengaturan AI
+            $pengaturanAi = $db->table('pengaturan_ai')->where('id', 1)->get()->getRowArray() ?? [];
+
+            // Data statistik agregat untuk live showcase
+            $totalKredit = $db->table('kredit')->countAllResults();
+            $totalPlafonRow = $db->table('kredit')->selectSum('plafon_pengajuan')->get()->getRowArray();
+            $totalPlafon = (float)($totalPlafonRow['plafon_pengajuan'] ?? 48500000000);
+        } catch (\Throwable $e) {
+            // Gunakan nilai default jika database sedang dimuat
+        }
 
         $data = [
             'pengaturan_sistem' => $pengaturanSistem,
