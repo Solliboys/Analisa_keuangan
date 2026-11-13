@@ -68,12 +68,6 @@
                     <!-- Biaya Hidup (Tanpa Persentase, Input Langsung Nominal Rupiah) -->
                     <?php
                         $nomBiayaHidup = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 0);
-                        if ($nomBiayaHidup <= 0 && !empty($keuangan['pendapatan_rk'])) {
-                            $nomBiayaHidup = ((float)$keuangan['pendapatan_rk']) * (((float)($keuangan['biaya_hidup_persen_rk'] ?? 10)) / 100);
-                        }
-                        if ($nomBiayaHidup <= 0) {
-                            $nomBiayaHidup = 15000000;
-                        }
 
                         $rawDetailBeban = $keuangan['detail_beban_lainnya_rk'] ?? '';
                         $listDetailBeban = [];
@@ -93,7 +87,7 @@
                     <div>
                         <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal Biaya Hidup (Rp)</label>
                         <input type="text" name="biaya_hidup_nominal_rk" id="biaya_hidup_nominal_rk" 
-                               value="<?= number_format($nomBiayaHidup, 0, ',', '.') ?>" 
+                               value="<?= $nomBiayaHidup > 0 ? number_format($nomBiayaHidup, 0, ',', '.') : '' ?>" 
                                class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]"
                                placeholder="Rp 0"
                                oninput="formatRupiah(this); hitungLabaRugi();">

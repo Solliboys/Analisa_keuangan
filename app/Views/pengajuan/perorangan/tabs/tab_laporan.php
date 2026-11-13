@@ -39,9 +39,6 @@ $nomPendapatanLain = $isAdaBuktiLain ? (float)($keuangan['pendapatan_lain_rk'] ?
 
 // Prive / Pengeluaran Rumah Tangga (Biaya Hidup Keluarga)
 $nomPengeluaranRT = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 0);
-if ($nomPengeluaranRT <= 0 && $omsetBulanan > 0) {
-    $nomPengeluaranRT = 4500000;
-}
 
 // Sisa Penghasilan Usaha = (Laba Usaha + Pendapatan Lain) - Prive RT
 $labaBersihSisaPenghasilanUsaha = ($labaUsaha + $nomPendapatanLain) - $nomPengeluaranRT;

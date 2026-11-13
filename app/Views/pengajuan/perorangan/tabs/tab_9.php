@@ -17,14 +17,8 @@
         }
     }
 
-    // Persiapan data biaya hidup pokok
+    // Persiapan data biaya hidup pokok (jangan langsung diisi default otomatis jika belum diinput)
     $nomBiayaHidup = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 0);
-    if ($nomBiayaHidup <= 0 && !empty($keuangan['pendapatan_rk'])) {
-        $nomBiayaHidup = ((float)$keuangan['pendapatan_rk']) * (((float)($keuangan['biaya_hidup_persen_rk'] ?? 10)) / 100);
-    }
-    if ($nomBiayaHidup <= 0) {
-        $nomBiayaHidup = 4500000;
-    }
 
     // Persiapan HPP Dinamis untuk Perorangan (Opsi B: Default 0% & Tersembunyi untuk karyawan/PNS)
     $nomHppLama = (float)($keuangan['hpp_nominal_rk'] ?? 0);
@@ -333,7 +327,7 @@
                     <input type="text" 
                            name="biaya_hidup_nominal_rk" 
                            id="biaya_hidup_nominal_rk" 
-                           value="<?= number_format($nomBiayaHidup, 0, ',', '.') ?>" 
+                           value="<?= $nomBiayaHidup > 0 ? number_format($nomBiayaHidup, 0, ',', '.') : '' ?>" 
                            class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition shadow-2xs rupiah-input h-[38px]"
                            placeholder="Rp 0"
                            oninput="formatRupiah(this); hitungLabaRugi();">
