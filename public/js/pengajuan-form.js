@@ -1738,6 +1738,7 @@ function initDaftarBebanLain() {
         }
     }
 
+    window.daftarBebanLain = daftarBebanLain;
     renderListBebanLain();
 }
 window.initDaftarBebanLain = initDaftarBebanLain;
@@ -1785,6 +1786,7 @@ function renderListBebanLain() {
         container.innerHTML = html;
     }
 
+    window.daftarBebanLain = daftarBebanLain;
     const hiddenDetail = document.getElementById('detail_beban_lainnya_rk');
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarBebanLain);
@@ -1822,6 +1824,7 @@ function updateItemBebanLain(index, field, val) {
         daftarBebanLain[index].nama = val;
     }
 
+    window.daftarBebanLain = daftarBebanLain;
     const hiddenDetail = document.getElementById('detail_beban_lainnya_rk');
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarBebanLain);

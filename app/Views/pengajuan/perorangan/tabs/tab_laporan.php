@@ -113,6 +113,30 @@ $totalPenghasilanGaji = $gajiPokok + $penghasilanLain;
 $biayaHidupGaji = $nomPengeluaranRT;
 $biayaPendidikanGaji = 0;
 $biayaLainGaji = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
+
+$rawDetailBeban = $keuangan['detail_beban_lainnya_rk'] ?? '';
+$listDetailBeban = [];
+if (!empty($rawDetailBeban)) {
+    $decBeban = json_decode($rawDetailBeban, true);
+    if (is_array($decBeban)) {
+        foreach ($decBeban as $bItem) {
+            $bNom = (float)($bItem['nominal'] ?? 0);
+            if ($bNom > 0) {
+                $listDetailBeban[] = [
+                    'nama' => !empty($bItem['nama']) ? $bItem['nama'] : 'Biaya & Beban Lainnya',
+                    'nominal' => $bNom,
+                ];
+            }
+        }
+    }
+}
+if (empty($listDetailBeban) && $biayaLainGaji > 0) {
+    $listDetailBeban[] = [
+        'nama' => 'Biaya & Beban Bebas Lainnya',
+        'nominal' => $biayaLainGaji,
+    ];
+}
+
 $cicilanBerjalanGaji = $totalCicilanSlik;
 $totalPengeluaranGaji = $biayaHidupGaji + $biayaPendidikanGaji + $biayaLainGaji + $cicilanBerjalanGaji;
 
@@ -528,20 +552,41 @@ $tahunPeriode = date('Y');
                         <tr class="bg-slate-50 font-bold text-slate-700 text-[10px] uppercase">
                             <td colspan="3" class="py-2 px-4 tracking-wider text-rose-800">B. PENGELUARAN BULANAN</td>
                         </tr>
-                        <tr>
+                        <!-- 1. Pengeluaran Kebutuhan Pokok (Dinamis: Muncul jika > 0) -->
+                        <tr id="container_row_gaji_hidup" class="<?= $biayaHidupGaji > 0 ? '' : 'hidden' ?>">
                             <td class="py-2.5 px-4 font-semibold text-rose-700">Pengeluaran Kebutuhan Pokok</td>
                             <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Belanja dapur, konsumsi keluarga, listrik, air &amp; kebutuhan rumah tangga harian</td>
                             <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_hidup">(Rp <?= number_format($biayaHidupGaji, 0, ',', '.') ?>)</td>
                         </tr>
-                        <tr>
-                            <td class="py-2.5 px-4 font-semibold text-rose-700">Biaya &amp; Beban Bebas Lainnya</td>
+
+                        <!-- 2. Biaya & Beban Bebas Lainnya (Dinamis per rincian yang diinput) -->
+                        <tr id="container_row_gaji_beban_default" class="<?= (empty($listDetailBeban) && $biayaLainGaji > 0) ? '' : 'hidden' ?>">
+                            <td class="py-2.5 px-4 font-semibold text-rose-700" id="label_gaji_b_lain">Biaya &amp; Beban Bebas Lainnya</td>
                             <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Asuransi, biaya pendidikan/sekolah, transport, dan biaya tak terduga (beban dinamis)</td>
                             <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_lain">(Rp <?= number_format($biayaLainGaji, 0, ',', '.') ?>)</td>
                         </tr>
-                        <tr>
+                        <?php if (!empty($listDetailBeban)): ?>
+                            <?php foreach ($listDetailBeban as $bItem): ?>
+                                <tr class="row_gaji_beban_item">
+                                    <td class="py-2.5 px-4 font-semibold text-rose-700"><?= esc($bItem['nama']) ?></td>
+                                    <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Biaya / beban bebas tambahan</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600">(Rp <?= number_format($bItem['nominal'], 0, ',', '.') ?>)</td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                        <!-- Anchor marker untuk live sync JS rows beban lain -->
+                        <tr id="anchor_gaji_beban" class="hidden"></tr>
+
+                        <!-- 3. Cicilan Pinjaman Berjalan (SLIK) (Dinamis: Muncul jika ada cicilan) -->
+                        <tr id="container_row_gaji_cicilan" class="<?= $cicilanBerjalanGaji > 0 ? '' : 'hidden' ?>">
                             <td class="py-2.5 px-4 font-semibold text-rose-700">Cicilan Pinjaman Berjalan</td>
                             <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">KPR, kredit kendaraan, atau pinjaman bank saat ini (SLIK / komitmen)</td>
                             <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_cicilan">(Rp <?= number_format($cicilanBerjalanGaji, 0, ',', '.') ?>)</td>
+                        </tr>
+
+                        <!-- Baris Keterangan Jika Seluruh Pengeluaran Belum Diisi / Rp 0 -->
+                        <tr id="row_gaji_pengeluaran_kosong" class="<?= ($biayaHidupGaji <= 0 && empty($listDetailBeban) && $cicilanBerjalanGaji <= 0) ? '' : 'hidden' ?>">
+                            <td colspan="3" class="py-2.5 px-4 text-center text-slate-400 italic text-[11px]">Belum ada data pengeluaran bulanan / belum diisi di Tab 9</td>
                         </tr>
                         <tr class="bg-rose-50/40 font-bold text-rose-900">
                             <td class="py-2.5 px-4">Total Pengeluaran</td>
@@ -815,11 +860,11 @@ $tahunPeriode = date('Y');
                                     <td class="py-2.5 px-4">Total Penghasilan</td>
                                     <td class="py-2.5 px-4 text-right font-bold" id="p_g_total_in">Rp <?= number_format($totalPenghasilanGaji, 0, ',', '.') ?></td>
                                 </tr>
-                                <tr>
+                                <tr id="p_row_g_hidup" class="<?= ($biayaHidupGaji + $biayaLainGaji) > 0 ? '' : 'hidden' ?>">
                                     <td class="py-2.5 px-4 font-normal">Pengeluaran Rumah Tangga</td>
                                     <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_g_hidup">(Rp <?= number_format($biayaHidupGaji + $biayaLainGaji, 0, ',', '.') ?>)</td>
                                 </tr>
-                                <tr>
+                                <tr id="p_row_g_cicilan" class="<?= $cicilanBerjalanGaji > 0 ? '' : 'hidden' ?>">
                                     <td class="py-2.5 px-4 font-normal">Cicilan Berjalan</td>
                                     <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_g_cicilan">(Rp <?= number_format($cicilanBerjalanGaji, 0, ',', '.') ?>)</td>
                                 </tr>
@@ -1207,7 +1252,8 @@ function sinkronkanLaporanKeuangan() {
 
     const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
     const pendapatanLain = isAdaLain ? (parseNominalLap(document.getElementById('pendapatan_lain_rk')?.value) || 0) : 0;
-    const pengeluaranRT = parseNominalLap(document.getElementById('biaya_hidup_nominal_rk')?.value) || <?= $nomPengeluaranRT ?>;
+    const elBiayaHidup = document.getElementById('biaya_hidup_nominal_rk');
+    const pengeluaranRT = elBiayaHidup ? parseNominalLap(elBiayaHidup.value) : <?= (float)$nomPengeluaranRT ?>;
 
     const sisaUsaha = (labaUsaha + pendapatanLain) - pengeluaranRT;
     const cicilanAcuan = parseNominalLap(document.getElementById('angsuran_dipilih')?.value) 
@@ -1296,59 +1342,111 @@ function sinkronkanLaporanKeuangan() {
 
     const totGajiIn = liveGajiPokok + pendapatanLain;
 
+    // --- PENGELUARAN GAJI DINAMIS (TERGANTUNG TAB 9) ---
     const bHidupG = pengeluaranRT;
-    const bLainG = parseNominalLap(document.getElementById('beban_lainnya_nominal_rk')?.value) || 0;
-    const totGajiOut = bHidupG + bLainG + cicilanAcuan;
-    const sisaGaji = totGajiIn - totGajiOut;
 
-    // Tampilkan / sembunyikan baris Pendapatan Lain-Lain secara dinamis
-    const rowLain = document.getElementById('container_row_gaji_lain');
-    const pRowLain = document.getElementById('p_row_g_lain');
-
-    if (pendapatanLain > 0) {
-        if (rowLain) rowLain.classList.remove('hidden');
-        if (pRowLain) pRowLain.classList.remove('hidden');
-        if (document.getElementById('row_gaji_lain')) {
-            document.getElementById('row_gaji_lain').innerText = formatNominalLap(pendapatanLain);
-        }
-        if (document.getElementById('desc_gaji_lain') && ketLain) {
-            document.getElementById('desc_gaji_lain').innerText = ketLain;
-        }
-        if (document.getElementById('p_g_tambahan')) {
-            document.getElementById('p_g_tambahan').innerText = formatNominalLap(pendapatanLain);
+    // 1. Pengeluaran Kebutuhan Pokok
+    const rowHidup = document.getElementById('container_row_gaji_hidup');
+    if (bHidupG > 0) {
+        if (rowHidup) rowHidup.classList.remove('hidden');
+        if (document.getElementById('row_gaji_b_hidup')) {
+            document.getElementById('row_gaji_b_hidup').innerText = `(${formatNominalLap(bHidupG)})`;
         }
     } else {
-        if (rowLain) rowLain.classList.add('hidden');
-        if (pRowLain) pRowLain.classList.add('hidden');
-        if (document.getElementById('row_gaji_lain')) {
-            document.getElementById('row_gaji_lain').innerText = 'Rp 0';
-        }
-        if (document.getElementById('p_g_tambahan')) {
-            document.getElementById('p_g_tambahan').innerText = 'Rp 0';
+        if (rowHidup) rowHidup.classList.add('hidden');
+        if (document.getElementById('row_gaji_b_hidup')) {
+            document.getElementById('row_gaji_b_hidup').innerText = '(Rp 0)';
         }
     }
 
-    if (document.getElementById('label_gaji_pokok')) {
-        document.getElementById('label_gaji_pokok').innerText = liveNamaGaji;
+    // 2. Biaya & Beban Bebas Lainnya
+    let liveBebanList = [];
+    if (Array.isArray(window.daftarBebanLain) && window.daftarBebanLain.length > 0) {
+        liveBebanList = window.daftarBebanLain;
+    } else {
+        const rawDetailBeban = document.getElementById('detail_beban_lainnya_rk')?.value;
+        if (rawDetailBeban) {
+            try {
+                const parsedBeban = JSON.parse(rawDetailBeban);
+                if (Array.isArray(parsedBeban)) {
+                    liveBebanList = parsedBeban;
+                }
+            } catch(e) {}
+        }
     }
-    if (document.getElementById('p_label_g_pokok')) {
-        document.getElementById('p_label_g_pokok').innerText = liveNamaGaji;
+
+    const activeBebanList = liveBebanList.filter(item => parseNominalLap(item?.nominal || 0) > 0);
+    let totBebanLain = 0;
+    activeBebanList.forEach(item => {
+        totBebanLain += parseNominalLap(item.nominal || 0);
+    });
+
+    // Bersihkan baris dinamis lama
+    document.querySelectorAll('.row_gaji_beban_item').forEach(el => el.remove());
+
+    const defaultBebanRow = document.getElementById('container_row_gaji_beban_default');
+    const anchorBeban = document.getElementById('anchor_gaji_beban');
+
+    if (activeBebanList.length > 0) {
+        if (defaultBebanRow) defaultBebanRow.classList.add('hidden');
+        if (anchorBeban && anchorBeban.parentNode) {
+            activeBebanList.forEach(item => {
+                const nama = item.nama && item.nama.trim() !== '' ? item.nama.trim() : 'Biaya & Beban Lainnya';
+                const nom = parseNominalLap(item.nominal || 0);
+                const tr = document.createElement('tr');
+                tr.className = 'row_gaji_beban_item';
+                tr.innerHTML = `
+                    <td class="py-2.5 px-4 font-semibold text-rose-700">${nama.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
+                    <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Biaya / beban bebas tambahan</td>
+                    <td class="py-2.5 px-4 text-right font-medium text-rose-600">(${formatNominalLap(nom)})</td>
+                `;
+                anchorBeban.parentNode.insertBefore(tr, anchorBeban);
+            });
+        }
+    } else {
+        const nomBebanDirect = parseNominalLap(document.getElementById('beban_lainnya_nominal_rk')?.value) || 0;
+        if (nomBebanDirect > 0) {
+            totBebanLain = nomBebanDirect;
+            if (defaultBebanRow) {
+                defaultBebanRow.classList.remove('hidden');
+                if (document.getElementById('row_gaji_b_lain')) {
+                    document.getElementById('row_gaji_b_lain').innerText = `(${formatNominalLap(nomBebanDirect)})`;
+                }
+            }
+        } else {
+            if (defaultBebanRow) defaultBebanRow.classList.add('hidden');
+        }
     }
-    if (document.getElementById('row_gaji_pokok')) {
-        document.getElementById('row_gaji_pokok').innerText = formatNominalLap(liveGajiPokok);
+
+    // 3. Cicilan Pinjaman Berjalan
+    const rowCicilan = document.getElementById('container_row_gaji_cicilan');
+    if (cicilanAcuan > 0) {
+        if (rowCicilan) rowCicilan.classList.remove('hidden');
+        if (document.getElementById('row_gaji_b_cicilan')) {
+            document.getElementById('row_gaji_b_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
+        }
+    } else {
+        if (rowCicilan) rowCicilan.classList.add('hidden');
+        if (document.getElementById('row_gaji_b_cicilan')) {
+            document.getElementById('row_gaji_b_cicilan').innerText = '(Rp 0)';
+        }
     }
-    if (document.getElementById('row_gaji_tot_inflow')) {
-        document.getElementById('row_gaji_tot_inflow').innerText = formatNominalLap(totGajiIn);
+
+    // 4. Baris Keterangan Jika Semua Pengeluaran 0
+    const rowKosong = document.getElementById('row_gaji_pengeluaran_kosong');
+    if (bHidupG <= 0 && totBebanLain <= 0 && cicilanAcuan <= 0) {
+        if (rowKosong) rowKosong.classList.remove('hidden');
+    } else {
+        if (rowKosong) rowKosong.classList.add('hidden');
     }
+
+    const totGajiOut = bHidupG + totBebanLain + cicilanAcuan;
+    const sisaGaji = totGajiIn - totGajiOut;
 
     if (document.getElementById('metric_gaji_total')) document.getElementById('metric_gaji_total').innerText = formatNominalLap(totGajiIn);
     if (document.getElementById('metric_gaji_pengeluaran')) document.getElementById('metric_gaji_pengeluaran').innerText = formatNominalLap(totGajiOut);
     if (document.getElementById('metric_gaji_sisa')) document.getElementById('metric_gaji_sisa').innerText = formatNominalLap(sisaGaji);
 
-    if (document.getElementById('row_gaji_b_hidup')) document.getElementById('row_gaji_b_hidup').innerText = `(${formatNominalLap(bHidupG)})`;
-    if (document.getElementById('row_gaji_b_pendidikan')) document.getElementById('row_gaji_b_pendidikan').innerText = `(Rp 0)`;
-    if (document.getElementById('row_gaji_b_lain')) document.getElementById('row_gaji_b_lain').innerText = `(${formatNominalLap(bLainG)})`;
-    if (document.getElementById('row_gaji_b_cicilan')) document.getElementById('row_gaji_b_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
     if (document.getElementById('row_gaji_tot_outflow')) document.getElementById('row_gaji_tot_outflow').innerText = `(${formatNominalLap(totGajiOut)})`;
     if (document.getElementById('row_gaji_sisa_penghasilan')) document.getElementById('row_gaji_sisa_penghasilan').innerText = formatNominalLap(sisaGaji);
 
@@ -1377,8 +1475,24 @@ function sinkronkanLaporanKeuangan() {
     if (document.getElementById('p_g_pokok')) document.getElementById('p_g_pokok').innerText = formatNominalLap(liveGajiPokok);
     if (document.getElementById('p_g_tambahan')) document.getElementById('p_g_tambahan').innerText = formatNominalLap(pendapatanLain);
     if (document.getElementById('p_g_total_in')) document.getElementById('p_g_total_in').innerText = formatNominalLap(totGajiIn);
-    if (document.getElementById('p_g_hidup')) document.getElementById('p_g_hidup').innerText = `(${formatNominalLap(bHidupG + bLainG)})`;
-    if (document.getElementById('p_g_cicilan')) document.getElementById('p_g_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
+
+    const pRowHidup = document.getElementById('p_row_g_hidup');
+    const totPengeluaranHidup = bHidupG + totBebanLain;
+    if (totPengeluaranHidup > 0) {
+        if (pRowHidup) pRowHidup.classList.remove('hidden');
+        if (document.getElementById('p_g_hidup')) document.getElementById('p_g_hidup').innerText = `(${formatNominalLap(totPengeluaranHidup)})`;
+    } else {
+        if (pRowHidup) pRowHidup.classList.add('hidden');
+    }
+
+    const pRowCicilan = document.getElementById('p_row_g_cicilan');
+    if (cicilanAcuan > 0) {
+        if (pRowCicilan) pRowCicilan.classList.remove('hidden');
+        if (document.getElementById('p_g_cicilan')) document.getElementById('p_g_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
+    } else {
+        if (pRowCicilan) pRowCicilan.classList.add('hidden');
+    }
+
     if (document.getElementById('p_g_surplus')) document.getElementById('p_g_surplus').innerText = formatNominalLap(sisaGaji);
     if (document.getElementById('p_g_kas_masuk')) document.getElementById('p_g_kas_masuk').innerText = formatNominalLap(totGajiIn);
     if (document.getElementById('p_g_kas_keluar')) document.getElementById('p_g_kas_keluar').innerText = `(${formatNominalLap(totGajiOut)})`;
