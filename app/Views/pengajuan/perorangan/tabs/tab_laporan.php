@@ -254,31 +254,29 @@ $tahunPeriode = date('Y');
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Unduh / Cetak Laporan</span>
             </button>
-            <a href="<?= base_url('preview_laporan.html') ?>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition shadow-2xs cursor-pointer" title="Buka lembar A4 terpisah di tab baru browser">
-                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                <span class="hidden sm:inline">Buka Tab Baru</span>
-            </a>
         </div>
     </div>
 
     <!-- =========================================================================
-         2. SELECTOR KATEGORI DEBITUR: PUNYA USAHA vs PUNYA GAJI
+         2. TIPE SUMBER PENGHASILAN DEBITUR PERORANGAN (DISESUAIKAN OTOMATIS)
     ========================================================================== -->
     <div class="p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-slate-50 border border-blue-200/80 mb-6 shadow-2xs">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-                <span class="text-[10px] font-extrabold text-blue-900 uppercase tracking-wider block">PILIH TIPE SUMBER PENGHASILAN DEBITUR PERORANGAN:</span>
-                <p class="text-[11px] text-slate-600">Sesuaikan struktur laporan agar tepat sasaran: apakah bersumber dari <strong>kegiatan usaha</strong> atau <strong>gaji/penghasilan tetap</strong>.</p>
+                <span class="text-[10px] font-extrabold text-blue-900 uppercase tracking-wider block">TIPE SUMBER PENGHASILAN DEBITUR PERORANGAN:</span>
+                <p id="descTipeDebitur" class="text-[11px] text-slate-600">
+                    <?= $isKaryawanPns ? 'Struktur laporan disesuaikan khusus untuk debitur <strong>berpenghasilan tetap (Karyawan/PNS/Pensiun)</strong>.' : 'Struktur laporan disesuaikan khusus untuk debitur dengan <strong>kegiatan usaha (Wiraswasta/Toko)</strong>.' ?>
+                </p>
             </div>
 
-            <!-- Switcher Button -->
+            <!-- Tipe Debitur Aktif (Eksklusif: hanya muncul yang sesuai) -->
             <div class="inline-flex p-1 bg-white border border-slate-200 rounded-xl shadow-2xs shrink-0" role="group">
-                <button type="button" onclick="gantiKategoriDebitur('usaha')" id="btnKategoriUsaha" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 <?= !$isKaryawanPns ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900' ?>">
+                <div id="btnKategoriUsaha" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-blue-600 text-white shadow-xs <?= $isKaryawanPns ? 'hidden' : '' ?>">
                     <span>💼 Punya Usaha (Wiraswasta)</span>
-                </button>
-                <button type="button" onclick="gantiKategoriDebitur('gaji')" id="btnKategoriGaji" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 <?= $isKaryawanPns ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900' ?>">
+                </div>
+                <div id="btnKategoriGaji" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-blue-600 text-white shadow-xs <?= !$isKaryawanPns ? 'hidden' : '' ?>">
                     <span>👔 Punya Gaji (Karyawan/PNS/Pensiun)</span>
-                </button>
+                </div>
             </div>
         </div>
     </div>
@@ -783,55 +781,6 @@ $tahunPeriode = date('Y');
     </div>
 
     <!-- =========================================================================
-         CATATAN ANALISIS & DOKUMEN PENDUKUNG (CALK)
-    ========================================================================== -->
-    <div class="mt-8 pt-6 border-t border-slate-200 space-y-4 text-xs">
-        <div class="flex items-center justify-between">
-            <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">
-                CATATAN ANALISIS KELAYAKAN & DOKUMEN VERIFIKASI PENDUKUNG
-            </h4>
-            <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
-                Standar Analisa 5C
-            </span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Box Karakteristik Khusus -->
-            <div class="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/90 space-y-2">
-                <span class="font-bold text-slate-800 text-xs block">Karakteristik Khusus Perorangan:</span>
-                <ul class="space-y-1.5 text-[11px] text-slate-600 list-disc list-inside leading-relaxed">
-                    <li><strong>Pemisahan Keuangan:</strong> Keuangan usaha dan keluarga dipisahkan secara tegas agar kapasitas bayar tidak dihitung terlalu tinggi (<em>overstated</em>).</li>
-                    <li><strong>Estimasi Terverifikasi:</strong> Angka omzet dihitung rata-rata hari ramai, biasa, dan sepi berdasarkan wawancara faktual.</li>
-                    <li><strong>Cross-Check Lapangan:</strong> Dilakukan verifikasi silang antara rekening koran, nota pembelian, kunjungan fisik (OTS), dan stok barang.</li>
-                </ul>
-            </div>
-
-            <!-- Box Dokumen Pendukung -->
-            <div class="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/90 space-y-2">
-                <span class="font-bold text-slate-800 text-xs block">Dokumen Pendukung yang Lazim & Diverifikasi:</span>
-                <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-600">
-                    <div class="p-2 bg-white rounded-lg border border-slate-200">
-                        <span class="font-bold text-slate-800 block text-[10px]">1. Rekening Koran</span>
-                        Mutasi tabungan 3 - 6 bulan
-                    </div>
-                    <div class="p-2 bg-white rounded-lg border border-slate-200">
-                        <span class="font-bold text-slate-800 block text-[10px]">2. Nota Jual / Beli</span>
-                        Catatan penjualan & suplier
-                    </div>
-                    <div class="p-2 bg-white rounded-lg border border-slate-200">
-                        <span class="font-bold text-slate-800 block text-[10px]">3. Bukti Usaha / Slip Gaji</span>
-                        Izin usaha (SKU/NIB) atau slip gaji
-                    </div>
-                    <div class="p-2 bg-white rounded-lg border border-slate-200">
-                        <span class="font-bold text-slate-800 block text-[10px]">4. Legalitas Pribadi</span>
-                        KTP, KK, NPWP (bila ada)
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- =========================================================================
          FOOTER NAVIGASI FORM
     ========================================================================== -->
     <div class="mt-8 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -843,11 +792,6 @@ $tahunPeriode = date('Y');
         <div class="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
             <span>Document ID: <?= $noAppDisplay ?></span>
         </div>
-
-        <button type="button" onclick="tabNav(1)" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer">
-            <span>Simpan & Lanjut</span>
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-        </button>
     </div>
 </div>
 
@@ -1253,10 +1197,15 @@ function gantiKategoriDebitur(kategori, syncCheckbox = true) {
         if (secUsaha) secUsaha.classList.remove('hidden');
         if (secGaji) secGaji.classList.add('hidden');
         if (btnUsaha) {
+            btnUsaha.classList.remove('hidden');
             btnUsaha.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-blue-600 text-white shadow-xs';
         }
         if (btnGaji) {
-            btnGaji.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-900';
+            btnGaji.classList.add('hidden');
+        }
+        const descEl = document.getElementById('descTipeDebitur');
+        if (descEl) {
+            descEl.innerHTML = 'Struktur laporan disesuaikan khusus untuk debitur dengan <strong>kegiatan usaha (Wiraswasta/Toko)</strong>.';
         }
         if (docUsaha) docUsaha.classList.remove('hidden');
         if (docGaji) docGaji.classList.add('hidden');
@@ -1276,10 +1225,15 @@ function gantiKategoriDebitur(kategori, syncCheckbox = true) {
         if (secUsaha) secUsaha.classList.add('hidden');
         if (secGaji) secGaji.classList.remove('hidden');
         if (btnGaji) {
+            btnGaji.classList.remove('hidden');
             btnGaji.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-blue-600 text-white shadow-xs';
         }
         if (btnUsaha) {
-            btnUsaha.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 text-slate-600 hover:text-slate-900';
+            btnUsaha.classList.add('hidden');
+        }
+        const descEl = document.getElementById('descTipeDebitur');
+        if (descEl) {
+            descEl.innerHTML = 'Struktur laporan disesuaikan khusus untuk debitur <strong>berpenghasilan tetap (Karyawan/PNS/Pensiun)</strong>.';
         }
         if (docUsaha) docUsaha.classList.add('hidden');
         if (docGaji) docGaji.classList.remove('hidden');
