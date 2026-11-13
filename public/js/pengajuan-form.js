@@ -46,38 +46,57 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTabelSimulasiAngsuran();
     }
 
-    // Buka tab spesifik jika ada query parameter misal ?tab=6 untuk Petugas SLIK
+    // Buka tab yang sedang dikerjakan saat halaman dimuat / direfresh
     const urlParams = new URLSearchParams(window.location.search);
-    const initialTabParam = urlParams.get('tab');
-    if (initialTabParam) {
+    const kidInit = document.getElementById('kredit_id')?.value || 'draft';
+    let tabTarget = urlParams.get('tab');
+    if (!tabTarget && window.location.hash) {
+        tabTarget = window.location.hash.replace('#tab-', '').replace('#', '');
+    }
+    if (!tabTarget) {
+        tabTarget = sessionStorage.getItem('active_pengajuan_tab_' + kidInit) || localStorage.getItem('last_active_pengajuan_tab');
+    }
+
+    if (tabTarget) {
         const activeSteps = getActiveSteps();
-        const parsed = isNaN(initialTabParam) ? initialTabParam : parseInt(initialTabParam, 10);
-        if (activeSteps.includes(parsed)) {
-            goToTab(parsed);
+        const norm = normalizeTab(tabTarget);
+        let targetIdx = findStepIndex(activeSteps, norm);
+        // Dukung nomor urut visual (misal 10 untuk Laporan di Perorangan atau 9 di Badan Usaha)
+        if (targetIdx === -1) {
+            if ((norm === 10 || norm === '10') && !window.IS_BADAN_USAHA) {
+                targetIdx = findStepIndex(activeSteps, 'laporan');
+            } else if ((norm === 9 || norm === '9') && window.IS_BADAN_USAHA) {
+                targetIdx = findStepIndex(activeSteps, 'laporan');
+            }
+        }
+        if (targetIdx !== -1) {
+            // Tandai semua langkah sebelum tab target sebagai selesai secara visual
+            for (let k = 0; k < targetIdx; k++) {
+                tabValidationStatus[activeSteps[k]] = true;
+            }
+            goToTab(activeSteps[targetIdx]);
         }
     }
 
-    // Inisialisasi status langkah yang sudah terisi jika dalam mode edit
+    // Inisialisasi status langkah yang sudah terisi jika dalam mode edit atau refresh
     setTimeout(() => {
         const kid = document.getElementById('kredit_id')?.value;
+        const activeSteps = getActiveSteps();
         if (kid) {
-            const activeSteps = getActiveSteps();
             for (let t of activeSteps) {
                 const val = validateTabSilent(t);
                 if (val.valid) {
                     tabValidationStatus[t] = true;
                 }
             }
-            if (normalizeTab(currentTab) === 6) {
-                const sixIdx = findStepIndex(activeSteps, 6);
-                if (sixIdx !== -1) {
-                    for (let k = 0; k < sixIdx; k++) {
-                        tabValidationStatus[activeSteps[k]] = true;
-                    }
-                }
-            }
-            updateStepperVisuals();
         }
+        const curIdx = findStepIndex(activeSteps, currentTab);
+        if (curIdx > 0) {
+            for (let k = 0; k < curIdx; k++) {
+                tabValidationStatus[activeSteps[k]] = true;
+            }
+        }
+        updateStepperVisuals();
     }, 300);
 });
 
@@ -672,12 +691,14 @@ function handleStepperClick(targetTab) {
             tabValidationStatus[stepNum] = true;
             clearAllFieldErrorsInTab(stepNum);
         }
+        simpanForm(false, false);
         goToTab(steps[targetIdx]);
         return;
     }
 
     // Jika navigasi mundur (kembali ke tahap sebelumnya), selalu diizinkan
     if (targetIdx < curIdx) {
+        simpanForm(false, false);
         goToTab(steps[targetIdx]);
         return;
     }
@@ -717,6 +738,7 @@ function handleStepperClick(targetTab) {
         clearAllFieldErrorsInTab(stepNum);
     }
 
+    simpanForm(false, false);
     goToTab(steps[targetIdx]);
 }
 window.handleStepperClick = handleStepperClick;
@@ -727,6 +749,25 @@ function goToTab(tabIndex) {
     const idx = findStepIndex(steps, tabIndex);
     if (idx === -1) return;
     currentTab = steps[idx];
+
+    // Simpan tab aktif ke URL (replaceState tanpa reload) & Web Storage agar saat refresh tetap di posisi ini
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', currentTab);
+        window.history.replaceState({ tab: currentTab }, '', url.toString());
+
+        const kid = document.getElementById('kredit_id')?.value || 'draft';
+        sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
+        localStorage.setItem('last_active_pengajuan_tab', currentTab);
+    } catch (e) {}
+
+    // Tandai langkah-langkah sebelum tab aktif sebagai selesai secara visual
+    for (let k = 0; k < idx; k++) {
+        const prevStep = steps[k];
+        if (tabValidationStatus[prevStep] === undefined) {
+            tabValidationStatus[prevStep] = true;
+        }
+    }
 
     // Ketika berada di Tab 6, pastikan semua tahap sebelum 6 (1, 2, 3, 4, 5) ditandai HIJAU (Selesai)
     const normTab = normalizeTab(currentTab);
@@ -2473,6 +2514,27 @@ function initAutoSave() {
         if (!e.target || e.target.type === 'file' || e.target.type === 'password') return;
         triggerAutoSave(400);
     });
+
+    // Listener focusout / blur saat keluar dari input (debounce 250ms agar cepat tersimpan)
+    form.addEventListener('focusout', (e) => {
+        if (!e.target || e.target.type === 'file' || e.target.type === 'password') return;
+        triggerAutoSave(250);
+    });
+
+    // Tangkap event sebelum refresh browser (beforeunload) agar posisi tab & data tersimpan
+    window.addEventListener('beforeunload', () => {
+        const kid = document.getElementById('kredit_id')?.value || 'draft';
+        sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
+        localStorage.setItem('last_active_pengajuan_tab', currentTab);
+
+        if (autoSaveTimer) {
+            clearTimeout(autoSaveTimer);
+            if (navigator.sendBeacon) {
+                const fd = new FormData(form);
+                navigator.sendBeacon(getBaseUrl() + '/pengajuan/simpan', fd);
+            }
+        }
+    });
 }
 
 // Simpan Form Data via AJAX
@@ -2545,6 +2607,18 @@ async function simpanForm(isComplete = false, showNotification = true) {
             if (data.kredit_id) {
                 const kid = document.getElementById('kredit_id');
                 if (kid) kid.value = data.kredit_id;
+
+                // Jika form baru (/baru), perbarui URL ke edit mode tanpa refresh halaman
+                if (!window.location.pathname.includes('/edit/')) {
+                    const newPath = getBaseUrl() + '/pengajuan/edit/' + data.kredit_id + '?tab=' + currentTab;
+                    window.history.replaceState({ tab: currentTab, kredit_id: data.kredit_id }, '', newPath);
+                } else {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', currentTab);
+                    window.history.replaceState({ tab: currentTab, kredit_id: data.kredit_id }, '', url.toString());
+                }
+
+                sessionStorage.setItem('active_pengajuan_tab_' + data.kredit_id, currentTab);
             }
             if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Otomatis tersimpan';
 
