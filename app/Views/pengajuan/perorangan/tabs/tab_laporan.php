@@ -525,9 +525,6 @@ $tahunPeriode = date('Y');
                         </tbody>
                     </table>
                 </div>
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </div>
 
