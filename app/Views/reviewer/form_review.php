@@ -373,6 +373,12 @@
                                     <span>Cetak Memorandum CAM Resmi</span>
                                 </a>
 
+                                <a href="<?= base_url('pengajuan/cetakLaporanPdf/' . $kredit['kredit_id']) ?>" target="_blank" 
+                                   class="w-full py-2.5 px-4 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition flex items-center justify-center gap-2 cursor-pointer">
+                                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <span>Lihat Laporan Keuangan Estimasi (PDF)</span>
+                                </a>
+
                                 <a href="<?= base_url('dashboard') ?>" 
                                    class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition text-center block">
                                     Kembali ke Dashboard
