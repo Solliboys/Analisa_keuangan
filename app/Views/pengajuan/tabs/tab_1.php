@@ -130,7 +130,7 @@ $listJaminan = $refByJenis['kre_jaminan'] ?? [];
                                            value="<?= esc($kredit['nama_debitur'] ?? '') ?>" 
                                            placeholder="<?= $isBu ? 'Contoh: PT Sumber Pangan Makmur Abadi' : 'Nama lengkap sesuai KTP' ?>"
                                            class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"
-                                           oninput="<?= $isBu ? 'if(document.getElementById(\'nama_usaha_bu\')) document.getElementById(\'nama_usaha_bu\').value = this.value;' : '' ?>">
+                                           oninput="if(typeof syncNamaDebitur === 'function'){ syncNamaDebitur(this.value); } else { const e2=document.getElementById('nama_debitur_tab2'); if(e2) e2.value=this.value; const eBu=document.getElementById('nama_usaha_bu'); if(eBu) eBu.value=this.value; }">
                                 </div>
 
                                 <!-- Plafond Pengajuan (Rp) -->

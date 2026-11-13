@@ -19,6 +19,17 @@ document.addEventListener('DOMContentLoaded', () => {
     initDaftarBebanLain();
     initDaftarPendapatan();
     initAutoSave();
+
+    // Pastikan nama debitur di Tab 1 dan Tab 2 tersinkron sejak awal load
+    const initNama1 = document.getElementById('nama_debitur')?.value;
+    const initNama2 = document.getElementById('nama_debitur_tab2')?.value;
+    const initNama = initNama1 || initNama2 || '';
+    if (initNama) {
+        const el1 = document.getElementById('nama_debitur');
+        const el2 = document.getElementById('nama_debitur_tab2');
+        if (el1) el1.value = initNama;
+        if (el2) el2.value = initNama;
+    }
     // Sesuaikan metadata jika form perorangan (fokus pekerjaan)
     const step3El = document.getElementById('step-title-3');
     if (step3El && step3El.innerText.toLowerCase().includes('pekerjaan')) {
@@ -2523,26 +2534,48 @@ function triggerAutoSave(delay = 1500) {
     }, delay);
 }
 
+// Fungsi sinkronisasi real-time nama debitur antar tab & modal
+function syncNamaDebitur(val) {
+    const el1 = document.getElementById('nama_debitur');
+    const el2 = document.getElementById('nama_debitur_tab2');
+    const elBu = document.getElementById('nama_usaha_bu');
+    const elMa = document.getElementById('modal_ma_nama');
+    const elWc = document.getElementById('modal_wc_nama');
+
+    if (el1 && el1.value !== val) el1.value = val;
+    if (el2 && el2.value !== val) el2.value = val;
+    if (elBu && elBu.value !== val) elBu.value = val;
+    if (elMa && elMa.value !== val) elMa.value = val;
+    if (elWc && elWc.value !== val) elWc.value = val;
+
+    triggerAutoSave(600);
+}
+window.syncNamaDebitur = syncNamaDebitur;
+
 function initAutoSave() {
     const form = document.getElementById('camForm');
     if (!form) return;
 
-    // Listener input untuk teks, angka, textarea (debounce 1.5 detik)
+    // Listener input untuk teks, angka, textarea (debounce 600ms)
     form.addEventListener('input', (e) => {
         if (!e.target || e.target.type === 'file' || e.target.type === 'password') return;
-        triggerAutoSave(1500);
+        if (e.target.id === 'nama_debitur' || e.target.id === 'nama_debitur_tab2') {
+            syncNamaDebitur(e.target.value);
+            return;
+        }
+        triggerAutoSave(600);
     });
 
-    // Listener change untuk select, checkbox, radio (debounce 400ms)
+    // Listener change untuk select, checkbox, radio (debounce 300ms)
     form.addEventListener('change', (e) => {
         if (!e.target || e.target.type === 'file' || e.target.type === 'password') return;
-        triggerAutoSave(400);
+        triggerAutoSave(300);
     });
 
-    // Listener focusout / blur saat keluar dari input (debounce 250ms agar cepat tersimpan)
+    // Listener focusout / blur saat keluar dari input (debounce 200ms agar cepat tersimpan)
     form.addEventListener('focusout', (e) => {
         if (!e.target || e.target.type === 'file' || e.target.type === 'password') return;
-        triggerAutoSave(250);
+        triggerAutoSave(200);
     });
 
     // Tangkap event sebelum refresh browser (beforeunload) agar posisi tab & data tersimpan
@@ -2553,8 +2586,16 @@ function initAutoSave() {
 
         if (autoSaveTimer) {
             clearTimeout(autoSaveTimer);
+            const nama1 = document.getElementById('nama_debitur')?.value.trim();
+            const nama2 = document.getElementById('nama_debitur_tab2')?.value.trim();
+            const resolvedNama = nama1 || nama2 || '';
+            if (resolvedNama) {
+                if (document.getElementById('nama_debitur')) document.getElementById('nama_debitur').value = resolvedNama;
+                if (document.getElementById('nama_debitur_tab2')) document.getElementById('nama_debitur_tab2').value = resolvedNama;
+            }
             if (navigator.sendBeacon) {
                 const fd = new FormData(form);
+                if (resolvedNama) fd.set('nama_debitur', resolvedNama);
                 navigator.sendBeacon(getBaseUrl() + '/pengajuan/simpan', fd);
             }
         }
@@ -2568,9 +2609,17 @@ async function simpanForm(isComplete = false, showNotification = true) {
         autoSaveTimer = null;
     }
 
+    // Pastikan nama debitur tersinkronisasi di kedua input sebelum validasi & FormData dibuat
+    const nama1 = document.getElementById('nama_debitur')?.value.trim();
+    const nama2 = document.getElementById('nama_debitur_tab2')?.value.trim();
+    const resolvedNama = nama1 || nama2 || '';
+    if (resolvedNama) {
+        if (document.getElementById('nama_debitur')) document.getElementById('nama_debitur').value = resolvedNama;
+        if (document.getElementById('nama_debitur_tab2')) document.getElementById('nama_debitur_tab2').value = resolvedNama;
+    }
+
     if (isComplete) {
-        const nama = document.getElementById('nama_debitur')?.value.trim() || document.getElementById('nama_debitur_tab2')?.value.trim();
-        if (!nama) {
+        if (!resolvedNama) {
             showToast('Nama Debitur wajib diisi!', 'error');
             goToTab(1);
             return;
@@ -2604,6 +2653,9 @@ async function simpanForm(isComplete = false, showNotification = true) {
     const form = document.getElementById('camForm');
     if (!form) return;
     const formData = new FormData(form);
+    if (resolvedNama) {
+        formData.set('nama_debitur', resolvedNama);
+    }
     if (isComplete) {
         formData.set('status_pengajuan', 'Diajukan');
     }

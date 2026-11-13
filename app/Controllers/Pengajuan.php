@@ -402,12 +402,17 @@ class Pengajuan extends BaseController
             $jsonKaryawan = json_encode(array_values($input['karyawan']));
         }
 
+        $valNamaDebitur = trim($input['nama_debitur'] ?? '');
+        if (empty($valNamaDebitur) && !empty($input['nama_debitur_tab2'])) {
+            $valNamaDebitur = trim($input['nama_debitur_tab2']);
+        }
+
         $dataKredit = [
             'user_id'                 => $userIdPembuat,
             'nomor_aplikasi'          => $input['nomor_aplikasi'] ?? ('CAM-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4))),
             'tipe_aplikasi'           => $input['tipe_aplikasi'] ?? 'Fasilitas Baru',
             'jenis_debitur'           => $input['jenis_debitur'] ?? 'Individu',
-            'nama_debitur'            => $input['nama_debitur'] ?? '',
+            'nama_debitur'            => $valNamaDebitur,
             'plafon_pengajuan'        => $this->cleanNumber($input['plafon_pengajuan'] ?? 0),
             'tenor_bulan'             => (int)($input['tenor_bulan'] ?? 12),
             'jenis_jaminan'           => $input['jenis_jaminan'] ?? 'On Hand',

@@ -783,19 +783,6 @@ $tahunPeriode = date('Y');
 
     </div>
 
-    <!-- =========================================================================
-         FOOTER NAVIGASI FORM
-    ========================================================================== -->
-    <div class="mt-8 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <button type="button" onclick="tabNav(-1)" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold transition shadow-2xs cursor-pointer">
-            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            <span>Kembali</span>
-        </button>
-
-        <div class="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
-            <span>Document ID: <?= $noAppDisplay ?></span>
-        </div>
-    </div>
 </div>
 
 <!-- Script Library html2pdf.js untuk cetak & unduh PDF instan -->
