@@ -96,23 +96,19 @@ if (!empty($rawDetailPendapatan)) {
 }
 
 $gajiPokok = 0;
-$tunjanganTetap = 0;
-$penghasilanTambahan = 0;
+$namaGajiPokok = 'Gaji Pokok / Penghasilan Utama';
 
 if (!empty($listDetailPendapatan)) {
     $gajiPokok = (float)($listDetailPendapatan[0]['nominal'] ?? 0);
-    if (isset($listDetailPendapatan[1])) {
-        $tunjanganTetap = (float)($listDetailPendapatan[1]['nominal'] ?? 0);
-    }
-    for ($i = 2; $i < count($listDetailPendapatan); $i++) {
-        $penghasilanTambahan += (float)($listDetailPendapatan[$i]['nominal'] ?? 0);
+    if (!empty($listDetailPendapatan[0]['nama'])) {
+        $namaGajiPokok = $listDetailPendapatan[0]['nama'];
     }
 } else {
     $gajiPokok = (float)($keuangan['pendapatan_rk'] ?? 0);
 }
 
-$penghasilanPasangan = $nomPendapatanLain;
-$totalPenghasilanGaji = $gajiPokok + $tunjanganTetap + $penghasilanTambahan + $penghasilanPasangan;
+$penghasilanLain = $nomPendapatanLain;
+$totalPenghasilanGaji = $gajiPokok + $penghasilanLain;
 
 $biayaHidupGaji = $nomPengeluaranRT;
 $biayaPendidikanGaji = 0;
@@ -512,24 +508,15 @@ $tahunPeriode = date('Y');
                             <td colspan="3" class="py-2 px-4 tracking-wider text-blue-900">A. PENGHASILAN BULANAN</td>
                         </tr>
                         <tr>
-                            <td class="py-2.5 px-4 font-semibold text-slate-800">Gaji Pokok</td>
-                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Sesuai slip gaji resmi & verifikasi rekening payroll</td>
+                            <td class="py-2.5 px-4 font-semibold text-slate-800" id="label_gaji_pokok"><?= esc($namaGajiPokok) ?></td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Sesuai slip gaji resmi &amp; verifikasi rekening payroll</td>
                             <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="row_gaji_pokok">Rp <?= number_format($gajiPokok, 0, ',', '.') ?></td>
                         </tr>
-                        <tr>
-                            <td class="py-2.5 px-4 font-semibold text-slate-800">Tunjangan Tetap</td>
-                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Tunjangan jabatan, makan, transport rutin</td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="row_gaji_tunjangan">Rp <?= number_format($tunjanganTetap, 0, ',', '.') ?></td>
-                        </tr>
-                        <tr>
-                            <td class="py-2.5 px-4 font-semibold text-slate-800">Penghasilan Tambahan</td>
-                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Uang lembur rutin, insentif performa, atau freelance</td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="row_gaji_tambahan">Rp <?= number_format($penghasilanTambahan, 0, ',', '.') ?></td>
-                        </tr>
-                        <tr>
-                            <td class="py-2.5 px-4 font-semibold text-slate-800">Penghasilan Pasangan</td>
-                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Gaji/penghasilan suami/istri (bila didukung bukti slip/buku tabungan)</td>
-                            <td class="py-2.5 px-4 text-right font-medium text-slate-800" id="row_gaji_pasangan">Rp <?= number_format($penghasilanPasangan, 0, ',', '.') ?></td>
+                        <!-- Baris Pendapatan Lain-Lain (Dinamis: Muncul Hanya Jika Ada) -->
+                        <tr id="container_row_gaji_lain" class="<?= $penghasilanLain > 0 ? '' : 'hidden' ?>">
+                            <td class="py-2.5 px-4 font-semibold text-slate-800" id="label_gaji_lain">Pendapatan Lain-Lain</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell" id="desc_gaji_lain"><?= !empty($keuangan['keterangan_pendapatan_lain_rk']) ? esc($keuangan['keterangan_pendapatan_lain_rk']) : 'Usaha sampingan, sewa aset, atau penghasilan pasangan' ?></td>
+                            <td class="py-2.5 px-4 text-right font-medium text-emerald-700" id="row_gaji_lain">Rp <?= number_format($penghasilanLain, 0, ',', '.') ?></td>
                         </tr>
                         <tr class="bg-blue-50/40 font-bold text-blue-900">
                             <td class="py-2.5 px-4">Total Penghasilan</td>
@@ -817,12 +804,12 @@ $tahunPeriode = date('Y');
                             </thead>
                             <tbody class="divide-y divide-slate-100 text-slate-700">
                                 <tr>
-                                    <td class="py-2.5 px-4 font-normal">Penghasilan Utama + Tunjangan + Bonus</td>
-                                    <td class="py-2.5 px-4 text-right font-medium" id="p_g_pokok">Rp <?= number_format($gajiPokok + $tunjanganTetap, 0, ',', '.') ?></td>
+                                    <td class="py-2.5 px-4 font-normal" id="p_label_g_pokok"><?= esc($namaGajiPokok) ?></td>
+                                    <td class="py-2.5 px-4 text-right font-medium" id="p_g_pokok">Rp <?= number_format($gajiPokok, 0, ',', '.') ?></td>
                                 </tr>
-                                <tr>
+                                <tr id="p_row_g_lain" class="<?= $penghasilanLain > 0 ? '' : 'hidden' ?>">
                                     <td class="py-2.5 px-4 font-normal">Pendapatan Lain-lain</td>
-                                    <td class="py-2.5 px-4 text-right font-medium" id="p_g_tambahan">Rp <?= number_format($penghasilanTambahan + $penghasilanPasangan, 0, ',', '.') ?></td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-emerald-700" id="p_g_tambahan">Rp <?= number_format($penghasilanLain, 0, ',', '.') ?></td>
                                 </tr>
                                 <tr class="font-bold text-slate-900 bg-slate-50/50">
                                     <td class="py-2.5 px-4">Total Penghasilan</td>
@@ -1292,40 +1279,71 @@ function sinkronkanLaporanKeuangan() {
 
     // 2. Data Gaji (Dinamis sinkron dari Tab 9)
     let liveGajiPokok = 0;
-    let liveTunjangan = 0;
-    let liveTambahan = 0;
+    let liveNamaGaji = 'Gaji Pokok / Penghasilan Utama';
 
     if (Array.isArray(window.daftarPendapatan) && window.daftarPendapatan.length > 0) {
         liveGajiPokok = parseNominalLap(window.daftarPendapatan[0]?.nominal || 0);
-        if (window.daftarPendapatan[1]) {
-            liveTunjangan = parseNominalLap(window.daftarPendapatan[1]?.nominal || 0);
-        }
-        for (let i = 2; i < window.daftarPendapatan.length; i++) {
-            liveTambahan += parseNominalLap(window.daftarPendapatan[i]?.nominal || 0);
+        if (window.daftarPendapatan[0]?.nama) {
+            liveNamaGaji = window.daftarPendapatan[0].nama;
         }
     } else {
         liveGajiPokok = parseNominalLap(document.getElementById('pendapatan_rk')?.value) || <?= $gajiPokok ?>;
-        liveTunjangan = <?= $tunjanganTetap ?>;
-        liveTambahan = <?= $penghasilanTambahan ?>;
     }
 
-    const pasangan = pendapatanLain;
-    const totGajiIn = liveGajiPokok + liveTunjangan + liveTambahan + pasangan;
+    const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
+    const pendapatanLain = isAdaLain ? (parseNominalLap(document.getElementById('pendapatan_lain_rk')?.value) || 0) : 0;
+    const ketLain = document.getElementById('keterangan_pendapatan_lain_rk')?.value?.trim();
+
+    const totGajiIn = liveGajiPokok + pendapatanLain;
 
     const bHidupG = pengeluaranRT;
     const bLainG = parseNominalLap(document.getElementById('beban_lainnya_nominal_rk')?.value) || 0;
     const totGajiOut = bHidupG + bLainG + cicilanAcuan;
     const sisaGaji = totGajiIn - totGajiOut;
 
+    // Tampilkan / sembunyikan baris Pendapatan Lain-Lain secara dinamis
+    const rowLain = document.getElementById('container_row_gaji_lain');
+    const pRowLain = document.getElementById('p_row_g_lain');
+
+    if (pendapatanLain > 0) {
+        if (rowLain) rowLain.classList.remove('hidden');
+        if (pRowLain) pRowLain.classList.remove('hidden');
+        if (document.getElementById('row_gaji_lain')) {
+            document.getElementById('row_gaji_lain').innerText = formatNominalLap(pendapatanLain);
+        }
+        if (document.getElementById('desc_gaji_lain') && ketLain) {
+            document.getElementById('desc_gaji_lain').innerText = ketLain;
+        }
+        if (document.getElementById('p_g_tambahan')) {
+            document.getElementById('p_g_tambahan').innerText = formatNominalLap(pendapatanLain);
+        }
+    } else {
+        if (rowLain) rowLain.classList.add('hidden');
+        if (pRowLain) pRowLain.classList.add('hidden');
+        if (document.getElementById('row_gaji_lain')) {
+            document.getElementById('row_gaji_lain').innerText = 'Rp 0';
+        }
+        if (document.getElementById('p_g_tambahan')) {
+            document.getElementById('p_g_tambahan').innerText = 'Rp 0';
+        }
+    }
+
+    if (document.getElementById('label_gaji_pokok')) {
+        document.getElementById('label_gaji_pokok').innerText = liveNamaGaji;
+    }
+    if (document.getElementById('p_label_g_pokok')) {
+        document.getElementById('p_label_g_pokok').innerText = liveNamaGaji;
+    }
+    if (document.getElementById('row_gaji_pokok')) {
+        document.getElementById('row_gaji_pokok').innerText = formatNominalLap(liveGajiPokok);
+    }
+    if (document.getElementById('row_gaji_tot_inflow')) {
+        document.getElementById('row_gaji_tot_inflow').innerText = formatNominalLap(totGajiIn);
+    }
+
     if (document.getElementById('metric_gaji_total')) document.getElementById('metric_gaji_total').innerText = formatNominalLap(totGajiIn);
     if (document.getElementById('metric_gaji_pengeluaran')) document.getElementById('metric_gaji_pengeluaran').innerText = formatNominalLap(totGajiOut);
     if (document.getElementById('metric_gaji_sisa')) document.getElementById('metric_gaji_sisa').innerText = formatNominalLap(sisaGaji);
-
-    if (document.getElementById('row_gaji_pokok')) document.getElementById('row_gaji_pokok').innerText = formatNominalLap(liveGajiPokok);
-    if (document.getElementById('row_gaji_tunjangan')) document.getElementById('row_gaji_tunjangan').innerText = formatNominalLap(liveTunjangan);
-    if (document.getElementById('row_gaji_tambahan')) document.getElementById('row_gaji_tambahan').innerText = formatNominalLap(liveTambahan);
-    if (document.getElementById('row_gaji_pasangan')) document.getElementById('row_gaji_pasangan').innerText = formatNominalLap(pasangan);
-    if (document.getElementById('row_gaji_tot_inflow')) document.getElementById('row_gaji_tot_inflow').innerText = formatNominalLap(totGajiIn);
 
     if (document.getElementById('row_gaji_b_hidup')) document.getElementById('row_gaji_b_hidup').innerText = `(${formatNominalLap(bHidupG)})`;
     if (document.getElementById('row_gaji_b_pendidikan')) document.getElementById('row_gaji_b_pendidikan').innerText = `(Rp 0)`;
@@ -1356,8 +1374,8 @@ function sinkronkanLaporanKeuangan() {
 
     // Update Elemen di Modal Preview Dokumen
     // Preview Gaji
-    if (document.getElementById('p_g_pokok')) document.getElementById('p_g_pokok').innerText = formatNominalLap(liveGajiPokok + liveTunjangan);
-    if (document.getElementById('p_g_tambahan')) document.getElementById('p_g_tambahan').innerText = formatNominalLap(liveTambahan + pasangan);
+    if (document.getElementById('p_g_pokok')) document.getElementById('p_g_pokok').innerText = formatNominalLap(liveGajiPokok);
+    if (document.getElementById('p_g_tambahan')) document.getElementById('p_g_tambahan').innerText = formatNominalLap(pendapatanLain);
     if (document.getElementById('p_g_total_in')) document.getElementById('p_g_total_in').innerText = formatNominalLap(totGajiIn);
     if (document.getElementById('p_g_hidup')) document.getElementById('p_g_hidup').innerText = `(${formatNominalLap(bHidupG + bLainG)})`;
     if (document.getElementById('p_g_cicilan')) document.getElementById('p_g_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;

@@ -1537,6 +1537,10 @@ function hitungLabaRugi() {
     if (document.getElementById('nettIV')) document.getElementById('nettIV').innerText = formatRupiahString(nettIV);
 
     hitungRasioDSC();
+
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
 }
 
 // Sinkronisasi dua arah saat user mengetik Nominal HPP langsung
@@ -1585,6 +1589,7 @@ function initDaftarPendapatan() {
         }
     }
 
+    window.daftarPendapatan = daftarPendapatan;
     renderListPendapatan();
 }
 window.initDaftarPendapatan = initDaftarPendapatan;
@@ -1637,6 +1642,7 @@ function renderListPendapatan() {
         total += parseNominal(item.nominal || 0);
     });
 
+    window.daftarPendapatan = daftarPendapatan;
     const hiddenDetail = document.getElementById('detail_pendapatan_rk');
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarPendapatan);
@@ -1688,6 +1694,7 @@ function updateItemPendapatan(index, field, val) {
         total += parseNominal(item.nominal || 0);
     });
 
+    window.daftarPendapatan = daftarPendapatan;
     const hiddenDetail = document.getElementById('detail_pendapatan_rk');
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarPendapatan);
