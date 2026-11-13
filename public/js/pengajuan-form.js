@@ -408,9 +408,13 @@ function validateTab(tabNum) {
             addError(pendapatan, 'Pendapatan/Omset bulanan riil wajib diisi lebih dari 0');
         }
 
-        const hpp = document.getElementById('hpp_persen_rk');
-        if (!hpp || parseFloat(hpp.value) <= 0) {
-            addError(hpp, 'Estimasi persentase HPP (%) wajib diisi lebih dari 0');
+        // HPP hanya divalidasi untuk Badan Usaha (karena debitur perorangan/karyawan tidak memiliki HPP)
+        const isBadanUsaha = Boolean(window.IS_BADAN_USAHA || document.getElementById('nama_usaha_bu') || document.getElementById('nomHppRKInput'));
+        if (isBadanUsaha) {
+            const hpp = document.getElementById('hpp_persen_rk');
+            if (!hpp || parseFloat(hpp.value) <= 0) {
+                addError(hpp, 'Estimasi persentase HPP (%) wajib diisi lebih dari 0');
+            }
         }
     } else if (tabNum === 'laporan') {
         // Tab Laporan: Tampilan saja tanpa fungsi atau konek database
