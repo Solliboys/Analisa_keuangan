@@ -23,8 +23,8 @@
     // Persiapan HPP Dinamis untuk Perorangan (Opsi B: Default 0% & Tersembunyi untuk karyawan/PNS)
     $nomHppLama = (float)($keuangan['hpp_nominal_rk'] ?? 0);
     $pctHppLama = (float)($keuangan['hpp_persen_rk'] ?? 0);
-    // HPP dianggap aktif HANYA jika ada nominal HPP > 0 atau persentase sengaja diisi non-default (bukan default db lama 60 dengan nominal 0)
-    $adaHppPerorangan = ($nomHppLama > 0) || ($pctHppLama > 0 && $pctHppLama != 60.0);
+    // HPP dianggap aktif jika ada persentase HPP > 0 atau nominal HPP > 0
+    $adaHppPerorangan = ($nomHppLama > 0 || $pctHppLama > 0);
     $hppPersenDisplay = $adaHppPerorangan ? $pctHppLama : 0;
     $hppNominalDisplay = $adaHppPerorangan ? $nomHppLama : 0;
 

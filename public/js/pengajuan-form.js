@@ -789,8 +789,16 @@ function goToTab(tabIndex) {
     }
     if (normalizeTab(currentTab) === 'laporan') {
         const checkHpp = document.getElementById('checkAdaHppPerorangan');
-        if (checkHpp && typeof window.gantiKategoriDebitur === 'function') {
-            window.gantiKategoriDebitur(checkHpp.checked ? 'usaha' : 'gaji');
+        const kid = document.getElementById('kredit_id')?.value || 'draft';
+        const savedHpp = sessionStorage.getItem('hpp_perorangan_' + kid);
+        let isUsaha = false;
+        if (checkHpp) {
+            isUsaha = checkHpp.checked;
+        } else if (savedHpp !== null) {
+            isUsaha = (savedHpp === '1');
+        }
+        if (typeof window.gantiKategoriDebitur === 'function') {
+            window.gantiKategoriDebitur(isUsaha ? 'usaha' : 'gaji', false);
         }
         if (typeof window.sinkronkanLaporanKeuangan === 'function') {
             window.sinkronkanLaporanKeuangan();
@@ -1839,20 +1847,23 @@ function togglePendapatanLain(checked) {
 window.togglePendapatanLain = togglePendapatanLain;
 
 // Toggle Tampilan Input HPP untuk Perorangan (Pedagang / Usaha Toko)
-function toggleHppPerorangan(checked) {
+function toggleHppPerorangan(checked, syncReport = true) {
     const container = document.getElementById('containerHppPerorangan');
     const box = document.getElementById('boxToggleHppPerorangan');
     const inputPct = document.getElementById('hpp_persen_rk');
     const inputNom = document.getElementById('nomHppRKInput');
+    const kid = document.getElementById('kredit_id')?.value || 'draft';
 
     if (checked) {
         if (container) container.classList.remove('hidden');
         if (box) {
             box.className = 'p-3.5 rounded-xl border transition mb-3 bg-blue-50/70 border-blue-300 ring-1 ring-blue-200';
         }
-        if (inputPct && (parseFloat(inputPct.value || 0) === 0)) {
-            inputPct.focus();
+        // Jika HPP masih 0 saat dicentang, berikan default 60% untuk usaha
+        if (inputPct && (parseFloat(inputPct.value || 0) <= 0)) {
+            inputPct.value = 60;
         }
+        sessionStorage.setItem('hpp_perorangan_' + kid, '1');
     } else {
         if (container) container.classList.add('hidden');
         if (box) {
@@ -1860,16 +1871,19 @@ function toggleHppPerorangan(checked) {
         }
         if (inputPct) inputPct.value = 0;
         if (inputNom) inputNom.value = '0';
+        sessionStorage.setItem('hpp_perorangan_' + kid, '0');
     }
     hitungLabaRugi();
 
     // Trigger otomatis peralihan format Laporan Keuangan (Usaha vs Karyawan)
-    const targetKategori = checked ? 'usaha' : 'gaji';
-    if (typeof window.gantiKategoriDebitur === 'function') {
-        window.gantiKategoriDebitur(targetKategori);
-    }
-    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
-        window.sinkronkanLaporanKeuangan();
+    if (syncReport) {
+        const targetKategori = checked ? 'usaha' : 'gaji';
+        if (typeof window.gantiKategoriDebitur === 'function') {
+            window.gantiKategoriDebitur(targetKategori, false);
+        }
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+            window.sinkronkanLaporanKeuangan();
+        }
     }
 }
 window.toggleHppPerorangan = toggleHppPerorangan;

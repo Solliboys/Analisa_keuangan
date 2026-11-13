@@ -15,7 +15,7 @@
 // Jika HPP aktif (karena dicentang di Tab 9), maka masuk ke Laporan Usaha (Wiraswasta/Pedagang).
 $nomHppLama = (float)($keuangan['hpp_nominal_rk'] ?? 0);
 $pctHppLama = (float)($keuangan['hpp_persen_rk'] ?? 0);
-$adaHppAktif = ($nomHppLama > 0) || ($pctHppLama > 0 && $pctHppLama != 60.0);
+$adaHppAktif = ($nomHppLama > 0 || $pctHppLama > 0);
 $isKaryawanPns = !$adaHppAktif;
 
 // 2. Data Keuangan Punya Usaha (dari Tab 9 & Database)
@@ -1127,7 +1127,7 @@ $tahunPeriode = date('Y');
 let activeKategoriDebitur = '<?= $isKaryawanPns ? "gaji" : "usaha" ?>';
 
 // Ganti Kategori Debitur (Punya Usaha vs Punya Gaji)
-function gantiKategoriDebitur(kategori) {
+function gantiKategoriDebitur(kategori, syncCheckbox = true) {
     activeKategoriDebitur = kategori;
     const secUsaha = document.getElementById('sectionPeroranganUsaha');
     const secGaji = document.getElementById('sectionPeroranganGaji');
@@ -1150,6 +1150,17 @@ function gantiKategoriDebitur(kategori) {
         if (docUsaha) docUsaha.classList.remove('hidden');
         if (docGaji) docGaji.classList.add('hidden');
         if (sub) sub.innerText = 'Perorangan (Wiraswasta), Periode Per Bulan <?= $tahunPeriode ?>';
+
+        // Sinkronisasi balik ke checkbox Tab 9
+        if (syncCheckbox) {
+            const checkHpp = document.getElementById('checkAdaHppPerorangan');
+            if (checkHpp && !checkHpp.checked) {
+                checkHpp.checked = true;
+                if (typeof window.toggleHppPerorangan === 'function') {
+                    window.toggleHppPerorangan(true, false);
+                }
+            }
+        }
     } else {
         if (secUsaha) secUsaha.classList.add('hidden');
         if (secGaji) secGaji.classList.remove('hidden');
@@ -1162,6 +1173,17 @@ function gantiKategoriDebitur(kategori) {
         if (docUsaha) docUsaha.classList.add('hidden');
         if (docGaji) docGaji.classList.remove('hidden');
         if (sub) sub.innerText = 'Perorangan (Penghasilan Tetap), Periode Per Bulan <?= $tahunPeriode ?>';
+
+        // Sinkronisasi balik ke checkbox Tab 9
+        if (syncCheckbox) {
+            const checkHpp = document.getElementById('checkAdaHppPerorangan');
+            if (checkHpp && checkHpp.checked) {
+                checkHpp.checked = false;
+                if (typeof window.toggleHppPerorangan === 'function') {
+                    window.toggleHppPerorangan(false, false);
+                }
+            }
+        }
     }
 
     sinkronkanLaporanKeuangan();
@@ -1435,11 +1457,17 @@ function unduhDokumenPdfLangsung() {
 
 document.addEventListener('DOMContentLoaded', function() {
     const checkHpp = document.getElementById('checkAdaHppPerorangan');
+    const kid = document.getElementById('kredit_id')?.value || 'draft';
+    const savedHpp = sessionStorage.getItem('hpp_perorangan_' + kid);
+    let isUsaha = false;
     if (checkHpp) {
-        gantiKategoriDebitur(checkHpp.checked ? 'usaha' : 'gaji');
+        isUsaha = checkHpp.checked;
+    } else if (savedHpp !== null) {
+        isUsaha = (savedHpp === '1');
     } else {
-        gantiKategoriDebitur(activeKategoriDebitur);
+        isUsaha = (activeKategoriDebitur === 'usaha');
     }
+    gantiKategoriDebitur(isUsaha ? 'usaha' : 'gaji', false);
     sinkronkanLaporanKeuangan();
 });
 </script>
