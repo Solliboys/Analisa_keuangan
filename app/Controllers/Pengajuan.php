@@ -68,13 +68,9 @@ class Pengajuan extends BaseController
         $jabatan = strtolower(session()->get('jabatan') ?? '');
 
         // Query daftar pengajuan berdasarkan peran
-        if ($jabatan === 'superadmin') {
+        if ($jabatan === 'superadmin' || strpos($jabatan, 'review') !== false || strpos($jabatan, 'ceo') !== false || strpos($jabatan, 'direk') !== false) {
+            // Superadmin, Reviewer & CEO: Tampilkan seluruh riwayat pengajuan (termasuk yang sedang diajukan dan draft)
             $daftarKredit = $this->kreditModel->orderBy('created_at', 'DESC')->findAll();
-        } elseif (strpos($jabatan, 'review') !== false || strpos($jabatan, 'ceo') !== false || strpos($jabatan, 'direk') !== false) {
-            // Reviewer & CEO: Draft JANGAN dimasukkan, hanya yang sudah Diajukan / Disetujui / Ditolak
-            $daftarKredit = $this->kreditModel->where('status_pengajuan !=', 'Draft')
-                                              ->where('status_pengajuan !=', 'draft')
-                                              ->orderBy('created_at', 'DESC')->findAll();
         } elseif (strpos($jabatan, 'slik') !== false) {
             $pengaturan = $this->db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
             $ijinSlik = (int)($pengaturan['ijin_pengusul_isi_slik'] ?? 1);
