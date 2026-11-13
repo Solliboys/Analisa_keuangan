@@ -495,9 +495,29 @@ class Pengajuan extends BaseController
 
         try {
             // Filter kolom agar hanya menyimpan kolom yang benar-benar ada di tabel database (mencegah error Unknown Column di VPS)
-            $tableCols = $this->kreditModel->db->getFieldNames('kredit');
-            if (!empty($tableCols)) {
-                $dataKredit = array_intersect_key($dataKredit, array_flip($tableCols));
+            try {
+                $tableCols = $this->kreditModel->db->getFieldNames('kredit');
+                if (is_array($tableCols) && !empty($tableCols)) {
+                    $dataKredit = array_intersect_key($dataKredit, array_flip($tableCols));
+                }
+            } catch (\Throwable $e) {}
+
+            // Proteksi berlapis kolom baru jika migrasi belum dijalankan di server/VPS
+            $newOptionalCols = [
+                'berkas_slik_pdf', 'berkas_slik_txt', 'daftar_permohonan_slik', 'metode_slik',
+                'kesimpulan_kolektibilitas', 'slik_permohonan_nama', 'slik_permohonan_nik', 'slik_permohonan_hubungan',
+                'slik_ktp_file', 'slik_surat_kuasa_file'
+            ];
+            foreach ($newOptionalCols as $colName) {
+                if (isset($dataKredit[$colName])) {
+                    try {
+                        if (!$this->kreditModel->db->fieldExists($colName, 'kredit')) {
+                            unset($dataKredit[$colName]);
+                        }
+                    } catch (\Throwable $e) {
+                        unset($dataKredit[$colName]);
+                    }
+                }
             }
 
             if ($kreditId) {
@@ -1599,9 +1619,13 @@ class Pengajuan extends BaseController
         $filePath = 'uploads/slik/' . $newName;
 
         if ($kreditId) {
-            $this->kreditModel->update($kreditId, [
-                'berkas_slik_pdf' => $filePath
-            ]);
+            try {
+                if ($this->kreditModel->db->fieldExists('berkas_slik_pdf', 'kredit')) {
+                    $this->kreditModel->update($kreditId, [
+                        'berkas_slik_pdf' => $filePath
+                    ]);
+                }
+            } catch (\Throwable $e) {}
         }
 
         return $this->response->setJSON([
@@ -1697,6 +1721,12 @@ class Pengajuan extends BaseController
         }
 
         if ($kreditId) {
+            try {
+                $tableCols = $this->kreditModel->db->getFieldNames('kredit');
+                if (is_array($tableCols) && !empty($tableCols)) {
+                    $updateData = array_intersect_key($updateData, array_flip($tableCols));
+                }
+            } catch (\Throwable $e) {}
             $this->kreditModel->update($kreditId, $updateData);
         }
 
