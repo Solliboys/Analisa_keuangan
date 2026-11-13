@@ -746,8 +746,14 @@ function goToTab(tabIndex) {
     if (currentTab === 6 && typeof sinkronisasiDataDebiturKeSlik === 'function') {
         sinkronisasiDataDebiturKeSlik();
     }
-    if (normalizeTab(currentTab) === 'laporan' && typeof sinkronkanLaporanKeuangan === 'function') {
-        sinkronkanLaporanKeuangan();
+    if (normalizeTab(currentTab) === 'laporan') {
+        const checkHpp = document.getElementById('checkAdaHppPerorangan');
+        if (checkHpp && typeof window.gantiKategoriDebitur === 'function') {
+            window.gantiKategoriDebitur(checkHpp.checked ? 'usaha' : 'gaji');
+        }
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+            window.sinkronkanLaporanKeuangan();
+        }
     }
 
     // Update Header Judul & Deskripsi
@@ -1807,6 +1813,15 @@ function toggleHppPerorangan(checked) {
         if (inputNom) inputNom.value = '0';
     }
     hitungLabaRugi();
+
+    // Trigger otomatis peralihan format Laporan Keuangan (Usaha vs Karyawan)
+    const targetKategori = checked ? 'usaha' : 'gaji';
+    if (typeof window.gantiKategoriDebitur === 'function') {
+        window.gantiKategoriDebitur(targetKategori);
+    }
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
 }
 window.toggleHppPerorangan = toggleHppPerorangan;
 

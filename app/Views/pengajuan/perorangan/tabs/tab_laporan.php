@@ -10,26 +10,19 @@
  *    - Daftar Harta & Utang (Tabungan, Tanah, Bangunan, Kendaraan, Utang Bank/Koperasi/Pinjol - TANPA aset usaha).
  */
 
-// 1. Deteksi Otomatis Kategori Debitur (Punya Usaha vs Punya Gaji)
-$jabatanPekerjaan = strtolower($kredit['jabatan'] ?? ($kredit['bidang_usaha'] ?? ''));
-$isKaryawanPns = (
-    strpos($jabatanPekerjaan, 'karyawan') !== false ||
-    strpos($jabatanPekerjaan, 'pns') !== false ||
-    strpos($jabatanPekerjaan, 'asn') !== false ||
-    strpos($jabatanPekerjaan, 'guru') !== false ||
-    strpos($jabatanPekerjaan, 'pegawai') !== false ||
-    strpos($jabatanPekerjaan, 'bumn') !== false ||
-    strpos($jabatanPekerjaan, 'staf') !== false ||
-    strpos($jabatanPekerjaan, 'pensiun') !== false ||
-    strpos($jabatanPekerjaan, 'polisi') !== false ||
-    strpos($jabatanPekerjaan, 'tni') !== false
-);
+// 1. Deteksi Otomatis Kategori Debitur (Trigger Utama: Centang HPP di Tab 9)
+// Jika HPP TIDAK aktif (default 0%), maka otomatis masuk ke Laporan Gaji (Karyawan/PNS/Pensiun).
+// Jika HPP aktif (karena dicentang di Tab 9), maka masuk ke Laporan Usaha (Wiraswasta/Pedagang).
+$nomHppLama = (float)($keuangan['hpp_nominal_rk'] ?? 0);
+$pctHppLama = (float)($keuangan['hpp_persen_rk'] ?? 0);
+$adaHppAktif = ($nomHppLama > 0) || ($pctHppLama > 0 && $pctHppLama != 60.0);
+$isKaryawanPns = !$adaHppAktif;
 
 // 2. Data Keuangan Punya Usaha (dari Tab 9 & Database)
-$omsetBulanan = (float)($keuangan['pendapatan_rk'] ?? 150000000);
-$hppPersen = (float)($keuangan['hpp_persen_rk'] ?? 60);
-$hppNominal = (float)($keuangan['hpp_nominal_rk'] ?? ($omsetBulanan * ($hppPersen / 100)));
-$labaKotor = $omsetBulanan - $hppNominal;
+$omsetBulanan = (float)($keuangan['pendapatan_rk'] ?? 0);
+$hppPersen = $adaHppAktif ? $pctHppLama : 0;
+$hppNominal = $adaHppAktif ? ($nomHppLama > 0 ? $nomHppLama : ($omsetBulanan * ($hppPersen / 100))) : 0;
+$labaKotor = max(0, $omsetBulanan - $hppNominal);
 
 // Estimasi Skenario Hari Ramai, Biasa, Sepi (Omzet = Ramai + Biasa + Sepi)
 $omzetRamai = round($omsetBulanan * 0.45); // 45% omzet dari hari ramai
@@ -37,16 +30,18 @@ $omzetBiasa = round($omsetBulanan * 0.40); // 40% omzet dari hari biasa
 $omzetSepi  = $omsetBulanan - $omzetRamai - $omzetBiasa; // 15% omzet dari hari sepi
 
 // Biaya Operasional Usaha
-$nomBiayaOperasional = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 12000000);
-if ($nomBiayaOperasional <= 0) $nomBiayaOperasional = round($omsetBulanan * 0.08);
-$labaUsaha = $labaKotor - $nomBiayaOperasional;
+$nomBiayaOperasional = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
+$labaUsaha = max(0, $labaKotor - $nomBiayaOperasional);
 
 // Pendapatan Lain (Luar usaha)
-$nomPendapatanLain = (float)($keuangan['pendapatan_lain_rk'] ?? 0);
+$isAdaBuktiLain = !empty($keuangan['ada_bukti_pendapatan_lain_rk']) || (!empty($keuangan['pendapatan_lain_rk']) && (float)$keuangan['pendapatan_lain_rk'] > 0);
+$nomPendapatanLain = $isAdaBuktiLain ? (float)($keuangan['pendapatan_lain_rk'] ?? 0) : 0;
 
 // Prive / Pengeluaran Rumah Tangga (Biaya Hidup Keluarga)
-$nomPengeluaranRT = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 15000000);
-if ($nomPengeluaranRT <= 0) $nomPengeluaranRT = 15000000;
+$nomPengeluaranRT = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 0);
+if ($nomPengeluaranRT <= 0 && $omsetBulanan > 0) {
+    $nomPengeluaranRT = 4500000;
+}
 
 // Sisa Penghasilan Usaha = (Laba Usaha + Pendapatan Lain) - Prive RT
 $labaBersihSisaPenghasilanUsaha = ($labaUsaha + $nomPendapatanLain) - $nomPengeluaranRT;
@@ -93,18 +88,39 @@ $utangPinjol = 0;
 $totalUtangUsaha = $utangDagang + $utangBank + $utangKoperasi + $utangPinjol;
 $kekayaanBersihUsaha = $totalHartaUsaha - $totalUtangUsaha;
 
-// 3. Data Keuangan Punya Gaji (Karyawan, PNS, Pensiunan)
-$gajiPokok = (float)($keuangan['gaji_pokok'] ?? 10000000);
-$tunjanganTetap = (float)($keuangan['tunjangan_tetap'] ?? 3500000);
-$penghasilanTambahan = (float)($keuangan['penghasilan_tambahan'] ?? 1500000);
-$penghasilanPasangan = (float)($keuangan['penghasilan_pasangan'] ?? $nomPendapatanLain);
+// 3. Data Keuangan Punya Gaji (Karyawan, PNS, Pensiunan) - Diambil Langsung Dinamis dari Tab 9
+$rawDetailPendapatan = $keuangan['detail_pendapatan_rk'] ?? '';
+$listDetailPendapatan = [];
+if (!empty($rawDetailPendapatan)) {
+    $decP = json_decode($rawDetailPendapatan, true);
+    if (is_array($decP) && count($decP) > 0) {
+        $listDetailPendapatan = $decP;
+    }
+}
+
+$gajiPokok = 0;
+$tunjanganTetap = 0;
+$penghasilanTambahan = 0;
+
+if (!empty($listDetailPendapatan)) {
+    $gajiPokok = (float)($listDetailPendapatan[0]['nominal'] ?? 0);
+    if (isset($listDetailPendapatan[1])) {
+        $tunjanganTetap = (float)($listDetailPendapatan[1]['nominal'] ?? 0);
+    }
+    for ($i = 2; $i < count($listDetailPendapatan); $i++) {
+        $penghasilanTambahan += (float)($listDetailPendapatan[$i]['nominal'] ?? 0);
+    }
+} else {
+    $gajiPokok = (float)($keuangan['pendapatan_rk'] ?? 0);
+}
+
+$penghasilanPasangan = $nomPendapatanLain;
 $totalPenghasilanGaji = $gajiPokok + $tunjanganTetap + $penghasilanTambahan + $penghasilanPasangan;
 
-$biayaHidupGaji = round($nomPengeluaranRT * 0.55); // Kebutuhan dapur/konsumsi
-$biayaPendidikanGaji = round($nomPengeluaranRT * 0.25); // Biaya sekolah/kuliah anak
-$biayaLainGaji = round($nomPengeluaranRT * 0.20); // Listrik, air, kuota, transport
+$biayaHidupGaji = $nomPengeluaranRT;
+$biayaLainGaji = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
 $cicilanBerjalanGaji = $totalCicilanSlik;
-$totalPengeluaranGaji = $biayaHidupGaji + $biayaPendidikanGaji + $biayaLainGaji + $cicilanBerjalanGaji;
+$totalPengeluaranGaji = $biayaHidupGaji + $biayaLainGaji + $cicilanBerjalanGaji;
 
 $sisaPenghasilanGaji = $totalPenghasilanGaji - $totalPengeluaranGaji;
 $dsrGaji = ($totalPenghasilanGaji > 0) ? round(($cicilanBerjalanGaji / $totalPenghasilanGaji) * 100, 1) : 0;
@@ -528,23 +544,18 @@ $tahunPeriode = date('Y');
                             <td colspan="3" class="py-2 px-4 tracking-wider text-rose-800">B. PENGELUARAN BULANAN</td>
                         </tr>
                         <tr>
-                            <td class="py-2.5 px-4 font-semibold text-rose-700">Biaya Hidup</td>
-                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Belanja dapur, konsumsi keluarga, dan kebutuhan harian</td>
+                            <td class="py-2.5 px-4 font-semibold text-rose-700">Pengeluaran Kebutuhan Pokok</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Belanja dapur, konsumsi keluarga, listrik, air &amp; kebutuhan rumah tangga harian</td>
                             <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_hidup">(Rp <?= number_format($biayaHidupGaji, 0, ',', '.') ?>)</td>
                         </tr>
                         <tr>
-                            <td class="py-2.5 px-4 font-semibold text-rose-700">Biaya Pendidikan</td>
-                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Uang sekolah, kuliah, buku, dan kursus anak</td>
-                            <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_pendidikan">(Rp <?= number_format($biayaPendidikanGaji, 0, ',', '.') ?>)</td>
-                        </tr>
-                        <tr>
-                            <td class="py-2.5 px-4 font-semibold text-rose-700">Biaya Lain-lain</td>
-                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Listrik, air, telepon/kuota, bensin, dan pemeliharaan</td>
+                            <td class="py-2.5 px-4 font-semibold text-rose-700">Biaya &amp; Beban Bebas Lainnya</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">Asuransi, biaya pendidikan/sekolah, transport, dan biaya tak terduga (beban dinamis)</td>
                             <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_lain">(Rp <?= number_format($biayaLainGaji, 0, ',', '.') ?>)</td>
                         </tr>
                         <tr>
-                            <td class="py-2.5 px-4 font-semibold text-rose-700">Cicilan Berjalan</td>
-                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">KPR, kredit kendaraan, atau pinjaman bank saat ini</td>
+                            <td class="py-2.5 px-4 font-semibold text-rose-700">Cicilan Pinjaman Berjalan</td>
+                            <td class="py-2.5 px-4 text-slate-500 hidden md:table-cell">KPR, kredit kendaraan, atau pinjaman bank saat ini (SLIK / komitmen)</td>
                             <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="row_gaji_b_cicilan">(Rp <?= number_format($cicilanBerjalanGaji, 0, ',', '.') ?>)</td>
                         </tr>
                         <tr class="bg-rose-50/40 font-bold text-rose-900">
@@ -1157,6 +1168,7 @@ function gantiKategoriDebitur(kategori) {
 
     sinkronkanLaporanKeuangan();
 }
+window.gantiKategoriDebitur = gantiKategoriDebitur;
 
 // Format Angka ke Rupiah String
 function formatNominalLap(num) {
@@ -1258,31 +1270,45 @@ function sinkronkanLaporanKeuangan() {
     if (document.getElementById('kekayaan_bersih_usaha')) document.getElementById('kekayaan_bersih_usaha').innerText = formatNominalLap(netWorthU);
     if (document.getElementById('pasiva_total_usaha')) document.getElementById('pasiva_total_usaha').innerText = formatNominalLap(totHartaU);
 
-    // 2. Data Gaji
-    const gajiPokok = <?= $gajiPokok ?>;
-    const tunjangan = <?= $tunjanganTetap ?>;
-    const tambahan = <?= $penghasilanTambahan ?>;
-    const pasangan = pendapatanLain;
-    const totGajiIn = gajiPokok + tunjangan + tambahan + pasangan;
+    // 2. Data Gaji (Dinamis sinkron dari Tab 9)
+    let liveGajiPokok = 0;
+    let liveTunjangan = 0;
+    let liveTambahan = 0;
 
-    const bHidupG = Math.round(pengeluaranRT * 0.55);
-    const bDidikG = Math.round(pengeluaranRT * 0.25);
-    const bLainG = Math.round(pengeluaranRT * 0.20);
-    const totGajiOut = bHidupG + bDidikG + bLainG + cicilanAcuan;
+    if (Array.isArray(window.daftarPendapatan) && window.daftarPendapatan.length > 0) {
+        liveGajiPokok = parseNominalLap(window.daftarPendapatan[0]?.nominal || 0);
+        if (window.daftarPendapatan[1]) {
+            liveTunjangan = parseNominalLap(window.daftarPendapatan[1]?.nominal || 0);
+        }
+        for (let i = 2; i < window.daftarPendapatan.length; i++) {
+            liveTambahan += parseNominalLap(window.daftarPendapatan[i]?.nominal || 0);
+        }
+    } else {
+        liveGajiPokok = parseNominalLap(document.getElementById('pendapatan_rk')?.value) || <?= $gajiPokok ?>;
+        liveTunjangan = <?= $tunjanganTetap ?>;
+        liveTambahan = <?= $penghasilanTambahan ?>;
+    }
+
+    const pasangan = pendapatanLain;
+    const totGajiIn = liveGajiPokok + liveTunjangan + liveTambahan + pasangan;
+
+    const bHidupG = pengeluaranRT;
+    const bLainG = parseNominalLap(document.getElementById('beban_lainnya_nominal_rk')?.value) || 0;
+    const totGajiOut = bHidupG + bLainG + cicilanAcuan;
     const sisaGaji = totGajiIn - totGajiOut;
 
     if (document.getElementById('metric_gaji_total')) document.getElementById('metric_gaji_total').innerText = formatNominalLap(totGajiIn);
     if (document.getElementById('metric_gaji_pengeluaran')) document.getElementById('metric_gaji_pengeluaran').innerText = formatNominalLap(totGajiOut);
     if (document.getElementById('metric_gaji_sisa')) document.getElementById('metric_gaji_sisa').innerText = formatNominalLap(sisaGaji);
 
-    if (document.getElementById('row_gaji_pokok')) document.getElementById('row_gaji_pokok').innerText = formatNominalLap(gajiPokok);
-    if (document.getElementById('row_gaji_tunjangan')) document.getElementById('row_gaji_tunjangan').innerText = formatNominalLap(tunjangan);
-    if (document.getElementById('row_gaji_tambahan')) document.getElementById('row_gaji_tambahan').innerText = formatNominalLap(tambahan);
+    if (document.getElementById('row_gaji_pokok')) document.getElementById('row_gaji_pokok').innerText = formatNominalLap(liveGajiPokok);
+    if (document.getElementById('row_gaji_tunjangan')) document.getElementById('row_gaji_tunjangan').innerText = formatNominalLap(liveTunjangan);
+    if (document.getElementById('row_gaji_tambahan')) document.getElementById('row_gaji_tambahan').innerText = formatNominalLap(liveTambahan);
     if (document.getElementById('row_gaji_pasangan')) document.getElementById('row_gaji_pasangan').innerText = formatNominalLap(pasangan);
     if (document.getElementById('row_gaji_tot_inflow')) document.getElementById('row_gaji_tot_inflow').innerText = formatNominalLap(totGajiIn);
 
     if (document.getElementById('row_gaji_b_hidup')) document.getElementById('row_gaji_b_hidup').innerText = `(${formatNominalLap(bHidupG)})`;
-    if (document.getElementById('row_gaji_b_pendidikan')) document.getElementById('row_gaji_b_pendidikan').innerText = `(${formatNominalLap(bDidikG)})`;
+    if (document.getElementById('row_gaji_b_pendidikan')) document.getElementById('row_gaji_b_pendidikan').innerText = `(Rp 0)`;
     if (document.getElementById('row_gaji_b_lain')) document.getElementById('row_gaji_b_lain').innerText = `(${formatNominalLap(bLainG)})`;
     if (document.getElementById('row_gaji_b_cicilan')) document.getElementById('row_gaji_b_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
     if (document.getElementById('row_gaji_tot_outflow')) document.getElementById('row_gaji_tot_outflow').innerText = `(${formatNominalLap(totGajiOut)})`;
@@ -1310,10 +1336,10 @@ function sinkronkanLaporanKeuangan() {
 
     // Update Elemen di Modal Preview Dokumen
     // Preview Gaji
-    if (document.getElementById('p_g_pokok')) document.getElementById('p_g_pokok').innerText = formatNominalLap(gajiPokok + tunjangan);
-    if (document.getElementById('p_g_tambahan')) document.getElementById('p_g_tambahan').innerText = formatNominalLap(tambahan + pasangan);
+    if (document.getElementById('p_g_pokok')) document.getElementById('p_g_pokok').innerText = formatNominalLap(liveGajiPokok + liveTunjangan);
+    if (document.getElementById('p_g_tambahan')) document.getElementById('p_g_tambahan').innerText = formatNominalLap(liveTambahan + pasangan);
     if (document.getElementById('p_g_total_in')) document.getElementById('p_g_total_in').innerText = formatNominalLap(totGajiIn);
-    if (document.getElementById('p_g_hidup')) document.getElementById('p_g_hidup').innerText = `(${formatNominalLap(bHidupG + bDidikG + bLainG)})`;
+    if (document.getElementById('p_g_hidup')) document.getElementById('p_g_hidup').innerText = `(${formatNominalLap(bHidupG + bLainG)})`;
     if (document.getElementById('p_g_cicilan')) document.getElementById('p_g_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
     if (document.getElementById('p_g_surplus')) document.getElementById('p_g_surplus').innerText = formatNominalLap(sisaGaji);
     if (document.getElementById('p_g_kas_masuk')) document.getElementById('p_g_kas_masuk').innerText = formatNominalLap(totGajiIn);
@@ -1339,6 +1365,7 @@ function sinkronkanLaporanKeuangan() {
     if (document.getElementById('p_u_tot_utang')) document.getElementById('p_u_tot_utang').innerText = `(${formatNominalLap(totUtangU)})`;
     if (document.getElementById('p_u_net_worth')) document.getElementById('p_u_net_worth').innerText = formatNominalLap(netWorthU);
 }
+window.sinkronkanLaporanKeuangan = sinkronkanLaporanKeuangan;
 
 // Buka Modal Preview Lembar A4
 function bukaModalPreviewLaporan() {
@@ -1409,6 +1436,12 @@ function unduhDokumenPdfLangsung() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    const checkHpp = document.getElementById('checkAdaHppPerorangan');
+    if (checkHpp) {
+        gantiKategoriDebitur(checkHpp.checked ? 'usaha' : 'gaji');
+    } else {
+        gantiKategoriDebitur(activeKategoriDebitur);
+    }
     sinkronkanLaporanKeuangan();
 });
 </script>
