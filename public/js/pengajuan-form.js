@@ -408,12 +408,21 @@ function validateTab(tabNum) {
             addError(pendapatan, 'Pendapatan/Omset bulanan riil wajib diisi lebih dari 0');
         }
 
-        // HPP hanya divalidasi untuk Badan Usaha (karena debitur perorangan/karyawan tidak memiliki HPP)
-        const isBadanUsaha = Boolean(window.IS_BADAN_USAHA || document.getElementById('nama_usaha_bu') || document.getElementById('nomHppRKInput'));
+        // HPP hanya divalidasi untuk Badan Usaha atau Perorangan yang mencentang opsi toko/dagang
+        const isBadanUsaha = Boolean(window.IS_BADAN_USAHA || document.getElementById('nama_usaha_bu'));
         if (isBadanUsaha) {
             const hpp = document.getElementById('hpp_persen_rk');
             if (!hpp || parseFloat(hpp.value) <= 0) {
                 addError(hpp, 'Estimasi persentase HPP (%) wajib diisi lebih dari 0');
+            }
+        } else {
+            // Perorangan: hanya divalidasi jika checkbox HPP dicentang
+            const checkAdaHpp = document.getElementById('checkAdaHppPerorangan');
+            if (checkAdaHpp && checkAdaHpp.checked) {
+                const hpp = document.getElementById('hpp_persen_rk');
+                if (!hpp || parseFloat(hpp.value) <= 0) {
+                    addError(hpp, 'Estimasi persentase HPP (%) wajib diisi lebih dari 0 jika opsi toko/dagang dicentang');
+                }
             }
         }
     } else if (tabNum === 'laporan') {
@@ -1360,10 +1369,30 @@ function hitungLabaRugi() {
         document.getElementById('pendapatan_rk').value = pRK;
     }
 
-    const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
-    const hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 0);
-    const nomHppRK = isBU ? Math.round(pRK * (hppPctRK / 100)) : 0;
-    const grossRK = isBU ? Math.max(0, pRK - nomHppRK) : pRK;
+    const isBU = Boolean(window.IS_BADAN_USAHA);
+    const checkAdaHpp = document.getElementById('checkAdaHppPerorangan');
+    // Jika Badan Usaha: selalu menggunakan HPP. Jika Perorangan: hanya jika checkbox dicentang.
+    const isAdaHpp = isBU ? true : (checkAdaHpp ? checkAdaHpp.checked : false);
+
+    let hppPctRK = 0;
+    let nomHppRK = 0;
+    let grossRK = pRK;
+
+    if (isAdaHpp) {
+        hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 0);
+        nomHppRK = Math.round(pRK * (hppPctRK / 100));
+        grossRK = Math.max(0, pRK - nomHppRK);
+    } else {
+        const inputHppPct = document.getElementById('hpp_persen_rk');
+        const inputNomHpp = document.getElementById('nomHppRKInput');
+        if (inputHppPct && !isBU) inputHppPct.value = 0;
+        if (inputNomHpp && !isBU && document.activeElement !== inputNomHpp) {
+            inputNomHpp.value = '0';
+        }
+        hppPctRK = 0;
+        nomHppRK = 0;
+        grossRK = pRK;
+    }
 
     // Biaya Hidup (langsung nominal rupiah tanpa %)
     const nomBhRK = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 0);
@@ -1753,6 +1782,33 @@ function togglePendapatanLain(checked) {
     hitungLabaRugi();
 }
 window.togglePendapatanLain = togglePendapatanLain;
+
+// Toggle Tampilan Input HPP untuk Perorangan (Pedagang / Usaha Toko)
+function toggleHppPerorangan(checked) {
+    const container = document.getElementById('containerHppPerorangan');
+    const box = document.getElementById('boxToggleHppPerorangan');
+    const inputPct = document.getElementById('hpp_persen_rk');
+    const inputNom = document.getElementById('nomHppRKInput');
+
+    if (checked) {
+        if (container) container.classList.remove('hidden');
+        if (box) {
+            box.className = 'p-3.5 rounded-xl border transition mb-3 bg-blue-50/70 border-blue-300 ring-1 ring-blue-200';
+        }
+        if (inputPct && (parseFloat(inputPct.value || 0) === 0)) {
+            inputPct.focus();
+        }
+    } else {
+        if (container) container.classList.add('hidden');
+        if (box) {
+            box.className = 'p-3.5 rounded-xl border transition mb-3 bg-white border-slate-200 hover:border-slate-300';
+        }
+        if (inputPct) inputPct.value = 0;
+        if (inputNom) inputNom.value = '0';
+    }
+    hitungLabaRugi();
+}
+window.toggleHppPerorangan = toggleHppPerorangan;
 
 // Inisialisasi Daftar Bukti Pendapatan Lain-Lain (Multiple & Delete)
 let daftarBuktiPendapatanLain = [];
