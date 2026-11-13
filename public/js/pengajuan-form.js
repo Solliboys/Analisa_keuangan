@@ -2790,9 +2790,9 @@ async function jalankanAnalisaAI() {
     }
 }
 
-// Eksekusi Analisa dari Box Kalkulasi Simulasi (Tab 1)
-async function eksekusiAnalisaKalkulasi() {
-    // 1. Jalankan kalkulasi simulasi terlebih dahulu
+// Eksekusi Simulasi Angsuran dari Box Kalkulasi Simulasi (Tab 1) - Menggunakan Rumus Matematis Finansial
+function eksekusiAnalisaKalkulasi() {
+    // 1. Jalankan kalkulasi simulasi terlebih dahulu dengan rumus
     hitungKalkulasiAngsuran();
     hitungCoverageAgunan();
     hitungDisbursement();
@@ -2803,107 +2803,37 @@ async function eksekusiAnalisaKalkulasi() {
     const icon = document.getElementById('iconEksekusiAnalisa');
     const boxHasil = document.getElementById('boxHasilEksekusiAnalisa');
 
-    // Set loading state
+    // 2. Berikan feedback singkat (snappy) tanpa memanggil AI
     if (btn) {
-        btn.disabled = true;
-        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        btn.classList.add('scale-95');
+        setTimeout(() => btn.classList.remove('scale-95'), 150);
     }
-    if (label) label.innerText = 'Menganalisa...';
-    if (icon) {
-        icon.innerHTML = '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>';
-        icon.classList.add('animate-spin');
-    }
+    if (label) label.innerText = 'Menghitung...';
 
-    showToast('Mengeksekusi simulasi kalkulasi & analisa risiko kredit...', 'info');
-
-    const form = document.getElementById('camForm');
-    const formData = new FormData(form);
-
-    try {
-        const res = await fetch(getBaseUrl() + '/pengajuan/analisa-ai', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await res.json();
-
-        if (data.status) {
-            if (data.skor_kelayakan_ai) {
-                const skorInput = document.getElementById('skor_kelayakan_ai');
-                if (skorInput) skorInput.value = data.skor_kelayakan_ai;
-                const badgeSkor = document.getElementById('badgeHasilSkor');
-                if (badgeSkor) badgeSkor.innerText = 'Skor ' + data.skor_kelayakan_ai + '/100';
-            }
-            if (data.rekomendasi_keputusan_ai) {
-                const rkInput = document.getElementById('rekomendasi_keputusan_ai');
-                if (rkInput) rkInput.value = data.rekomendasi_keputusan_ai;
-                const badgeKeputusan = document.getElementById('badgeHasilKeputusan');
-                if (badgeKeputusan) {
-                    badgeKeputusan.innerText = data.rekomendasi_keputusan_ai;
-                    const dec = data.rekomendasi_keputusan_ai.toLowerCase();
-                    if (dec.includes('tolak')) {
-                        badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200';
-                    } else if (dec.includes('penurunan') || dec.includes('khusus')) {
-                        badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200';
-                    } else {
-                        badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
-                    }
-                }
-            }
-            if (data.rekomendasi_plafon_ai) {
-                const plafonInput = document.getElementById('rekomendasi_plafon_ai');
-                if (plafonInput) plafonInput.value = formatRupiahString(data.rekomendasi_plafon_ai);
-                const valPlafon = document.getElementById('valHasilPlafon');
-                if (valPlafon) valPlafon.innerText = formatRupiahString(data.rekomendasi_plafon_ai);
-            }
-            if (data.analisis_risiko_ai) {
-                const risikoInput = document.getElementById('analisis_risiko_ai');
-                if (risikoInput) risikoInput.value = data.analisis_risiko_ai;
-            }
-
-            const banner = document.getElementById('aiPdfBanner');
-            if (banner) banner.classList.remove('hidden');
-
-            const sumber = document.getElementById('aiSumberLabel');
-            if (sumber && data.sumber) {
-                sumber.innerText = data.sumber + ' - Skor ' + data.skor_kelayakan_ai + '/100';
-            }
-
-            if (boxHasil) {
-                boxHasil.classList.remove('hidden');
-                renderTabelSimulasiAngsuran();
-            }
-
-            showToast('Eksekusi analisa berhasil! Skor kelayakan & rekomendasi diperbarui.', 'success');
-            simpanForm(false, false);
-        } else {
-            jalankanFallbackEksekusiAnalisa();
-        }
-    } catch (err) {
-        console.error(err);
-        jalankanFallbackEksekusiAnalisa();
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        }
-        if (label) label.innerText = 'Eksekusi Analisa';
-        if (icon) {
-            icon.classList.remove('animate-spin');
-            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>';
-        }
-    }
-}
-
-function jalankanFallbackEksekusiAnalisa() {
+    // 3. Hitung skor & rekomendasi keputusan berbasis rumus standar rasio kredit (rule-based finansial)
     const plafon = parseNominal(document.getElementById('plafon_pengajuan')?.value || 0);
+    const dscEl = document.getElementById('valRasioDSC');
+    let dscVal = dscEl ? parseFloat(dscEl.innerText.replace(',', '.')) : 1.5;
+    if (isNaN(dscVal) || dscVal <= 0) dscVal = 1.5;
+
     let skor = 82;
     let keputusan = 'Disetujui Penuh';
     let plafonRec = plafon;
 
-    if (plafon > 1000000000) {
-        skor = 76;
+    if (dscVal >= 1.5) {
+        skor = 88;
+        keputusan = 'Disetujui Penuh';
+    } else if (dscVal >= 1.3) {
+        skor = 82;
+        keputusan = 'Disetujui Penuh';
+    } else if (dscVal >= 1.0) {
+        skor = 74;
         keputusan = 'Disetujui dengan Penurunan Plafon';
         plafonRec = Math.round(plafon * 0.85);
+    } else {
+        skor = 65;
+        keputusan = 'Perlu Pertimbangan / Evaluasi Ulang';
+        plafonRec = Math.round(plafon * 0.70);
     }
 
     const skorInput = document.getElementById('skor_kelayakan_ai');
@@ -2918,19 +2848,39 @@ function jalankanFallbackEksekusiAnalisa() {
     const badgeKeputusan = document.getElementById('badgeHasilKeputusan');
     if (badgeKeputusan) {
         badgeKeputusan.innerText = keputusan;
-        badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
+        if (keputusan.includes('Tolak')) {
+            badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200';
+        } else if (keputusan.includes('Penurunan') || keputusan.includes('Pertimbangan')) {
+            badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200';
+        } else {
+            badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
+        }
     }
     const valPlafon = document.getElementById('valHasilPlafon');
     if (valPlafon) valPlafon.innerText = formatRupiahString(plafonRec);
 
-    const boxHasil = document.getElementById('boxHasilEksekusiAnalisa');
+    // 4. Buka dan render tabel jadwal angsuran (Data Anda, Angsuran Anda, dan Tabel Angsuran)
     if (boxHasil) {
         boxHasil.classList.remove('hidden');
         renderTabelSimulasiAngsuran();
     }
 
-    showToast('Eksekusi analisa selesai! Kalkulasi simulasi & jadwal angsuran siap.', 'success');
+    // Kembalikan label tombol secara instan & scroll ke tabel
+    setTimeout(() => {
+        if (label) label.innerText = 'Simulasi Angsuran';
+        if (boxHasil) {
+            boxHasil.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, 150);
+
+    showToast('Simulasi angsuran berhasil dihitung dengan rumus!', 'success');
+
+    // 5. Simpan draft secara otomatis di latar belakang
     simpanForm(false, false);
+}
+
+function jalankanFallbackEksekusiAnalisa() {
+    eksekusiAnalisaKalkulasi();
 }
 
 // Format angka desimal mata uang Rupiah (contoh: Rp 120.000.000,00)
