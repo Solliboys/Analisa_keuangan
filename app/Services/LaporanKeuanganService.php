@@ -40,8 +40,7 @@ class LaporanKeuanganService
         $pendapatan = $this->cleanNumber($input['pendapatan'] ?? $input['pendapatan_rk'] ?? 0);
 
         // HPP
-        $isBU = ($tipePemohon === 'badan_usaha');
-        $defaultHpp = $isBU ? 60 : 0;
+        $defaultHpp = 60;
         $hppPct = isset($input['hpp_persen']) ? (float)$input['hpp_persen'] : (isset($input['hpp_persen_rk']) ? (float)$input['hpp_persen_rk'] : $defaultHpp);
         $hppNom = isset($input['hpp']) && $input['hpp'] !== ''
             ? $this->cleanNumber($input['hpp'])
