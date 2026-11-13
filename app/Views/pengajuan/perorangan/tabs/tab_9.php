@@ -102,25 +102,44 @@
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </div>
                             <div>
-                                <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Pendapatan Pokok / Utama (Dinamis)</h3>
+                                <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Pendapatan Pokok / Utama</h3>
                                 <span class="text-[11px] text-slate-400 font-medium">Gaji pokok, tunjangan, bonus, lembur, dll</span>
                             </div>
                         </div>
-                        <button type="button" onclick="tambahPendapatan();" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg shadow-2xs transition">
-                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            <span>Tambah Baris</span>
-                        </button>
                     </div>
 
-                    <!-- Container List Baris Pendapatan Dinamis -->
+                    <!-- Container Baris Pendapatan Pokok (Langsung Tampil Otomatis) -->
                     <div id="containerPendapatanDinamis" class="space-y-2 mb-3">
-                        <!-- Diisi oleh renderListPendapatan() -->
+                        <?php foreach ($listDetailPendapatan as $index => $item): ?>
+                            <?php 
+                                $namaVal = $item['nama'] ?? 'Gaji Pokok';
+                                $nomVal = (float)($item['nominal'] ?? 0);
+                                $nomStr = $nomVal > 0 ? number_format($nomVal, 0, ',', '.') : '';
+                            ?>
+                            <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
+                                <div class="flex-1 min-w-0">
+                                    <input type="text" value="<?= esc($namaVal) ?>" 
+                                           placeholder="Nama pendapatan (cth: Gaji Pokok, Bonus, Lembur)" 
+                                           class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                                           oninput="updateItemPendapatan(<?= $index ?>, 'nama', this.value)">
+                                </div>
+                                <div class="w-36 sm:w-48 shrink-0">
+                                    <div class="relative flex items-center">
+                                        <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                                        <input type="text" value="<?= esc($nomStr) ?>" 
+                                               placeholder="0" 
+                                               class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
+                                               oninput="formatRupiah(this); updateItemPendapatan(<?= $index ?>, 'nominal', this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
 
                     <!-- Bar Total Pendapatan Pokok -->
                     <div class="p-3 bg-white border border-blue-200 rounded-xl flex justify-between items-center text-xs shadow-2xs mb-3">
                         <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Total Pendapatan Pokok:</span>
-                        <span id="nomTotalPendapatanDinamis" class="text-sm font-black text-blue-700">Rp 0</span>
+                        <span id="nomTotalPendapatanDinamis" class="text-sm font-black text-blue-700">Rp <?= number_format((float)($keuangan['pendapatan_rk'] ?? 0), 0, ',', '.') ?></span>
                     </div>
 
                     <!-- Centang Opsional: HPP Biaya Kulakan Toko / Pedagang (Opsi B) -->

@@ -1553,6 +1553,13 @@ function renderListPendapatan() {
         const safeNama = (item.nama || '').replace(/"/g, '&quot;');
         const nomVal = parseInt(item.nominal, 10) || 0;
         const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+        const deleteBtnHtml = (daftarPendapatan.length > 1) ? `
+            <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
+                    class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+        ` : '';
+
         html += `
             <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
                 <div class="flex-1 min-w-0">
@@ -1561,7 +1568,7 @@ function renderListPendapatan() {
                            class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
                            oninput="updateItemPendapatan(${index}, 'nama', this.value)">
                 </div>
-                <div class="w-32 sm:w-40 shrink-0">
+                <div class="w-36 sm:w-48 shrink-0">
                     <div class="relative flex items-center">
                         <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
                         <input type="text" value="${nomStr}" 
@@ -1570,10 +1577,7 @@ function renderListPendapatan() {
                                oninput="formatRupiah(this); updateItemPendapatan(${index}, 'nominal', this.value)">
                     </div>
                 </div>
-                <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
-                        class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
+                ${deleteBtnHtml}
             </div>
         `;
     });
@@ -1619,7 +1623,11 @@ function hapusPendapatan(index) {
 window.hapusPendapatan = hapusPendapatan;
 
 function updateItemPendapatan(index, field, val) {
-    if (!daftarPendapatan[index]) return;
+    if (!daftarPendapatan[index]) {
+        while (daftarPendapatan.length <= index) {
+            daftarPendapatan.push({ nama: 'Gaji Pokok', nominal: 0 });
+        }
+    }
     if (field === 'nominal') {
         daftarPendapatan[index].nominal = parseNominal(val);
     } else {
