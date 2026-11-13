@@ -118,9 +118,10 @@ $penghasilanPasangan = $nomPendapatanLain;
 $totalPenghasilanGaji = $gajiPokok + $tunjanganTetap + $penghasilanTambahan + $penghasilanPasangan;
 
 $biayaHidupGaji = $nomPengeluaranRT;
+$biayaPendidikanGaji = 0;
 $biayaLainGaji = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
 $cicilanBerjalanGaji = $totalCicilanSlik;
-$totalPengeluaranGaji = $biayaHidupGaji + $biayaLainGaji + $cicilanBerjalanGaji;
+$totalPengeluaranGaji = $biayaHidupGaji + $biayaPendidikanGaji + $biayaLainGaji + $cicilanBerjalanGaji;
 
 $sisaPenghasilanGaji = $totalPenghasilanGaji - $totalPengeluaranGaji;
 $dsrGaji = ($totalPenghasilanGaji > 0) ? round(($cicilanBerjalanGaji / $totalPenghasilanGaji) * 100, 1) : 0;
@@ -832,7 +833,7 @@ $tahunPeriode = date('Y');
                                 </tr>
                                 <tr>
                                     <td class="py-2.5 px-4 font-normal">Pengeluaran Rumah Tangga</td>
-                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_g_hidup">(Rp <?= number_format($biayaHidupGaji + $biayaPendidikanGaji + $biayaLainGaji, 0, ',', '.') ?>)</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_g_hidup">(Rp <?= number_format($biayaHidupGaji + $biayaLainGaji, 0, ',', '.') ?>)</td>
                                 </tr>
                                 <tr>
                                     <td class="py-2.5 px-4 font-normal">Cicilan Berjalan</td>
@@ -870,7 +871,7 @@ $tahunPeriode = date('Y');
                                 </tr>
                                 <tr>
                                     <td class="py-2.5 px-4 font-normal">Pengeluaran Keluar</td>
-                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_g_kas_keluar">(Rp <?= number_format($biayaHidupGaji + $biayaPendidikanGaji + $biayaLainGaji + $cicilanBerjalanGaji, 0, ',', '.') ?>)</td>
+                                    <td class="py-2.5 px-4 text-right font-medium text-rose-600" id="p_g_kas_keluar">(Rp <?= number_format($totalPengeluaranGaji, 0, ',', '.') ?>)</td>
                                 </tr>
                                 <!-- Baris Arus Kas Bersih (Persis Kotak Biru di Gambar) -->
                                 <tr class="bg-blue-100/80">
