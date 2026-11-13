@@ -749,6 +749,11 @@ function handleStepperClick(targetTab) {
         clearAllFieldErrorsInTab(stepNum);
     }
 
+    if (normalizeTab(steps[targetIdx]) === 'laporan' || normalizeTab(currentTab) === 9) {
+        if (typeof hitungLabaRugi === 'function') hitungLabaRugi();
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan();
+    }
+
     simpanForm(false, false);
     goToTab(steps[targetIdx]);
 }
@@ -811,8 +816,13 @@ function goToTab(tabIndex) {
         if (typeof window.gantiKategoriDebitur === 'function') {
             window.gantiKategoriDebitur(isUsaha ? 'usaha' : 'gaji', false);
         }
+        if (typeof hitungLabaRugi === 'function') {
+            hitungLabaRugi();
+        }
         if (typeof window.sinkronkanLaporanKeuangan === 'function') {
             window.sinkronkanLaporanKeuangan();
+            setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 50);
+            setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 200);
         }
     }
 
@@ -960,8 +970,13 @@ function tabNav(delta) {
     } else {
         const nextIdx = curIdx + delta;
         if (nextIdx >= 0 && nextIdx < steps.length) {
+            const nextStep = steps[nextIdx];
+            if (normalizeTab(nextStep) === 'laporan' || normalizeTab(currentTab) === 9) {
+                if (typeof hitungLabaRugi === 'function') hitungLabaRugi();
+                if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan();
+            }
             simpanForm(false, false);
-            goToTab(steps[nextIdx]);
+            goToTab(nextStep);
         }
     }
 }
