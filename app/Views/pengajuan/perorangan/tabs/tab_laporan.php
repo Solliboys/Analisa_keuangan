@@ -24,11 +24,6 @@ $hppPersen = $adaHppAktif ? $pctHppLama : 0;
 $hppNominal = $adaHppAktif ? ($nomHppLama > 0 ? $nomHppLama : ($omsetBulanan * ($hppPersen / 100))) : 0;
 $labaKotor = max(0, $omsetBulanan - $hppNominal);
 
-// Estimasi Skenario Hari Ramai, Biasa, Sepi (Omzet = Ramai + Biasa + Sepi)
-$omzetRamai = round($omsetBulanan * 0.45); // 45% omzet dari hari ramai
-$omzetBiasa = round($omsetBulanan * 0.40); // 40% omzet dari hari biasa
-$omzetSepi  = $omsetBulanan - $omzetRamai - $omzetBiasa; // 15% omzet dari hari sepi
-
 // Biaya Operasional Usaha
 $nomBiayaOperasional = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
 $labaUsaha = max(0, $labaKotor - $nomBiayaOperasional);
@@ -293,7 +288,7 @@ $tahunPeriode = date('Y');
                 <span id="metric_usaha_omzet" class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight block mt-1">
                     Rp <?= number_format($omsetBulanan, 0, ',', '.') ?>
                 </span>
-                <span class="text-[11px] text-slate-500 mt-1 block">Gabungan hari ramai, biasa, dan sepi</span>
+                <span class="text-[11px] text-slate-500 mt-1 block">Total pendapatan usaha per bulan</span>
             </div>
 
             <div class="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/90 flex flex-col justify-between shadow-2xs">
@@ -318,7 +313,7 @@ $tahunPeriode = date('Y');
             <div class="flex items-center justify-between pb-1">
                 <div>
                     <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">1. LABA RUGI SEDERHANA PER BULAN</h4>
-                    <p class="text-[11px] text-slate-500">Penjualan dipecah per hari ramai, biasa, dan sepi &bull; Periode Bulanan <?= $tahunPeriode ?></p>
+                    <p class="text-[11px] text-slate-500">Pencatatan pendapatan dan beban usaha &bull; Periode Bulanan <?= $tahunPeriode ?></p>
                 </div>
                 <span class="px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                     Format Usaha Perorangan
@@ -335,32 +330,34 @@ $tahunPeriode = date('Y');
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white">
-                        <!-- Penjualan dipecah 3 skenario -->
-                        <tr class="bg-slate-50/50">
-                            <td class="py-2.5 px-4 font-bold text-slate-800">Penjualan / Omzet:</td>
-                            <td class="py-2.5 px-4 text-slate-500 text-[11px] hidden md:table-cell">Rincian estimasi hari ramai, biasa, dan sepi:</td>
-                            <td class="py-2.5 px-4 text-right font-bold text-slate-800"></td>
-                        </tr>
-                        <tr>
-                            <td class="py-2 px-4 pl-8 text-slate-700">&bull; Penjualan Hari Ramai</td>
-                            <td class="py-2 px-4 text-slate-500 hidden md:table-cell">Weekend / awal bulan / tanggal gajian</td>
-                            <td class="py-2 px-4 text-right font-medium text-slate-800" id="row_usaha_ramai">Rp <?= number_format($omzetRamai, 0, ',', '.') ?></td>
-                        </tr>
-                        <tr>
-                            <td class="py-2 px-4 pl-8 text-slate-700">&bull; Penjualan Hari Biasa</td>
-                            <td class="py-2 px-4 text-slate-500 hidden md:table-cell">Hari kerja reguler (Senin - Kamis)</td>
-                            <td class="py-2 px-4 text-right font-medium text-slate-800" id="row_usaha_biasa">Rp <?= number_format($omzetBiasa, 0, ',', '.') ?></td>
-                        </tr>
-                        <tr>
-                            <td class="py-2 px-4 pl-8 text-slate-700">&bull; Penjualan Hari Sepi</td>
-                            <td class="py-2 px-4 text-slate-500 hidden md:table-cell">Hari sepi / pasca liburan</td>
-                            <td class="py-2 px-4 text-right font-medium text-slate-800" id="row_usaha_sepi">Rp <?= number_format($omzetSepi, 0, ',', '.') ?></td>
-                        </tr>
-                        <tr class="bg-blue-50/40 font-bold text-blue-900">
-                            <td class="py-2.5 px-4">Total Penjualan / Omzet</td>
-                            <td class="py-2.5 px-4 text-slate-600 text-[11px] hidden md:table-cell">Total pendapatan usaha per bulan</td>
-                            <td class="py-2.5 px-4 text-right font-black text-blue-700" id="row_usaha_tot_omzet">Rp <?= number_format($omsetBulanan, 0, ',', '.') ?></td>
-                        </tr>
+                        <!-- Rincian Penjualan / Omzet Dinamis dari Database Tab 9 -->
+                        <?php if (!empty($listDetailPendapatan) && count($listDetailPendapatan) > 1): ?>
+                            <tr class="bg-slate-50/50">
+                                <td class="py-2.5 px-4 font-bold text-slate-800">Rincian Penjualan / Omzet:</td>
+                                <td class="py-2.5 px-4 text-slate-500 text-[11px] hidden md:table-cell">Komponen pendapatan usaha sesuai input Tab 9</td>
+                                <td class="py-2.5 px-4 text-right font-bold text-slate-800"></td>
+                            </tr>
+                            <?php foreach ($listDetailPendapatan as $pItem): ?>
+                                <?php $pNom = (float)($pItem['nominal'] ?? 0); if ($pNom > 0): ?>
+                                    <tr>
+                                        <td class="py-2 px-4 pl-8 text-slate-700">&bull; <?= esc(!empty($pItem['nama']) ? $pItem['nama'] : 'Pendapatan Usaha') ?></td>
+                                        <td class="py-2 px-4 text-slate-500 hidden md:table-cell">Sesuai data inputan pendapatan usaha</td>
+                                        <td class="py-2 px-4 text-right font-medium text-slate-800">Rp <?= number_format($pNom, 0, ',', '.') ?></td>
+                                    </tr>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                            <tr class="bg-blue-50/40 font-bold text-blue-900">
+                                <td class="py-2.5 px-4">Total Penjualan / Omzet</td>
+                                <td class="py-2.5 px-4 text-slate-600 text-[11px] hidden md:table-cell">Total pendapatan usaha per bulan</td>
+                                <td class="py-2.5 px-4 text-right font-black text-blue-700" id="row_usaha_tot_omzet">Rp <?= number_format($omsetBulanan, 0, ',', '.') ?></td>
+                            </tr>
+                        <?php else: ?>
+                            <tr class="bg-blue-50/40 font-bold text-blue-900">
+                                <td class="py-2.5 px-4" id="label_usaha_omzet"><?= (!empty($listDetailPendapatan) && count($listDetailPendapatan) === 1 && !empty($listDetailPendapatan[0]['nama'])) ? esc($listDetailPendapatan[0]['nama']) : 'Total Penjualan / Omzet' ?></td>
+                                <td class="py-2.5 px-4 text-slate-600 text-[11px] hidden md:table-cell">Total pendapatan usaha per bulan</td>
+                                <td class="py-2.5 px-4 text-right font-black text-blue-700" id="row_usaha_tot_omzet">Rp <?= number_format($omsetBulanan, 0, ',', '.') ?></td>
+                            </tr>
+                        <?php endif; ?>
 
                         <!-- HPP -->
                         <tr>
@@ -991,7 +988,7 @@ $tahunPeriode = date('Y');
                             <tbody class="divide-y divide-slate-100 text-slate-700">
                                 <tr>
                                     <td class="py-2.5 px-4 font-normal">
-                                        <span class="font-semibold text-slate-800 block">Penjualan / Omzet (Ramai, Biasa, Sepi)</span>
+                                        <span class="font-semibold text-slate-800 block">Penjualan / Omzet Usaha</span>
                                     </td>
                                     <td class="py-2.5 px-4 text-right font-bold text-slate-900" id="p_u_omzet">Rp <?= number_format($omsetBulanan, 0, ',', '.') ?></td>
                                 </tr>
@@ -1276,10 +1273,6 @@ function sinkronkanLaporanKeuangan() {
     const hppNom = Math.round(omzet * (hppPct / 100));
     const labaKotor = omzet - hppNom;
 
-    const omzetRamai = Math.round(omzet * 0.45);
-    const omzetBiasa = Math.round(omzet * 0.40);
-    const omzetSepi  = omzet - omzetRamai - omzetBiasa;
-
     const biayaOperasional = parseNominalLap(document.getElementById('beban_lainnya_nominal_rk')?.value) || <?= $nomBiayaOperasional ?>;
     const labaUsaha = labaKotor - biayaOperasional;
 
@@ -1299,9 +1292,6 @@ function sinkronkanLaporanKeuangan() {
     if (document.getElementById('metric_usaha_laba_usaha')) document.getElementById('metric_usaha_laba_usaha').innerText = formatNominalLap(labaUsaha);
     if (document.getElementById('metric_usaha_sisa')) document.getElementById('metric_usaha_sisa').innerText = formatNominalLap(sisaUsaha);
 
-    if (document.getElementById('row_usaha_ramai')) document.getElementById('row_usaha_ramai').innerText = formatNominalLap(omzetRamai);
-    if (document.getElementById('row_usaha_biasa')) document.getElementById('row_usaha_biasa').innerText = formatNominalLap(omzetBiasa);
-    if (document.getElementById('row_usaha_sepi')) document.getElementById('row_usaha_sepi').innerText = formatNominalLap(omzetSepi);
     if (document.getElementById('row_usaha_tot_omzet')) document.getElementById('row_usaha_tot_omzet').innerText = formatNominalLap(omzet);
 
     if (document.getElementById('row_usaha_hpp')) document.getElementById('row_usaha_hpp').innerText = `(${formatNominalLap(hppNom)})`;
