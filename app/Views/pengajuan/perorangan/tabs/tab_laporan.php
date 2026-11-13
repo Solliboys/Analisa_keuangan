@@ -38,15 +38,12 @@ $nomPengeluaranRT = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 0);
 // Sisa Penghasilan Usaha = (Laba Usaha + Pendapatan Lain) - Prive RT
 $labaBersihSisaPenghasilanUsaha = ($labaUsaha + $nomPendapatanLain) - $nomPengeluaranRT;
 
-// Cicilan Utang Berjalan
+// Cicilan Utang Berjalan (Murni dari Tab 6 SLIK)
 $totalCicilanSlik = 0;
 if (!empty($slik) && is_array($slik)) {
     foreach ($slik as $s) {
         $totalCicilanSlik += (float)($s['angsuran'] ?? ($s['outstanding'] ? round($s['outstanding'] / 24) : 0));
     }
-}
-if ($totalCicilanSlik <= 0) {
-    $totalCicilanSlik = (float)($keuangan['angsuran_dipilih'] ?? ($keuangan['angsuran_installment'] ?? 2000000));
 }
 $sisaKasBebasUsaha = $labaBersihSisaPenghasilanUsaha - $totalCicilanSlik;
 $dsrUsaha = ($omsetBulanan > 0) ? round(($totalCicilanSlik / ($omsetBulanan + $nomPendapatanLain)) * 100, 1) : 0;
@@ -128,11 +125,6 @@ if (!empty($slik) && is_array($slik)) {
             $utangBank += $out;
         }
     }
-}
-
-// Fallback jika ada cicilan berjalan tapi belum ada detail outstanding di SLIK
-if ($utangBank <= 0 && $totalCicilanSlik > 0) {
-    $utangBank = $totalCicilanSlik * 18;
 }
 
 $totalUtangUsaha = $utangBank + $utangKoperasi + $utangPinjol;
@@ -1296,10 +1288,8 @@ function sinkronkanLaporanKeuangan() {
     const pengeluaranRT = elBiayaHidup ? parseNominalLap(elBiayaHidup.value) : <?= (float)$nomPengeluaranRT ?>;
 
     const sisaUsaha = (labaUsaha + pendapatanLain) - pengeluaranRT;
-    const cicilanAcuan = parseNominalLap(document.getElementById('angsuran_dipilih')?.value) 
-        || parseNominalLap(document.getElementById('angsuran_installment')?.value) 
-        || <?= $totalCicilanSlik ?>;
-    const bufferUsaha = sisaUsaha - cicilanAcuan;
+    const cicilanSlikUsaha = <?= (float)$totalCicilanSlik ?>;
+    const bufferUsaha = sisaUsaha - cicilanSlikUsaha;
 
     // Update Tampilan Usaha
     if (document.getElementById('metric_usaha_omzet')) document.getElementById('metric_usaha_omzet').innerText = formatNominalLap(omzet);
@@ -1315,7 +1305,7 @@ function sinkronkanLaporanKeuangan() {
     if (document.getElementById('row_usaha_pendapatan_lain')) document.getElementById('row_usaha_pendapatan_lain').innerText = formatNominalLap(pendapatanLain);
     if (document.getElementById('row_usaha_prive')) document.getElementById('row_usaha_prive').innerText = `(${formatNominalLap(pengeluaranRT)})`;
     if (document.getElementById('row_usaha_sisa_penghasilan')) document.getElementById('row_usaha_sisa_penghasilan').innerText = formatNominalLap(sisaUsaha);
-    if (document.getElementById('row_usaha_cicilan')) document.getElementById('row_usaha_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
+    if (document.getElementById('row_usaha_cicilan')) document.getElementById('row_usaha_cicilan').innerText = `(${formatNominalLap(cicilanSlikUsaha)})`;
     if (document.getElementById('row_usaha_buffer')) document.getElementById('row_usaha_buffer').innerText = formatNominalLap(bufferUsaha);
 
     // Toggle Dinamis Laba Rugi Usaha (Kalau ada ditampilkan, kalau tidak disembunyikan)
@@ -1357,11 +1347,11 @@ function sinkronkanLaporanKeuangan() {
     const rowCicilanU = document.getElementById('row_lap_usaha_cicilan');
     const rowBufferU = document.getElementById('row_lap_usaha_buffer');
     if (rowCicilanU) {
-        if (cicilanAcuan > 0) rowCicilanU.classList.remove('hidden');
+        if (cicilanSlikUsaha > 0) rowCicilanU.classList.remove('hidden');
         else rowCicilanU.classList.add('hidden');
     }
     if (rowBufferU) {
-        if (cicilanAcuan > 0) rowBufferU.classList.remove('hidden');
+        if (cicilanSlikUsaha > 0) rowBufferU.classList.remove('hidden');
         else rowBufferU.classList.add('hidden');
     }
 
@@ -1407,7 +1397,7 @@ function sinkronkanLaporanKeuangan() {
     const kdrP = <?= (float)$kendaraanPribadi ?>;
     const totHartaU = tabP + tanahP + bgnP + kdrP;
 
-    const utgBank = (<?= (float)$utangBank ?> > 0) ? <?= (float)$utangBank ?> : (cicilanAcuan > 0 ? cicilanAcuan * 18 : 0);
+    const utgBank = <?= (float)$utangBank ?>;
     const utgKoperasi = <?= (float)$utangKoperasi ?>;
     const utgPinjol = <?= (float)$utangPinjol ?>;
     const totUtangU = utgBank + utgKoperasi + utgPinjol;
@@ -1563,12 +1553,13 @@ function sinkronkanLaporanKeuangan() {
         }
     }
 
-    // 3. Cicilan Pinjaman Berjalan
+    // 3. Cicilan Pinjaman Berjalan (Murni dari SLIK)
+    const cicilanSlikGaji = <?= (float)$cicilanBerjalanGaji ?>;
     const rowCicilan = document.getElementById('container_row_gaji_cicilan');
-    if (cicilanAcuan > 0) {
+    if (cicilanSlikGaji > 0) {
         if (rowCicilan) rowCicilan.classList.remove('hidden');
         if (document.getElementById('row_gaji_b_cicilan')) {
-            document.getElementById('row_gaji_b_cicilan').innerText = `(${formatNominalLap(cicilanAcuan)})`;
+            document.getElementById('row_gaji_b_cicilan').innerText = `(${formatNominalLap(cicilanSlikGaji)})`;
         }
     } else {
         if (rowCicilan) rowCicilan.classList.add('hidden');
@@ -1579,13 +1570,13 @@ function sinkronkanLaporanKeuangan() {
 
     // 4. Baris Keterangan Jika Semua Pengeluaran 0
     const rowKosong = document.getElementById('row_gaji_pengeluaran_kosong');
-    if (bHidupG <= 0 && totBebanLain <= 0 && cicilanAcuan <= 0) {
+    if (bHidupG <= 0 && totBebanLain <= 0 && cicilanSlikGaji <= 0) {
         if (rowKosong) rowKosong.classList.remove('hidden');
     } else {
         if (rowKosong) rowKosong.classList.add('hidden');
     }
 
-    const totGajiOut = bHidupG + totBebanLain + cicilanAcuan;
+    const totGajiOut = bHidupG + totBebanLain + cicilanSlikGaji;
     const sisaGaji = totGajiIn - totGajiOut;
 
     if (document.getElementById('metric_gaji_total')) document.getElementById('metric_gaji_total').innerText = formatNominalLap(totGajiIn);
@@ -1602,7 +1593,7 @@ function sinkronkanLaporanKeuangan() {
     const kdrG = <?= (float)$kendaraanGaji ?>;
     const totHartaG = tabG + tanahG + bgnG + kdrG;
 
-    const utgBankG = (<?= (float)$utangBankGaji ?> > 0) ? <?= (float)$utangBankGaji ?> : (cicilanAcuan > 0 ? cicilanAcuan * 18 : 0);
+    const utgBankG = <?= (float)$utangBankGaji ?>;
     const utgKopG = <?= (float)$utangKoperasiGaji ?>;
     const utgPinjolG = <?= (float)$utangPinjolGaji ?>;
     const totUtangG = utgBankG + utgKopG + utgPinjolG;
