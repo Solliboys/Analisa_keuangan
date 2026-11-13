@@ -1393,15 +1393,15 @@ function hitungLabaRugi() {
     const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
     const pLainRK = isAdaLain ? parseNominal(document.getElementById('pendapatan_lain_rk')?.value || 0) : 0;
 
-    // Total Penghasilan & Pengeluaran
-    const totalPenghasilanPR = pRK + pLainRK;
+    // Total Penghasilan & Pengeluaran (memperhitungkan Laba Kotor jika ada HPP)
+    const totalPenghasilanPR = grossRK + pLainRK;
     const totalPengeluaranPR = nomBhRK + nomBlRK;
 
-    // Surplus = Penghasilan - Pengeluaran (live preview, tanpa cicilan — cicilan diinput di Tab Laporan)
+    // Surplus = Penghasilan (setelah HPP) - Pengeluaran (live preview, tanpa cicilan — cicilan diinput di Tab Laporan)
     const surplusPR = totalPenghasilanPR - totalPengeluaranPR;
 
     // nettRK & totalCashflow untuk kompatibilitas dengan field-field lain
-    const nettRK = isBU ? (grossRK - nomBhRK - nomBlRK) : (pRK - nomBhRK - nomBlRK);
+    const nettRK = grossRK - nomBhRK - nomBlRK;
     const totalCashflow = isBU ? nettRK : surplusPR;
 
     if (document.getElementById('nomHppRK')) document.getElementById('nomHppRK').innerText = formatRupiahString(nomHppRK);

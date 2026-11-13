@@ -110,17 +110,40 @@
                     </div>
 
                     <!-- Bar Total Pendapatan Pokok -->
-                    <div class="p-3 bg-white border border-blue-200 rounded-xl flex justify-between items-center text-xs shadow-2xs">
+                    <div class="p-3 bg-white border border-blue-200 rounded-xl flex justify-between items-center text-xs shadow-2xs mb-3">
                         <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Total Pendapatan Pokok:</span>
                         <span id="nomTotalPendapatanDinamis" class="text-sm font-black text-blue-700">Rp 0</span>
+                    </div>
+
+                    <!-- Input HPP / Biaya Pokok (Opsional untuk Usaha / Dagang) -->
+                    <div class="grid grid-cols-3 gap-3 mb-3">
+                        <div class="col-span-1">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">HPP (%)</label>
+                            <input type="number" step="0.1" name="hpp_persen_rk" id="hpp_persen_rk" 
+                                   value="<?= esc($keuangan['hpp_persen_rk'] ?? 0) ?>" 
+                                   placeholder="0"
+                                   class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
+                                   oninput="hitungLabaRugi();">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal HPP / Biaya Pokok</label>
+                            <input type="text" name="hpp_nominal_rk" id="nomHppRKInput" 
+                                   value="<?= number_format((float)($keuangan['hpp_nominal_rk'] ?? 0), 0, ',', '.') ?>" 
+                                   placeholder="Rp 0"
+                                   class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]"
+                                   oninput="formatRupiah(this); syncHppNominalKePersen();">
+                            <span id="nomHppRK" class="hidden">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-blue-50/80 border border-blue-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs mb-3">
+                        <span class="font-bold text-blue-900">Laba Kotor (Setelah HPP):</span>
+                        <span id="grossRK" class="text-sm font-black text-blue-700">Rp 0</span>
                     </div>
 
                     <!-- Hidden inputs untuk database -->
                     <input type="hidden" name="pendapatan_rk" id="pendapatan_rk" value="<?= esc($keuangan['pendapatan_rk'] ?? 0) ?>">
                     <input type="hidden" name="detail_pendapatan_rk" id="detail_pendapatan_rk" value="<?= esc(!empty($listDetailPendapatan) ? json_encode($listDetailPendapatan) : '[]') ?>">
-                    <input type="hidden" name="hpp_persen_rk" id="hpp_persen_rk" value="0">
-                    <span id="nomHppRK" class="hidden">Rp 0</span>
-                    <span id="grossRK" class="hidden">Rp 0</span>
                 </div>
 
                 <!-- 2. PENDAPATAN LAIN-LAIN (KHUSUS KARYAWAN: MISAL USAHA SAMPINGAN) -->
