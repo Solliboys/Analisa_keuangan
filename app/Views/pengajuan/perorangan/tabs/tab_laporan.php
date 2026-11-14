@@ -227,6 +227,14 @@ $tahunPeriode = date('Y');
         </div>
         
         <div class="flex items-center gap-2 self-start sm:self-auto">
+            <button type="button" onclick="hitungUlangLaporan()" id="btnHitungUlangLaporan"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition shadow-2xs cursor-pointer"
+                    title="Hitung ulang dan sinkronkan seluruh data laporan keuangan">
+                <svg id="iconHitungUlangLaporan" class="w-3.5 h-3.5 text-blue-600 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                <span id="labelHitungUlangLaporan">Hitung Ulang</span>
+            </button>
             <button type="button" onclick="bukaModalPreviewLaporan()" class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs cursor-pointer">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 <span>Unduh / Cetak Laporan</span>
@@ -1249,6 +1257,70 @@ function parseNominalLap(str) {
     if (typeof str === 'number') return str;
     const clean = str.toString().replace(/[^0-9]/g, '');
     return clean ? parseFloat(clean) : 0;
+}
+
+// Hitung Ulang & Sinkronkan Seluruh Data Laporan Keuangan
+function hitungUlangLaporan() {
+    const btn = document.getElementById('btnHitungUlangLaporan');
+    const label = document.getElementById('labelHitungUlangLaporan');
+    const icon = document.getElementById('iconHitungUlangLaporan');
+
+    // Efek visual klik & animasi putar pada icon
+    if (btn) {
+        btn.classList.add('scale-95');
+        setTimeout(() => btn.classList.remove('scale-95'), 150);
+    }
+    if (icon) {
+        icon.classList.add('animate-spin');
+    }
+    if (label) {
+        label.innerText = 'Menghitung...';
+    }
+
+    // 1. Eksekusi kalkulasi simulasi & rasio-rasio terkait (jika fungsi tersedia)
+    if (typeof hitungLabaRugi === 'function') {
+        hitungLabaRugi();
+    }
+    if (typeof hitungKalkulasiAngsuran === 'function') {
+        hitungKalkulasiAngsuran();
+    }
+    if (typeof hitungCoverageAgunan === 'function') {
+        hitungCoverageAgunan();
+    }
+    if (typeof hitungDisbursement === 'function') {
+        hitungDisbursement();
+    }
+    if (typeof hitungRasioDSC === 'function') {
+        hitungRasioDSC();
+    }
+
+    // 2. Evaluasi status HPP Tab 9 untuk memastikan tipe kategori yang tepat (usaha vs gaji)
+    const checkHpp = document.getElementById('checkAdaHppPerorangan');
+    const kid = document.getElementById('kredit_id')?.value || 'draft';
+    const savedHpp = sessionStorage.getItem('hpp_perorangan_' + kid);
+    let isUsaha = false;
+    if (checkHpp) {
+        isUsaha = checkHpp.checked;
+    } else if (savedHpp !== null) {
+        isUsaha = (savedHpp === '1');
+    } else {
+        isUsaha = (activeKategoriDebitur === 'usaha');
+    }
+    if (typeof gantiKategoriDebitur === 'function') {
+        gantiKategoriDebitur(isUsaha ? 'usaha' : 'gaji', false);
+    }
+
+    // 3. Sinkronkan nilai terkini ke seluruh tampilan laporan & lembar cetak
+    sinkronkanLaporanKeuangan();
+
+    // 4. Kembalikan state tombol & tampilkan notifikasi
+    setTimeout(() => {
+        if (icon) icon.classList.remove('animate-spin');
+        if (label) label.innerText = 'Hitung Ulang';
+        if (typeof showToast === 'function') {
+            showToast('Laporan keuangan berhasil dihitung ulang!', 'success');
+        }
+    }, 300);
 }
 
 // Sinkronisasi Live Data
