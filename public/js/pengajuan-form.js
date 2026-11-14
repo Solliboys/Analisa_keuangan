@@ -733,6 +733,11 @@ function goToTab(tabIndex) {
     if (currentTab === 6 && typeof sinkronisasiDataDebiturKeSlik === 'function') {
         sinkronisasiDataDebiturKeSlik();
     }
+    const normTabCheck = normalizeTab(currentTab);
+    if (normTabCheck === 8 || normTabCheck === 9 || currentTab === 8 || currentTab === 9) {
+        if (typeof hitungRataRataRekening === 'function') hitungRataRataRekening();
+        if (typeof hitungLabaRugi === 'function') hitungLabaRugi();
+    }
 
     // Update Header Judul & Deskripsi
     const meta = getStepMeta(currentTab);
@@ -1218,42 +1223,123 @@ function tambahBarisSlik() {
 // Kalkulasi Rekening Koran
 function hitungRataRataRekening() {
     let totalAvgKredit = 0;
+    let totalAvgDebit = 0;
+    let totalKreditAll = 0;
+    let totalDebitAll = 0;
     const items = document.querySelectorAll('.rekening-item');
     items.forEach(item => {
         const kInput = item.querySelector('.rek-kredit');
+        const dInput = item.querySelector('.rek-debit');
         const bInput = item.querySelector('.rek-bulan');
         const labelAvg = item.querySelector('.rek-avg-kredit');
 
         const totalKredit = parseNominal(kInput?.value || 0);
+        const totalDebit = parseNominal(dInput?.value || 0);
         const bulan = Math.max(1, parseInt(bInput?.value || 6));
         const avgKredit = Math.round(totalKredit / bulan);
+        const avgDebit = Math.round(totalDebit / bulan);
 
         if (labelAvg) labelAvg.innerText = formatRupiahString(avgKredit);
         totalAvgKredit += avgKredit;
+        totalAvgDebit += avgDebit;
+        totalKreditAll += totalKredit;
+        totalDebitAll += totalDebit;
     });
 
-    document.getElementById('totalAvgKreditGabungan').innerText = formatRupiahString(totalAvgKredit);
+    const elTotalKredit = document.getElementById('totalAvgKreditGabungan');
+    if (elTotalKredit) elTotalKredit.innerText = formatRupiahString(totalAvgKredit);
+
+    const elTotalDebit = document.getElementById('totalAvgDebitGabungan');
+    if (elTotalDebit) elTotalDebit.innerText = formatRupiahString(totalAvgDebit);
+
+    // Hitung estimasi HPP (%) dari mutasi debit / kredit rekening koran
+    let hppRatio = 0;
+    if (totalKreditAll > 0 && totalDebitAll > 0) {
+        hppRatio = Math.round((totalDebitAll / totalKreditAll) * 1000) / 10;
+    } else if (totalAvgKredit > 0 && totalAvgDebit > 0) {
+        hppRatio = Math.round((totalAvgDebit / totalAvgKredit) * 1000) / 10;
+    }
+
+    const elHpp = document.getElementById('estimasiHppGabungan');
+    if (elHpp) elHpp.innerText = hppRatio > 0 ? (hppRatio + '%') : '0%';
+
+    // Auto-sync ke Tab Laba Rugi Badan Usaha
+    syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, false);
 }
+window.hitungRataRataRekening = hitungRataRataRekening;
+
+function syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, isForce = false) {
+    const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
+    if (!isBU) return;
+
+    const pEl = document.getElementById('pendapatan_rk');
+    const hppEl = document.getElementById('hpp_persen_rk');
+    let changed = false;
+
+    // 1. Sync Omzet / Pendapatan Bulanan: pastikan berformat ribuan bertitik
+    if (totalAvgKredit > 0 && pEl) {
+        const curVal = parseNominal(pEl.value || 0);
+        if (isForce || curVal === 0 || curVal === 250000000 || pEl.getAttribute('data-synced-rek') === '1') {
+            pEl.value = formatRupiahString(totalAvgKredit);
+            pEl.setAttribute('data-synced-rek', '1');
+            changed = true;
+        }
+    }
+
+    // 2. Sync HPP (%): ikuti rasio mutasi debit/kredit rekening koran (misal 78%)
+    if (hppRatio > 0 && hppEl) {
+        const curHpp = parseFloat(hppEl.value) || 0;
+        if (isForce || curHpp === 0 || curHpp === 60 || hppEl.getAttribute('data-synced-rek') === '1') {
+            hppEl.value = hppRatio;
+            hppEl.setAttribute('data-synced-rek', '1');
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        hitungLabaRugi();
+    }
+}
+window.syncRekeningKeLabaRugiBU = syncRekeningKeLabaRugiBU;
 
 function salinOmzetKeLabaRugi() {
     let totalAvgKredit = 0;
+    let totalAvgDebit = 0;
+    let totalKreditAll = 0;
+    let totalDebitAll = 0;
     document.querySelectorAll('.rekening-item').forEach(item => {
         const kInput = item.querySelector('.rek-kredit');
+        const dInput = item.querySelector('.rek-debit');
         const bInput = item.querySelector('.rek-bulan');
         const totalKredit = parseNominal(kInput?.value || 0);
+        const totalDebit = parseNominal(dInput?.value || 0);
         const bulan = Math.max(1, parseInt(bInput?.value || 6));
         totalAvgKredit += Math.round(totalKredit / bulan);
+        totalAvgDebit += Math.round(totalDebit / bulan);
+        totalKreditAll += totalKredit;
+        totalDebitAll += totalDebit;
     });
 
     if (totalAvgKredit > 0) {
-        document.getElementById('pendapatan_rk').value = formatRupiahString(totalAvgKredit);
-        hitungLabaRugi();
-        showToast('Omzet rata-rata rekening koran berhasil disalin ke Tab Laba Rugi', 'success');
+        let hppRatio = 0;
+        if (totalKreditAll > 0 && totalDebitAll > 0) {
+            hppRatio = Math.round((totalDebitAll / totalKreditAll) * 1000) / 10;
+        } else if (totalAvgKredit > 0 && totalAvgDebit > 0) {
+            hppRatio = Math.round((totalAvgDebit / totalAvgKredit) * 1000) / 10;
+        }
+
+        syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, true);
+
+        const msg = hppRatio > 0 
+            ? `Omzet (Rp ${formatRupiahString(totalAvgKredit)}) & HPP (${hppRatio}%) rekening koran berhasil disalin ke Laba Rugi`
+            : `Omzet (Rp ${formatRupiahString(totalAvgKredit)}) rekening koran berhasil disalin ke Laba Rugi`;
+        showToast(msg, 'success');
         goToTab(9);
     } else {
         showToast('Isi mutasi kredit rekening koran terlebih dahulu', 'error');
     }
 }
+window.salinOmzetKeLabaRugi = salinOmzetKeLabaRugi;
 
 function tambahBarisRekening() {
     const container = document.getElementById('containerRekening');
@@ -1348,9 +1434,17 @@ function hitungLabaRugi() {
         ? totalPendapatanDinamis
         : parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
 
-    // Sync hidden input pendapatan_rk agar form submit dan generate-laporan konsisten
-    if (document.getElementById('pendapatan_rk')) {
-        document.getElementById('pendapatan_rk').value = pRK;
+    // Sync input pendapatan_rk
+    const pEl = document.getElementById('pendapatan_rk');
+    if (pEl) {
+        if (pEl.type === 'hidden') {
+            pEl.value = pRK;
+        } else {
+            // Field input terlihat (Badan Usaha): jika tidak sedang diketik langsung, pastikan berformat ribuan bertitik
+            if (document.activeElement !== pEl && pRK > 0) {
+                pEl.value = formatRupiahString(pRK);
+            }
+        }
     }
 
     const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));

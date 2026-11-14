@@ -78,13 +78,27 @@ class LaporanKeuanganService
             }
         }
 
-        // Beban gaji karyawan telah digabung ke beban operasional pokok usaha
-        $bebanGaji = 0;
+        // Beban Gaji Karyawan (jika ada daftar_karyawan atau beban_gaji terpisah)
+        $bebanGaji = $this->cleanNumber($input['beban_gaji'] ?? 0);
+        if ($bebanGaji == 0 && !empty($input['daftar_karyawan'])) {
+            $karyawanList = is_array($input['daftar_karyawan'])
+                ? $input['daftar_karyawan']
+                : json_decode($input['daftar_karyawan'], true);
+            if (is_array($karyawanList)) {
+                foreach ($karyawanList as $k) {
+                    $bebanGaji += $this->cleanNumber($k['gaji'] ?? $k['nominal_gaji'] ?? 0);
+                }
+            }
+        }
 
-        // Penyusutan Aset Tetap (Dihapus dari Laba Rugi Operasional sesuai instruksi)
-        $penyusutanTahunan = 0;
+        // Penyusutan Aset Tetap
+        $penyusutanTahunan = isset($input['beban_depresiasi']) && $input['beban_depresiasi'] !== ''
+            ? $this->cleanNumber($input['beban_depresiasi'])
+            : (isset($input['beban_penyusutan']) && $input['beban_penyusutan'] !== ''
+                ? $this->cleanNumber($input['beban_penyusutan'])
+                : 0);
 
-        $totalBebanOp = $bebanOperasional + $bebanLainnya;
+        $totalBebanOp = $bebanGaji + $bebanOperasional + $bebanLainnya + $penyusutanTahunan;
         $labaOperasional = $labaKotor - $totalBebanOp;
 
         // Badan Usaha: TIDAK ADA pendapatan lain-lain
@@ -93,9 +107,11 @@ class LaporanKeuanganService
         $bebanBunga = $this->cleanNumber($input['input_beban_bunga'] ?? $input['beban_bunga'] ?? 0);
         $labaSebelumPjk = $labaOperasional + $pendapatanLain - $bebanBunga;
 
-        // Pajak Usaha Badan Usaha ditiadakan / dihapus
-        $pajakNom = 0;
-        $labaBersih = $labaSebelumPjk;
+        // Pajak Usaha Badan Usaha (jika ada input beban pajak)
+        $pajakNom = isset($input['input_beban_pajak']) && $input['input_beban_pajak'] !== ''
+            ? $this->cleanNumber($input['input_beban_pajak'])
+            : (isset($input['pajak']) && $input['pajak'] !== '' ? $this->cleanNumber($input['pajak']) : 0);
+        $labaBersih = $labaSebelumPjk - $pajakNom;
 
         $labaRugi = [
             'pendapatan'         => $pendapatan,

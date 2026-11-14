@@ -36,29 +36,68 @@
                 </div>
 
                 <div class="space-y-4">
+                    <?php
+                        // Cek akumulasi mutasi rekening koran untuk auto-sync omzet dan HPP awal
+                        $totRekKreditBU = 0;
+                        $totRekDebitBU  = 0;
+                        if (!empty($rekening) && is_array($rekening)) {
+                            foreach ($rekening as $rk) {
+                                $m = max(1, (int)($rk['jumlah_bulan'] ?? 6));
+                                $k = (float)($rk['total_mutasi_kredit'] ?? 0);
+                                $d = (float)($rk['total_mutasi_debit'] ?? 0);
+                                $totRekKreditBU += round($k / $m);
+                                $totRekDebitBU  += round($d / $m);
+                            }
+                        }
+                        $autoOmzetRekBU = ($totRekKreditBU > 0) ? $totRekKreditBU : 0;
+                        $autoHppRekBU   = ($totRekKreditBU > 0 && $totRekDebitBU > 0) ? round(($totRekDebitBU / $totRekKreditBU) * 100, 1) : 0;
+
+                        $nomPendapatanBU = (float)($keuangan['pendapatan_rk'] ?? 0);
+                        if ($nomPendapatanBU <= 0 && $autoOmzetRekBU > 0) {
+                            $nomPendapatanBU = $autoOmzetRekBU;
+                        }
+                        if ($nomPendapatanBU <= 0) {
+                            $nomPendapatanBU = 250000000;
+                        }
+
+                        $persenHppBU = (float)($keuangan['hpp_persen_rk'] ?? 0);
+                        if (($persenHppBU <= 0 || $persenHppBU == 60) && $autoHppRekBU > 0) {
+                            $persenHppBU = $autoHppRekBU;
+                        }
+                        if ($persenHppBU <= 0) {
+                            $persenHppBU = 60;
+                        }
+
+                        $nomHppAwalBU = (float)($keuangan['hpp_nominal_rk'] ?? 0);
+                        if ($nomHppAwalBU <= 0 && $nomPendapatanBU > 0 && $persenHppBU > 0) {
+                            $nomHppAwalBU = round($nomPendapatanBU * ($persenHppBU / 100));
+                        }
+                    ?>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Pendapatan / Omset Usaha Bulanan (Rp)</label>
                         <input type="text" name="pendapatan_rk" id="pendapatan_rk" 
-                               value="<?= number_format((float)($keuangan['pendapatan_rk'] ?? 250000000), 0, ',', '.') ?>" 
+                               value="<?= number_format($nomPendapatanBU, 0, ',', '.') ?>" 
                                class="w-full text-sm font-bold text-blue-700 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[42px]"
-                               oninput="formatRupiah(this); hitungLabaRugi();">
+                               oninput="formatRupiah(this); hitungLabaRugi();"
+                               onblur="if(this.value){ formatRupiah(this); hitungLabaRugi(); }">
                     </div>
 
                     <div class="grid grid-cols-3 gap-3">
                         <div class="col-span-1">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">HPP / COGS (%)</label>
                             <input type="number" step="0.1" name="hpp_persen_rk" id="hpp_persen_rk" 
-                                   value="<?= esc($keuangan['hpp_persen_rk'] ?? 60) ?>" 
+                                   value="<?= esc($persenHppBU) ?>" 
                                    class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
                                    oninput="hitungLabaRugi();">
                         </div>
                         <div class="col-span-2">
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal HPP / Biaya Pokok Produksi</label>
                             <input type="text" name="hpp_nominal_rk" id="nomHppRKInput" 
-                                   value="<?= number_format((float)($keuangan['hpp_nominal_rk'] ?? 0), 0, ',', '.') ?>" 
+                                   value="<?= number_format($nomHppAwalBU, 0, ',', '.') ?>" 
                                    placeholder="Rp 0"
                                    class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]"
-                                   oninput="formatRupiah(this); syncHppNominalKePersen();">
+                                   oninput="formatRupiah(this); syncHppNominalKePersen();"
+                                   onblur="if(this.value){ formatRupiah(this); syncHppNominalKePersen(); }">
                             <span id="nomHppRK" class="hidden">Rp 0</span>
                         </div>
                     </div>
