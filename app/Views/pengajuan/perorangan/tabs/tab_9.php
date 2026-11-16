@@ -17,14 +17,16 @@
         }
     }
 
-    // Persiapan data biaya hidup pokok
+    // Persiapan data biaya hidup pokok (jangan langsung diisi default otomatis jika belum diinput)
     $nomBiayaHidup = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 0);
-    if ($nomBiayaHidup <= 0 && !empty($keuangan['pendapatan_rk'])) {
-        $nomBiayaHidup = ((float)$keuangan['pendapatan_rk']) * (((float)($keuangan['biaya_hidup_persen_rk'] ?? 10)) / 100);
-    }
-    if ($nomBiayaHidup <= 0) {
-        $nomBiayaHidup = 4500000;
-    }
+
+    // Persiapan HPP Dinamis untuk Perorangan (Opsi B: Default 0% & Tersembunyi untuk karyawan/PNS)
+    $nomHppLama = (float)($keuangan['hpp_nominal_rk'] ?? 0);
+    $pctHppLama = (float)($keuangan['hpp_persen_rk'] ?? 0);
+    // HPP dianggap aktif jika ada persentase HPP > 0 atau nominal HPP > 0
+    $adaHppPerorangan = ($nomHppLama > 0 || $pctHppLama > 0);
+    $hppPersenDisplay = $adaHppPerorangan ? $pctHppLama : 0;
+    $hppNominalDisplay = $adaHppPerorangan ? $nomHppLama : 0;
 
     // Persiapan data rincian beban lainnya dinamis (asuransi, biaya tak terduga, dll)
     $rawDetailBeban = $keuangan['detail_beban_lainnya_rk'] ?? '';
@@ -94,51 +96,92 @@
                                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </div>
                             <div>
-                                <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Pendapatan Pokok / Utama (Dinamis)</h3>
+                                <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Pendapatan Pokok / Utama</h3>
                                 <span class="text-[11px] text-slate-400 font-medium">Gaji pokok, tunjangan, bonus, lembur, dll</span>
                             </div>
                         </div>
-                        <button type="button" onclick="tambahPendapatan();" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg shadow-2xs transition">
-                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            <span>Tambah Baris</span>
-                        </button>
                     </div>
 
-                    <!-- Container List Baris Pendapatan Dinamis -->
+                    <!-- Container Baris Pendapatan Pokok (Langsung Tampil Otomatis) -->
                     <div id="containerPendapatanDinamis" class="space-y-2 mb-3">
-                        <!-- Diisi oleh renderListPendapatan() -->
+                        <?php foreach ($listDetailPendapatan as $index => $item): ?>
+                            <?php 
+                                $namaVal = $item['nama'] ?? 'Gaji Pokok';
+                                $nomVal = (float)($item['nominal'] ?? 0);
+                                $nomStr = $nomVal > 0 ? number_format($nomVal, 0, ',', '.') : '';
+                            ?>
+                            <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
+                                <div class="flex-1 min-w-0">
+                                    <input type="text" value="<?= esc($namaVal) ?>" 
+                                           placeholder="Nama pendapatan (cth: Gaji Pokok, Bonus, Lembur)" 
+                                           class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                                           oninput="updateItemPendapatan(<?= $index ?>, 'nama', this.value)">
+                                </div>
+                                <div class="w-36 sm:w-48 shrink-0">
+                                    <div class="relative flex items-center">
+                                        <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                                        <input type="text" value="<?= esc($nomStr) ?>" 
+                                               placeholder="0" 
+                                               class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
+                                               oninput="formatRupiah(this); updateItemPendapatan(<?= $index ?>, 'nominal', this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
 
                     <!-- Bar Total Pendapatan Pokok -->
                     <div class="p-3 bg-white border border-blue-200 rounded-xl flex justify-between items-center text-xs shadow-2xs mb-3">
                         <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Total Pendapatan Pokok:</span>
-                        <span id="nomTotalPendapatanDinamis" class="text-sm font-black text-blue-700">Rp 0</span>
+                        <span id="nomTotalPendapatanDinamis" class="text-sm font-black text-blue-700">Rp <?= number_format((float)($keuangan['pendapatan_rk'] ?? 0), 0, ',', '.') ?></span>
                     </div>
 
-                    <!-- Input HPP / Biaya Pokok (Opsional untuk Usaha / Dagang) -->
-                    <div class="grid grid-cols-3 gap-3 mb-3">
-                        <div class="col-span-1">
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">HPP (%)</label>
-                            <input type="number" step="0.1" name="hpp_persen_rk" id="hpp_persen_rk" 
-                                   value="<?= esc($keuangan['hpp_persen_rk'] ?? 0) ?>" 
-                                   placeholder="0"
-                                   class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
-                                   oninput="hitungLabaRugi();">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal HPP / Biaya Pokok</label>
-                            <input type="text" name="hpp_nominal_rk" id="nomHppRKInput" 
-                                   value="<?= number_format((float)($keuangan['hpp_nominal_rk'] ?? 0), 0, ',', '.') ?>" 
-                                   placeholder="Rp 0"
-                                   class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]"
-                                   oninput="formatRupiah(this); syncHppNominalKePersen();">
-                            <span id="nomHppRK" class="hidden">Rp 0</span>
-                        </div>
+                    <!-- Centang Opsional: HPP Biaya Kulakan Toko / Pedagang (Opsi B) -->
+                    <div class="p-3.5 rounded-xl border transition mb-3 <?= $adaHppPerorangan ? 'bg-blue-50/70 border-blue-300 ring-1 ring-blue-200' : 'bg-white border-slate-200 hover:border-slate-300' ?>" id="boxToggleHppPerorangan">
+                        <label class="flex items-start gap-3 cursor-pointer select-none">
+                            <input type="checkbox" 
+                                   id="checkAdaHppPerorangan" 
+                                   onchange="toggleHppPerorangan(this.checked)" 
+                                   <?= $adaHppPerorangan ? 'checked' : '' ?>
+                                   class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-0.5 cursor-pointer">
+                            <div class="flex-1">
+                                <div class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                                    <span>Debitur memiliki usaha dagang / toko (memerlukan biaya kulakan / HPP)</span>
+                                    <span class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[9px] font-extrabold rounded uppercase">Opsional</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                                    Centang jika debitur perorangan ini adalah pedagang / punya usaha toko (ada kulakan HPP). Biarkan tidak tercentang jika karyawan/PNS agar gaji utuh tidak dipotong HPP.
+                                </p>
+                            </div>
+                        </label>
                     </div>
 
-                    <div class="p-3 bg-blue-50/80 border border-blue-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs mb-3">
-                        <span class="font-bold text-blue-900">Laba Kotor (Setelah HPP):</span>
-                        <span id="grossRK" class="text-sm font-black text-blue-700">Rp 0</span>
+                    <!-- Container Input HPP & Laba Kotor (Tampil hanya jika opsi toko/dagang dicentang) -->
+                    <div id="containerHppPerorangan" class="<?= $adaHppPerorangan ? '' : 'hidden' ?> space-y-3 mb-3">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div class="col-span-1">
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">HPP (%)</label>
+                                <input type="number" step="0.1" name="hpp_persen_rk" id="hpp_persen_rk" 
+                                       value="<?= esc($hppPersenDisplay) ?>" 
+                                       placeholder="0"
+                                       class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
+                                       oninput="hitungLabaRugi();">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal HPP / Biaya Pokok</label>
+                                <input type="text" name="hpp_nominal_rk" id="nomHppRKInput" 
+                                       value="<?= number_format($hppNominalDisplay, 0, ',', '.') ?>" 
+                                       placeholder="Rp 0"
+                                       class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]"
+                                       oninput="formatRupiah(this); syncHppNominalKePersen();">
+                                <span id="nomHppRK" class="hidden">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-blue-50/80 border border-blue-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
+                            <span class="font-bold text-blue-900">Laba Kotor (Setelah HPP):</span>
+                            <span id="grossRK" class="text-sm font-black text-blue-700">Rp 0</span>
+                        </div>
                     </div>
 
                     <!-- Hidden inputs untuk database -->
@@ -284,7 +327,7 @@
                     <input type="text" 
                            name="biaya_hidup_nominal_rk" 
                            id="biaya_hidup_nominal_rk" 
-                           value="<?= number_format($nomBiayaHidup, 0, ',', '.') ?>" 
+                           value="<?= $nomBiayaHidup > 0 ? number_format($nomBiayaHidup, 0, ',', '.') : '' ?>" 
                            class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-rose-500 focus:ring-2 focus:ring-rose-100 transition shadow-2xs rupiah-input h-[38px]"
                            placeholder="Rp 0"
                            oninput="formatRupiah(this); hitungLabaRugi();">

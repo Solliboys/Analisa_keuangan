@@ -408,12 +408,17 @@ class Pengajuan extends BaseController
             $jsonKaryawan = json_encode(array_values($input['karyawan']));
         }
 
+        $valNamaDebitur = trim($input['nama_debitur'] ?? '');
+        if (empty($valNamaDebitur) && !empty($input['nama_debitur_tab2'])) {
+            $valNamaDebitur = trim($input['nama_debitur_tab2']);
+        }
+
         $dataKredit = [
             'user_id'                 => $userIdPembuat,
             'nomor_aplikasi'          => $input['nomor_aplikasi'] ?? ('CAM-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4))),
             'tipe_aplikasi'           => $input['tipe_aplikasi'] ?? 'Fasilitas Baru',
             'jenis_debitur'           => $input['jenis_debitur'] ?? 'Individu',
-            'nama_debitur'            => $input['nama_debitur'] ?? '',
+            'nama_debitur'            => $valNamaDebitur,
             'plafon_pengajuan'        => $this->cleanNumber($input['plafon_pengajuan'] ?? 0),
             'tenor_bulan'             => (int)($input['tenor_bulan'] ?? 12),
             'jenis_jaminan'           => $input['jenis_jaminan'] ?? 'On Hand',
@@ -501,9 +506,29 @@ class Pengajuan extends BaseController
 
         try {
             // Filter kolom agar hanya menyimpan kolom yang benar-benar ada di tabel database (mencegah error Unknown Column di VPS)
-            $tableCols = $this->kreditModel->db->getFieldNames('kredit');
-            if (!empty($tableCols)) {
-                $dataKredit = array_intersect_key($dataKredit, array_flip($tableCols));
+            try {
+                $tableCols = $this->kreditModel->db->getFieldNames('kredit');
+                if (is_array($tableCols) && !empty($tableCols)) {
+                    $dataKredit = array_intersect_key($dataKredit, array_flip($tableCols));
+                }
+            } catch (\Throwable $e) {}
+
+            // Proteksi berlapis kolom baru jika migrasi belum dijalankan di server/VPS
+            $newOptionalCols = [
+                'berkas_slik_pdf', 'berkas_slik_txt', 'daftar_permohonan_slik', 'metode_slik',
+                'kesimpulan_kolektibilitas', 'slik_permohonan_nama', 'slik_permohonan_nik', 'slik_permohonan_hubungan',
+                'slik_ktp_file', 'slik_surat_kuasa_file'
+            ];
+            foreach ($newOptionalCols as $colName) {
+                if (isset($dataKredit[$colName])) {
+                    try {
+                        if (!$this->kreditModel->db->fieldExists($colName, 'kredit')) {
+                            unset($dataKredit[$colName]);
+                        }
+                    } catch (\Throwable $e) {
+                        unset($dataKredit[$colName]);
+                    }
+                }
             }
 
             if ($kreditId) {
@@ -799,9 +824,20 @@ class Pengajuan extends BaseController
         $pRK   = $this->cleanNumber($input['pendapatan_rk'] ?? 0);
         $detailPendapatanRK = !empty($input['detail_pendapatan_rk']) ? $input['detail_pendapatan_rk'] : null;
         if ($detailPendapatanRK === '[]') $detailPendapatanRK = null;
-        $hppPctRK = (float)($input['hpp_persen_rk'] ?? 60);
-        $hppNomRK = $pRK * ($hppPctRK / 100);
-        $grossRK  = $pRK - $hppNomRK;
+        $isBU = false;
+        if (!empty($input['jenis_debitur'])) {
+            $isBU = (stripos($input['jenis_debitur'], 'badan') !== false || stripos($input['jenis_debitur'], 'pt') !== false || stripos($input['jenis_debitur'], 'cv') !== false);
+        } else {
+            $kreditData = $this->kreditModel->find($kreditId);
+            $rawJd = $kreditData['jenis_debitur'] ?? 'Perorangan';
+            $isBU = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false);
+        }
+        $defaultHppPct = $isBU ? 60 : 0;
+        $hppPctRK = isset($input['hpp_persen_rk']) && $input['hpp_persen_rk'] !== '' ? (float)$input['hpp_persen_rk'] : $defaultHppPct;
+        $hppNomRK = isset($input['hpp_nominal_rk']) && $input['hpp_nominal_rk'] !== '' && (float)$input['hpp_nominal_rk'] > 0
+            ? $this->cleanNumber($input['hpp_nominal_rk'])
+            : $pRK * ($hppPctRK / 100);
+        $grossRK  = max(0, $pRK - $hppNomRK);
         // Biaya hidup nominal langsung & persentase
         $bhNomRK = isset($input['biaya_hidup_nominal_rk']) ? $this->cleanNumber($input['biaya_hidup_nominal_rk']) : 0;
         if ($bhNomRK == 0 && !empty($input['biaya_hidup_persen_rk']) && $pRK > 0) {
@@ -1448,7 +1484,9 @@ class Pengajuan extends BaseController
 
         $omzet = $this->cleanNumber($input['pendapatan_rk'] ?? ($input['pendapatan_iv'] ?? 0));
         $angsuran = $this->cleanNumber($input['angsuran_dipilih'] ?? 0);
-        $hppPct = (float)($input['hpp_persen_rk'] ?? 60);
+        $isBUAi = (stripos($input['jenis_debitur'] ?? '', 'badan') !== false || stripos($input['jenis_debitur'] ?? '', 'pt') !== false || stripos($input['jenis_debitur'] ?? '', 'cv') !== false);
+        $defaultHppAi = $isBUAi ? 60 : 0;
+        $hppPct = isset($input['hpp_persen_rk']) && $input['hpp_persen_rk'] !== '' ? (float)$input['hpp_persen_rk'] : $defaultHppAi;
         $bhNom  = isset($input['biaya_hidup_nominal_rk']) ? $this->cleanNumber($input['biaya_hidup_nominal_rk']) : ($omzet * ((float)($input['biaya_hidup_persen_rk'] ?? 10) / 100));
         $blNom  = isset($input['beban_lainnya_nominal_rk']) ? $this->cleanNumber($input['beban_lainnya_nominal_rk']) : ($omzet * ((float)($input['beban_lainnya_persen_rk'] ?? 10) / 100));
         $labaBersih = $omzet - ($omzet * $hppPct/100) - $bhNom - $blNom;
@@ -1592,9 +1630,13 @@ class Pengajuan extends BaseController
         $filePath = 'uploads/slik/' . $newName;
 
         if ($kreditId) {
-            $this->kreditModel->update($kreditId, [
-                'berkas_slik_pdf' => $filePath
-            ]);
+            try {
+                if ($this->kreditModel->db->fieldExists('berkas_slik_pdf', 'kredit')) {
+                    $this->kreditModel->update($kreditId, [
+                        'berkas_slik_pdf' => $filePath
+                    ]);
+                }
+            } catch (\Throwable $e) {}
         }
 
         return $this->response->setJSON([
@@ -1690,6 +1732,12 @@ class Pengajuan extends BaseController
         }
 
         if ($kreditId) {
+            try {
+                $tableCols = $this->kreditModel->db->getFieldNames('kredit');
+                if (is_array($tableCols) && !empty($tableCols)) {
+                    $updateData = array_intersect_key($updateData, array_flip($tableCols));
+                }
+            } catch (\Throwable $e) {}
             $this->kreditModel->update($kreditId, $updateData);
         }
 

@@ -218,6 +218,12 @@ class Slik extends BaseController
         }
 
         // Update data kredit induk
+        try {
+            $tableCols = $this->kreditModel->db->getFieldNames('kredit');
+            if (is_array($tableCols) && !empty($tableCols)) {
+                $updateKredit = array_intersect_key($updateKredit, array_flip($tableCols));
+            }
+        } catch (\Throwable $e) {}
         $this->kreditModel->update($kreditId, $updateKredit);
 
         // Catat ke log aktivitas sistem

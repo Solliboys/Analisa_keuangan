@@ -48,7 +48,7 @@
                        value="<?= esc($kredit['nama_debitur'] ?? '') ?>" 
                        placeholder="Nama lengkap tanpa gelar singkatan"
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"
-                       oninput="document.getElementById('nama_debitur') ? document.getElementById('nama_debitur').value = this.value : null;">
+                       oninput="if(typeof syncNamaDebitur === 'function'){ syncNamaDebitur(this.value); } else { const e1=document.getElementById('nama_debitur'); if(e1) e1.value=this.value; }">
             </div>
 
             <!-- Tempat Lahir -->

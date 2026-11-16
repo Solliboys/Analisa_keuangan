@@ -19,6 +19,17 @@ document.addEventListener('DOMContentLoaded', () => {
     initDaftarBebanLain();
     initDaftarPendapatan();
     initAutoSave();
+
+    // Pastikan nama debitur di Tab 1 dan Tab 2 tersinkron sejak awal load
+    const initNama1 = document.getElementById('nama_debitur')?.value;
+    const initNama2 = document.getElementById('nama_debitur_tab2')?.value;
+    const initNama = initNama1 || initNama2 || '';
+    if (initNama) {
+        const el1 = document.getElementById('nama_debitur');
+        const el2 = document.getElementById('nama_debitur_tab2');
+        if (el1) el1.value = initNama;
+        if (el2) el2.value = initNama;
+    }
     // Sesuaikan metadata jika form perorangan (fokus pekerjaan)
     const step3El = document.getElementById('step-title-3');
     if (step3El && step3El.innerText.toLowerCase().includes('pekerjaan')) {
@@ -46,38 +57,57 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTabelSimulasiAngsuran();
     }
 
-    // Buka tab spesifik jika ada query parameter misal ?tab=6 untuk Petugas SLIK
+    // Buka tab yang sedang dikerjakan saat halaman dimuat / direfresh
     const urlParams = new URLSearchParams(window.location.search);
-    const initialTabParam = urlParams.get('tab');
-    if (initialTabParam) {
+    const kidInit = document.getElementById('kredit_id')?.value || 'draft';
+    let tabTarget = urlParams.get('tab');
+    if (!tabTarget && window.location.hash) {
+        tabTarget = window.location.hash.replace('#tab-', '').replace('#', '');
+    }
+    if (!tabTarget) {
+        tabTarget = sessionStorage.getItem('active_pengajuan_tab_' + kidInit) || localStorage.getItem('last_active_pengajuan_tab');
+    }
+
+    if (tabTarget) {
         const activeSteps = getActiveSteps();
-        const parsed = isNaN(initialTabParam) ? initialTabParam : parseInt(initialTabParam, 10);
-        if (activeSteps.includes(parsed)) {
-            goToTab(parsed);
+        const norm = normalizeTab(tabTarget);
+        let targetIdx = findStepIndex(activeSteps, norm);
+        // Dukung nomor urut visual (misal 10 untuk Laporan di Perorangan atau 9 di Badan Usaha)
+        if (targetIdx === -1) {
+            if ((norm === 10 || norm === '10') && !window.IS_BADAN_USAHA) {
+                targetIdx = findStepIndex(activeSteps, 'laporan');
+            } else if ((norm === 9 || norm === '9') && window.IS_BADAN_USAHA) {
+                targetIdx = findStepIndex(activeSteps, 'laporan');
+            }
+        }
+        if (targetIdx !== -1) {
+            // Tandai semua langkah sebelum tab target sebagai selesai secara visual
+            for (let k = 0; k < targetIdx; k++) {
+                tabValidationStatus[activeSteps[k]] = true;
+            }
+            goToTab(activeSteps[targetIdx]);
         }
     }
 
-    // Inisialisasi status langkah yang sudah terisi jika dalam mode edit
+    // Inisialisasi status langkah yang sudah terisi jika dalam mode edit atau refresh
     setTimeout(() => {
         const kid = document.getElementById('kredit_id')?.value;
+        const activeSteps = getActiveSteps();
         if (kid) {
-            const activeSteps = getActiveSteps();
             for (let t of activeSteps) {
                 const val = validateTabSilent(t);
                 if (val.valid) {
                     tabValidationStatus[t] = true;
                 }
             }
-            if (normalizeTab(currentTab) === 6) {
-                const sixIdx = findStepIndex(activeSteps, 6);
-                if (sixIdx !== -1) {
-                    for (let k = 0; k < sixIdx; k++) {
-                        tabValidationStatus[activeSteps[k]] = true;
-                    }
-                }
-            }
-            updateStepperVisuals();
         }
+        const curIdx = findStepIndex(activeSteps, currentTab);
+        if (curIdx > 0) {
+            for (let k = 0; k < curIdx; k++) {
+                tabValidationStatus[activeSteps[k]] = true;
+            }
+        }
+        updateStepperVisuals();
     }, 300);
 });
 
@@ -408,12 +438,21 @@ function validateTab(tabNum) {
             addError(pendapatan, 'Pendapatan/Omset bulanan riil wajib diisi lebih dari 0');
         }
 
-        // HPP hanya divalidasi untuk Badan Usaha (karena debitur perorangan/karyawan tidak memiliki HPP)
-        const isBadanUsaha = Boolean(window.IS_BADAN_USAHA || document.getElementById('nama_usaha_bu') || document.getElementById('nomHppRKInput'));
+        // HPP hanya divalidasi untuk Badan Usaha atau Perorangan yang mencentang opsi toko/dagang
+        const isBadanUsaha = Boolean(window.IS_BADAN_USAHA || document.getElementById('nama_usaha_bu'));
         if (isBadanUsaha) {
             const hpp = document.getElementById('hpp_persen_rk');
             if (!hpp || parseFloat(hpp.value) <= 0) {
                 addError(hpp, 'Estimasi persentase HPP (%) wajib diisi lebih dari 0');
+            }
+        } else {
+            // Perorangan: hanya divalidasi jika checkbox HPP dicentang
+            const checkAdaHpp = document.getElementById('checkAdaHppPerorangan');
+            if (checkAdaHpp && checkAdaHpp.checked) {
+                const hpp = document.getElementById('hpp_persen_rk');
+                if (!hpp || parseFloat(hpp.value) <= 0) {
+                    addError(hpp, 'Estimasi persentase HPP (%) wajib diisi lebih dari 0 jika opsi toko/dagang dicentang');
+                }
             }
         }
     } else if (tabNum === 'laporan') {
@@ -663,12 +702,14 @@ function handleStepperClick(targetTab) {
             tabValidationStatus[stepNum] = true;
             clearAllFieldErrorsInTab(stepNum);
         }
+        simpanForm(false, false);
         goToTab(steps[targetIdx]);
         return;
     }
 
     // Jika navigasi mundur (kembali ke tahap sebelumnya), selalu diizinkan
     if (targetIdx < curIdx) {
+        simpanForm(false, false);
         goToTab(steps[targetIdx]);
         return;
     }
@@ -708,6 +749,12 @@ function handleStepperClick(targetTab) {
         clearAllFieldErrorsInTab(stepNum);
     }
 
+    if (normalizeTab(steps[targetIdx]) === 'laporan' || normalizeTab(currentTab) === 9) {
+        if (typeof hitungLabaRugi === 'function') hitungLabaRugi();
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan();
+    }
+
+    simpanForm(false, false);
     goToTab(steps[targetIdx]);
 }
 window.handleStepperClick = handleStepperClick;
@@ -718,6 +765,25 @@ function goToTab(tabIndex) {
     const idx = findStepIndex(steps, tabIndex);
     if (idx === -1) return;
     currentTab = steps[idx];
+
+    // Simpan tab aktif ke URL (replaceState tanpa reload) & Web Storage agar saat refresh tetap di posisi ini
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', currentTab);
+        window.history.replaceState({ tab: currentTab }, '', url.toString());
+
+        const kid = document.getElementById('kredit_id')?.value || 'draft';
+        sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
+        localStorage.setItem('last_active_pengajuan_tab', currentTab);
+    } catch (e) {}
+
+    // Tandai langkah-langkah sebelum tab aktif sebagai selesai secara visual
+    for (let k = 0; k < idx; k++) {
+        const prevStep = steps[k];
+        if (tabValidationStatus[prevStep] === undefined) {
+            tabValidationStatus[prevStep] = true;
+        }
+    }
 
     // Ketika berada di Tab 6, pastikan semua tahap sebelum 6 (1, 2, 3, 4, 5) ditandai HIJAU (Selesai)
     const normTab = normalizeTab(currentTab);
@@ -737,8 +803,27 @@ function goToTab(tabIndex) {
     if (currentTab === 6 && typeof sinkronisasiDataDebiturKeSlik === 'function') {
         sinkronisasiDataDebiturKeSlik();
     }
-    if (normalizeTab(currentTab) === 'laporan' && typeof sinkronkanLaporanKeuangan === 'function') {
-        sinkronkanLaporanKeuangan();
+    if (normalizeTab(currentTab) === 'laporan') {
+        const checkHpp = document.getElementById('checkAdaHppPerorangan');
+        const kid = document.getElementById('kredit_id')?.value || 'draft';
+        const savedHpp = sessionStorage.getItem('hpp_perorangan_' + kid);
+        let isUsaha = false;
+        if (checkHpp) {
+            isUsaha = checkHpp.checked;
+        } else if (savedHpp !== null) {
+            isUsaha = (savedHpp === '1');
+        }
+        if (typeof window.gantiKategoriDebitur === 'function') {
+            window.gantiKategoriDebitur(isUsaha ? 'usaha' : 'gaji', false);
+        }
+        if (typeof hitungLabaRugi === 'function') {
+            hitungLabaRugi();
+        }
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+            window.sinkronkanLaporanKeuangan();
+            setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 50);
+            setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 200);
+        }
     }
 
     // Update Header Judul & Deskripsi
@@ -885,8 +970,13 @@ function tabNav(delta) {
     } else {
         const nextIdx = curIdx + delta;
         if (nextIdx >= 0 && nextIdx < steps.length) {
+            const nextStep = steps[nextIdx];
+            if (normalizeTab(nextStep) === 'laporan' || normalizeTab(currentTab) === 9) {
+                if (typeof hitungLabaRugi === 'function') hitungLabaRugi();
+                if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan();
+            }
             simpanForm(false, false);
-            goToTab(steps[nextIdx]);
+            goToTab(nextStep);
         }
     }
 }
@@ -1360,10 +1450,30 @@ function hitungLabaRugi() {
         document.getElementById('pendapatan_rk').value = pRK;
     }
 
-    const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
-    const hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 0);
-    const nomHppRK = isBU ? Math.round(pRK * (hppPctRK / 100)) : 0;
-    const grossRK = isBU ? Math.max(0, pRK - nomHppRK) : pRK;
+    const isBU = Boolean(window.IS_BADAN_USAHA);
+    const checkAdaHpp = document.getElementById('checkAdaHppPerorangan');
+    // Jika Badan Usaha: selalu menggunakan HPP. Jika Perorangan: hanya jika checkbox dicentang.
+    const isAdaHpp = isBU ? true : (checkAdaHpp ? checkAdaHpp.checked : false);
+
+    let hppPctRK = 0;
+    let nomHppRK = 0;
+    let grossRK = pRK;
+
+    if (isAdaHpp) {
+        hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 0);
+        nomHppRK = Math.round(pRK * (hppPctRK / 100));
+        grossRK = Math.max(0, pRK - nomHppRK);
+    } else {
+        const inputHppPct = document.getElementById('hpp_persen_rk');
+        const inputNomHpp = document.getElementById('nomHppRKInput');
+        if (inputHppPct && !isBU) inputHppPct.value = 0;
+        if (inputNomHpp && !isBU && document.activeElement !== inputNomHpp) {
+            inputNomHpp.value = '0';
+        }
+        hppPctRK = 0;
+        nomHppRK = 0;
+        grossRK = pRK;
+    }
 
     // Biaya Hidup (langsung nominal rupiah tanpa %)
     const nomBhRK = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 0);
@@ -1457,6 +1567,10 @@ function hitungLabaRugi() {
     if (document.getElementById('nettIV')) document.getElementById('nettIV').innerText = formatRupiahString(nettIV);
 
     hitungRasioDSC();
+
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
 }
 
 // Sinkronisasi dua arah saat user mengetik Nominal HPP langsung
@@ -1505,6 +1619,7 @@ function initDaftarPendapatan() {
         }
     }
 
+    window.daftarPendapatan = daftarPendapatan;
     renderListPendapatan();
 }
 window.initDaftarPendapatan = initDaftarPendapatan;
@@ -1522,6 +1637,13 @@ function renderListPendapatan() {
         const safeNama = (item.nama || '').replace(/"/g, '&quot;');
         const nomVal = parseInt(item.nominal, 10) || 0;
         const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+        const deleteBtnHtml = (daftarPendapatan.length > 1) ? `
+            <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
+                    class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+        ` : '';
+
         html += `
             <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
                 <div class="flex-1 min-w-0">
@@ -1530,7 +1652,7 @@ function renderListPendapatan() {
                            class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
                            oninput="updateItemPendapatan(${index}, 'nama', this.value)">
                 </div>
-                <div class="w-32 sm:w-40 shrink-0">
+                <div class="w-36 sm:w-48 shrink-0">
                     <div class="relative flex items-center">
                         <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
                         <input type="text" value="${nomStr}" 
@@ -1539,10 +1661,7 @@ function renderListPendapatan() {
                                oninput="formatRupiah(this); updateItemPendapatan(${index}, 'nominal', this.value)">
                     </div>
                 </div>
-                <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
-                        class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
+                ${deleteBtnHtml}
             </div>
         `;
     });
@@ -1553,6 +1672,7 @@ function renderListPendapatan() {
         total += parseNominal(item.nominal || 0);
     });
 
+    window.daftarPendapatan = daftarPendapatan;
     const hiddenDetail = document.getElementById('detail_pendapatan_rk');
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarPendapatan);
@@ -1588,7 +1708,11 @@ function hapusPendapatan(index) {
 window.hapusPendapatan = hapusPendapatan;
 
 function updateItemPendapatan(index, field, val) {
-    if (!daftarPendapatan[index]) return;
+    if (!daftarPendapatan[index]) {
+        while (daftarPendapatan.length <= index) {
+            daftarPendapatan.push({ nama: 'Gaji Pokok', nominal: 0 });
+        }
+    }
     if (field === 'nominal') {
         daftarPendapatan[index].nominal = parseNominal(val);
     } else {
@@ -1600,6 +1724,7 @@ function updateItemPendapatan(index, field, val) {
         total += parseNominal(item.nominal || 0);
     });
 
+    window.daftarPendapatan = daftarPendapatan;
     const hiddenDetail = document.getElementById('detail_pendapatan_rk');
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarPendapatan);
@@ -1643,6 +1768,7 @@ function initDaftarBebanLain() {
         }
     }
 
+    window.daftarBebanLain = daftarBebanLain;
     renderListBebanLain();
 }
 window.initDaftarBebanLain = initDaftarBebanLain;
@@ -1690,6 +1816,7 @@ function renderListBebanLain() {
         container.innerHTML = html;
     }
 
+    window.daftarBebanLain = daftarBebanLain;
     const hiddenDetail = document.getElementById('detail_beban_lainnya_rk');
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarBebanLain);
@@ -1727,6 +1854,7 @@ function updateItemBebanLain(index, field, val) {
         daftarBebanLain[index].nama = val;
     }
 
+    window.daftarBebanLain = daftarBebanLain;
     const hiddenDetail = document.getElementById('detail_beban_lainnya_rk');
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarBebanLain);
@@ -1757,6 +1885,48 @@ function togglePendapatanLain(checked) {
     hitungLabaRugi();
 }
 window.togglePendapatanLain = togglePendapatanLain;
+
+// Toggle Tampilan Input HPP untuk Perorangan (Pedagang / Usaha Toko)
+function toggleHppPerorangan(checked, syncReport = true) {
+    const container = document.getElementById('containerHppPerorangan');
+    const box = document.getElementById('boxToggleHppPerorangan');
+    const inputPct = document.getElementById('hpp_persen_rk');
+    const inputNom = document.getElementById('nomHppRKInput');
+    const kid = document.getElementById('kredit_id')?.value || 'draft';
+
+    if (checked) {
+        if (container) container.classList.remove('hidden');
+        if (box) {
+            box.className = 'p-3.5 rounded-xl border transition mb-3 bg-blue-50/70 border-blue-300 ring-1 ring-blue-200';
+        }
+        // Jika HPP masih 0 saat dicentang, berikan default 60% untuk usaha
+        if (inputPct && (parseFloat(inputPct.value || 0) <= 0)) {
+            inputPct.value = 60;
+        }
+        sessionStorage.setItem('hpp_perorangan_' + kid, '1');
+    } else {
+        if (container) container.classList.add('hidden');
+        if (box) {
+            box.className = 'p-3.5 rounded-xl border transition mb-3 bg-white border-slate-200 hover:border-slate-300';
+        }
+        if (inputPct) inputPct.value = 0;
+        if (inputNom) inputNom.value = '0';
+        sessionStorage.setItem('hpp_perorangan_' + kid, '0');
+    }
+    hitungLabaRugi();
+
+    // Trigger otomatis peralihan format Laporan Keuangan (Usaha vs Karyawan)
+    if (syncReport) {
+        const targetKategori = checked ? 'usaha' : 'gaji';
+        if (typeof window.gantiKategoriDebitur === 'function') {
+            window.gantiKategoriDebitur(targetKategori, false);
+        }
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+            window.sinkronkanLaporanKeuangan();
+        }
+    }
+}
+window.toggleHppPerorangan = toggleHppPerorangan;
 
 // Inisialisasi Daftar Bukti Pendapatan Lain-Lain (Multiple & Delete)
 let daftarBuktiPendapatanLain = [];
@@ -2383,20 +2553,71 @@ function triggerAutoSave(delay = 1500) {
     }, delay);
 }
 
+// Fungsi sinkronisasi real-time nama debitur antar tab & modal
+function syncNamaDebitur(val) {
+    const el1 = document.getElementById('nama_debitur');
+    const el2 = document.getElementById('nama_debitur_tab2');
+    const elBu = document.getElementById('nama_usaha_bu');
+    const elMa = document.getElementById('modal_ma_nama');
+    const elWc = document.getElementById('modal_wc_nama');
+
+    if (el1 && el1.value !== val) el1.value = val;
+    if (el2 && el2.value !== val) el2.value = val;
+    if (elBu && elBu.value !== val) elBu.value = val;
+    if (elMa && elMa.value !== val) elMa.value = val;
+    if (elWc && elWc.value !== val) elWc.value = val;
+
+    triggerAutoSave(600);
+}
+window.syncNamaDebitur = syncNamaDebitur;
+
 function initAutoSave() {
     const form = document.getElementById('camForm');
     if (!form) return;
 
-    // Listener input untuk teks, angka, textarea (debounce 1.5 detik)
+    // Listener input untuk teks, angka, textarea (debounce 600ms)
     form.addEventListener('input', (e) => {
         if (!e.target || e.target.type === 'file' || e.target.type === 'password') return;
-        triggerAutoSave(1500);
+        if (e.target.id === 'nama_debitur' || e.target.id === 'nama_debitur_tab2') {
+            syncNamaDebitur(e.target.value);
+            return;
+        }
+        triggerAutoSave(600);
     });
 
-    // Listener change untuk select, checkbox, radio (debounce 400ms)
+    // Listener change untuk select, checkbox, radio (debounce 300ms)
     form.addEventListener('change', (e) => {
         if (!e.target || e.target.type === 'file' || e.target.type === 'password') return;
-        triggerAutoSave(400);
+        triggerAutoSave(300);
+    });
+
+    // Listener focusout / blur saat keluar dari input (debounce 200ms agar cepat tersimpan)
+    form.addEventListener('focusout', (e) => {
+        if (!e.target || e.target.type === 'file' || e.target.type === 'password') return;
+        triggerAutoSave(200);
+    });
+
+    // Tangkap event sebelum refresh browser (beforeunload) agar posisi tab & data tersimpan
+    window.addEventListener('beforeunload', () => {
+        const kid = document.getElementById('kredit_id')?.value || 'draft';
+        sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
+        localStorage.setItem('last_active_pengajuan_tab', currentTab);
+
+        if (autoSaveTimer) {
+            clearTimeout(autoSaveTimer);
+            const nama1 = document.getElementById('nama_debitur')?.value.trim();
+            const nama2 = document.getElementById('nama_debitur_tab2')?.value.trim();
+            const resolvedNama = nama1 || nama2 || '';
+            if (resolvedNama) {
+                if (document.getElementById('nama_debitur')) document.getElementById('nama_debitur').value = resolvedNama;
+                if (document.getElementById('nama_debitur_tab2')) document.getElementById('nama_debitur_tab2').value = resolvedNama;
+            }
+            if (navigator.sendBeacon) {
+                const fd = new FormData(form);
+                if (resolvedNama) fd.set('nama_debitur', resolvedNama);
+                navigator.sendBeacon(getBaseUrl() + '/pengajuan/simpan', fd);
+            }
+        }
     });
 }
 
@@ -2407,9 +2628,17 @@ async function simpanForm(isComplete = false, showNotification = true) {
         autoSaveTimer = null;
     }
 
+    // Pastikan nama debitur tersinkronisasi di kedua input sebelum validasi & FormData dibuat
+    const nama1 = document.getElementById('nama_debitur')?.value.trim();
+    const nama2 = document.getElementById('nama_debitur_tab2')?.value.trim();
+    const resolvedNama = nama1 || nama2 || '';
+    if (resolvedNama) {
+        if (document.getElementById('nama_debitur')) document.getElementById('nama_debitur').value = resolvedNama;
+        if (document.getElementById('nama_debitur_tab2')) document.getElementById('nama_debitur_tab2').value = resolvedNama;
+    }
+
     if (isComplete) {
-        const nama = document.getElementById('nama_debitur')?.value.trim() || document.getElementById('nama_debitur_tab2')?.value.trim();
-        if (!nama) {
+        if (!resolvedNama) {
             showToast('Nama Debitur wajib diisi!', 'error');
             goToTab(1);
             return;
@@ -2443,6 +2672,9 @@ async function simpanForm(isComplete = false, showNotification = true) {
     const form = document.getElementById('camForm');
     if (!form) return;
     const formData = new FormData(form);
+    if (resolvedNama) {
+        formData.set('nama_debitur', resolvedNama);
+    }
     if (isComplete) {
         formData.set('status_pengajuan', 'Diajukan');
     }
@@ -2470,6 +2702,18 @@ async function simpanForm(isComplete = false, showNotification = true) {
             if (data.kredit_id) {
                 const kid = document.getElementById('kredit_id');
                 if (kid) kid.value = data.kredit_id;
+
+                // Jika form baru (/baru), perbarui URL ke edit mode tanpa refresh halaman
+                if (!window.location.pathname.includes('/edit/')) {
+                    const newPath = getBaseUrl() + '/pengajuan/edit/' + data.kredit_id + '?tab=' + currentTab;
+                    window.history.replaceState({ tab: currentTab, kredit_id: data.kredit_id }, '', newPath);
+                } else {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', currentTab);
+                    window.history.replaceState({ tab: currentTab, kredit_id: data.kredit_id }, '', url.toString());
+                }
+
+                sessionStorage.setItem('active_pengajuan_tab_' + data.kredit_id, currentTab);
             }
             if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Otomatis tersimpan';
 
@@ -2550,9 +2794,9 @@ async function jalankanAnalisaAI() {
     }
 }
 
-// Eksekusi Analisa dari Box Kalkulasi Simulasi (Tab 1)
-async function eksekusiAnalisaKalkulasi() {
-    // 1. Jalankan kalkulasi simulasi terlebih dahulu
+// Eksekusi Simulasi Angsuran dari Box Kalkulasi Simulasi (Tab 1) - Menggunakan Rumus Matematis Finansial
+function eksekusiAnalisaKalkulasi() {
+    // 1. Jalankan kalkulasi simulasi terlebih dahulu dengan rumus
     hitungKalkulasiAngsuran();
     hitungCoverageAgunan();
     hitungDisbursement();
@@ -2563,107 +2807,37 @@ async function eksekusiAnalisaKalkulasi() {
     const icon = document.getElementById('iconEksekusiAnalisa');
     const boxHasil = document.getElementById('boxHasilEksekusiAnalisa');
 
-    // Set loading state
+    // 2. Berikan feedback singkat (snappy) tanpa memanggil AI
     if (btn) {
-        btn.disabled = true;
-        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        btn.classList.add('scale-95');
+        setTimeout(() => btn.classList.remove('scale-95'), 150);
     }
-    if (label) label.innerText = 'Menganalisa...';
-    if (icon) {
-        icon.innerHTML = '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>';
-        icon.classList.add('animate-spin');
-    }
+    if (label) label.innerText = 'Menghitung...';
 
-    showToast('Mengeksekusi simulasi kalkulasi & analisa risiko kredit...', 'info');
-
-    const form = document.getElementById('camForm');
-    const formData = new FormData(form);
-
-    try {
-        const res = await fetch(getBaseUrl() + '/pengajuan/analisa-ai', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await res.json();
-
-        if (data.status) {
-            if (data.skor_kelayakan_ai) {
-                const skorInput = document.getElementById('skor_kelayakan_ai');
-                if (skorInput) skorInput.value = data.skor_kelayakan_ai;
-                const badgeSkor = document.getElementById('badgeHasilSkor');
-                if (badgeSkor) badgeSkor.innerText = 'Skor ' + data.skor_kelayakan_ai + '/100';
-            }
-            if (data.rekomendasi_keputusan_ai) {
-                const rkInput = document.getElementById('rekomendasi_keputusan_ai');
-                if (rkInput) rkInput.value = data.rekomendasi_keputusan_ai;
-                const badgeKeputusan = document.getElementById('badgeHasilKeputusan');
-                if (badgeKeputusan) {
-                    badgeKeputusan.innerText = data.rekomendasi_keputusan_ai;
-                    const dec = data.rekomendasi_keputusan_ai.toLowerCase();
-                    if (dec.includes('tolak')) {
-                        badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200';
-                    } else if (dec.includes('penurunan') || dec.includes('khusus')) {
-                        badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200';
-                    } else {
-                        badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
-                    }
-                }
-            }
-            if (data.rekomendasi_plafon_ai) {
-                const plafonInput = document.getElementById('rekomendasi_plafon_ai');
-                if (plafonInput) plafonInput.value = formatRupiahString(data.rekomendasi_plafon_ai);
-                const valPlafon = document.getElementById('valHasilPlafon');
-                if (valPlafon) valPlafon.innerText = formatRupiahString(data.rekomendasi_plafon_ai);
-            }
-            if (data.analisis_risiko_ai) {
-                const risikoInput = document.getElementById('analisis_risiko_ai');
-                if (risikoInput) risikoInput.value = data.analisis_risiko_ai;
-            }
-
-            const banner = document.getElementById('aiPdfBanner');
-            if (banner) banner.classList.remove('hidden');
-
-            const sumber = document.getElementById('aiSumberLabel');
-            if (sumber && data.sumber) {
-                sumber.innerText = data.sumber + ' - Skor ' + data.skor_kelayakan_ai + '/100';
-            }
-
-            if (boxHasil) {
-                boxHasil.classList.remove('hidden');
-                renderTabelSimulasiAngsuran();
-            }
-
-            showToast('Eksekusi analisa berhasil! Skor kelayakan & rekomendasi diperbarui.', 'success');
-            simpanForm(false, false);
-        } else {
-            jalankanFallbackEksekusiAnalisa();
-        }
-    } catch (err) {
-        console.error(err);
-        jalankanFallbackEksekusiAnalisa();
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        }
-        if (label) label.innerText = 'Eksekusi Analisa';
-        if (icon) {
-            icon.classList.remove('animate-spin');
-            icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>';
-        }
-    }
-}
-
-function jalankanFallbackEksekusiAnalisa() {
+    // 3. Hitung skor & rekomendasi keputusan berbasis rumus standar rasio kredit (rule-based finansial)
     const plafon = parseNominal(document.getElementById('plafon_pengajuan')?.value || 0);
+    const dscEl = document.getElementById('valRasioDSC');
+    let dscVal = dscEl ? parseFloat(dscEl.innerText.replace(',', '.')) : 1.5;
+    if (isNaN(dscVal) || dscVal <= 0) dscVal = 1.5;
+
     let skor = 82;
     let keputusan = 'Disetujui Penuh';
     let plafonRec = plafon;
 
-    if (plafon > 1000000000) {
-        skor = 76;
+    if (dscVal >= 1.5) {
+        skor = 88;
+        keputusan = 'Disetujui Penuh';
+    } else if (dscVal >= 1.3) {
+        skor = 82;
+        keputusan = 'Disetujui Penuh';
+    } else if (dscVal >= 1.0) {
+        skor = 74;
         keputusan = 'Disetujui dengan Penurunan Plafon';
         plafonRec = Math.round(plafon * 0.85);
+    } else {
+        skor = 65;
+        keputusan = 'Perlu Pertimbangan / Evaluasi Ulang';
+        plafonRec = Math.round(plafon * 0.70);
     }
 
     const skorInput = document.getElementById('skor_kelayakan_ai');
@@ -2678,19 +2852,39 @@ function jalankanFallbackEksekusiAnalisa() {
     const badgeKeputusan = document.getElementById('badgeHasilKeputusan');
     if (badgeKeputusan) {
         badgeKeputusan.innerText = keputusan;
-        badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
+        if (keputusan.includes('Tolak')) {
+            badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200';
+        } else if (keputusan.includes('Penurunan') || keputusan.includes('Pertimbangan')) {
+            badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200';
+        } else {
+            badgeKeputusan.className = 'px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200';
+        }
     }
     const valPlafon = document.getElementById('valHasilPlafon');
     if (valPlafon) valPlafon.innerText = formatRupiahString(plafonRec);
 
-    const boxHasil = document.getElementById('boxHasilEksekusiAnalisa');
+    // 4. Buka dan render tabel jadwal angsuran (Data Anda, Angsuran Anda, dan Tabel Angsuran)
     if (boxHasil) {
         boxHasil.classList.remove('hidden');
         renderTabelSimulasiAngsuran();
     }
 
-    showToast('Eksekusi analisa selesai! Kalkulasi simulasi & jadwal angsuran siap.', 'success');
+    // Kembalikan label tombol secara instan & scroll ke tabel
+    setTimeout(() => {
+        if (label) label.innerText = 'Simulasi Angsuran';
+        if (boxHasil) {
+            boxHasil.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, 150);
+
+    showToast('Simulasi angsuran berhasil dihitung dengan rumus!', 'success');
+
+    // 5. Simpan draft secara otomatis di latar belakang
     simpanForm(false, false);
+}
+
+function jalankanFallbackEksekusiAnalisa() {
+    eksekusiAnalisaKalkulasi();
 }
 
 // Format angka desimal mata uang Rupiah (contoh: Rp 120.000.000,00)
