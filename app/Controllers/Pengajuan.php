@@ -68,15 +68,9 @@ class Pengajuan extends BaseController
         $jabatan = strtolower(session()->get('jabatan') ?? '');
 
         // Query daftar pengajuan berdasarkan peran
-        if ($jabatan === 'superadmin') {
         if ($jabatan === 'superadmin' || strpos($jabatan, 'review') !== false || strpos($jabatan, 'ceo') !== false || strpos($jabatan, 'direk') !== false) {
             // Superadmin, Reviewer & CEO: Tampilkan seluruh riwayat pengajuan (termasuk yang sedang diajukan dan draft)
             $daftarKredit = $this->kreditModel->orderBy('created_at', 'DESC')->findAll();
-        } elseif (strpos($jabatan, 'review') !== false || strpos($jabatan, 'ceo') !== false || strpos($jabatan, 'direk') !== false) {
-            // Reviewer & CEO: Draft JANGAN dimasukkan, hanya yang sudah Diajukan / Disetujui / Ditolak
-            $daftarKredit = $this->kreditModel->where('status_pengajuan !=', 'Draft')
-                                              ->where('status_pengajuan !=', 'draft')
-                                              ->orderBy('created_at', 'DESC')->findAll();
         } elseif (strpos($jabatan, 'slik') !== false) {
             $pengaturan = $this->db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
             $ijinSlik = (int)($pengaturan['ijin_pengusul_isi_slik'] ?? 1);
@@ -1774,6 +1768,66 @@ class Pengajuan extends BaseController
             'txt_path'   => $txtPath,
             'facilities' => $extractedFacilities,
             'daftar_permohonan_slik' => $updateData['daftar_permohonan_slik'] ?? null
+        ]);
+    }
+
+    /**
+     * Upload berkas Rekening Koran (PDF / Gambar) dan ekstraksi otomatis dengan Gemini AI
+     */
+    public function uploadOcrRekening()
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+        }
+
+        $file = $this->request->getFile('file_rekening');
+        if (!$file || !$file->isValid()) {
+            return $this->response->setJSON([
+                'status'  => false,
+                'message' => 'Berkas rekening koran tidak valid atau tidak ditemukan.'
+            ]);
+        }
+
+        $ext = strtolower($file->getExtension());
+        $allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+        if (!in_array($ext, $allowedExt)) {
+            return $this->response->setJSON([
+                'status'  => false,
+                'message' => 'Format berkas tidak didukung. Harap unggah berkas PDF atau gambar (JPG/PNG/WebP).'
+            ]);
+        }
+
+        $targetDir = FCPATH . 'uploads/rekening_koran';
+        if (!is_dir($targetDir)) {
+            mkdir($targetDir, 0777, true);
+        }
+
+        $newName = $file->getRandomName();
+        $file->move($targetDir, $newName);
+        $filePath = 'uploads/rekening_koran/' . $newName;
+        $fullPath = $targetDir . '/' . $newName;
+
+        $kreditId = $this->request->getPost('kredit_id');
+        if ($kreditId) {
+            try {
+                $cols = $this->kreditModel->db->getFieldNames('kredit');
+                if (in_array('berkas_rekening_koran', $cols)) {
+                    $this->kreditModel->update($kreditId, ['berkas_rekening_koran' => $filePath]);
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        // Panggil Gemini AI Service untuk mengekstrak data
+        $aiService = new \App\Services\GeminiAiService();
+        $res = $aiService->ekstrakRekeningKoran($fullPath, $file->getClientMimeType());
+
+        return $this->response->setJSON([
+            'status'    => $res['status'] ?? true,
+            'message'   => $res['message'] ?? 'Ekstraksi rekening koran berhasil',
+            'file_path' => $filePath,
+            'file_name' => $file->getClientName(),
+            'file_url'  => base_url($filePath),
+            'data'      => $res['data'] ?? []
         ]);
     }
 
