@@ -883,6 +883,11 @@ class Pengajuan extends BaseController
 
         $totalNettRK = $nettRK + $pLainRK;
         $angsuran = $this->cleanNumber($input['angsuran_dipilih'] ?? 0);
+        if ($angsuran <= 0) {
+            $angsuranBalloon = $this->cleanNumber($input['angsuran_balloon'] ?? 0);
+            $angsuranInstallment = $this->cleanNumber($input['angsuran_installment'] ?? 0);
+            $angsuran = $angsuranInstallment > 0 ? $angsuranInstallment : $angsuranBalloon;
+        }
         $dscRK = $angsuran > 0 ? round($totalNettRK / $angsuran, 2) : 0;
         $dscIV = $angsuran > 0 ? round($nettIV / $angsuran, 2) : 0;
 
@@ -1486,6 +1491,11 @@ class Pengajuan extends BaseController
 
         $omzet = $this->cleanNumber($input['pendapatan_rk'] ?? ($input['pendapatan_iv'] ?? 0));
         $angsuran = $this->cleanNumber($input['angsuran_dipilih'] ?? 0);
+        if ($angsuran <= 0) {
+            $angsuranBalloon = $this->cleanNumber($input['angsuran_balloon'] ?? 0);
+            $angsuranInstallment = $this->cleanNumber($input['angsuran_installment'] ?? 0);
+            $angsuran = $angsuranInstallment > 0 ? $angsuranInstallment : $angsuranBalloon;
+        }
         $isBUAi = (stripos($input['jenis_debitur'] ?? '', 'badan') !== false || stripos($input['jenis_debitur'] ?? '', 'pt') !== false || stripos($input['jenis_debitur'] ?? '', 'cv') !== false);
         $defaultHppAi = $isBUAi ? 60 : 0;
         $hppPct = isset($input['hpp_persen_rk']) && $input['hpp_persen_rk'] !== '' ? (float)$input['hpp_persen_rk'] : $defaultHppAi;

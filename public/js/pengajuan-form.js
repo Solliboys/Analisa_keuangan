@@ -5,7 +5,7 @@
 const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') : '');
 
 let currentTab = 1;
-const totalTabs = 12; // Proses pengusul dibatasi sampai tahap 12 (Tahap 13 didisabel sementara)
+const totalTabs = 11; // Proses pengusul dibatasi sampai tahap Disbursement (Tahap 12 Repayment & 13 Komite ditiadakan di pengusul)
 
 // Inisialisasi saat halaman dimuat
 document.addEventListener('DOMContentLoaded', () => {
@@ -122,8 +122,7 @@ const stepsMetadata = [
     { title: '8. Rekening Koran', sub: 'Sedang dikerjakan', defaultSub: 'Analisis mutasi', mainTitle: 'Langkah 8: Rekapitulasi Mutasi Rekening Koran', desc: 'Pencatatan arus kas masuk (kredit) dan keluar (debit) untuk validasi omzet usaha riil.' },
     { title: '9. Laba Rugi', sub: 'Sedang dikerjakan', defaultSub: 'Proyeksi keuangan', mainTitle: 'Langkah 9: Analisis Laba Rugi & Pendapatan', desc: 'Perhitungan omset pendapatan, HPP pengeluaran, laba bersih riil, dan ekstra cashflow.' },
     { title: '10. Opini Pengusul', sub: 'Sedang dikerjakan', defaultSub: 'Catatan kualitatif', mainTitle: 'Langkah 10: Opini & Pertimbangan Pengusul', desc: 'Evaluasi kualitatif dan pertimbangan pengusul terkait kelayakan usaha, kondisi agunan, dan kebutuhan pembiayaan nasabah.' },
-    { title: '11. Disbursement', sub: 'Sedang dikerjakan', defaultSub: 'Jadwal pencairan', mainTitle: 'Langkah 11: Simulasi Biaya & Pencairan (Disbursement)', desc: 'Rincian seluruh komponen biaya potong muka dan estimasi dana riil yang diterima debitur saat akad.' },
-    { title: '12. Repayment', sub: 'Sedang dikerjakan', defaultSub: 'Kemampuan angsur', mainTitle: 'Langkah 12: Kemampuan Angsur & DSC (Tahap Akhir Pengusul)', desc: 'Pengujian kemampuan bayar debitur terhadap angsuran pinjaman (Standar aman DSC >= 1.30x).' }
+    { title: '11. Disbursement', sub: 'Sedang dikerjakan', defaultSub: 'Jadwal pencairan', mainTitle: 'Langkah 11: Simulasi Biaya & Pencairan (Disbursement)', desc: 'Rincian seluruh komponen biaya potong muka dan estimasi dana riil yang diterima debitur saat akad.' }
 ];
 
 // Status validasi tiap tahap (1 - 12):
@@ -476,12 +475,6 @@ function validateTab(tabNum) {
             const disbPlafonEl = document.getElementById('disbPlafon');
             addError(disbPlafonEl, 'Parameter plafon pinjaman belum terhitung valid');
         }
-    } else if (tabNum === 12) {
-        // Tab 12: Repayment
-        const angsuranPilih = document.getElementById('angsuran_dipilih');
-        if (!angsuranPilih || parseNominal(angsuranPilih.value) <= 0) {
-            addError(angsuranPilih, 'Angsuran acuan repayment wajib diisi lebih dari 0');
-        }
     }
 
     return {
@@ -506,12 +499,12 @@ const findStepIndex = (steps, tab) => {
     return steps.findIndex(s => s == norm || String(s).toLowerCase() === String(norm).toLowerCase());
 };
 
-// Daftar urutan langkah aktif sesuai entitas (Badan Usaha: 12 langkah, Perorangan: 13 langkah)
+// Daftar urutan langkah aktif sesuai entitas (Badan Usaha: 11 langkah, Perorangan: 12 langkah)
 const getActiveSteps = () => {
     if (window.IS_BADAN_USAHA) {
-        return [1, 2, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11, 12];
+        return [1, 2, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11];
     }
-    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11, 12];
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11];
 };
 
 const getDisplayStepNum = (tabNum) => {
@@ -555,16 +548,6 @@ function getStepMeta(tabNum) {
             defaultSub: 'Jadwal pencairan',
             mainTitle: `Langkah ${num}: Simulasi Biaya & Pencairan (Disbursement)`,
             desc: 'Rincian seluruh komponen biaya potong muka dan estimasi dana riil yang diterima debitur saat akad.'
-        };
-    }
-    if (norm === 12) {
-        const num = window.IS_BADAN_USAHA ? 12 : 13;
-        return {
-            title: `${num}. Repayment`,
-            sub: 'Sedang dikerjakan',
-            defaultSub: 'Kemampuan angsur',
-            mainTitle: `Langkah ${num}: Kemampuan Angsur & DSC (Tahap Akhir Pengusul)`,
-            desc: 'Pengujian kemampuan bayar debitur terhadap angsuran pinjaman (Standar aman DSC >= 1.30x).'
         };
     }
     if (norm === 2 && window.IS_BADAN_USAHA) {
@@ -2374,8 +2357,10 @@ function hitungRasioDSC() {
     const dscRK = angsuran > 0 ? (totalNettRK / angsuran).toFixed(2) : 0;
     const dscIV = angsuran > 0 ? (nettIV / angsuran).toFixed(2) : 0;
 
-    document.getElementById('labelRasioDSCRK').innerText = dscRK + 'x';
-    document.getElementById('labelRasioDSCIV').innerText = dscIV + 'x';
+    const elRK = document.getElementById('labelRasioDSCRK');
+    if (elRK) elRK.innerText = dscRK + 'x';
+    const elIV = document.getElementById('labelRasioDSCIV');
+    if (elIV) elIV.innerText = dscIV + 'x';
 
     updateDSCBadge('badgeStatusDSCRK', dscRK);
     updateDSCBadge('badgeStatusDSCIV', dscIV);
