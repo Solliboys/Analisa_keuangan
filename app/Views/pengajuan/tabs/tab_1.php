@@ -187,6 +187,7 @@ $listJaminan = $refByJenis['kre_jaminan'] ?? [];
                                             <option value="SHM Sarusun" <?= $jj === 'SHM Sarusun' ? 'selected' : '' ?>>SHM Sarusun (Apartemen)</option>
                                             <option value="BPKB Mobil" <?= ($jj === 'BPKB Mobil' || $jj === 'BPKB') ? 'selected' : '' ?>>BPKB Kendaraan Roda 4</option>
                                             <option value="Bilyet Deposito" <?= $jj === 'Bilyet Deposito' ? 'selected' : '' ?>>Bilyet Deposito</option>
+                                            <option value="Dan Lain-Lain" <?= in_array($jj, ['Dan Lain-Lain', 'Dan Lain-lain', 'Lain-lain', 'Lainnya']) ? 'selected' : '' ?>>Dan Lain-Lain</option>
                                             <option value="Tanpa Jaminan" <?= $jj === 'Tanpa Jaminan' ? 'selected' : '' ?>>Tanpa Jaminan</option>
                                         <?php endif; ?>
                                     </select>

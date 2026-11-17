@@ -1120,6 +1120,7 @@ function tambahBarisAgunan() {
                                 <option value="SHM Sarusun">SHM Sarusun (Apartemen)</option>
                                 <option value="BPKB Mobil">BPKB Kendaraan Roda 4</option>
                                 <option value="Bilyet Deposito">Bilyet Deposito</option>
+                                <option value="Dan Lain-Lain">Dan Lain-Lain</option>
                             </select>
                         </div>
 
@@ -4617,7 +4618,7 @@ function sesuaikanFormAgunan(item) {
             inputLvPct.value = '50';
             if (typeof hitungCoverageAgunan === 'function') hitungCoverageAgunan();
         }
-    } else if (val === 'Bilyet Deposito') {
+    } else if (val === 'Bilyet Deposito' || val === 'Dan Lain-Lain' || val === 'Dan Lain-lain' || (val && val.toLowerCase().indexOf('lain') !== -1)) {
         setField(wrapAlamat, 'Bank Penerbit & Kantor Cabang', 'Contoh: Bank BPR SA / Bank Mandiri KC Bandung', false);
         setField(wrapNomor, 'Nomor Bilyet Deposito & No. Rekening', 'No. Seri Bilyet Deposito & No. Rekening', false);
         setField(wrapPemilik, 'Nama Pemilik Rekening Bilyet', 'Sesuai nama di Bilyet Deposito / KTP', false);

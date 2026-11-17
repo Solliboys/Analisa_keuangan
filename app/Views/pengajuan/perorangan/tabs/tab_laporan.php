@@ -62,7 +62,7 @@ if (!empty($agunan) && is_array($agunan)) {
         $mv = (float)($ag['nilai_pasar_mv'] ?? 0);
         if ($mv <= 0) continue;
 
-        if (strpos($jenisAg, 'deposito') !== false) {
+        if (strpos($jenisAg, 'deposito') !== false || strpos($jenisAg, 'lain') !== false) {
             $depositoAgunan += $mv;
         } elseif (strpos($jenisAg, 'mobil') !== false || strpos($jenisAg, 'motor') !== false || strpos($jenisAg, 'kendaraan') !== false || strpos($jenisAg, 'bpkb') !== false) {
             $kendaraanPribadi += $mv;

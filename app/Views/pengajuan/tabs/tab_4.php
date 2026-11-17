@@ -31,7 +31,7 @@ if (!function_exists('getAgunanFieldConfig')) {
                 'lbl_mv'         => 'Nilai Pasar Kendaraan / MV (Rp)',
                 'default_lv_pct' => 50,
             ];
-        } elseif ($jenis === 'Bilyet Deposito') {
+        } elseif ($jenis === 'Bilyet Deposito' || in_array($jenis, ['Dan Lain-Lain', 'Dan Lain-lain', 'Lain-lain', 'Lainnya'])) {
             return [
                 'is_kendaraan'   => false,
                 'is_deposito'    => true,
@@ -163,7 +163,8 @@ if (!function_exists('getAgunanFieldConfig')) {
                             <option value="SHGB">SHGB (Hak Guna Bangunan)</option>
                             <option value="SHM Sarusun">SHM Sarusun (Apartemen)</option>
                             <option value="BPKB Mobil">BPKB Kendaraan Roda 4</option>
-                            <option value="Bilyet Deposito">Bilyet Deposito</option>
+                            <option value="Bilyet Deposito">Bilyet Deposito</option>
+                            <option value="Dan Lain-Lain">Dan Lain-Lain</option>
                         </select>
                     </div>
 
@@ -319,7 +320,8 @@ if (!function_exists('getAgunanFieldConfig')) {
                                 <option value="SHGB" <?= $ja === 'SHGB' ? 'selected' : '' ?>>SHGB (Hak Guna Bangunan)</option>
                                 <option value="SHM Sarusun" <?= $ja === 'SHM Sarusun' ? 'selected' : '' ?>>SHM Sarusun (Apartemen)</option>
                                 <option value="BPKB Mobil" <?= $ja === 'BPKB Mobil' ? 'selected' : '' ?>>BPKB Kendaraan Roda 4</option>
-                                <option value="Bilyet Deposito" <?= $ja === 'Bilyet Deposito' ? 'selected' : '' ?>>Bilyet Deposito</option>
+                                <option value="Bilyet Deposito" <?= $ja === 'Bilyet Deposito' ? 'selected' : '' ?>>Bilyet Deposito</option>
+                                <option value="Dan Lain-Lain" <?= in_array($ja, ['Dan Lain-Lain', 'Dan Lain-lain', 'Lain-lain', 'Lainnya']) ? 'selected' : '' ?>>Dan Lain-Lain</option>
                             </select>
                         </div>
 

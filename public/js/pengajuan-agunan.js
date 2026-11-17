@@ -44,7 +44,7 @@ function sesuaikanFormAgunan(item) {
             inputLvPct.value = '50';
             if (typeof hitungCoverageAgunan === 'function') hitungCoverageAgunan();
         }
-    } else if (val === 'Bilyet Deposito' || val.indexOf('Deposito') !== -1) {
+    } else if (val === 'Bilyet Deposito' || val.indexOf('Deposito') !== -1 || val === 'Dan Lain-Lain' || val === 'Dan Lain-lain' || (val && val.toLowerCase().indexOf('lain') !== -1)) {
         // HIDE Luas Tanah, Luas Bangunan, Status IMB
         setField(wrapImb, '', '', true);
         setField(wrapTanah, '', '', true);
