@@ -2829,6 +2829,14 @@ async function simpanForm(isComplete = false, showNotification = true) {
         if (document.getElementById('nama_debitur_tab2')) document.getElementById('nama_debitur_tab2').value = resolvedNama;
     }
 
+    // Pastikan alamat domisili tersinkron jika mode alamat berbeda tidak aktif
+    const chkDomBeda = document.getElementById('domisili_beda_ktp');
+    const txtDom = document.getElementById('alamat_domisili');
+    const txtKtp = document.getElementById('alamat_ktp');
+    if (chkDomBeda && !chkDomBeda.checked && txtDom && txtKtp) {
+        txtDom.value = txtKtp.value;
+    }
+
     if (isComplete) {
         if (!resolvedNama) {
             showToast('Nama Debitur wajib diisi!', 'error');

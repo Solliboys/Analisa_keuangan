@@ -34,6 +34,10 @@
         // Deteksi jenis debitur
         $rawJd = $kredit['jenis_debitur'] ?? 'Individu';
         $isBadanUsaha = (stripos($rawJd, 'PT') !== false || stripos($rawJd, 'CV') !== false || stripos($rawJd, 'Badan') !== false);
+        
+        $valAlamatKtp = trim($kredit['alamat_ktp'] ?? '');
+        $valAlamatDomisili = trim($kredit['alamat_domisili'] ?? '');
+        $isDomisiliBeda = (!empty($valAlamatDomisili) && $valAlamatDomisili !== $valAlamatKtp);
         ?>
 
         <!-- Grid Form Fields 2 Kolom Simetris -->
@@ -89,25 +93,40 @@
             </div>
 
             <!-- Alamat KTP Lengkap -->
-            <div class="md:col-span-2">
+            <div>
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                     Alamat KTP Lengkap <span class="text-rose-500 font-extrabold">*</span>
                 </label>
-                <textarea name="alamat_ktp" rows="2" 
+                <textarea name="alamat_ktp" id="alamat_ktp" rows="2" 
                           placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota/Kab, Provinsi"
-                          class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"><?= esc($kredit['alamat_ktp'] ?? '') ?></textarea>
+                          class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"
+                          oninput="syncAlamatKtpKeDomisili(this.value)"><?= esc($valAlamatKtp) ?></textarea>
             </div>
 
             <!-- Alamat Domisili Sekarang -->
             <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    Alamat Domisili Sekarang
-                </label>
-                <textarea name="alamat_domisili" rows="2" 
-                          placeholder="Kosongkan jika sama dengan alamat KTP"
-                          class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"><?= esc($kredit['alamat_domisili'] ?? '') ?></textarea>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        Alamat Domisili Sekarang
+                    </label>
+                    <label class="inline-flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer select-none bg-blue-50/80 hover:bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg border border-blue-200 transition shadow-2xs">
+                        <input type="checkbox" id="domisili_beda_ktp" onchange="toggleDomisiliBeda(this)" <?= $isDomisiliBeda ? 'checked' : '' ?> class="rounded border-blue-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer">
+                        <span>Alamat Berbeda</span>
+                    </label>
+                </div>
+                <textarea name="alamat_domisili" id="alamat_domisili" rows="2" 
+                          <?= !$isDomisiliBeda ? 'readonly' : '' ?>
+                          placeholder="<?= !$isDomisiliBeda ? 'Sama dengan alamat KTP' : 'Jalan, RT/RW, Kelurahan, Kecamatan, Kota/Kab, Provinsi' ?>"
+                          class="w-full text-sm font-semibold border rounded-xl px-3.5 py-2.5 transition shadow-2xs <?= !$isDomisiliBeda ? 'bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 select-none' : 'text-slate-800 border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100' ?>"><?= esc(!$isDomisiliBeda ? $valAlamatKtp : $valAlamatDomisili) ?></textarea>
+                <p id="helper_alamat_domisili" class="text-[11px] mt-1.5 flex items-center gap-1 <?= $isDomisiliBeda ? 'text-blue-600' : 'text-slate-500' ?>">
+                    <?php if ($isDomisiliBeda): ?>
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500"></span> Mode alamat berbeda aktif. Silakan isi alamat domisili sekarang.
+                    <?php else: ?>
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Sesuai KTP (Centang "Alamat Berbeda" jika tempat tinggal sekarang berbeda)
+                    <?php endif; ?>
+                </p>
             </div>
 
             <!-- Kepemilikan Rumah Domisili (Tampil untuk Perorangan & Badan Usaha) -->
@@ -327,6 +346,45 @@ function ubahJenisDebitur(val) {
     updateSemuaCardUsaha(isBadan);
 }
 
+// Fungsi sinkronisasi & toggle Alamat Domisili vs Alamat KTP
+function syncAlamatKtpKeDomisili(val) {
+    const chk = document.getElementById('domisili_beda_ktp');
+    const dom = document.getElementById('alamat_domisili');
+    if (!chk || !dom) return;
+    if (!chk.checked) {
+        dom.value = val;
+    }
+}
+
+function toggleDomisiliBeda(chk) {
+    const dom = document.getElementById('alamat_domisili');
+    const ktp = document.getElementById('alamat_ktp');
+    const helper = document.getElementById('helper_alamat_domisili');
+    if (!dom) return;
+
+    if (chk && chk.checked) {
+        dom.removeAttribute('readonly');
+        dom.className = "w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs cursor-text";
+        dom.placeholder = 'Jalan, RT/RW, Kelurahan, Kecamatan, Kota/Kab, Provinsi';
+        if (helper) {
+            helper.innerHTML = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500"></span> Mode alamat berbeda aktif. Silakan isi alamat domisili sekarang.';
+            helper.className = 'text-[11px] mt-1.5 flex items-center gap-1 text-blue-600 font-medium';
+        }
+        dom.focus();
+    } else {
+        dom.setAttribute('readonly', 'readonly');
+        dom.className = "w-full text-sm font-semibold border rounded-xl px-3.5 py-2.5 transition shadow-2xs bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200 select-none";
+        dom.placeholder = 'Sama dengan alamat KTP';
+        if (ktp) {
+            dom.value = ktp.value;
+        }
+        if (helper) {
+            helper.innerHTML = '<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Sesuai KTP (Centang "Alamat Berbeda" jika tempat tinggal sekarang berbeda)';
+            helper.className = 'text-[11px] mt-1.5 flex items-center gap-1 text-slate-500 font-medium';
+        }
+    }
+}
+
 // Inisialisasi event listener dan status awal
 document.addEventListener('DOMContentLoaded', () => {
     const jdVal = document.getElementById('jenis_debitur')?.value;
@@ -339,6 +397,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ju && bu1) {
         ju.addEventListener('input', () => { bu1.value = ju.value; });
         bu1.addEventListener('input', () => { ju.value = bu1.value; });
+    }
+
+    // Pastikan status toggle alamat domisili sesuai
+    const chkDom = document.getElementById('domisili_beda_ktp');
+    if (chkDom) {
+        toggleDomisiliBeda(chkDom);
     }
 });
 </script>
