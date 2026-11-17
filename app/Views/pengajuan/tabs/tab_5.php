@@ -130,11 +130,11 @@
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
 
-                                    <!-- Tombol Lihat File -->
-                                    <a href="<?= base_url($doc['path_file']) ?>" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-[11px] border border-blue-200 rounded-lg hover:bg-blue-50 transition shadow-2xs">
+                                    <!-- Tombol Lihat File (Popup Modal) -->
+                                    <button type="button" onclick="previewDokumenModal('<?= base_url($doc['path_file']) ?>', '<?= esc(addslashes($namaFileDisplay)) ?>', '<?= esc($rawKat) ?>')" class="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-[11px] border border-blue-200 rounded-lg hover:bg-blue-50 transition shadow-2xs cursor-pointer">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                         <span>Lihat File</span>
-                                    </a>
+                                    </button>
                                 </div>
                             </div>
 
@@ -344,11 +344,11 @@ async function uploadBerkasDokumenTab5(input) {
                             <button type="button" onclick="hapusDokumen(${data.dokumen_id})" class="inline-flex items-center justify-center p-1.5 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition shadow-2xs cursor-pointer" title="Hapus Berkas Dokumen">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
-                            <!-- Tombol Lihat File -->
-                            <a href="${data.path}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-[11px] border border-blue-200 rounded-lg hover:bg-blue-50 transition shadow-2xs">
+                            <!-- Tombol Lihat File (Popup Modal) -->
+                            <button type="button" onclick="previewDokumenModal('${data.path}', '${(data.nama_file || '').replace(/'/g, "\\'")}', '${kategoriLabel}')" class="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-[11px] border border-blue-200 rounded-lg hover:bg-blue-50 transition shadow-2xs cursor-pointer">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                 <span>Lihat File</span>
-                            </a>
+                            </button>
                         </div>
                     </div>
 
@@ -383,4 +383,98 @@ async function uploadBerkasDokumenTab5(input) {
         alert('Terjadi kesalahan saat upload dokumen');
     }
 }
+
+// Global Document Preview Modal Handlers
+function previewDokumenModal(url, fileName, category) {
+    const modal = document.getElementById('modalPreviewDokumenGlobal');
+    const titleEl = document.getElementById('previewGlobalTitle');
+    const subEl = document.getElementById('previewGlobalSub');
+    const badgeEl = document.getElementById('previewGlobalBadge');
+    const bodyEl = document.getElementById('previewGlobalBody');
+    const dlBtn = document.getElementById('previewGlobalDownloadBtn');
+    const newTabBtn = document.getElementById('previewGlobalOpenNewTabBtn');
+
+    if (!modal || !bodyEl) return;
+
+    if (titleEl) titleEl.textContent = fileName || 'Pratinjau Dokumen';
+    if (subEl) subEl.textContent = fileName || url;
+    if (badgeEl) badgeEl.textContent = category || 'DOKUMEN';
+    if (dlBtn) dlBtn.href = url;
+    if (newTabBtn) newTabBtn.href = url;
+
+    // Detect extension
+    const cleanUrl = (url || '').split('?')[0];
+    const ext = (cleanUrl.split('.').pop() || '').toLowerCase();
+
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) {
+        bodyEl.innerHTML = `<div class="p-2 flex items-center justify-center w-full h-full"><img src="${url}" alt="${fileName || 'Foto Bukti'}" class="max-h-[72vh] max-w-full object-contain rounded-lg shadow-sm"></div>`;
+    } else if (ext === 'pdf') {
+        bodyEl.innerHTML = `<iframe src="${url}#toolbar=1" class="w-full h-[72vh] border-0 rounded-lg"></iframe>`;
+    } else {
+        bodyEl.innerHTML = `<iframe src="${url}" class="w-full h-[72vh] border-0 rounded-lg"></iframe>`;
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+window.previewDokumenModal = previewDokumenModal;
+
+function tutupModalPreviewDokumen() {
+    const modal = document.getElementById('modalPreviewDokumenGlobal');
+    if (modal) {
+        modal.classList.add('hidden');
+        const bodyEl = document.getElementById('previewGlobalBody');
+        if (bodyEl) bodyEl.innerHTML = '';
+        document.body.style.overflow = '';
+    }
+}
+window.tutupModalPreviewDokumen = tutupModalPreviewDokumen;
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        tutupModalPreviewDokumen();
+    }
+});
 </script>
+
+<!-- Modal Preview Dokumen Terunggah (Pop-up In-App) -->
+<div id="modalPreviewDokumenGlobal" onclick="if(event.target === this) tutupModalPreviewDokumen()" class="fixed inset-0 z-[100] bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 hidden animate-in fade-in duration-150">
+    <div class="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full p-4 sm:p-5 shadow-2xl relative flex flex-col max-h-[92vh]">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+            <div class="min-w-0 pr-3">
+                <div class="flex items-center gap-2">
+                    <span id="previewGlobalBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase">DOKUMEN</span>
+                    <h3 class="text-sm sm:text-base font-bold text-slate-900 truncate" id="previewGlobalTitle">Pratinjau Berkas</h3>
+                </div>
+                <p class="text-xs text-slate-500 truncate mt-0.5" id="previewGlobalSub">-</p>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <a id="previewGlobalDownloadBtn" href="#" target="_blank" download class="inline-flex items-center gap-1 px-2.5 py-1 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 text-xs font-semibold rounded-lg transition" title="Unduh Berkas Asli">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span class="hidden sm:inline">Unduh</span>
+                </a>
+                <a id="previewGlobalOpenNewTabBtn" href="#" target="_blank" class="inline-flex items-center gap-1 px-2.5 py-1 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 text-xs font-semibold rounded-lg transition" title="Buka di Tab Baru jika diperlukan">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    <span class="hidden sm:inline">Tab Baru</span>
+                </a>
+                <button type="button" onclick="tutupModalPreviewDokumen()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Body Preview -->
+        <div class="flex-1 overflow-auto py-2 flex items-center justify-center min-h-[380px] bg-slate-50/70 rounded-xl mt-3 border border-slate-100" id="previewGlobalBody">
+            <!-- Dynamic content (img / iframe / message) -->
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100 shrink-0 mt-3 text-xs">
+            <span class="text-[11px] text-slate-400">Tekan tombol Esc atau klik Tutup untuk kembali ke formulir</span>
+            <button type="button" onclick="tutupModalPreviewDokumen()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>

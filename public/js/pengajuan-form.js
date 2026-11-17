@@ -2015,11 +2015,11 @@ function renderListBuktiPendapatanLain() {
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
 
-                                <!-- Tombol Lihat File -->
-                                <a href="${fullUrl}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-[11px] border border-blue-200 rounded-lg hover:bg-blue-50 transition shadow-2xs">
+                                <!-- Tombol Lihat File (Popup Modal) -->
+                                <button type="button" onclick="previewDokumenModal('${fullUrl}', '${(item.nama_file || '').replace(/'/g, "\\'")}', 'Bukti Pendapatan')" class="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-[11px] border border-blue-200 rounded-lg hover:bg-blue-50 transition shadow-2xs cursor-pointer">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     <span>Lihat File</span>
-                                </a>
+                                </button>
                             </div>
                         </div>
 
@@ -2151,6 +2151,201 @@ async function handlePilihBuktiLain(input) {
     }
 }
 window.handlePilihBuktiLain = handlePilihBuktiLain;
+
+// Handler Upload Bukti Kunjungan OTS (Tab 10 - Opini Pengusul)
+async function uploadBuktiOts(input) {
+    if (!input.files || input.files.length === 0) return;
+    const files = Array.from(input.files);
+
+    const kreditIdInput = document.getElementById('kredit_id');
+    let activeKreditId = kreditIdInput ? kreditIdInput.value : '';
+    if (!activeKreditId && typeof simpanForm === 'function') {
+        await simpanForm(false, false);
+        activeKreditId = kreditIdInput ? kreditIdInput.value : '';
+    }
+
+    if (!activeKreditId) {
+        alert('Harap simpan data pengajuan terlebih dahulu sebelum mengunggah bukti OTS.');
+        input.value = '';
+        return;
+    }
+
+    const btn = document.getElementById('btnUploadOts');
+    const originalBtnHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Mengunggah...</span>`;
+    }
+
+    let successCount = 0;
+    for (let file of files) {
+        if (file.size > 10 * 1024 * 1024) {
+            alert(`File "${file.name}" melebihi 10MB dan dilewati.`);
+            continue;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('kredit_id', activeKreditId);
+        formData.append('kategori', 'Foto Kunjungan OTS');
+        formData.append('catatan', 'Bukti Kunjungan Lapangan (OTS)');
+
+        try {
+            const res = await fetch(getBaseUrl() + '/pengajuan/upload-dokumen', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.status) {
+                successCount++;
+                const emptyEl = document.getElementById('emptyBuktiOts');
+                if (emptyEl) emptyEl.classList.add('hidden');
+
+                const list = document.getElementById('listBuktiOts');
+                if (list) {
+                    const ext = (data.nama_file.split('.').pop() || 'FILE').toUpperCase();
+                    const isImg = ['JPG', 'JPEG', 'PNG', 'WEBP'].includes(ext);
+                    const isBu = !!window.IS_BADAN_USAHA;
+                    const accentText = isBu ? 'text-indigo-600' : 'text-blue-600';
+                    const accentBg = isBu ? 'bg-indigo-50 border-indigo-100' : 'bg-blue-50 border-blue-100';
+                    const accentBtn = isBu ? 'text-indigo-600 hover:text-indigo-800 bg-indigo-50/60 hover:bg-indigo-100 border-indigo-200' : 'text-blue-600 hover:text-blue-800 bg-blue-50/60 hover:bg-blue-100 border-blue-200';
+
+                    const fileIcon = isImg ? `
+                        <svg class="w-3.5 h-3.5 ${accentText}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    ` : `
+                        <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    `;
+
+                    const itemHtml = `
+                        <div id="otsDocRow_${data.dokumen_id}" class="ots-doc-item flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition shadow-2xs text-xs">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-7 h-7 rounded-lg ${accentBg} flex items-center justify-center shrink-0 border">
+                                    ${fileIcon}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="font-bold text-slate-800 text-[11px] truncate max-w-[170px] sm:max-w-xs" title="${data.nama_file}">${data.nama_file}</p>
+                                    <span class="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/60">Terunggah &bull; ${data.ukuran_kb || '0'} KB</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button type="button" onclick="hapusBuktiOts(${data.dokumen_id})" class="inline-flex items-center justify-center p-1.5 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition cursor-pointer" title="Hapus Bukti OTS">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                                <button type="button" onclick="previewDokumenModal('${data.path}', '${(data.nama_file || '').replace(/'/g, "\\'")}', 'Bukti OTS')" class="inline-flex items-center gap-1 px-2.5 py-1 font-bold text-[11px] border rounded-lg transition ${accentBtn} cursor-pointer">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span>Lihat</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    list.insertAdjacentHTML('afterbegin', itemHtml);
+                }
+            }
+        } catch (e) {
+            console.error('Upload OTS error:', e);
+        }
+    }
+
+    if (successCount > 0 && typeof showToast === 'function') {
+        showToast(`${successCount} berkas bukti OTS berhasil diunggah`, 'success');
+    }
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
+    }
+    input.value = '';
+}
+window.uploadBuktiOts = uploadBuktiOts;
+
+// Handler Hapus Bukti OTS
+async function hapusBuktiOts(docId) {
+    let yakin = confirm('Apakah Anda yakin ingin menghapus berkas bukti OTS ini?');
+    if (!yakin) return;
+
+    try {
+        const res = await fetch(getBaseUrl() + '/pengajuan/hapus-dokumen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ dokumen_id: docId })
+        });
+        const data = await res.json();
+        if (data.status) {
+            const row = document.getElementById('otsDocRow_' + docId);
+            if (row) row.remove();
+            const tab5Row = document.getElementById('docRow_' + docId);
+            if (tab5Row) tab5Row.remove();
+
+            const list = document.getElementById('listBuktiOts');
+            if (list && list.querySelectorAll('.ots-doc-item').length === 0) {
+                const empty = document.getElementById('emptyBuktiOts');
+                if (empty) empty.classList.remove('hidden');
+            }
+
+            if (typeof showToast === 'function') {
+                showToast('Bukti OTS berhasil dihapus', 'info');
+            }
+        } else {
+            alert(data.message || 'Gagal menghapus berkas');
+        }
+    } catch (e) {
+        alert('Gagal menghubungi server untuk menghapus dokumen');
+    }
+}
+window.hapusBuktiOts = hapusBuktiOts;
+
+// ========================================================
+// Modal Preview Dokumen Terunggah (Pop-up In-App)
+// ========================================================
+function previewDokumenModal(url, fileName, category) {
+    const modal = document.getElementById('modalPreviewDokumenGlobal');
+    const titleEl = document.getElementById('previewGlobalTitle');
+    const subEl = document.getElementById('previewGlobalSub');
+    const badgeEl = document.getElementById('previewGlobalBadge');
+    const bodyEl = document.getElementById('previewGlobalBody');
+    const dlBtn = document.getElementById('previewGlobalDownloadBtn');
+    const newTabBtn = document.getElementById('previewGlobalOpenNewTabBtn');
+
+    if (!modal || !bodyEl) return;
+
+    if (titleEl) titleEl.textContent = fileName || 'Pratinjau Dokumen';
+    if (subEl) subEl.textContent = fileName || url;
+    if (badgeEl) badgeEl.textContent = category || 'DOKUMEN';
+    if (dlBtn) dlBtn.href = url;
+    if (newTabBtn) newTabBtn.href = url;
+
+    // Detect extension
+    const cleanUrl = (url || '').split('?')[0];
+    const ext = (cleanUrl.split('.').pop() || '').toLowerCase();
+
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) {
+        bodyEl.innerHTML = `<div class="p-2 flex items-center justify-center w-full h-full"><img src="${url}" alt="${fileName || 'Foto Bukti'}" class="max-h-[72vh] max-w-full object-contain rounded-lg shadow-sm"></div>`;
+    } else if (ext === 'pdf') {
+        bodyEl.innerHTML = `<iframe src="${url}#toolbar=1" class="w-full h-[72vh] border-0 rounded-lg"></iframe>`;
+    } else {
+        bodyEl.innerHTML = `<iframe src="${url}" class="w-full h-[72vh] border-0 rounded-lg"></iframe>`;
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+window.previewDokumenModal = previewDokumenModal;
+
+function tutupModalPreviewDokumen() {
+    const modal = document.getElementById('modalPreviewDokumenGlobal');
+    if (modal) {
+        modal.classList.add('hidden');
+        const bodyEl = document.getElementById('previewGlobalBody');
+        if (bodyEl) bodyEl.innerHTML = '';
+        document.body.style.overflow = '';
+    }
+}
+window.tutupModalPreviewDokumen = tutupModalPreviewDokumen;
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        tutupModalPreviewDokumen();
+    }
+});
 
 // Kalkulasi Rasio DSC
 function hitungRasioDSC() {
@@ -2480,10 +2675,10 @@ async function prosesUploadDokumen(input) {
                                 <button type="button" onclick="hapusDokumen(${data.dokumen_id})" class="inline-flex items-center justify-center p-2 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition shadow-2xs cursor-pointer" title="Hapus Berkas Dokumen">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
-                                <a href="${data.path}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-200 rounded-xl hover:bg-blue-50 transition shadow-2xs">
+                                <button type="button" onclick="previewDokumenModal('${data.path}', '${(data.nama_file || '').replace(/'/g, "\\'")}', '${kategoriLabel}')" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-200 rounded-xl hover:bg-blue-50 transition shadow-2xs cursor-pointer">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     <span>Lihat File</span>
-                                </a>
+                                </button>
                             </div>
                         </div>
                     `;
