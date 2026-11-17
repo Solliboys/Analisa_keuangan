@@ -821,31 +821,36 @@ class GeminiAiService
      */
     public function ekstrakRekeningKoran(string $filePath, string $clientMime = ''): array
     {
-        if (!file_exists($filePath)) {
-            return [
-                'status'  => false,
-                'message' => 'Berkas rekening koran tidak ditemukan di server.'
-            ];
-        }
+        try {
+            if (!file_exists($filePath)) {
+                return [
+                    'status'  => false,
+                    'message' => 'Berkas rekening koran tidak ditemukan di server.'
+                ];
+            }
 
-        $settings = $this->getSettings();
-        $apiKey = $settings['api_key'] ?? (getenv('GEMINI_API_KEY') ?: '');
+            $settings = $this->getSettings();
+            $apiKey = $settings['api_key'] ?? (getenv('GEMINI_API_KEY') ?: '');
 
-        // Deteksi MIME type
-        $mimeType = $clientMime ?: (mime_content_type($filePath) ?: 'application/octet-stream');
-        if (preg_match('/\.pdf$/i', $filePath)) {
-            $mimeType = 'application/pdf';
-        } elseif (preg_match('/\.(jpg|jpeg)$/i', $filePath)) {
-            $mimeType = 'image/jpeg';
-        } elseif (preg_match('/\.png$/i', $filePath)) {
-            $mimeType = 'image/png';
-        } elseif (preg_match('/\.webp$/i', $filePath)) {
-            $mimeType = 'image/webp';
-        }
+            // Deteksi MIME type secara aman tanpa crash jika fileinfo tidak tersedia
+            $mimeType = 'application/octet-stream';
+            if (preg_match('/\.pdf$/i', $filePath)) {
+                $mimeType = 'application/pdf';
+            } elseif (preg_match('/\.(jpg|jpeg)$/i', $filePath)) {
+                $mimeType = 'image/jpeg';
+            } elseif (preg_match('/\.png$/i', $filePath)) {
+                $mimeType = 'image/png';
+            } elseif (preg_match('/\.webp$/i', $filePath)) {
+                $mimeType = 'image/webp';
+            } elseif (!empty($clientMime)) {
+                $mimeType = $clientMime;
+            } elseif (function_exists('mime_content_type')) {
+                $mimeType = @mime_content_type($filePath) ?: 'application/octet-stream';
+            }
 
-        $fileData = base64_encode(file_get_contents($filePath));
+            $fileData = base64_encode(file_get_contents($filePath));
 
-        $prompt = "Anda adalah Senior Bank Statement / Rekening Koran Parser dan Financial Analyst.
+            $prompt = "Anda adalah Senior Bank Statement / Rekening Koran Parser dan Financial Analyst.
 Tugas Anda adalah membaca dokumen mutasi bank / rekening koran ini dengan sangat teliti dan mengekstrak seluruh datanya ke format JSON berikut:
 {
   \"nama_bank\": \"...\",
@@ -876,103 +881,111 @@ PANDUAN EKSTRAKSI PENTING:
 5. Jika nomor rekening tidak tertulis, berikan string kosong.
 6. Kembalikan HANYA JSON murni tanpa markdown, tanpa ```json, tanpa penjelasan apapun.";
 
-        $candidateModels = [
-            'gemini-3.8-flash',
-            'gemini-3.6-flash',
-            'gemini-3.5-flash',
-            'gemini-3.1-flash-lite'
-        ];
+            $candidateModels = [
+                'gemini-3.8-flash',
+                'gemini-3.6-flash',
+                'gemini-3.5-flash',
+                'gemini-3.1-flash-lite'
+            ];
 
-        $payload = [
-            'contents' => [
-                [
-                    'parts' => [
-                        [
-                            'inline_data' => [
-                                'mime_type' => $mimeType,
-                                'data'      => $fileData
+            $payload = [
+                'contents' => [
+                    [
+                        'parts' => [
+                            [
+                                'inline_data' => [
+                                    'mime_type' => $mimeType,
+                                    'data'      => $fileData
+                                ]
+                            ],
+                            [
+                                'text' => $prompt
                             ]
-                        ],
-                        [
-                            'text' => $prompt
                         ]
                     ]
+                ],
+                'generationConfig' => [
+                    'temperature'      => 0.1,
+                    'responseMimeType' => 'application/json',
+                    'maxOutputTokens'  => 4000
                 ]
-            ],
-            'generationConfig' => [
-                'temperature'      => 0.1,
-                'responseMimeType' => 'application/json',
-                'maxOutputTokens'  => 4000
-            ]
-        ];
+            ];
 
-        $extractedData = null;
-        $usedModel = '';
+            $extractedData = null;
+            $usedModel = '';
 
-        if (!empty($apiKey)) {
-            foreach ($candidateModels as $mod) {
-                $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($mod) . ":generateContent?key=" . urlencode($apiKey);
-                $ch = curl_init($endpoint);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 35);
+            if (!empty($apiKey)) {
+                foreach ($candidateModels as $mod) {
+                    $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($mod) . ":generateContent?key=" . urlencode($apiKey);
+                    $ch = curl_init($endpoint);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 35);
 
-                $response  = curl_exec($ch);
-                $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
+                    $response  = curl_exec($ch);
+                    $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
 
-                if ($httpCode === 200 && !empty($response)) {
-                    $resArr = json_decode($response, true);
-                    $rawText = $resArr['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                    if (!empty($rawText)) {
-                        $cleanText = preg_replace('/^```(?:json)?\s*/i', '', trim($rawText));
-                        $cleanText = preg_replace('/\s*```$/i', '', $cleanText);
-                        $parsed = json_decode($cleanText, true);
-                        if (is_array($parsed) && (isset($parsed['total_mutasi_kredit']) || isset($parsed['transaksi']))) {
-                            $extractedData = $parsed;
-                            $usedModel = $mod;
-                            break;
+                    if ($httpCode === 200 && !empty($response)) {
+                        $resArr = json_decode($response, true);
+                        $rawText = $resArr['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                        if (!empty($rawText)) {
+                            $cleanText = preg_replace('/^```(?:json)?\s*/i', '', trim($rawText));
+                            $cleanText = preg_replace('/\s*```$/i', '', $cleanText);
+                            $parsed = json_decode($cleanText, true);
+                            if (is_array($parsed) && (isset($parsed['total_mutasi_kredit']) || isset($parsed['transaksi']))) {
+                                $extractedData = $parsed;
+                                $usedModel = $mod;
+                                break;
+                            }
                         }
                     }
                 }
             }
+
+            // Jika AI tidak berhasil atau API key kosong, jalankan fallback parser cerdas
+            if (!$extractedData) {
+                $extractedData = $this->fallbackParserRekening($filePath);
+            }
+
+            // Normalisasi dan hitung rata-rata
+            $totalKredit = (float)($extractedData['total_mutasi_kredit'] ?? 0);
+            $totalDebit  = (float)($extractedData['total_mutasi_debit'] ?? 0);
+            $jumlahBulan = max(1, (int)($extractedData['jumlah_bulan'] ?? 1));
+            $avgKredit   = round($totalKredit / $jumlahBulan);
+            $avgDebit    = round($totalDebit / $jumlahBulan);
+
+            return [
+                'status'  => true,
+                'message' => 'Ekstraksi rekening koran berhasil' . ($usedModel ? " (Gemini AI: $usedModel)" : ' (Parser Lokal)'),
+                'data'    => [
+                    'nama_bank'           => $extractedData['nama_bank'] ?? 'Bank Operasional Usaha',
+                    'nomor_rekening'      => $extractedData['nomor_rekening'] ?? '',
+                    'atas_nama'           => $extractedData['atas_nama'] ?? '',
+                    'periode'             => $extractedData['periode'] ?? date('F Y'),
+                    'jumlah_bulan'        => $jumlahBulan,
+                    'saldo_awal'          => (float)($extractedData['saldo_awal'] ?? 0),
+                    'total_mutasi_kredit' => $totalKredit,
+                    'total_mutasi_debit'  => $totalDebit,
+                    'saldo_akhir'         => (float)($extractedData['saldo_akhir'] ?? 0),
+                    'rata_rata_kredit'    => $avgKredit,
+                    'rata_rata_debit'     => $avgDebit,
+                    'transaksi'           => $extractedData['transaksi'] ?? []
+                ]
+            ];
+        } catch (\Throwable $e) {
+            $fallback = $this->fallbackParserRekening($filePath);
+            return [
+                'status'  => true,
+                'message' => 'Ekstraksi rekening koran selesai (Mode Parser Cadangan)',
+                'data'    => $fallback
+            ];
         }
-
-        // Jika AI tidak berhasil atau API key kosong, jalankan fallback parser cerdas
-        if (!$extractedData) {
-            $extractedData = $this->fallbackParserRekening($filePath);
-        }
-
-        // Normalisasi dan hitung rata-rata
-        $totalKredit = (float)($extractedData['total_mutasi_kredit'] ?? 0);
-        $totalDebit  = (float)($extractedData['total_mutasi_debit'] ?? 0);
-        $jumlahBulan = max(1, (int)($extractedData['jumlah_bulan'] ?? 1));
-        $avgKredit   = round($totalKredit / $jumlahBulan);
-        $avgDebit    = round($totalDebit / $jumlahBulan);
-
-        return [
-            'status'  => true,
-            'message' => 'Ekstraksi rekening koran berhasil' . ($usedModel ? " (Gemini AI: $usedModel)" : ' (Parser Lokal)'),
-            'data'    => [
-                'nama_bank'           => $extractedData['nama_bank'] ?? 'Bank Operasional Usaha',
-                'nomor_rekening'      => $extractedData['nomor_rekening'] ?? '',
-                'atas_nama'           => $extractedData['atas_nama'] ?? '',
-                'periode'             => $extractedData['periode'] ?? date('F Y'),
-                'jumlah_bulan'        => $jumlahBulan,
-                'saldo_awal'          => (float)($extractedData['saldo_awal'] ?? 0),
-                'total_mutasi_kredit' => $totalKredit,
-                'total_mutasi_debit'  => $totalDebit,
-                'saldo_akhir'         => (float)($extractedData['saldo_akhir'] ?? 0),
-                'rata_rata_kredit'    => $avgKredit,
-                'rata_rata_debit'     => $avgDebit,
-                'transaksi'           => $extractedData['transaksi'] ?? []
-            ]
-        ];
     }
 
     /**

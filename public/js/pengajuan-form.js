@@ -1545,7 +1545,21 @@ async function prosesOcrRekeningKoran() {
         });
 
         clearTimeout(timerStep);
-        const resJson = await response.json();
+
+        const resText = await response.text();
+        let resJson;
+        try {
+            resJson = JSON.parse(resText);
+        } catch (parseErr) {
+            console.error('Non-JSON response:', resText);
+            if (response.status === 413) {
+                throw new Error('Ukuran berkas terlalu besar. Maksimal 20MB.');
+            } else if (response.status === 401 || response.status === 403) {
+                throw new Error('Sesi Anda telah berakhir. Silakan login kembali.');
+            } else {
+                throw new Error('Server mengembalikan respon tidak valid (Status ' + response.status + '). Periksa kembali berkas yang diunggah.');
+            }
+        }
 
         if (resJson.status && resJson.data) {
             currentOcrRekeningData = resJson.data;
