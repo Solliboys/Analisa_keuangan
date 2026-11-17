@@ -303,8 +303,8 @@ function updateCardUsahaLabels(card, isBadan, num) {
             lblJabatan.innerText = 'Jabatan Pemohon di Usaha';
             inpJabatan.placeholder = 'Direktur / Komisaris / General Manager';
         } else {
-            lblJabatan.innerText = 'Jabatan / Status Pekerjaan';
-            inpJabatan.placeholder = 'Contoh: Karyawan Tetap / Manajer / Staf / Pemilik';
+            lblJabatan.innerText = 'Jabatan / Posisi';
+            inpJabatan.placeholder = 'Contoh: Manager / Staf / Admin / Direktur / Pemilik';
         }
     }
 

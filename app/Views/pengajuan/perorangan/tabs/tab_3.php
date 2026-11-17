@@ -7,6 +7,8 @@ if (empty($listUsaha)) {
     $listUsaha[] = [
         'is_utama'                 => 1,
         'nama_usaha'               => $kredit['nama_usaha'] ?? '',
+        'jenis_pekerjaan'          => $kredit['jenis_pekerjaan'] ?? 'Karyawan',
+        'status_pekerjaan'         => $kredit['status_pekerjaan'] ?? 'Pegawai Tetap',
         'bidang_usaha'             => $kredit['bidang_usaha'] ?? ($kredit['jenis_usaha'] ?? ''),
         'jabatan'                  => $kredit['jabatan'] ?? '',
         'lama_usaha'               => $kredit['lama_usaha'] ?? '',
@@ -81,33 +83,70 @@ if (empty($listUsaha)) {
                                    class="inp-nama-usaha w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
-                        <!-- 2. Bidang Pekerjaan / Usaha -->
+                        <!-- 2. Jenis Pekerjaan / Profesi (Dropdown) -->
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <span class="lbl-jenis-pekerjaan">Jenis Pekerjaan / Profesi</span>
+                                <span class="text-rose-500 font-extrabold">*</span>
+                            </label>
+                            <?php $jp = $u['jenis_pekerjaan'] ?? 'Karyawan'; ?>
+                            <select name="usaha[<?= $idx ?>][jenis_pekerjaan]" class="inp-jenis-pekerjaan w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs cursor-pointer" onchange="sesuaikanStatusPekerjaan(this)">
+                                <option value="Karyawan" <?= in_array($jp, ['Karyawan', 'Karyawan Swasta']) ? 'selected' : '' ?>>Karyawan</option>
+                                <option value="Pengusaha" <?= $jp === 'Pengusaha' ? 'selected' : '' ?>>Pengusaha</option>
+                                <option value="Wiraswasta" <?= $jp === 'Wiraswasta' ? 'selected' : '' ?>>Wiraswasta</option>
+                                <option value="Freelancer" <?= in_array($jp, ['Freelancer', 'Freelance']) ? 'selected' : '' ?>>Freelancer</option>
+                                <option value="PNS / ASN / BUMN" <?= in_array($jp, ['PNS / ASN / BUMN', 'PNS', 'BUMN']) ? 'selected' : '' ?>>PNS / ASN / BUMN</option>
+                                <option value="Profesional / Mandiri" <?= in_array($jp, ['Profesional / Mandiri', 'Profesional']) ? 'selected' : '' ?>>Profesional / Mandiri</option>
+                                <option value="Lainnya" <?= in_array($jp, ['Lainnya', 'Lain-Lain']) ? 'selected' : '' ?>>Lainnya</option>
+                            </select>
+                        </div>
+
+                        <!-- 3. Status Pekerjaan (Pegawai Tetap / Kontrak, dll) -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span class="lbl-status-pekerjaan">Status Pekerjaan</span>
+                                <span class="text-rose-500 font-extrabold">*</span>
+                            </label>
+                            <?php $sp = $u['status_pekerjaan'] ?? 'Pegawai Tetap'; ?>
+                            <select name="usaha[<?= $idx ?>][status_pekerjaan]" class="inp-status-pekerjaan w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs cursor-pointer">
+                                <option value="Pegawai Tetap" <?= in_array($sp, ['Pegawai Tetap', 'Karyawan Tetap', 'Tetap']) ? 'selected' : '' ?>>Pegawai Tetap</option>
+                                <option value="Pegawai Kontrak" <?= in_array($sp, ['Pegawai Kontrak', 'Karyawan Kontrak', 'Kontrak']) ? 'selected' : '' ?>>Pegawai Kontrak</option>
+                                <option value="Pegawai Harian / Outsource" <?= in_array($sp, ['Pegawai Harian / Outsource', 'Outsource', 'Harian']) ? 'selected' : '' ?>>Pegawai Harian / Outsource</option>
+                                <option value="Pemilik Usaha / Owner" <?= in_array($sp, ['Pemilik Usaha / Owner', 'Pemilik Usaha', 'Owner']) ? 'selected' : '' ?>>Pemilik Usaha / Owner</option>
+                                <option value="Freelance / Lepas" <?= in_array($sp, ['Freelance / Lepas', 'Freelance']) ? 'selected' : '' ?>>Freelance / Lepas</option>
+                                <option value="Lainnya" <?= in_array($sp, ['Lainnya', 'Lain-Lain']) ? 'selected' : '' ?>>Lainnya</option>
+                            </select>
+                        </div>
+
+                        <!-- 4. Jabatan / Posisi -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                <span class="lbl-jabatan">Jabatan / Posisi</span>
+                                <span class="text-rose-500 font-extrabold">*</span>
+                            </label>
+                            <input type="text" name="usaha[<?= $idx ?>][jabatan]" 
+                                   value="<?= esc($u['jabatan'] ?? '') ?>" 
+                                   placeholder="Contoh: Manager / Staf / Admin / Direktur / Pemilik"
+                                   class="inp-jabatan w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                        </div>
+
+                        <!-- 5. Bidang Pekerjaan / Usaha -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                                 <span class="lbl-bidang-usaha">Bidang Pekerjaan / Usaha</span>
                                 <span class="text-rose-500 font-extrabold">*</span>
                             </label>
                             <input type="text" name="usaha[<?= $idx ?>][bidang_usaha]" 
                                    value="<?= esc($u['bidang_usaha'] ?? '') ?>" 
-                                   placeholder="Contoh: Karyawan Swasta / PNS / BUMN / Jasa / Perdagangan"
+                                   placeholder="Contoh: Perbankan / Jasa / Perdagangan / F&B / Teknologi"
                                    class="inp-bidang-usaha w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
                         </div>
 
-                        <!-- 3. Jabatan / Status Pekerjaan -->
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                <span class="lbl-jabatan">Jabatan / Status Pekerjaan</span>
-                                <span class="text-rose-500 font-extrabold">*</span>
-                            </label>
-                            <input type="text" name="usaha[<?= $idx ?>][jabatan]" 
-                                   value="<?= esc($u['jabatan'] ?? '') ?>" 
-                                   placeholder="Contoh: Karyawan Tetap / Manajer / Staf / Pemilik"
-                                   class="inp-jabatan w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-                        </div>
-
-                        <!-- 4. Lama Bekerja / Masa Kerja -->
+                        <!-- 6. Lama Bekerja / Masa Kerja -->
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -197,31 +236,66 @@ if (empty($listUsaha)) {
                        class="inp-nama-usaha w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 
-            <!-- 2. Bidang Pekerjaan / Usaha -->
+            <!-- 2. Jenis Pekerjaan / Profesi (Dropdown) -->
             <div>
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <span class="lbl-jenis-pekerjaan">Jenis Pekerjaan / Profesi</span>
+                    <span class="text-rose-500 font-extrabold">*</span>
+                </label>
+                <select name="usaha[__INDEX__][jenis_pekerjaan]" class="inp-jenis-pekerjaan w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs cursor-pointer" onchange="sesuaikanStatusPekerjaan(this)">
+                    <option value="Karyawan" selected>Karyawan</option>
+                    <option value="Pengusaha">Pengusaha</option>
+                    <option value="Wiraswasta">Wiraswasta</option>
+                    <option value="Freelancer">Freelancer</option>
+                    <option value="PNS / ASN / BUMN">PNS / ASN / BUMN</option>
+                    <option value="Profesional / Mandiri">Profesional / Mandiri</option>
+                    <option value="Lainnya">Lainnya</option>
+                </select>
+            </div>
+
+            <!-- 3. Status Pekerjaan (Pegawai Tetap / Kontrak, dll) -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="lbl-status-pekerjaan">Status Pekerjaan</span>
+                    <span class="text-rose-500 font-extrabold">*</span>
+                </label>
+                <select name="usaha[__INDEX__][status_pekerjaan]" class="inp-status-pekerjaan w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs cursor-pointer">
+                    <option value="Pegawai Tetap" selected>Pegawai Tetap</option>
+                    <option value="Pegawai Kontrak">Pegawai Kontrak</option>
+                    <option value="Pegawai Harian / Outsource">Pegawai Harian / Outsource</option>
+                    <option value="Pemilik Usaha / Owner">Pemilik Usaha / Owner</option>
+                    <option value="Freelance / Lepas">Freelance / Lepas</option>
+                    <option value="Lainnya">Lainnya</option>
+                </select>
+            </div>
+
+            <!-- 4. Jabatan / Posisi -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <span class="lbl-jabatan">Jabatan / Posisi</span>
+                    <span class="text-rose-500 font-extrabold">*</span>
+                </label>
+                <input type="text" name="usaha[__INDEX__][jabatan]" 
+                       placeholder="Contoh: Manager / Staf / Admin / Direktur / Pemilik"
+                       class="inp-jabatan w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+            </div>
+
+            <!-- 5. Bidang Pekerjaan / Usaha -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     <span class="lbl-bidang-usaha">Bidang Pekerjaan / Usaha</span>
                     <span class="text-rose-500 font-extrabold">*</span>
                 </label>
                 <input type="text" name="usaha[__INDEX__][bidang_usaha]" 
-                       placeholder="Contoh: Karyawan Swasta / PNS / BUMN / Jasa / Perdagangan"
+                       placeholder="Contoh: Perbankan / Jasa / Perdagangan / F&B / Teknologi"
                        class="inp-bidang-usaha w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 
-            <!-- 3. Jabatan / Status Pekerjaan -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <span class="lbl-jabatan">Jabatan / Status Pekerjaan</span>
-                    <span class="text-rose-500 font-extrabold">*</span>
-                </label>
-                <input type="text" name="usaha[__INDEX__][jabatan]" 
-                       placeholder="Contoh: Karyawan Tetap / Manajer / Staf / Pemilik"
-                       class="inp-jabatan w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-            </div>
-
-            <!-- 4. Lama Bekerja / Masa Kerja -->
+            <!-- 6. Lama Bekerja / Masa Kerja -->
             <div>
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -271,3 +345,26 @@ if (empty($listUsaha)) {
         </div>
     </div>
 </template>
+
+<script>
+function sesuaikanStatusPekerjaan(sel) {
+    if (!sel) return;
+    const card = sel.closest('.card-usaha-item');
+    if (!card) return;
+    const statusSel = card.querySelector('.inp-status-pekerjaan');
+    if (!statusSel) return;
+
+    const val = sel.value;
+    if (val === 'Karyawan' || val.includes('PNS') || val.includes('BUMN')) {
+        if (statusSel.value === 'Pemilik Usaha / Owner' || statusSel.value === 'Freelance / Lepas') {
+            statusSel.value = 'Pegawai Tetap';
+        }
+    } else if (val === 'Pengusaha' || val === 'Wiraswasta') {
+        if (statusSel.value === 'Pegawai Tetap' || statusSel.value === 'Pegawai Kontrak' || statusSel.value === 'Pegawai Harian / Outsource') {
+            statusSel.value = 'Pemilik Usaha / Owner';
+        }
+    } else if (val === 'Freelancer') {
+        statusSel.value = 'Freelance / Lepas';
+    }
+}
+</script>

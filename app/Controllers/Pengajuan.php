@@ -388,6 +388,8 @@ class Pengajuan extends BaseController
         // Ambil data usaha pertama jika dikirim sebagai array dinamis usaha
         $firstUsaha = (!empty($input['usaha']) && is_array($input['usaha'])) ? ($input['usaha'][0] ?? []) : [];
         $valNamaUsaha = !empty($firstUsaha['nama_usaha']) ? $firstUsaha['nama_usaha'] : ($input['nama_usaha'] ?? '');
+        $valJenisPekerjaan = !empty($firstUsaha['jenis_pekerjaan']) ? $firstUsaha['jenis_pekerjaan'] : ($input['jenis_pekerjaan'] ?? '');
+        $valStatusPekerjaan = !empty($firstUsaha['status_pekerjaan']) ? $firstUsaha['status_pekerjaan'] : ($input['status_pekerjaan'] ?? '');
         $valBidangUsaha = !empty($firstUsaha['bidang_usaha']) ? $firstUsaha['bidang_usaha'] : ($input['bidang_usaha'] ?? ($input['jenis_usaha'] ?? ''));
         $valJabatan = !empty($firstUsaha['jabatan']) ? $firstUsaha['jabatan'] : ($input['jabatan'] ?? '');
         $valLamaUsaha = !empty($firstUsaha['lama_usaha']) ? $firstUsaha['lama_usaha'] : ($input['lama_usaha'] ?? '');
@@ -443,6 +445,7 @@ class Pengajuan extends BaseController
             'sk_perubahan'            => $input['sk_perubahan'] ?? '',
             'nama_usaha'              => $valNamaUsaha,
             'jabatan'                 => $valJabatan,
+            'status_pekerjaan'        => $valStatusPekerjaan,
             'lama_usaha'              => $valLamaUsaha,
             'alamat_usaha'            => $valAlamatUsaha,
             'npwp_usaha'              => $valNpwpUsaha,
@@ -629,6 +632,8 @@ class Pengajuan extends BaseController
                     'kredit_id'                => $kreditId,
                     'is_utama'                 => $isFirst ? 1 : 0,
                     'nama_usaha'               => $row['nama_usaha'] ?? '',
+                    'jenis_pekerjaan'          => $row['jenis_pekerjaan'] ?? '',
+                    'status_pekerjaan'         => $row['status_pekerjaan'] ?? '',
                     'bidang_usaha'             => $row['bidang_usaha'] ?? '',
                     'jabatan'                  => $row['jabatan'] ?? '',
                     'lama_usaha'               => $row['lama_usaha'] ?? '',
@@ -644,6 +649,8 @@ class Pengajuan extends BaseController
                 'kredit_id'                => $kreditId,
                 'is_utama'                 => 1,
                 'nama_usaha'               => $input['nama_usaha'] ?? '',
+                'jenis_pekerjaan'          => $input['jenis_pekerjaan'] ?? '',
+                'status_pekerjaan'         => $input['status_pekerjaan'] ?? '',
                 'bidang_usaha'             => $input['bidang_usaha'] ?? ($input['jenis_usaha'] ?? ''),
                 'jabatan'                  => $input['jabatan'] ?? '',
                 'lama_usaha'               => $input['lama_usaha'] ?? '',

@@ -46,6 +46,7 @@ class KreditModel extends Model
         'sk_perubahan',
         'nama_usaha',
         'jabatan',
+        'status_pekerjaan',
         'lama_usaha',
         'alamat_usaha',
         'npwp_usaha',

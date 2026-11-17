@@ -16,6 +16,8 @@ class KreditUsahaModel extends Model
         'kredit_id',
         'is_utama',
         'nama_usaha',
+        'jenis_pekerjaan',
+        'status_pekerjaan',
         'bidang_usaha',
         'jabatan',
         'lama_usaha',
