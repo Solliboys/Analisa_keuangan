@@ -237,19 +237,7 @@ $valNamaUsaha = $kredit['nama_usaha'] ?? ($kredit['nama_debitur'] ?? '');
                                    <?= $isFirst ? 'oninput="syncDirekturUtama(this.value)"' : '' ?>>
                         </div>
 
-                        <!-- 2. Jabatan di Perusahaan -->
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                Jabatan di Perusahaan <span class="text-rose-500 font-extrabold">*</span>
-                            </label>
-                            <input type="text" name="karyawan[<?= $idx ?>][jabatan]" 
-                                   value="<?= esc($k['jabatan'] ?? ($isFirst ? 'Direktur Utama' : '')) ?>" 
-                                   placeholder="Contoh: Direktur Utama / Komisaris / Manajer Keuangan / Staff"
-                                   class="inp-karyawan-jabatan w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition shadow-2xs">
-                        </div>
-
-                        <!-- 3. NIK KTP (16 Digit) -->
+                        <!-- 2. NIK KTP (16 Digit) di Samping Nama -->
                         <div>
                             <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
@@ -260,6 +248,18 @@ $valNamaUsaha = $kredit['nama_usaha'] ?? ($kredit['nama_debitur'] ?? '');
                                    placeholder="Contoh: 3578012345670001" maxlength="16"
                                    class="inp-karyawan-nik w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition shadow-2xs"
                                    <?= $isFirst ? 'id="npwp_pribadi"' : '' ?>>
+                        </div>
+
+                        <!-- 3. Jabatan di Perusahaan -->
+                        <div>
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                Jabatan di Perusahaan <span class="text-rose-500 font-extrabold">*</span>
+                            </label>
+                            <input type="text" name="karyawan[<?= $idx ?>][jabatan]" 
+                                   value="<?= esc($k['jabatan'] ?? ($isFirst ? 'Direktur Utama' : '')) ?>" 
+                                   placeholder="Contoh: Direktur Utama / Komisaris / Manajer Keuangan / Staff"
+                                   class="inp-karyawan-jabatan w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition shadow-2xs">
                         </div>
 
                         <!-- 4. Nomor HP / WhatsApp Aktif -->
@@ -339,6 +339,7 @@ $valNamaUsaha = $kredit['nama_usaha'] ?? ($kredit['nama_debitur'] ?? '');
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- 1. Nama Lengkap Sesuai KTP -->
             <div>
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
@@ -349,16 +350,7 @@ $valNamaUsaha = $kredit['nama_usaha'] ?? ($kredit['nama_debitur'] ?? '');
                        class="inp-karyawan-nama w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition shadow-2xs">
             </div>
 
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    Jabatan di Perusahaan <span class="text-rose-500 font-extrabold">*</span>
-                </label>
-                <input type="text" name="karyawan[__INDEX__][jabatan]" 
-                       placeholder="Contoh: Direktur Operasional / Komisaris / Manajer Keuangan / Staff"
-                       class="inp-karyawan-jabatan w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition shadow-2xs">
-            </div>
-
+            <!-- 2. NIK KTP (16 Digit) di Samping Nama -->
             <div>
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
@@ -369,6 +361,18 @@ $valNamaUsaha = $kredit['nama_usaha'] ?? ($kredit['nama_debitur'] ?? '');
                        class="inp-karyawan-nik w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition shadow-2xs">
             </div>
 
+            <!-- 3. Jabatan di Perusahaan -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    Jabatan di Perusahaan <span class="text-rose-500 font-extrabold">*</span>
+                </label>
+                <input type="text" name="karyawan[__INDEX__][jabatan]" 
+                       placeholder="Contoh: Direktur Operasional / Komisaris / Manajer Keuangan / Staff"
+                       class="inp-karyawan-jabatan w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition shadow-2xs">
+            </div>
+
+            <!-- 4. Nomor HP / WhatsApp Aktif -->
             <div>
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
