@@ -140,7 +140,8 @@ $listJaminan = $refByJenis['kre_jaminan'] ?? [];
                                         Plafond Pengajuan (Rp) <span class="text-rose-500 font-extrabold">*</span>
                                     </label>
                                     <input type="text" name="plafon_pengajuan" id="plafon_pengajuan" 
-                                           value="<?= number_format((float)($kredit['plafon_pengajuan'] ?? 200000000), 0, ',', '.') ?>" 
+                                           value="<?= !empty($kredit['plafon_pengajuan']) ? number_format((float)$kredit['plafon_pengajuan'], 0, ',', '.') : '' ?>" 
+                                           placeholder="0" 
                                            class="w-full text-sm font-bold text-slate-900 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs text-right sm:text-left rupiah-input"
                                            oninput="formatRupiah(this); hitungKalkulasiAngsuran(); hitungCoverageAgunan(); hitungDisbursement();">
                                 </div>
@@ -246,7 +247,7 @@ $listJaminan = $refByJenis['kre_jaminan'] ?? [];
                                         <option value="EFEKTIF" <?= $pb === 'EFEKTIF' ? 'selected' : '' ?>>EFEKTIF</option>
                                         <option value="ANUITAS" <?= ($pb === 'ANUITAS' || empty($pb)) ? 'selected' : '' ?>>ANUITAS</option>
                                     </select>
-                                    <input type="hidden" name="bunga_per_bulan" id="bunga_per_bulan" value="<?= esc($kredit['bunga_per_bulan'] ?? 3) ?>">
+                                    <input type="hidden" name="bunga_per_bulan" id="bunga_per_bulan" value="<?= (isset($kredit['bunga_per_bulan']) && $kredit['bunga_per_bulan'] !== '' && $kredit['bunga_per_bulan'] !== null) ? esc($kredit['bunga_per_bulan']) : '' ?>">
                                 </div>
 
                                 <!-- Bunga per Tahun (%) -->
@@ -256,7 +257,8 @@ $listJaminan = $refByJenis['kre_jaminan'] ?? [];
                                         Suku Bunga per Tahun (%)
                                     </label>
                                     <input type="number" step="0.01" name="bunga_per_tahun" id="bunga_per_tahun" 
-                                           value="<?= esc($kredit['bunga_per_tahun'] ?? 36.0) ?>" 
+                                           value="<?= (isset($kredit['bunga_per_tahun']) && $kredit['bunga_per_tahun'] !== '' && $kredit['bunga_per_tahun'] !== null) ? esc($kredit['bunga_per_tahun']) : '' ?>" 
+                                           placeholder="0" 
                                            class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"
                                            oninput="syncBunga('tahun'); hitungKalkulasiAngsuran();">
                                 </div>
