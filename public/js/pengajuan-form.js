@@ -1414,6 +1414,375 @@ function tambahBarisRekening() {
     container.insertAdjacentHTML('beforeend', html);
 }
 
+// ==========================================
+// FITUR EKSTRAKSI AI REKENING KORAN (OCR)
+// ==========================================
+let currentOcrRekeningData = null;
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function bukaModalUploadOcrRekening() {
+    const modal = document.getElementById('modalUploadOcrRekening');
+    if (!modal) return;
+    
+    // Reset file input jika belum ada hasil ekstraksi
+    if (!currentOcrRekeningData) {
+        const fileInput = document.getElementById('inputOcrRekeningFile');
+        if (fileInput) fileInput.value = '';
+        const labelName = document.getElementById('labelOcrFileName');
+        if (labelName) labelName.innerText = 'Klik untuk pilih berkas rekening koran atau seret berkas ke sini';
+        const labelInfo = document.getElementById('labelOcrFileInfo');
+        if (labelInfo) labelInfo.innerText = 'Mendukung format PDF e-Statement, JPG, PNG, atau WebP (Maksimal 20MB)';
+        
+        document.getElementById('ocrDropzoneWrapper')?.classList.remove('hidden');
+        document.getElementById('ocrLoadingState')?.classList.add('hidden');
+        document.getElementById('ocrResultContainer')?.classList.add('hidden');
+        document.getElementById('btnTerapkanOcr')?.classList.add('hidden');
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function tutupModalUploadOcrRekening() {
+    const modal = document.getElementById('modalUploadOcrRekening');
+    if (modal) modal.classList.add('hidden');
+}
+
+function handleOcrFileSelected(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const sizeKb = (file.size / 1024).toFixed(1);
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+        const sizeStr = file.size > 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+
+        const labelName = document.getElementById('labelOcrFileName');
+        if (labelName) labelName.innerHTML = `<span class="text-indigo-600 font-extrabold">${file.name}</span> (${sizeStr})`;
+
+        const labelInfo = document.getElementById('labelOcrFileInfo');
+        if (labelInfo) labelInfo.innerText = 'Berkas siap diekstrak oleh Gemini AI. Klik tombol "Mulai Ekstraksi AI" di bawah.';
+
+        const dropzone = document.getElementById('dropzoneRekening');
+        if (dropzone) {
+            dropzone.classList.remove('border-slate-300');
+            dropzone.classList.add('border-indigo-500', 'bg-indigo-50/30');
+        }
+    }
+}
+
+async function prosesOcrRekeningKoran() {
+    const fileInput = document.getElementById('inputOcrRekeningFile');
+    const file = fileInput?.files?.[0];
+
+    if (!file) {
+        if (typeof showToast === 'function') {
+            showToast('Silakan pilih berkas rekening koran (PDF / Gambar) terlebih dahulu!', 'warning');
+        } else if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'warning', title: 'Pilih Berkas', text: 'Silakan pilih berkas mutasi bank terlebih dahulu.' });
+        }
+        return;
+    }
+
+    // Tampilkan Loading State
+    const dropzoneWrap = document.getElementById('ocrDropzoneWrapper');
+    const optionsSec   = document.getElementById('ocrOptionsSection');
+    const loadingState = document.getElementById('ocrLoadingState');
+    const resultCont   = document.getElementById('ocrResultContainer');
+    const btnTerapkan  = document.getElementById('btnTerapkanOcr');
+
+    dropzoneWrap?.classList.add('hidden');
+    optionsSec?.classList.add('hidden');
+    resultCont?.classList.add('hidden');
+    btnTerapkan?.classList.add('hidden');
+    loadingState?.classList.remove('hidden');
+
+    const loadingTitle = document.getElementById('ocrLoadingTitle');
+    const loadingSub   = document.getElementById('ocrLoadingSub');
+    if (loadingTitle) loadingTitle.innerText = 'Mengunggah & Membaca Berkas...';
+    if (loadingSub) loadingSub.innerText = 'Menyiapkan dokumen rekening koran untuk dianalisis oleh Gemini AI...';
+
+    const kid = document.getElementById('kredit_id')?.value || (window.KREDIT_ID_VAL || '');
+    const baseUrl = (typeof getBaseUrl === 'function') ? getBaseUrl() : (window.BASE_URL || '');
+
+    const formData = new FormData();
+    formData.append('file_rekening', file);
+    if (kid) formData.append('kredit_id', kid);
+
+    // Animasi teks langkah
+    const timerStep = setTimeout(() => {
+        if (loadingTitle) loadingTitle.innerText = 'Gemini AI Menganalisis Mutasi Transaksi...';
+        if (loadingSub) loadingSub.innerText = 'Mendeteksi arus kas masuk (kredit), arus kas keluar (debit), serta saldo...';
+    }, 2500);
+
+    try {
+        const response = await fetch(baseUrl + '/pengajuan/upload-ocr-rekening', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        });
+
+        clearTimeout(timerStep);
+
+        const resText = await response.text();
+        let resJson;
+        try {
+            resJson = JSON.parse(resText);
+        } catch (parseErr) {
+            console.error('Non-JSON response:', resText);
+            if (response.status === 413) {
+                throw new Error('Ukuran berkas terlalu besar. Maksimal 20MB.');
+            } else if (response.status === 401 || response.status === 403) {
+                throw new Error('Sesi Anda telah berakhir. Silakan login kembali.');
+            } else {
+                throw new Error('Server mengembalikan respon tidak valid (Status ' + response.status + '). Periksa kembali berkas yang diunggah.');
+            }
+        }
+
+        if (resJson.status && resJson.data) {
+            currentOcrRekeningData = resJson.data;
+            const d = resJson.data;
+
+            // Isi kartu hasil ekstraksi
+            const badgeBank = document.getElementById('badgeOcrBank');
+            if (badgeBank) badgeBank.innerText = d.nama_bank || 'Bank Operasional Usaha';
+
+            const resNama = document.getElementById('resOcrAtasNama');
+            if (resNama) resNama.innerText = d.atas_nama || '-';
+
+            const resPeriode = document.getElementById('resOcrPeriode');
+            if (resPeriode) resPeriode.innerText = d.periode || '-';
+
+            const resNoRek = document.getElementById('resOcrNoRek');
+            if (resNoRek) resNoRek.innerText = d.nomor_rekening || '-';
+
+            const resBulan = document.getElementById('resOcrBulan');
+            if (resBulan) resBulan.innerText = (d.jumlah_bulan || 1) + ' Bulan';
+
+            const resSaldoAwal = document.getElementById('resOcrSaldoAwal');
+            if (resSaldoAwal) resSaldoAwal.innerText = formatRupiahString(d.saldo_awal || 0);
+
+            const resTotalKredit = document.getElementById('resOcrTotalKredit');
+            if (resTotalKredit) resTotalKredit.innerText = formatRupiahString(d.total_mutasi_kredit || 0);
+
+            const resTotalDebit = document.getElementById('resOcrTotalDebit');
+            if (resTotalDebit) resTotalDebit.innerText = formatRupiahString(d.total_mutasi_debit || 0);
+
+            const resSaldoAkhir = document.getElementById('resOcrSaldoAkhir');
+            if (resSaldoAkhir) resSaldoAkhir.innerText = formatRupiahString(d.saldo_akhir || 0);
+
+            const resAvgKredit = document.getElementById('resOcrAvgKredit');
+            if (resAvgKredit) resAvgKredit.innerText = formatRupiahString(d.rata_rata_kredit || 0);
+
+            // Render daftar rincian mutasi transaksi
+            const tbody = document.getElementById('tbodyOcrTransaksi');
+            const countTrans = document.getElementById('countOcrTransaksi');
+            const transList = Array.isArray(d.transaksi) ? d.transaksi : [];
+            if (countTrans) countTrans.innerText = transList.length;
+
+            if (tbody) {
+                if (transList.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400">Rincian mutasi transaksi tidak tersedia atau dokumen hanya memuat ringkasan saldo.</td></tr>`;
+                } else {
+                    let rowsHtml = '';
+                    transList.forEach(item => {
+                        const kVal = parseFloat(item.kredit) || 0;
+                        const dVal = parseFloat(item.debit) || 0;
+                        const sVal = parseFloat(item.saldo) || 0;
+
+                        const kText = kVal > 0 ? `<span class="font-bold text-emerald-600">${formatRupiahString(kVal)}</span>` : '-';
+                        const dText = dVal > 0 ? `<span class="font-bold text-rose-600">${formatRupiahString(dVal)}</span>` : '-';
+                        const sText = `<span class="font-semibold text-slate-700">${formatRupiahString(sVal)}</span>`;
+
+                        rowsHtml += `
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="py-1.5 px-2.5 font-mono text-[10px] text-slate-500 whitespace-nowrap">${escapeHtml(item.tanggal || '-')}</td>
+                                <td class="py-1.5 px-2.5 text-slate-700 font-medium">${escapeHtml(item.keterangan || '-')}</td>
+                                <td class="py-1.5 px-2.5 text-right whitespace-nowrap">${kText}</td>
+                                <td class="py-1.5 px-2.5 text-right whitespace-nowrap">${dText}</td>
+                                <td class="py-1.5 px-2.5 text-right whitespace-nowrap">${sText}</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = rowsHtml;
+                }
+            }
+
+            loadingState?.classList.add('hidden');
+            dropzoneWrap?.classList.remove('hidden');
+            optionsSec?.classList.remove('hidden');
+            resultCont?.classList.remove('hidden');
+            btnTerapkan?.classList.remove('hidden');
+
+            if (typeof showToast === 'function') {
+                showToast(resJson.message || 'Ekstraksi rekening koran berhasil!', 'success');
+            } else if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: resJson.message || 'Ekstraksi rekening koran berhasil!',
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            }
+        } else {
+            throw new Error(resJson.message || 'Gagal mengekstrak dokumen rekening koran.');
+        }
+    } catch (err) {
+        clearTimeout(timerStep);
+        loadingState?.classList.add('hidden');
+        dropzoneWrap?.classList.remove('hidden');
+        optionsSec?.classList.remove('hidden');
+
+        console.error('OCR Error:', err);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Ekstraksi Gagal',
+                text: err.message || 'Terjadi kesalahan saat memproses berkas rekening koran.'
+            });
+        } else if (typeof showToast === 'function') {
+            showToast(err.message || 'Gagal mengekstrak berkas rekening koran', 'error');
+        }
+    }
+}
+
+function toggleOcrTransaksiTable() {
+    const wrap = document.getElementById('wrapperOcrTransaksiTable');
+    const arrow = document.getElementById('arrowOcrTransaksi');
+    if (wrap) {
+        const isHidden = wrap.classList.contains('hidden');
+        if (isHidden) {
+            wrap.classList.remove('hidden');
+            if (arrow) arrow.innerHTML = '&uarr;';
+        } else {
+            wrap.classList.add('hidden');
+            if (arrow) arrow.innerHTML = '&darr;';
+        }
+    }
+}
+
+function terapkanHasilOcrKeFormulir() {
+    if (!currentOcrRekeningData) {
+        if (typeof showToast === 'function') showToast('Belum ada data ekstraksi untuk diterapkan', 'warning');
+        return;
+    }
+
+    const d = currentOcrRekeningData;
+    const targetSelect = document.getElementById('selectTargetRekeningRow')?.value || 'auto';
+    const container = document.getElementById('containerRekening');
+    let items = container.querySelectorAll('.rekening-item');
+
+    let targetItem = null;
+
+    if (targetSelect === 'new') {
+        tambahBarisRekening();
+        items = container.querySelectorAll('.rekening-item');
+        targetItem = items[items.length - 1];
+    } else if (targetSelect === '0') {
+        if (items.length === 0) {
+            tambahBarisRekening();
+            items = container.querySelectorAll('.rekening-item');
+        }
+        targetItem = items[0];
+    } else {
+        // Auto: jika item 0 masih kosong, pakai item 0. Jika sudah ada isinya, tambah baru.
+        if (items.length === 0) {
+            tambahBarisRekening();
+            items = container.querySelectorAll('.rekening-item');
+            targetItem = items[0];
+        } else {
+            const firstBank = items[0].querySelector('input[name*="[nama_bank]"]')?.value?.trim();
+            const firstKredit = items[0].querySelector('input[name*="[total_mutasi_kredit]"]')?.value?.trim();
+            if (!firstBank && (!firstKredit || firstKredit === '0')) {
+                targetItem = items[0];
+            } else {
+                tambahBarisRekening();
+                items = container.querySelectorAll('.rekening-item');
+                targetItem = items[items.length - 1];
+            }
+        }
+    }
+
+    if (targetItem) {
+        const inputBank    = targetItem.querySelector('input[name*="[nama_bank]"]');
+        const inputPeriode = targetItem.querySelector('input[name*="[periode]"]');
+        const inputNoRek   = targetItem.querySelector('input[name*="[nomor_rekening]"]');
+        const inputNama    = targetItem.querySelector('input[name*="[atas_nama]"]');
+        const inputAwal    = targetItem.querySelector('input[name*="[saldo_awal]"]');
+        const inputKredit  = targetItem.querySelector('input[name*="[total_mutasi_kredit]"]');
+        const inputDebit   = targetItem.querySelector('input[name*="[total_mutasi_debit]"]');
+        const inputBulan   = targetItem.querySelector('input[name*="[jumlah_bulan]"]');
+
+        if (inputBank && d.nama_bank) inputBank.value = d.nama_bank;
+        if (inputPeriode && d.periode) inputPeriode.value = d.periode;
+        if (inputNoRek && d.nomor_rekening) inputNoRek.value = d.nomor_rekening;
+        if (inputNama && d.atas_nama) inputNama.value = d.atas_nama;
+
+        if (inputAwal) {
+            const saldoAwalNum = parseFloat(d.saldo_awal) || 0;
+            inputAwal.value = saldoAwalNum > 0 ? formatRupiahString(saldoAwalNum).replace(/^Rp\s*/, '') : '0';
+        }
+
+        if (inputKredit) {
+            const kreditNum = parseFloat(d.total_mutasi_kredit) || 0;
+            inputKredit.value = formatRupiahString(kreditNum).replace(/^Rp\s*/, '');
+        }
+
+        if (inputDebit) {
+            const debitNum = parseFloat(d.total_mutasi_debit) || 0;
+            inputDebit.value = formatRupiahString(debitNum).replace(/^Rp\s*/, '');
+        }
+
+        if (inputBulan) {
+            inputBulan.value = Math.max(1, parseInt(d.jumlah_bulan) || 1);
+        }
+
+        // Jalankan kalkulasi rata-rata
+        hitungRataRataRekening();
+
+        // Berikan highlight visual pada item yang baru diisi
+        targetItem.classList.add('ring-2', 'ring-indigo-400', 'bg-indigo-50/20');
+        setTimeout(() => {
+            targetItem.classList.remove('ring-2', 'ring-indigo-400', 'bg-indigo-50/20');
+        }, 3000);
+
+        // Tutup modal
+        tutupModalUploadOcrRekening();
+
+        // Notifikasi berhasil
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'success',
+                title: 'Data Diterapkan!',
+                text: 'Data mutasi rekening koran berhasil dimasukkan ke formulir dan omzet telah dihitung.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        } else if (typeof showToast === 'function') {
+            showToast('Data rekening koran berhasil diterapkan ke formulir!', 'success');
+        }
+
+        // Scroll halus ke formulir
+        targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// Expose fungsi ke window agar dapat dipanggil dari inline HTML
+window.bukaModalUploadOcrRekening = bukaModalUploadOcrRekening;
+window.tutupModalUploadOcrRekening = tutupModalUploadOcrRekening;
+window.handleOcrFileSelected = handleOcrFileSelected;
+window.prosesOcrRekeningKoran = prosesOcrRekeningKoran;
+window.toggleOcrTransaksiTable = toggleOcrTransaksiTable;
+window.terapkanHasilOcrKeFormulir = terapkanHasilOcrKeFormulir;
+
 // Kalkulasi Laba Rugi (RK & Wawancara)
 function hitungLabaRugi() {
     // Track 1: RK

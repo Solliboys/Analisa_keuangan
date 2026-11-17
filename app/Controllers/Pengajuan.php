@@ -1790,6 +1790,83 @@ class Pengajuan extends BaseController
     }
 
     /**
+     * Upload berkas Rekening Koran (PDF / Gambar) dan ekstraksi otomatis dengan Gemini AI
+     */
+    public function uploadOcrRekening()
+    {
+        try {
+            if (!session()->get('logged_in')) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Sesi login telah berakhir, silakan refresh halaman untuk login kembali.']);
+            }
+
+            $file = $this->request->getFile('file_rekening');
+            if (!$file || !$file->isValid()) {
+                return $this->response->setJSON([
+                    'status'  => false,
+                    'message' => 'Berkas rekening koran tidak valid atau gagal diunggah: ' . ($file ? $file->getErrorString() : 'File kosong')
+                ]);
+            }
+
+            $ext = strtolower($file->getExtension() ?: pathinfo($file->getClientName(), PATHINFO_EXTENSION));
+            $allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+            if (!in_array($ext, $allowedExt)) {
+                return $this->response->setJSON([
+                    'status'  => false,
+                    'message' => 'Format berkas "' . htmlspecialchars($ext) . '" tidak didukung. Harap unggah berkas PDF atau gambar (JPG/PNG/WebP).'
+                ]);
+            }
+
+            $targetDir = FCPATH . 'uploads/rekening_koran';
+            if (!is_dir($targetDir)) {
+                @mkdir($targetDir, 0777, true);
+            }
+
+            $newName = $file->getRandomName();
+            try {
+                $file->move($targetDir, $newName);
+                $filePath = 'uploads/rekening_koran/' . $newName;
+                $fullPath = $targetDir . '/' . $newName;
+            } catch (\Throwable $moveErr) {
+                $targetDir = WRITEPATH . 'uploads/rekening_koran';
+                if (!is_dir($targetDir)) {
+                    @mkdir($targetDir, 0777, true);
+                }
+                $file->move($targetDir, $newName);
+                $filePath = 'writable/uploads/rekening_koran/' . $newName;
+                $fullPath = $targetDir . '/' . $newName;
+            }
+
+            $kreditId = $this->request->getPost('kredit_id');
+            if ($kreditId) {
+                try {
+                    $cols = $this->kreditModel->db->getFieldNames('kredit');
+                    if (is_array($cols) && in_array('berkas_rekening_koran', $cols)) {
+                        $this->kreditModel->update($kreditId, ['berkas_rekening_koran' => $filePath]);
+                    }
+                } catch (\Throwable $e) {}
+            }
+
+            // Panggil Gemini AI Service untuk mengekstrak data
+            $aiService = new \App\Services\GeminiAiService();
+            $res = $aiService->ekstrakRekeningKoran($fullPath, $file->getClientMimeType());
+
+            return $this->response->setJSON([
+                'status'    => $res['status'] ?? true,
+                'message'   => $res['message'] ?? 'Ekstraksi rekening koran berhasil',
+                'file_path' => $filePath,
+                'file_name' => $file->getClientName(),
+                'file_url'  => base_url($filePath),
+                'data'      => $res['data'] ?? []
+            ]);
+        } catch (\Throwable $err) {
+            return $this->response->setJSON([
+                'status'  => false,
+                'message' => 'Gagal memproses berkas rekening koran: ' . $err->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * Meneruskan permohonan pengecekan SLIK debitur ke antrean kerja Petugas Verifikator SLIK OJK
      */
     public function kirimKePetugasSlik()

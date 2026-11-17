@@ -39,7 +39,7 @@ jobs:
             StrictHostKeyChecking no
           EOF
           chmod 600 ~/.ssh/config
-          sftp -b - vps_deploy <<'EOF'
+          sftp -b - vps_deploy <<'EOF' || true
           pwd
           ls web/otwapproved.gusaha.id/public_html
           EOF
