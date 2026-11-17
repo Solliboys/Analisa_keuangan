@@ -88,11 +88,11 @@ function sesuaikanFormAgunan(item) {
 window.sesuaikanFormAgunan = sesuaikanFormAgunan;
 
 function inisialisasiSemuaAgunan() {
-    document.querySelectorAll('.agunan-item').forEach(function(item) {
+    document.querySelectorAll('.agunan-item').forEach(function (item) {
         sesuaikanFormAgunan(item);
     });
-    document.querySelectorAll('select[name$="[jenis_agunan]"]').forEach(function(sel) {
-        sel.onchange = function() {
+    document.querySelectorAll('select[name$="[jenis_agunan]"]').forEach(function (sel) {
+        sel.onchange = function () {
             sesuaikanFormAgunan(this.closest('.agunan-item'));
         };
     });
@@ -105,7 +105,7 @@ setTimeout(inisialisasiSemuaAgunan, 500);
 // Hook ke tambahBarisAgunan jika dipanggil
 if (typeof window.tambahBarisAgunan === 'function') {
     var _oldTambah = window.tambahBarisAgunan;
-    window.tambahBarisAgunan = function() {
+    window.tambahBarisAgunan = function () {
         _oldTambah();
         setTimeout(inisialisasiSemuaAgunan, 50);
     };

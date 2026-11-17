@@ -39,7 +39,7 @@
         <!-- Grid Form Fields 2 Kolom Simetris -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <!-- Nama Lengkap Sesuai KTP -->
-            <div class="md:col-span-2">
+            <div>
                 <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     Nama Lengkap (Sesuai KTP) <span class="text-rose-500 font-extrabold">*</span>
@@ -49,6 +49,20 @@
                        placeholder="Nama lengkap tanpa gelar singkatan"
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"
                        oninput="if(typeof syncNamaDebitur === 'function'){ syncNamaDebitur(this.value); } else { const e1=document.getElementById('nama_debitur'); if(e1) e1.value=this.value; }">
+            </div>
+
+            <!-- NIK KTP / NPWP Debitur -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    NIK KTP / NPWP Debitur (16 Digit Angka) <span class="text-rose-500 font-extrabold">*</span>
+                </label>
+                <input type="text" name="npwp_pribadi" id="npwp_pribadi" 
+                       value="<?= esc($kredit['npwp_pribadi'] ?? '') ?>" 
+                       placeholder="Contoh: 3578012345670001 (16 digit angka)"
+                       maxlength="16"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 16)"
+                       class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 
             <!-- Tempat Lahir -->
@@ -135,20 +149,6 @@
                        value="<?= esc($kredit['nomor_emergency'] ?? '') ?>" 
                        placeholder="Nomor kerabat (Hanya angka)"
                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 15)"
-                       class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-            </div>
-
-            <!-- NIK KTP / NPWP Debitur -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    NIK KTP / NPWP Debitur (16 Digit Angka) <span class="text-rose-500 font-extrabold">*</span>
-                </label>
-                <input type="text" name="npwp_pribadi" id="npwp_pribadi" 
-                       value="<?= esc($kredit['npwp_pribadi'] ?? '') ?>" 
-                       placeholder="Contoh: 3578012345670001 (16 digit angka)"
-                       maxlength="16"
-                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 16)"
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 
