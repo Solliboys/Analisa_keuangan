@@ -158,29 +158,53 @@
                        class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
             </div>
 
-            <!-- Nomor Emergency / Kontak Darurat -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    Nomor Emergency / Kontak Darurat
-                </label>
-                <input type="text" name="nomor_emergency" id="nomor_emergency" 
-                       value="<?= esc($kredit['nomor_emergency'] ?? '') ?>" 
-                       placeholder="Nomor kerabat (Hanya angka)"
-                       oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 15)"
-                       class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
-            </div>
+            <!-- Kontak Darurat (3 Kolom Berdampingan: Nama, Nomor Telepon, Status Hubungan) -->
+            <div class="md:col-span-2 pt-2 border-t border-slate-100">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <!-- 1. Nama Kontak Darurat -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            Nama Kontak Darurat
+                        </label>
+                        <input type="text" name="nama_kontak_darurat" id="nama_kontak_darurat" 
+                               value="<?= esc($kredit['nama_kontak_darurat'] ?? ($kredit['nama_ibu_kandung'] ?? '')) ?>" 
+                               placeholder="Nama lengkap kerabat darurat"
+                               class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                    </div>
 
-            <!-- Nama Kontak Darurat -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    Nama Kontak Darurat
-                </label>
-                <input type="text" name="nama_kontak_darurat" id="nama_kontak_darurat" 
-                       value="<?= esc($kredit['nama_kontak_darurat'] ?? ($kredit['nama_ibu_kandung'] ?? '')) ?>" 
-                       placeholder="Nama lengkap kerabat / kontak darurat"
-                       class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                    <!-- 2. Nomor Telepon Emergency -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                            Nomor Telepon Emergency
+                        </label>
+                        <input type="text" name="nomor_emergency" id="nomor_emergency" 
+                               value="<?= esc($kredit['nomor_emergency'] ?? '') ?>" 
+                               placeholder="081234567xxx (Hanya angka)"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 15)"
+                               class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs">
+                    </div>
+
+                    <!-- 3. Status Hubungan -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            Status Hubungan
+                        </label>
+                        <select name="hubungan_kontak_darurat" id="hubungan_kontak_darurat" class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs cursor-pointer">
+                            <?php $hub = $kredit['hubungan_kontak_darurat'] ?? 'Ibu Kandung'; ?>
+                            <option value="Ibu Kandung" <?= $hub === 'Ibu Kandung' ? 'selected' : '' ?>>Ibu Kandung</option>
+                            <option value="Ayah Kandung" <?= $hub === 'Ayah Kandung' ? 'selected' : '' ?>>Ayah Kandung</option>
+                            <option value="Suami / Istri" <?= in_array($hub, ['Suami / Istri', 'Pasangan']) ? 'selected' : '' ?>>Suami / Istri</option>
+                            <option value="Saudara Kandung" <?= in_array($hub, ['Saudara Kandung', 'Saudara']) ? 'selected' : '' ?>>Saudara Kandung</option>
+                            <option value="Anak" <?= $hub === 'Anak' ? 'selected' : '' ?>>Anak</option>
+                            <option value="Keluarga / Kerabat" <?= in_array($hub, ['Keluarga / Kerabat', 'Kerabat']) ? 'selected' : '' ?>>Keluarga / Kerabat</option>
+                            <option value="Teman / Rekan Kerja" <?= in_array($hub, ['Teman / Rekan Kerja', 'Rekan Kerja']) ? 'selected' : '' ?>>Teman / Rekan Kerja</option>
+                            <option value="Lain-Lain" <?= in_array($hub, ['Lain-Lain', 'Lainnya']) ? 'selected' : '' ?>>Lain-Lain</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

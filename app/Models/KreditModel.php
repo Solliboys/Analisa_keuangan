@@ -34,6 +34,7 @@ class KreditModel extends Model
         'nomor_hp',
         'nomor_emergency',
         'nama_kontak_darurat',
+        'hubungan_kontak_darurat',
         'npwp_pribadi',
         'nama_ibu_kandung',
         'tempat_tanggal_lahir',
