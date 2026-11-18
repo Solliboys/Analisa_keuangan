@@ -622,13 +622,18 @@ class Pengajuan extends BaseController
         $this->usahaModel->where('kredit_id', $kreditId)->delete();
 
         $daftar = $input['usaha'] ?? [];
+        $usahaCols = [];
+        try {
+            $usahaCols = $this->usahaModel->db->getFieldNames('kredit_usaha');
+        } catch (\Throwable $e) {}
+
         if (!empty($daftar) && is_array($daftar)) {
             $isFirst = true;
             foreach ($daftar as $row) {
                 if (empty($row['nama_usaha']) && empty($row['bidang_usaha']) && empty($row['alamat_usaha'])) {
                     continue;
                 }
-                $this->usahaModel->insert([
+                $rowUsaha = [
                     'kredit_id'                => $kreditId,
                     'is_utama'                 => $isFirst ? 1 : 0,
                     'nama_usaha'               => $row['nama_usaha'] ?? '',
@@ -641,11 +646,15 @@ class Pengajuan extends BaseController
                     'alamat_usaha'             => $row['alamat_usaha'] ?? '',
                     'npwp_usaha'               => $row['npwp_usaha'] ?? '',
                     'nomor_induk_berusaha_nib' => $row['nomor_induk_berusaha_nib'] ?? '',
-                ]);
+                ];
+                if (!empty($usahaCols)) {
+                    $rowUsaha = array_intersect_key($rowUsaha, array_flip($usahaCols));
+                }
+                $this->usahaModel->insert($rowUsaha);
                 $isFirst = false;
             }
         } elseif (!empty($input['nama_usaha']) || !empty($input['bidang_usaha'])) {
-            $this->usahaModel->insert([
+            $rowUsaha = [
                 'kredit_id'                => $kreditId,
                 'is_utama'                 => 1,
                 'nama_usaha'               => $input['nama_usaha'] ?? '',
@@ -658,7 +667,11 @@ class Pengajuan extends BaseController
                 'alamat_usaha'             => $input['alamat_usaha'] ?? '',
                 'npwp_usaha'               => $input['npwp_usaha'] ?? '',
                 'nomor_induk_berusaha_nib' => $input['nomor_induk_berusaha_nib'] ?? '',
-            ]);
+            ];
+            if (!empty($usahaCols)) {
+                $rowUsaha = array_intersect_key($rowUsaha, array_flip($usahaCols));
+            }
+            $this->usahaModel->insert($rowUsaha);
         }
     }
 

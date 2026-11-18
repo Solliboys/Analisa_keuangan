@@ -218,7 +218,7 @@
                     <div>
                         <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-2">
                             <span>PENGELUARAN</span>
-                            <span class="px-2 py-0.5 text-[10px] font-semibold bg-rose-100 text-rose-700 rounded-full">Pengeluaran</span>
+                            <span class="px-2 py-0.5 text-[10px] font-semibold bg-rose-100 text-rose-700 rounded-full">Arus Keluar</span>
                         </h3>
                         <span class="text-[11px] text-slate-400 font-medium">Rincian pengeluaran kebutuhan hidup, operasional rutin, dan modal bahan/kulakan (HPP) yang dinamis</span>
                     </div>

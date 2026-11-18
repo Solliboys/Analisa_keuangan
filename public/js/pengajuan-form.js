@@ -1398,13 +1398,27 @@ function syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, isForce = false) {
     const hppEl = document.getElementById('hpp_persen_rk');
     let changed = false;
 
-    // 1. Sync Omzet / Pendapatan Bulanan: pastikan berformat ribuan bertitik
+    // 1. Sync Omzet / Pendapatan Bulanan ke input & daftarPendapatan dinamis
     if (totalAvgKredit > 0 && pEl) {
         const curVal = parseNominal(pEl.value || 0);
         if (isForce || curVal === 0 || curVal === 250000000 || pEl.getAttribute('data-synced-rek') === '1') {
-            pEl.value = formatRupiahString(totalAvgKredit);
+            pEl.value = totalAvgKredit;
             pEl.setAttribute('data-synced-rek', '1');
             changed = true;
+
+            if (typeof daftarPendapatan !== 'undefined' && Array.isArray(daftarPendapatan)) {
+                const idxSynced = daftarPendapatan.findIndex(it => it._syncedRek || (it.nama || '').toLowerCase().includes('rekening koran'));
+                if (idxSynced >= 0) {
+                    daftarPendapatan[idxSynced].nominal = totalAvgKredit;
+                } else if (daftarPendapatan.length === 0 || (isForce && daftarPendapatan.length === 1 && parseNominal(daftarPendapatan[0].nominal) === 0)) {
+                    daftarPendapatan = [{ nama: 'Omset Mutasi Rekening Koran', nominal: totalAvgKredit, _syncedRek: true }];
+                } else if (isForce) {
+                    daftarPendapatan[0].nominal = totalAvgKredit;
+                    if (!daftarPendapatan[0].nama) daftarPendapatan[0].nama = 'Omset Mutasi Rekening Koran';
+                }
+                window.daftarPendapatan = daftarPendapatan;
+                if (typeof renderListPendapatan === 'function') renderListPendapatan();
+            }
         }
     }
 
@@ -1415,6 +1429,19 @@ function syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, isForce = false) {
             hppEl.value = hppRatio;
             hppEl.setAttribute('data-synced-rek', '1');
             changed = true;
+
+            if (isForce && totalAvgKredit > 0 && typeof window.daftarHpp !== 'undefined' && Array.isArray(window.daftarHpp)) {
+                const nomHppEst = Math.round(totalAvgKredit * (hppRatio / 100));
+                const hppItems = window.daftarHpp.filter(it => (it.kategori || 'hpp') === 'hpp');
+                if (hppItems.length === 0 && nomHppEst > 0) {
+                    window.daftarHpp.push({
+                        nama: 'Estimasi HPP (Mutasi Rekening Koran)',
+                        kategori: 'hpp',
+                        nominal: nomHppEst
+                    });
+                    if (typeof renderListHpp === 'function') renderListHpp();
+                }
+            }
         }
     }
 
@@ -1456,7 +1483,7 @@ function salinOmzetKeLabaRugi() {
 
         syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, true);
 
-        const msg = `Omzet (Rp ${formatRupiahString(totalAvgKredit)}) & HPP (${hppRatio}%) rekening koran berhasil disalin ke Laba Rugi`;
+        const msg = `Omzet (${formatRupiahString(totalAvgKredit)}) & HPP (${hppRatio}%) rekening koran berhasil disalin ke Laba Rugi`;
         showToast(msg, 'success');
         goToTab(9);
     } else {

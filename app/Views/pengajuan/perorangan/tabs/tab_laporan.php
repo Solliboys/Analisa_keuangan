@@ -20,9 +20,20 @@ $plafonBaru         = (float)($kredit['plafon_pengajuan'] ?? 50000000);
 $tenorBulanBaru     = (int)($kredit['tenor_bulan'] ?? 12);
 if ($tenorBulanBaru <= 0) $tenorBulanBaru = 12;
 $bungaBulanPersen   = (float)($kredit['bunga_per_bulan'] ?? 1.25);
-$angsuranPokokBaru  = ($plafonBaru > 0) ? round($plafonBaru / $tenorBulanBaru) : 0;
-$angsuranBungaBaru  = ($plafonBaru > 0) ? round($plafonBaru * ($bungaBulanPersen / 100)) : 0;
-$estimasiAngsuranBaru = $angsuranPokokBaru + $angsuranBungaBaru;
+$metodeBungaBaru    = strtoupper($kredit['perhitungan_bunga'] ?? 'ANUITAS');
+$skemaKreditBaru    = strtolower($kredit['skema_kredit'] ?? 'installment');
+$rateBulanBaru      = $bungaBulanPersen / 100;
+if (strpos($skemaKreditBaru, 'balloon') !== false) {
+    $estimasiAngsuranBaru = ($plafonBaru > 0) ? round($plafonBaru * $rateBulanBaru) : 0;
+} elseif ($metodeBungaBaru === 'ANUITAS' && $plafonBaru > 0 && $tenorBulanBaru > 0) {
+    $estimasiAngsuranBaru = ($rateBulanBaru > 0)
+        ? round($plafonBaru * ($rateBulanBaru / (1 - pow(1 + $rateBulanBaru, -$tenorBulanBaru))))
+        : round($plafonBaru / $tenorBulanBaru);
+} else {
+    $angsuranPokokBaru  = ($plafonBaru > 0) ? round($plafonBaru / $tenorBulanBaru) : 0;
+    $angsuranBungaBaru  = ($plafonBaru > 0) ? round($plafonBaru * $rateBulanBaru) : 0;
+    $estimasiAngsuranBaru = $angsuranPokokBaru + $angsuranBungaBaru;
+}
 
 // =============================================================================
 // 2. DATA SLIK OJK (Baki Debet & Angsuran Berjalan)
@@ -1256,13 +1267,25 @@ function sinkronkanLaporanKeuangan() {
     const totUtangLuar = subUtangDinamis + outSlik;
     const totAngsBerjalan = subAngsDinamis + angsSlik;
 
-    // 7. Fasilitas Kredit Baru yang Diajukan
+    // 7. Fasilitas Kredit Baru yang Diajukan (Sinkron dengan Metode Bunga Tab 1: ANUITAS / FLAT / EFEKTIF)
     const plafonBaru = pNomLap(document.getElementById('plafon_pengajuan')?.value) || <?= $plafonBaru ?>;
     const tenorBaru = parseInt(document.getElementById('tenor_bulan')?.value, 10) || <?= $tenorBulanBaru ?>;
     const bungaBaru = parseFloat(document.getElementById('bunga_per_bulan')?.value) || <?= $bungaBulanPersen ?>;
-    const angsPokokBaru = (plafonBaru > 0 && tenorBaru > 0) ? Math.round(plafonBaru / tenorBaru) : 0;
-    const angsBungaBaru = (plafonBaru > 0) ? Math.round(plafonBaru * (bungaBaru / 100)) : 0;
-    const estimasiAngsBaru = angsPokokBaru + angsBungaBaru;
+    const metodeBungaLap = (document.getElementById('perhitungan_bunga')?.value || '<?= $metodeBungaBaru ?>').toUpperCase();
+    const skemaKreditLap = (document.getElementById('skema_kredit')?.value || '<?= $skemaKreditBaru ?>').toLowerCase();
+    const rateBulanLap = bungaBaru / 100;
+    let estimasiAngsBaru = 0;
+    if (plafonBaru > 0 && tenorBaru > 0) {
+        if (skemaKreditLap.includes('balloon')) {
+            estimasiAngsBaru = Math.round(plafonBaru * rateBulanLap);
+        } else if (metodeBungaLap === 'ANUITAS') {
+            estimasiAngsBaru = rateBulanLap > 0
+                ? Math.round(plafonBaru * (rateBulanLap / (1 - Math.pow(1 + rateBulanLap, -tenorBaru))))
+                : Math.round(plafonBaru / tenorBaru);
+        } else {
+            estimasiAngsBaru = Math.round((plafonBaru / tenorBaru) + (plafonBaru * rateBulanLap));
+        }
+    }
     const totAngsGabungan = totAngsBerjalan + estimasiAngsBaru;
 
     // 8. Kekayaan Bersih (Harta Bersih)
