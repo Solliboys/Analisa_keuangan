@@ -40,12 +40,31 @@ class LaporanKeuanganService
         $pendapatan = $this->cleanNumber($input['pendapatan'] ?? $input['pendapatan_rk'] ?? 0);
 
         // HPP
-        $hppPct = (float)($input['hpp_persen'] ?? $input['hpp_persen_rk'] ?? 78);
         $hppNom = isset($input['hpp']) && $input['hpp'] !== ''
             ? $this->cleanNumber($input['hpp'])
             : $this->cleanNumber($input['hpp_nominal_rk'] ?? 0);
-        if (($hppNom == 0 || ($pendapatan > 0 && abs($hppNom - round($pendapatan * ($hppPct / 100))) > 1000)) && $pendapatan > 0 && $hppPct > 0) {
-            $hppNom = round($pendapatan * ($hppPct / 100), 2);
+
+        // Jika ada detail_hpp_rk dan hppNom belum ditentukan
+        if ($hppNom == 0 && !empty($input['detail_hpp_rk'])) {
+            $parsedHpp = is_array($input['detail_hpp_rk']) ? $input['detail_hpp_rk'] : json_decode($input['detail_hpp_rk'], true);
+            if (is_array($parsedHpp)) {
+                foreach ($parsedHpp as $itemHpp) {
+                    $nom = $this->cleanNumber($itemHpp['nominal'] ?? 0);
+                    $kat = strtolower($itemHpp['kategori'] ?? 'hpp');
+                    if ($kat !== 'aset') {
+                        $hppNom += $nom;
+                    }
+                }
+            }
+        }
+
+        if ($hppNom > 0 && $pendapatan > 0) {
+            $hppPct = round(($hppNom / $pendapatan) * 100, 2);
+        } else {
+            $hppPct = (float)($input['hpp_persen'] ?? $input['hpp_persen_rk'] ?? 78);
+            if ($hppNom == 0 && $pendapatan > 0 && $hppPct > 0) {
+                $hppNom = round($pendapatan * ($hppPct / 100), 2);
+            }
         }
         $labaKotor = max(0, $pendapatan - $hppNom);
 
@@ -147,32 +166,32 @@ class LaporanKeuanganService
         $saldoAwalModal      = $this->cleanNumber($input['neraca_awal_modal_disetor'] ?? $input['saldo_awal_modal'] ?? ($input['modal_disetor'] ?? 0));
         $saldoAwalLabaDitahan= $this->cleanNumber($input['neraca_awal_laba_ditahan'] ?? $input['laba_ditahan_awal'] ?? 0);
 
-        // Piutang Akhir
+        // Piutang Akhir (Murni input riil pengguna — jika tidak diinput maka Rp 0)
         $piutangInput = isset($input['input_piutang_akhir']) && $input['input_piutang_akhir'] !== ''
             ? $input['input_piutang_akhir']
             : (isset($input['piutang_usaha']) && $input['piutang_usaha'] !== '' ? $input['piutang_usaha'] : null);
         $piutangAkhir = ($piutangInput !== null)
             ? $this->cleanNumber($piutangInput)
-            : round(($dso / 365) * $pendapatan, 2);
-        $piutangSumber = ($piutangInput !== null) ? 'input' : 'estimasi';
+            : 0;
+        $piutangSumber = 'input';
 
-        // Persediaan Akhir
+        // Persediaan Akhir (Murni input riil pengguna — jika tidak diinput maka Rp 0)
         $persediaanInput = isset($input['input_persediaan_akhir']) && $input['input_persediaan_akhir'] !== ''
             ? $input['input_persediaan_akhir']
             : (isset($input['persediaan']) && $input['persediaan'] !== '' ? $input['persediaan'] : null);
         $persediaanAkhir = ($persediaanInput !== null)
             ? $this->cleanNumber($persediaanInput)
-            : round(($dio / 365) * $hppNom, 2);
-        $persediaanSumber = ($persediaanInput !== null) ? 'input' : 'estimasi';
+            : 0;
+        $persediaanSumber = 'input';
 
-        // Utang Usaha Akhir
+        // Utang Usaha Akhir (Murni input riil pengguna — jika tidak diinput maka Rp 0)
         $utangUsahaInput = isset($input['input_utang_usaha_akhir']) && $input['input_utang_usaha_akhir'] !== ''
             ? $input['input_utang_usaha_akhir']
             : (isset($input['utang_usaha']) && $input['utang_usaha'] !== '' ? $input['utang_usaha'] : null);
         $utangUsahaAkhir = ($utangUsahaInput !== null)
             ? $this->cleanNumber($utangUsahaInput)
-            : round(($dpo / 365) * $hppNom, 2);
-        $utangUsahaSumber = ($utangUsahaInput !== null) ? 'input' : 'estimasi';
+            : 0;
+        $utangUsahaSumber = 'input';
 
         // Pembelian & Nilai Aset Tetap (Neraca)
         $hargaPerolehanAset = $this->cleanNumber($input['neraca_aset_tetap_bruto'] ?? $input['harga_perolehan_aset_tetap'] ?? $input['harga_perolehan'] ?? 0);

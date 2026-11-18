@@ -400,15 +400,15 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                 Rumus: Pendapatan - Beban = Laba (Rugi) Bersih
             </div>
             <table class="report-table">
-                <tr><td class="col-desc">Pendapatan Usaha (Penjualan / Omzet) <span style="font-size: 8.5px; color: #64748b;">(dari input Penjualan/Omzet)</span></td><td class="col-val"><?= rpFmt($lr['pendapatan'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Biaya Modal / Kulakan Produk (HPP) <span style="font-size: 8.5px; color: #64748b;">(dari input Biaya Modal/Kulakan)</span></td><td class="col-val"><?= rpFmtParen($lr['hpp'] ?? 0) ?></td></tr>
-                <tr class="row-highlight"><td class="col-desc font-bold">Keuntungan Kotor (Laba Kotor) <span style="font-size: 8.5px; color: #64748b;">(Pendapatan - HPP)</span></td><td class="col-val font-bold"><?= rpFmt($lr['laba_kotor'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Pendapatan Usaha (Penjualan / Omzet)</td><td class="col-val"><?= rpFmt($lr['pendapatan'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Biaya Modal / Kulakan Produk (HPP)</td><td class="col-val"><?= rpFmtParen($lr['hpp'] ?? 0) ?></td></tr>
+                <tr class="row-highlight"><td class="col-desc font-bold">Keuntungan Kotor (Laba Kotor)</td><td class="col-val font-bold"><?= rpFmt($lr['laba_kotor'] ?? 0) ?></td></tr>
                 <tr><td class="col-desc">Beban Operasional Pokok Usaha (Gaji Karyawan, Sewa, Listrik &amp; Utilitas)</td><td class="col-val"><?= rpFmtParen($lr['beban_operasional'] ?? 0) ?></td></tr>
                 <tr class="row-highlight"><td class="col-desc font-bold">Keuntungan Operasional Usaha</td><td class="col-val font-bold"><?= rpFmt($lr['laba_operasional'] ?? 0) ?></td></tr>
                 <?php if (!empty($lr['beban_bunga']) && (float)$lr['beban_bunga'] > 0): ?>
-                <tr><td class="col-desc">Biaya Bunga Pinjaman Bank <span style="font-size: 8.5px; color: #64748b;">(dari input Pinjaman Bank)</span></td><td class="col-val"><?= rpFmtParen($lr['beban_bunga'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Biaya Bunga Pinjaman Bank</td><td class="col-val"><?= rpFmtParen($lr['beban_bunga'] ?? 0) ?></td></tr>
                 <?php endif; ?>
-                <tr class="row-total-accent"><td class="col-desc font-black">KEUNTUNGAN BERSIH AKHIR (LABA BERSIH) <span style="font-size: 8.5px; color: #1e40af;">(hasil perhitungan data keuangan)</span></td><td class="col-val font-black"><?= rpFmt($lr['laba_bersih'] ?? 0) ?></td></tr>
+                <tr class="row-total-accent"><td class="col-desc font-black">KEUNTUNGAN BERSIH AKHIR (LABA BERSIH)</td><td class="col-val font-black"><?= rpFmt($lr['laba_bersih'] ?? 0) ?></td></tr>
             </table>
             <?php endif; ?>
 
@@ -424,9 +424,13 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                     <div class="col-section-title">HARTA PERUSAHAAN (ASET)</div>
                     <div class="group-title">Harta Lancar (Kas, Tagihan &amp; Stok)</div>
                     <table class="report-table">
-                        <tr><td class="col-desc">Uang Kas &amp; Saldo Bank <span style="font-size: 8px; color: #64748b;">(dari input Kas &amp; Bank)</span></td><td class="col-val"><?= rpFmt($nr['kas_bank'] ?? 0) ?></td></tr>
-                        <tr><td class="col-desc">Tagihan ke Pelanggan (Piutang) <span style="font-size: 8px; color: #64748b;">(dari input Piutang)</span></td><td class="col-val"><?= rpFmt($nr['piutang_usaha'] ?? 0) ?></td></tr>
-                        <tr><td class="col-desc">Stok Barang Dagang (Persediaan) <span style="font-size: 8px; color: #64748b;">(dari input Stok)</span></td><td class="col-val"><?= rpFmt($nr['persediaan'] ?? 0) ?></td></tr>
+                        <tr><td class="col-desc">Uang Kas &amp; Saldo Bank</td><td class="col-val"><?= rpFmt($nr['kas_bank'] ?? 0) ?></td></tr>
+                        <?php if (!empty($nr['piutang_usaha']) && (float)$nr['piutang_usaha'] > 0): ?>
+                        <tr><td class="col-desc">Tagihan ke Pelanggan (Piutang)</td><td class="col-val"><?= rpFmt($nr['piutang_usaha'] ?? 0) ?></td></tr>
+                        <?php endif; ?>
+                        <?php if (!empty($nr['persediaan']) && (float)$nr['persediaan'] > 0): ?>
+                        <tr><td class="col-desc">Stok Barang Dagang (Persediaan)</td><td class="col-val"><?= rpFmt($nr['persediaan'] ?? 0) ?></td></tr>
+                        <?php endif; ?>
                         <tr class="row-highlight"><td class="col-desc font-bold">Total Harta Lancar</td><td class="col-val font-bold"><?= rpFmt($nr['total_aset_lancar'] ?? 0) ?></td></tr>
                     </table>
 
@@ -444,12 +448,15 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                     <div class="col-section-title">UTANG &amp; MODAL SENDIRI</div>
                     <?php 
                     $totBank = (float)($nr['utang_bank_pendek'] ?? 0) + (float)($nr['utang_jangka_panjang'] ?? 0); 
+                    $utangSupp = (float)($nr['utang_usaha'] ?? 0);
                     ?>
                     <div class="group-title"><?= ($totBank > 0) ? 'Utang Usaha &amp; Bank' : 'Utang Usaha' ?></div>
                     <table class="report-table">
-                        <tr><td class="col-desc">Utang Pembelian ke Supplier <span style="font-size: 8px; color: #64748b;">(dari input Utang)</span></td><td class="col-val"><?= rpFmt($nr['utang_usaha'] ?? 0) ?></td></tr>
+                        <?php if ($utangSupp > 0): ?>
+                        <tr><td class="col-desc">Utang Pembelian ke Supplier</td><td class="col-val"><?= rpFmt($utangSupp) ?></td></tr>
+                        <?php endif; ?>
                         <?php if ($totBank > 0): ?>
-                        <tr><td class="col-desc">Utang Pinjaman ke Bank <span style="font-size: 8px; color: #64748b;">(dari input Bank)</span></td><td class="col-val"><?= rpFmt($totBank) ?></td></tr>
+                        <tr><td class="col-desc">Utang Pinjaman ke Bank</td><td class="col-val"><?= rpFmt($totBank) ?></td></tr>
                         <?php endif; ?>
                         <tr class="row-highlight"><td class="col-desc font-bold">Total Seluruh Utang (Liabilitas)</td><td class="col-val font-bold"><?= rpFmt($nr['total_liabilitas'] ?? 0) ?></td></tr>
                     </table>
@@ -501,16 +508,16 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
 
             <table class="report-table">
                 <tr class="sub-header-row"><td colspan="2">ARUS KAS DARI KEGIATAN USAHA (OPERASIONAL)</td></tr>
-                <tr><td class="col-desc">Keuntungan Bersih (Laba Bersih) <span style="font-size: 8.5px; color: #64748b; font-style: italic;">(hasil perhitungan data keuangan)</span></td><td class="col-val"><?= rpFmt($ak['laba_bersih'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Keuntungan Bersih (Laba Bersih)</td><td class="col-val"><?= rpFmt($ak['laba_bersih'] ?? 0) ?></td></tr>
                 <tr class="row-highlight"><td class="col-desc font-bold">Total Sisa Kas dari Kegiatan Usaha (Arus Kas Operasional)</td><td class="col-val font-bold"><?= rpFmt($ak['kas_operasional'] ?? 0) ?></td></tr>
 
                 <tr class="sub-header-row"><td colspan="2">ARUS KAS PINJAMAN &amp; MODAL (PENDANAAN)</td></tr>
-                <tr><td class="col-desc">Bayar Pokok Pinjaman ke Bank <span style="font-size: 8.5px; color: #64748b; font-style: italic;">(dari input Pinjaman Bank)</span></td><td class="col-val"><?= rpFmtParen($ak['cicilan_pokok'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Bayar Pokok Pinjaman ke Bank</td><td class="col-val"><?= rpFmtParen($ak['cicilan_pokok'] ?? 0) ?></td></tr>
                 <tr class="row-highlight"><td class="col-desc font-bold">Total Kas Pendanaan &amp; Modal</td><td class="col-val font-bold"><?= rpFmtParen(abs($ak['kas_pendanaan'] ?? 0)) ?></td></tr>
 
                 <tr class="sub-header-row"><td colspan="2">REKONSILIASI KAS (HASIL AKHIR)</td></tr>
                 <tr class="row-highlight"><td class="col-desc font-bold">Kenaikan (Penurunan) Kas Bersih Tahun Ini</td><td class="col-val font-bold"><?= rpFmt($ak['kenaikan_bersih_kas'] ?? 0) ?></td></tr>
-                <tr><td class="col-desc">Uang Kas di Awal Tahun <span style="font-size: 8.5px; color: #64748b; font-style: italic;">(dari mutasi rekening koran)</span></td><td class="col-val"><?= rpFmt($ak['saldo_awal_kas'] ?? 0) ?></td></tr>
+                <tr><td class="col-desc">Uang Kas di Awal Tahun</td><td class="col-val"><?= rpFmt($ak['saldo_awal_kas'] ?? 0) ?></td></tr>
                 <tr class="row-total-accent"><td class="col-desc font-black">SISA UANG KAS DI AKHIR TAHUN (KAS AKHIR)</td><td class="col-val font-black"><?= rpFmt($ak['kas_akhir'] ?? 0) ?></td></tr>
             </table>
 

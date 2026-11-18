@@ -13,22 +13,8 @@ $showModalDisetor = !empty($nrData['modal_disetor']) && (float)$nrData['modal_di
 $showBebanBunga = !empty($lrData['beban_bunga']) && (float)$lrData['beban_bunga'] > 0;
 
 if (!function_exists('badgeSumberData')) {
-    function badgeSumberData($bagian, $tipe, $rumus = '') {
-        $bSafe = htmlspecialchars($bagian, ENT_QUOTES, 'UTF-8');
-        $tSafe = htmlspecialchars($tipe, ENT_QUOTES, 'UTF-8');
-        $rSafe = htmlspecialchars($rumus, ENT_QUOTES, 'UTF-8');
-        $isUser = ($tipe === 'Input User');
-        $rumusHtml = !empty($rumus) ? '<span class="mt-1 pt-1 border-t border-slate-700/80 block text-[10px]"><strong class="text-amber-300">Rumus:</strong> <span class="font-mono text-amber-200">' . $rSafe . '</span></span>' : '';
-
-        return '<span class="relative inline-flex items-center group ml-1.5 align-middle cursor-pointer" onclick="showPopupSumberData(\'' . addslashes($bagian) . '\', \'' . addslashes($tipe) . '\', \'' . addslashes($rumus) . '\')">
-            <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white transition text-[10px] font-black shadow-2xs cursor-pointer select-none" title="Lihat Sumber Data">ℹ️</span>
-            <span class="absolute left-6 bottom-[-8px] hidden group-hover:block z-50 w-72 p-2.5 bg-slate-900 text-white rounded-xl shadow-2xl text-[11px] leading-relaxed border border-slate-700 pointer-events-none transition-opacity text-left">
-                <span class="font-bold text-blue-400 block mb-1 border-b border-slate-800 pb-0.5">ℹ️ Sumber Data</span>
-                <span class="text-slate-300 block"><strong class="text-white">Berasal dari:</strong> ' . $bSafe . '</span>
-                <span class="text-slate-300 block mt-0.5"><strong class="text-white">Tipe:</strong> <span class="' . ($isUser ? 'text-emerald-400' : 'text-blue-300') . ' font-bold">' . $tSafe . '</span></span>
-                ' . $rumusHtml . '
-            </span>
-        </span>';
+    function badgeSumberData($bagian = '', $tipe = '', $rumus = '') {
+        return '';
     }
 }
 ?>
@@ -176,24 +162,24 @@ if (!function_exists('badgeSumberData')) {
 
         <div class="space-y-3 text-xs sm:text-sm">
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Pendapatan Usaha (Penjualan / Omzet) <?= badgeSumberData('Input Data Keuangan → Penjualan/Omzet', 'Input User') ?></span>
+                <span class="text-slate-600 font-medium">Pendapatan Usaha (Penjualan / Omzet)</span>
                 <span class="font-bold text-slate-900" id="bu_lr_pendapatan">—</span>
             </div>
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Biaya Modal / Kulakan (HPP) <?= badgeSumberData('Input Data Keuangan → HPP', 'Input User') ?></span>
+                <span class="text-slate-600 font-medium">Biaya Modal / Kulakan (HPP)</span>
                 <span class="font-bold text-slate-900" id="bu_lr_hpp">—</span>
             </div>
 
             <!-- Highlight: Laba Kotor -->
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Keuntungan Kotor (Laba Kotor) <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Pendapatan Usaha - HPP') ?></span>
+                <span>Keuntungan Kotor (Laba Kotor)</span>
                 <span id="bu_lr_laba_kotor" class="text-blue-700 font-black">—</span>
             </div>
 
             <!-- Beban Operasional Pokok Usaha -->
             <div class="flex justify-between items-start py-1">
                 <div>
-                    <span class="text-slate-700 font-semibold block">Beban Operasional Pokok Usaha (Rp/Bulan) <?= badgeSumberData('Input Data Keuangan → Beban Operasional', 'Input User') ?></span>
+                    <span class="text-slate-700 font-semibold block">Beban Operasional Pokok Usaha (Rp/Bulan)</span>
                     <span class="text-[11px] text-slate-400 block">Gaji karyawan tetap, sewa kantor/gudang usaha, listrik, air &amp; utilitas operasional</span>
                 </div>
                 <span class="font-bold text-slate-900 shrink-0 ml-4" id="bu_lr_beban_op">—</span>
@@ -206,18 +192,18 @@ if (!function_exists('badgeSumberData')) {
 
             <!-- Highlight: Laba Operasional -->
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Keuntungan Operasional Usaha <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Laba Kotor - Beban Operasional') ?></span>
+                <span>Keuntungan Operasional Usaha</span>
                 <span id="bu_lr_laba_op" class="text-blue-700 font-black">—</span>
             </div>
 
             <div class="flex justify-between items-center py-1" id="row_bu_lr_beban_bunga" style="display: <?= $showBebanBunga ? 'flex' : 'none' ?>;">
-                <span class="text-slate-600 font-medium">Biaya Bunga Pinjaman Bank <?= badgeSumberData('Input Data Keuangan → Biaya Bunga (SLIK OJK)', 'Input User') ?></span>
+                <span class="text-slate-600 font-medium">Biaya Bunga Pinjaman Bank</span>
                 <span class="font-bold text-slate-900" id="bu_lr_beban_bunga">—</span>
             </div>
 
             <!-- Highlight: LABA BERSIH (Rumus: Pendapatan - Beban = Laba Bersih) -->
             <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
-                <span class="tracking-wide">KEUNTUNGAN BERSIH AKHIR (LABA BERSIH) <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Pendapatan - Beban = Laba (Rugi) Bersih') ?></span>
+                <span class="tracking-wide">KEUNTUNGAN BERSIH AKHIR (LABA BERSIH)</span>
                 <span id="bu_lr_laba_bersih" class="text-blue-700 font-black">—</span>
             </div>
         </div>
@@ -242,32 +228,32 @@ if (!function_exists('badgeSumberData')) {
 
                 <div class="space-y-3 text-xs sm:text-sm">
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Uang Kas &amp; Saldo Bank <?= badgeSumberData('Input Neraca → Kas & Saldo Bank', 'Input User') ?></span>
+                        <span class="text-slate-600 font-medium">Uang Kas &amp; Saldo Bank</span>
                         <span class="font-bold text-slate-900" id="bu_nr_kas">—</span>
                     </div>
-                    <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Tagihan ke Pelanggan (Piutang) <?= badgeSumberData('Input Neraca → Tagihan Pelanggan (Piutang)', 'Input User') ?></span>
+                    <div class="flex justify-between items-center py-1" id="row_bu_nr_piutang" style="display: <?= (!empty($nrData['piutang_usaha']) && (float)$nrData['piutang_usaha'] > 0) ? 'flex' : 'none' ?>;">
+                        <span class="text-slate-600 font-medium">Tagihan ke Pelanggan (Piutang)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_piutang">—</span>
                     </div>
-                    <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Stok Barang Dagang (Persediaan) <?= badgeSumberData('Input Neraca → Stok Barang (Persediaan)', 'Input User') ?></span>
+                    <div class="flex justify-between items-center py-1" id="row_bu_nr_persediaan" style="display: <?= (!empty($nrData['persediaan']) && (float)$nrData['persediaan'] > 0) ? 'flex' : 'none' ?>;">
+                        <span class="text-slate-600 font-medium">Stok Barang Dagang (Persediaan)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_persediaan">—</span>
                     </div>
 
                     <!-- Highlight: Total Aset Lancar -->
                     <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                        <span>Total Harta Lancar <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Kas & Bank + Tagihan Pelanggan + Stok Persediaan') ?></span>
+                        <span>Total Harta Lancar</span>
                         <span id="bu_nr_total_aset_lancar" class="text-blue-700 font-black">—</span>
                     </div>
 
                     <div class="flex justify-between items-center py-1" id="row_bu_nr_aset_tetap" style="display: <?= $showAsetTetap ? 'flex' : 'none' ?>;">
-                        <span class="text-slate-600 font-medium">Nilai Alat, Mesin &amp; Gedung Saat Ini (Neto) <?= badgeSumberData('Input Neraca → Aset Tetap Neto', 'Input User') ?></span>
+                        <span class="text-slate-600 font-medium">Nilai Alat, Mesin &amp; Gedung Saat Ini (Neto)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_aset_tetap_neto">—</span>
                     </div>
 
                     <!-- Highlight: TOTAL ASET (Rumus: Aset = Liabilitas + Ekuitas) -->
                     <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
-                        <span class="tracking-wide">TOTAL KESELURUHAN HARTA (ASET) <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Aset = Liabilitas + Ekuitas') ?></span>
+                        <span class="tracking-wide">TOTAL KESELURUHAN HARTA (ASET)</span>
                         <span id="bu_nr_total_aset" class="text-blue-700 font-black">—</span>
                     </div>
                 </div>
@@ -280,39 +266,39 @@ if (!function_exists('badgeSumberData')) {
                 </div>
 
                 <div class="space-y-3 text-xs sm:text-sm">
-                    <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Utang ke Supplier (Pemasok) <?= badgeSumberData('Input Neraca → Utang Supplier', 'Input User') ?></span>
+                    <div class="flex justify-between items-center py-1" id="row_bu_nr_utang_usaha" style="display: <?= (!empty($nrData['utang_usaha']) && (float)$nrData['utang_usaha'] > 0) ? 'flex' : 'none' ?>;">
+                        <span class="text-slate-600 font-medium">Utang ke Supplier (Pemasok)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_utang_usaha">—</span>
                     </div>
                     <div class="flex justify-between items-center py-1" id="row_bu_nr_utang_bank" style="display: <?= $showUtangBank ? 'flex' : 'none' ?>;">
-                        <span class="text-slate-600 font-medium">Utang Pinjaman ke Bank <?= badgeSumberData('Input Neraca → Pinjaman Bank (SLIK OJK)', 'Input User') ?></span>
+                        <span class="text-slate-600 font-medium">Utang Pinjaman ke Bank</span>
                         <span class="font-bold text-slate-900" id="bu_nr_utang_bank">—</span>
                     </div>
 
                     <!-- Highlight: Total Liabilitas -->
                     <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                        <span id="lbl_bu_nr_total_liab">Total Seluruh Utang (Liabilitas) <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Utang Supplier + Utang Pinjaman Bank') ?></span>
+                        <span id="lbl_bu_nr_total_liab">Total Seluruh Utang (Liabilitas)</span>
                         <span id="bu_nr_total_liab" class="text-blue-700 font-black">—</span>
                     </div>
 
                     <div class="flex justify-between items-center py-1" id="row_bu_nr_modal" style="display: <?= $showModalDisetor ? 'flex' : 'none' ?>;">
-                        <span class="text-slate-600 font-medium">Modal Sendiri yang Disetor <?= badgeSumberData('Input Neraca → Modal Disetor', 'Input User') ?></span>
+                        <span class="text-slate-600 font-medium">Modal Sendiri yang Disetor</span>
                         <span class="font-bold text-slate-900" id="bu_nr_modal">—</span>
                     </div>
                     <div class="flex justify-between items-center py-1">
-                        <span class="text-slate-600 font-medium">Sisa Keuntungan yang Disimpan (Laba Ditahan) <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Laba Ditahan Awal + Laba Bersih Tahun Ini') ?></span>
+                        <span class="text-slate-600 font-medium">Sisa Keuntungan yang Disimpan (Laba Ditahan)</span>
                         <span class="font-bold text-slate-900" id="bu_nr_laba_ditahan">—</span>
                     </div>
 
                     <!-- Highlight: Total Ekuitas (Rumus: Ekuitas = Aset - Liabilitas) -->
                     <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                        <span>Total Modal Bersih Sendiri (Ekuitas) <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Ekuitas = Aset - Liabilitas') ?></span>
+                        <span>Total Modal Bersih Sendiri (Ekuitas)</span>
                         <span id="bu_nr_total_ekuitas" class="text-blue-700 font-black">—</span>
                     </div>
 
                     <!-- Highlight: TOTAL LIABILITAS & EKUITAS (Rumus: Aset = Liabilitas + Ekuitas) -->
                     <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
-                        <span class="tracking-wide">TOTAL UTANG + MODAL (ASET) <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Aset = Liabilitas + Ekuitas') ?></span>
+                        <span class="tracking-wide">TOTAL UTANG + MODAL (ASET)</span>
                         <span id="bu_nr_total_liab_ekuitas" class="text-blue-700 font-black">—</span>
                     </div>
                 </div>
@@ -335,36 +321,36 @@ if (!function_exists('badgeSumberData')) {
             <!-- I. Aktivitas Operasi -->
             <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-1">Arus Kas dari Usaha Pokok (Operasional)</div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Keuntungan Bersih (Laba Bersih) <?= badgeSumberData('Data Keuangan → Laba Bersih', 'Perhitungan Otomatis', 'Pendapatan - Beban = Laba (Rugi) Bersih') ?></span>
+                <span class="text-slate-600 font-medium">Keuntungan Bersih (Laba Bersih)</span>
                 <span class="font-bold text-slate-900" id="bu_ak_laba_bersih">—</span>
             </div>
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Total Kas dari Usaha Pokok (Kas Operasi) <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Laba Bersih + Perubahan Modal Kerja') ?></span>
+                <span>Total Kas dari Usaha Pokok (Kas Operasi)</span>
                 <span id="bu_ak_kas_operasi" class="text-blue-700 font-black">—</span>
             </div>
 
             <!-- II. Aktivitas Pendanaan -->
             <div class="text-xs font-bold text-blue-700 uppercase tracking-wider pt-2" id="judul_bu_ak_pendanaan">Arus Kas Utang &amp; Modal (Pendanaan)</div>
             <div class="flex justify-between items-center py-0.5">
-                <span class="text-slate-600 font-medium">Bayar Pokok Pinjaman ke Bank <?= badgeSumberData('Input Arus Kas → Cicilan Pokok Pinjaman (SLIK OJK)', 'Input User') ?></span>
+                <span class="text-slate-600 font-medium">Bayar Pokok Pinjaman ke Bank</span>
                 <span class="font-bold text-slate-900" id="bu_ak_cicilan">—</span>
             </div>
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Total Kas Pendanaan &amp; Pembiayaan <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Total Pembayaran Pokok Pinjaman Bank') ?></span>
+                <span>Total Kas Pendanaan &amp; Pembiayaan</span>
                 <span id="bu_ak_kas_pendanaan" class="text-blue-700 font-black">—</span>
             </div>
 
             <!-- Kenaikan Bersih & Kas Akhir (Rumus Kenaikan Kas & Kas Akhir) -->
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
-                <span>Kenaikan (Penurunan) Kas Bersih Tahun Ini <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Kenaikan Kas = Kas Operasi + Kas Investasi + Kas Pendanaan') ?></span>
+                <span>Kenaikan (Penurunan) Kas Bersih Tahun Ini</span>
                 <span id="bu_ak_kenaikan_bersih" class="text-blue-700 font-black">—</span>
             </div>
             <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Uang Kas di Awal Tahun (Kas Awal) <?= badgeSumberData('Input Arus Kas → Saldo Awal (Mutasi Rekening Koran)', 'Input User') ?></span>
+                <span class="text-slate-600 font-medium">Uang Kas di Awal Tahun (Kas Awal)</span>
                 <span class="font-bold text-slate-900" id="bu_ak_saldo_awal">—</span>
             </div>
             <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
-                <span class="tracking-wide">SISA UANG KAS DI AKHIR TAHUN (Kas Akhir) <?= badgeSumberData('Perhitungan otomatis', 'Perhitungan Otomatis', 'Kas Akhir = Kas Awal + Kas Operasi + Kas Investasi + Kas Pendanaan') ?></span>
+                <span class="tracking-wide">SISA UANG KAS DI AKHIR TAHUN (Kas Akhir)</span>
                 <span id="bu_ak_kas_akhir" class="text-blue-700 font-black">—</span>
             </div>
         </div>
@@ -633,14 +619,16 @@ async function unduhLaporanPDF(target) {
                                 <td class="col-desc">Kas &amp; Bank</td>
                                 <td class="col-val">${v('bu_nr_kas')}</td>
                             </tr>
+                            ${(!v('bu_nr_piutang').includes('—') && !v('bu_nr_piutang').includes('Rp 0') && v('bu_nr_piutang').trim() !== '') ? `
                             <tr>
                                 <td class="col-desc">Piutang Usaha</td>
                                 <td class="col-val">${v('bu_nr_piutang')}</td>
-                            </tr>
+                            </tr>` : ''}
+                            ${(!v('bu_nr_persediaan').includes('—') && !v('bu_nr_persediaan').includes('Rp 0') && v('bu_nr_persediaan').trim() !== '') ? `
                             <tr>
                                 <td class="col-desc">Persediaan</td>
                                 <td class="col-val">${v('bu_nr_persediaan')}</td>
-                            </tr>
+                            </tr>` : ''}
                             <tr class="row-highlight">
                                 <td class="col-desc font-bold">Total Aset Lancar</td>
                                 <td class="col-val font-bold">${v('bu_nr_total_aset_lancar')}</td>
@@ -1397,8 +1385,21 @@ function isiDataLaporanBU(data) {
 
     // --- TAB NERACA ---
     setT('bu_nr_kas', rpFmt(nr.kas_bank));
-    setT('bu_nr_piutang', rpFmt(nr.piutang_usaha));
-    setT('bu_nr_persediaan', rpFmt(nr.persediaan));
+
+    const piutangVal = parseFloat(nr.piutang_usaha || 0);
+    setT('bu_nr_piutang', rpFmt(piutangVal));
+    const rowPiutang = document.getElementById('row_bu_nr_piutang');
+    if (rowPiutang) {
+        rowPiutang.style.display = (piutangVal > 0) ? 'flex' : 'none';
+    }
+
+    const persediaanVal = parseFloat(nr.persediaan || 0);
+    setT('bu_nr_persediaan', rpFmt(persediaanVal));
+    const rowPersediaan = document.getElementById('row_bu_nr_persediaan');
+    if (rowPersediaan) {
+        rowPersediaan.style.display = (persediaanVal > 0) ? 'flex' : 'none';
+    }
+
     setT('bu_nr_total_aset_lancar', rpFmt(nr.total_aset_lancar));
 
     const asetTetapNeto = parseFloat(nr.aset_tetap_neto || 0);
@@ -1409,7 +1410,13 @@ function isiDataLaporanBU(data) {
     }
 
     setT('bu_nr_total_aset', rpFmt(nr.total_aset));
-    setT('bu_nr_utang_usaha', rpFmt(nr.utang_usaha));
+
+    const utangUsahaVal = parseFloat(nr.utang_usaha || 0);
+    setT('bu_nr_utang_usaha', rpFmt(utangUsahaVal));
+    const rowUtangUsaha = document.getElementById('row_bu_nr_utang_usaha');
+    if (rowUtangUsaha) {
+        rowUtangUsaha.style.display = (utangUsahaVal > 0) ? 'flex' : 'none';
+    }
 
     const totalUtangBank = (parseFloat(nr.utang_bank_pendek || 0) + parseFloat(nr.utang_jangka_panjang || 0));
     setT('bu_nr_utang_bank', rpFmt(totalUtangBank));
@@ -1511,6 +1518,12 @@ function generateLaporanKeuangan(isSilent = false) {
         payload.append('detail_beban_lainnya_rk', elDetailBeban.value);
     }
 
+    // Ambil rincian HPP & Aset dinamis dari Tab 8 (dalam format JSON murni)
+    const elDetailHpp = document.querySelector('[name="detail_hpp_rk"]') || document.getElementById('detail_hpp_rk');
+    if (elDetailHpp && elDetailHpp.value) {
+        payload.append('detail_hpp_rk', elDetailHpp.value);
+    }
+
     // Ambil data neraca di collapsible Tahap 9 jika ada
     ['neraca_awal_kas','input_piutang_akhir','input_persediaan_akhir','neraca_awal_piutang','neraca_awal_persediaan',
      'neraca_aset_tetap_bruto','neraca_akumulasi_penyusutan','input_capex','beban_depresiasi','neraca_awal_aset_tetap',
@@ -1588,8 +1601,22 @@ function hitungDataLaporanDariDOM() {
     const omzetBulan = pF(document.querySelector('[name="pendapatan_rk"]')?.value || document.getElementById('pendapatan_rk')?.value);
     const pendapatan = omzetBulan > 0 ? (omzetBulan * 12) : 0;
 
-    let hppPersen = pF(document.querySelector('[name="hpp_persen_rk"]')?.value || document.getElementById('hpp_persen_rk')?.value);
-    let hppNomBulan = pF(document.querySelector('[name="hpp_nominal_rk"]')?.value || document.getElementById('hpp_nominal_rk')?.value);
+    let hppPersen = pPct(document.querySelector('[name="hpp_persen_rk"]')?.value || document.getElementById('hpp_persen_rk')?.value);
+    let hppNomBulan = pF(document.querySelector('[name="hpp_nominal_rk"]')?.value || document.getElementById('nomHppRKInput')?.value);
+    const rawDetailHppDOM = document.querySelector('[name="detail_hpp_rk"]')?.value || document.getElementById('detail_hpp_rk')?.value;
+    if (rawDetailHppDOM && rawDetailHppDOM !== '[]') {
+        try {
+            const arrHpp = JSON.parse(rawDetailHppDOM);
+            if (Array.isArray(arrHpp) && arrHpp.length > 0) {
+                let sumHpp = 0;
+                arrHpp.forEach(it => {
+                    const k = (it.kategori || 'hpp').toLowerCase();
+                    if (k !== 'aset') sumHpp += pF(it.nominal);
+                });
+                if (sumHpp > 0) hppNomBulan = sumHpp;
+            }
+        } catch(e) {}
+    }
     if (hppNomBulan === 0 && hppPersen > 0) {
         hppNomBulan = omzetBulan * (hppPersen / 100);
     }

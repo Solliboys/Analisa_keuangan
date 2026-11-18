@@ -22,6 +22,8 @@ class KreditKeuanganDscModel extends Model
         'bukti_pendapatan_lain_rk',
         'hpp_persen_rk',
         'hpp_nominal_rk',
+        'detail_hpp_rk',
+        'total_aset_hpp_rk',
         'laba_kotor_rk',
         'biaya_hidup_persen_rk',
         'biaya_hidup_nominal_rk',
