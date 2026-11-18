@@ -1812,6 +1812,39 @@ function toggleOcrTransaksiTable() {
     }
 }
 
+function hapusBarisRekening(btn) {
+    const tr = btn.closest('tr');
+    if (tr) tr.remove();
+
+    const container = document.getElementById('containerRekening');
+    if (!container) return;
+
+    const rows = container.querySelectorAll('.rekening-item');
+    if (rows.length === 0) {
+        container.innerHTML = `
+            <tr id="emptyRowRekening">
+                <td colspan="11" class="py-10 px-4 text-center text-slate-400">
+                    <div class="flex flex-col items-center justify-center gap-2">
+                        <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <p class="text-xs font-medium text-slate-500">Belum ada data rekening koran yang diimpor.</p>
+                        <p class="text-[11px] text-slate-400">Klik tombol <strong class="text-indigo-600">Import Rekening Koran (AI)</strong> di pojok kanan atas untuk mengunggah berkas mutasi bank.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    } else {
+        rows.forEach((row, idx) => {
+            const noEl = row.querySelector('.rek-no');
+            if (noEl) noEl.innerText = idx + 1;
+            row.querySelectorAll('input[name^="rekening["]').forEach(inp => {
+                inp.name = inp.name.replace(/rekening\[\d+\]/, `rekening[${idx}]`);
+            });
+        });
+    }
+    hitungRataRataRekening();
+}
+window.hapusBarisRekening = hapusBarisRekening;
+
 function terapkanHasilOcrKeFormulir() {
     if (!currentOcrRekeningData) {
         if (typeof showToast === 'function') showToast('Belum ada data ekstraksi untuk diterapkan', 'warning');
@@ -1819,103 +1852,105 @@ function terapkanHasilOcrKeFormulir() {
     }
 
     const d = currentOcrRekeningData;
-    const targetSelect = document.getElementById('selectTargetRekeningRow')?.value || 'auto';
     const container = document.getElementById('containerRekening');
-    let items = container.querySelectorAll('.rekening-item');
+    if (!container) return;
 
-    let targetItem = null;
+    // Hapus baris kosong jika ada
+    const emptyRow = document.getElementById('emptyRowRekening');
+    if (emptyRow) emptyRow.remove();
 
-    if (targetSelect === 'new') {
-        tambahBarisRekening();
-        items = container.querySelectorAll('.rekening-item');
-        targetItem = items[items.length - 1];
-    } else if (targetSelect === '0') {
-        if (items.length === 0) {
-            tambahBarisRekening();
-            items = container.querySelectorAll('.rekening-item');
-        }
-        targetItem = items[0];
-    } else {
-        // Auto: jika item 0 masih kosong, pakai item 0. Jika sudah ada isinya, tambah baru.
-        if (items.length === 0) {
-            tambahBarisRekening();
-            items = container.querySelectorAll('.rekening-item');
-            targetItem = items[0];
-        } else {
-            const firstBank = items[0].querySelector('input[name*="[nama_bank]"]')?.value?.trim();
-            const firstKredit = items[0].querySelector('input[name*="[total_mutasi_kredit]"]')?.value?.trim();
-            if (!firstBank && (!firstKredit || firstKredit === '0')) {
-                targetItem = items[0];
-            } else {
-                tambahBarisRekening();
-                items = container.querySelectorAll('.rekening-item');
-                targetItem = items[items.length - 1];
-            }
-        }
+    const idx = container.querySelectorAll('.rekening-item').length;
+    const namaBank = d.nama_bank || 'Bank Operasional Usaha';
+    const periode  = d.periode || '-';
+    const noRek    = d.nomor_rekening || '-';
+    const atasNama = d.atas_nama || '-';
+    const saldoAwalNum = parseFloat(d.saldo_awal) || 0;
+    const kreditNum    = parseFloat(d.total_mutasi_kredit) || 0;
+    const debitNum     = parseFloat(d.total_mutasi_debit) || 0;
+    const bulanNum     = Math.max(1, parseInt(d.jumlah_bulan) || 1);
+    const avgKreditNum = Math.round(kreditNum / bulanNum);
+
+    const saStr = saldoAwalNum > 0 ? formatRupiahString(saldoAwalNum).replace(/^Rp\s*/, '') : '0';
+    const krStr = kreditNum > 0 ? formatRupiahString(kreditNum).replace(/^Rp\s*/, '') : '0';
+    const dbStr = debitNum > 0 ? formatRupiahString(debitNum).replace(/^Rp\s*/, '') : '0';
+
+    const rowHtml = `
+        <tr class="rekening-item hover:bg-slate-50/80 transition bg-indigo-50/30">
+            <td class="py-3 px-3 text-center font-bold text-slate-400 rek-no">${idx + 1}</td>
+            <td class="py-3 px-3 font-bold text-slate-800 whitespace-nowrap">
+                ${escapeHtml(namaBank)}
+                <input type="hidden" name="rekening[${idx}][nama_bank]" value="${escapeHtml(namaBank)}">
+            </td>
+            <td class="py-3 px-3 font-medium text-slate-700 whitespace-nowrap">
+                ${escapeHtml(periode)}
+                <input type="hidden" name="rekening[${idx}][periode]" value="${escapeHtml(periode)}">
+            </td>
+            <td class="py-3 px-3 font-mono text-slate-700 whitespace-nowrap">
+                ${escapeHtml(noRek)}
+                <input type="hidden" name="rekening[${idx}][nomor_rekening]" value="${escapeHtml(noRek === '-' ? '' : noRek)}">
+            </td>
+            <td class="py-3 px-3 font-semibold text-slate-800">
+                ${escapeHtml(atasNama)}
+                <input type="hidden" name="rekening[${idx}][atas_nama]" value="${escapeHtml(atasNama === '-' ? '' : atasNama)}">
+            </td>
+            <td class="py-3 px-3 text-right font-bold text-emerald-700 whitespace-nowrap">
+                ${formatRupiahString(saldoAwalNum)}
+                <input type="hidden" name="rekening[${idx}][saldo_awal]" value="${saStr}" class="rek-saldo-awal">
+            </td>
+            <td class="py-3 px-3 text-right font-bold text-blue-700 whitespace-nowrap">
+                ${formatRupiahString(kreditNum)}
+                <input type="hidden" name="rekening[${idx}][total_mutasi_kredit]" value="${krStr}" class="rek-kredit">
+            </td>
+            <td class="py-3 px-3 text-right font-semibold text-slate-700 whitespace-nowrap">
+                ${formatRupiahString(debitNum)}
+                <input type="hidden" name="rekening[${idx}][total_mutasi_debit]" value="${dbStr}" class="rek-debit">
+            </td>
+            <td class="py-3 px-3 text-center font-semibold text-slate-700 whitespace-nowrap">
+                ${bulanNum} Bln
+                <input type="hidden" name="rekening[${idx}][jumlah_bulan]" value="${bulanNum}" class="rek-bulan">
+            </td>
+            <td class="py-3 px-3 text-right font-extrabold text-blue-800 bg-blue-50/30 whitespace-nowrap rek-avg-kredit">
+                ${formatRupiahString(avgKreditNum)}
+            </td>
+            <td class="py-3 px-3 text-center">
+                <button type="button" onclick="hapusBarisRekening(this)" title="Hapus data ini" class="inline-flex items-center justify-center w-7 h-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </td>
+        </tr>
+    `;
+
+    container.insertAdjacentHTML('beforeend', rowHtml);
+    const items = container.querySelectorAll('.rekening-item');
+    const newRow = items[items.length - 1];
+
+    // Reset state modal untuk import berikutnya
+    currentOcrRekeningData = null;
+
+    // Jalankan kalkulasi rata-rata
+    hitungRataRataRekening();
+
+    setTimeout(() => {
+        if (newRow) newRow.classList.remove('bg-indigo-50/30');
+    }, 3000);
+
+    // Tutup modal
+    tutupModalUploadOcrRekening();
+
+    // Notifikasi berhasil
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'success',
+            title: 'Data Ditambahkan!',
+            text: 'Data mutasi rekening koran berhasil masuk ke tabel.',
+            timer: 1800,
+            showConfirmButton: false
+        });
+    } else if (typeof showToast === 'function') {
+        showToast('Data rekening koran berhasil masuk ke tabel!', 'success');
     }
 
-    if (targetItem) {
-        const inputBank    = targetItem.querySelector('input[name*="[nama_bank]"]');
-        const inputPeriode = targetItem.querySelector('input[name*="[periode]"]');
-        const inputNoRek   = targetItem.querySelector('input[name*="[nomor_rekening]"]');
-        const inputNama    = targetItem.querySelector('input[name*="[atas_nama]"]');
-        const inputAwal    = targetItem.querySelector('input[name*="[saldo_awal]"]');
-        const inputKredit  = targetItem.querySelector('input[name*="[total_mutasi_kredit]"]');
-        const inputDebit   = targetItem.querySelector('input[name*="[total_mutasi_debit]"]');
-        const inputBulan   = targetItem.querySelector('input[name*="[jumlah_bulan]"]');
-
-        if (inputBank && d.nama_bank) inputBank.value = d.nama_bank;
-        if (inputPeriode && d.periode) inputPeriode.value = d.periode;
-        if (inputNoRek && d.nomor_rekening) inputNoRek.value = d.nomor_rekening;
-        if (inputNama && d.atas_nama) inputNama.value = d.atas_nama;
-
-        if (inputAwal) {
-            const saldoAwalNum = parseFloat(d.saldo_awal) || 0;
-            inputAwal.value = saldoAwalNum > 0 ? formatRupiahString(saldoAwalNum).replace(/^Rp\s*/, '') : '0';
-        }
-
-        if (inputKredit) {
-            const kreditNum = parseFloat(d.total_mutasi_kredit) || 0;
-            inputKredit.value = formatRupiahString(kreditNum).replace(/^Rp\s*/, '');
-        }
-
-        if (inputDebit) {
-            const debitNum = parseFloat(d.total_mutasi_debit) || 0;
-            inputDebit.value = formatRupiahString(debitNum).replace(/^Rp\s*/, '');
-        }
-
-        if (inputBulan) {
-            inputBulan.value = Math.max(1, parseInt(d.jumlah_bulan) || 1);
-        }
-
-        // Jalankan kalkulasi rata-rata
-        hitungRataRataRekening();
-
-        // Berikan highlight visual pada item yang baru diisi
-        targetItem.classList.add('ring-2', 'ring-indigo-400', 'bg-indigo-50/20');
-        setTimeout(() => {
-            targetItem.classList.remove('ring-2', 'ring-indigo-400', 'bg-indigo-50/20');
-        }, 3000);
-
-        // Tutup modal
-        tutupModalUploadOcrRekening();
-
-        // Notifikasi berhasil
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'success',
-                title: 'Data Diterapkan!',
-                text: 'Data mutasi rekening koran berhasil dimasukkan ke formulir dan omzet telah dihitung.',
-                timer: 2000,
-                showConfirmButton: false
-            });
-        } else if (typeof showToast === 'function') {
-            showToast('Data rekening koran berhasil diterapkan ke formulir!', 'success');
-        }
-
-        // Scroll halus ke formulir
-        targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    if (newRow) newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // Expose fungsi ke window agar dapat dipanggil dari inline HTML

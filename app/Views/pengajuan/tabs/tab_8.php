@@ -11,134 +11,90 @@
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <button type="button" onclick="bukaModalUploadOcrRekening()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer" title="Unggah PDF atau foto rekening koran untuk pengisian otomatis">
+                        <button type="button" onclick="bukaModalUploadOcrRekening()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer" title="Unggah PDF atau foto rekening koran untuk pengisian otomatis">
                             <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                             <span>Import Rekening Koran (AI)</span>
-                        </button>
-                        <button type="button" onclick="tambahBarisRekening()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            <span>Tambah Rekening</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Tabel Input Rekening Koran -->
+                <!-- Tabel Data Rekening Koran (Read-Only Hasil Import AI) -->
                 <div class="overflow-x-auto rounded-2xl border border-slate-200/90 shadow-2xs bg-white">
-                    <table class="w-full text-left border-collapse min-w-[1060px]">
+                    <table class="w-full text-left border-collapse min-w-[980px]">
                         <thead>
                             <tr class="bg-slate-50/90 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-                                <th class="py-3 px-2.5 text-center w-9">No</th>
-                                <th class="py-3 px-2 min-w-[110px]">Nama Bank</th>
-                                <th class="py-3 px-2 min-w-[135px]">Periode Mutasi</th>
-                                <th class="py-3 px-2 min-w-[120px]">No. Rekening</th>
-                                <th class="py-3 px-2 min-w-[130px]">Atas Nama</th>
-                                <th class="py-3 px-2 text-right min-w-[125px]">Saldo Awal (Rp)</th>
-                                <th class="py-3 px-2 text-right min-w-[135px] text-blue-700">Mutasi Kredit (Rp)</th>
-                                <th class="py-3 px-2 text-right min-w-[135px]">Mutasi Debit (Rp)</th>
-                                <th class="py-3 px-2 text-center w-16">Bln</th>
-                                <th class="py-3 px-2.5 text-right min-w-[130px] text-blue-700 bg-blue-50/40">Rata² Kredit / Bln</th>
-                                <th class="py-3 px-2 text-center w-11">Aksi</th>
+                                <th class="py-3 px-3 text-center w-10">No</th>
+                                <th class="py-3 px-3">Nama Bank</th>
+                                <th class="py-3 px-3">Periode Mutasi</th>
+                                <th class="py-3 px-3">No. Rekening</th>
+                                <th class="py-3 px-3">Atas Nama</th>
+                                <th class="py-3 px-3 text-right">Saldo Awal</th>
+                                <th class="py-3 px-3 text-right text-blue-700">Mutasi Kredit</th>
+                                <th class="py-3 px-3 text-right">Mutasi Debit</th>
+                                <th class="py-3 px-3 text-center">Bln</th>
+                                <th class="py-3 px-3 text-right text-blue-700 bg-blue-50/40">Rata² Kredit / Bln</th>
+                                <th class="py-3 px-3 text-center w-12">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="containerRekening" class="divide-y divide-slate-100 text-xs">
                             <?php if (empty($rekening)): ?>
-                                <!-- Default 1 Baris Rekening -->
-                                <tr class="rekening-item hover:bg-blue-50/20 transition">
-                                    <td class="py-2.5 px-2.5 text-center font-bold text-slate-400 rek-no">1</td>
-                                    <td class="py-2.5 px-1.5">
-                                        <input type="text" name="rekening[0][nama_bank]" placeholder="BCA / Mandiri" 
-                                               class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition h-[34px]">
-                                    </td>
-                                    <td class="py-2.5 px-1.5">
-                                        <input type="text" name="rekening[0][periode]" placeholder="Jan - Jun 2026" 
-                                               class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition h-[34px]">
-                                    </td>
-                                    <td class="py-2.5 px-1.5">
-                                        <input type="text" name="rekening[0][nomor_rekening]" placeholder="No. rekening" 
-                                               class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition h-[34px]">
-                                    </td>
-                                    <td class="py-2.5 px-1.5">
-                                        <input type="text" name="rekening[0][atas_nama]" placeholder="Nama pemilik" 
-                                               class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition h-[34px]">
-                                    </td>
-                                    <td class="py-2.5 px-1.5">
-                                        <input type="text" name="rekening[0][saldo_awal]" placeholder="0" 
-                                               class="w-full text-xs font-bold text-right text-emerald-700 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input rek-saldo-awal h-[34px]" 
-                                               oninput="formatRupiah(this);">
-                                    </td>
-                                    <td class="py-2.5 px-1.5">
-                                        <input type="text" name="rekening[0][total_mutasi_kredit]" placeholder="0" 
-                                               class="w-full text-xs font-bold text-right text-blue-700 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input rek-kredit h-[34px]" 
-                                               oninput="formatRupiah(this); hitungRataRataRekening();">
-                                    </td>
-                                    <td class="py-2.5 px-1.5">
-                                        <input type="text" name="rekening[0][total_mutasi_debit]" placeholder="0" 
-                                               class="w-full text-xs font-bold text-right text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input rek-debit h-[34px]" 
-                                               oninput="formatRupiah(this); hitungRataRataRekening();">
-                                    </td>
-                                    <td class="py-2.5 px-1.5">
-                                        <input type="number" name="rekening[0][jumlah_bulan]" value="6" min="1" max="24" 
-                                               class="w-full text-xs font-semibold text-center text-slate-800 border border-slate-200 rounded-lg px-1.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rek-bulan h-[34px]" 
-                                               oninput="hitungRataRataRekening();">
-                                    </td>
-                                    <td class="py-2.5 px-2.5 text-right font-extrabold text-blue-800 bg-blue-50/30 whitespace-nowrap rek-avg-kredit">
-                                        Rp 0
-                                    </td>
-                                    <td class="py-2.5 px-1.5 text-center">
-                                        <button type="button" onclick="hapusBarisTabel(this); updateNomorBarisRekening(); hitungRataRataRekening();" title="Hapus baris" class="inline-flex items-center justify-center w-7 h-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        </button>
+                                <tr id="emptyRowRekening">
+                                    <td colspan="11" class="py-10 px-4 text-center text-slate-400">
+                                        <div class="flex flex-col items-center justify-center gap-2">
+                                            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            <p class="text-xs font-medium text-slate-500">Belum ada data rekening koran yang diimpor.</p>
+                                            <p class="text-[11px] text-slate-400">Klik tombol <strong class="text-indigo-600">Import Rekening Koran (AI)</strong> di pojok kanan atas untuk mengunggah berkas mutasi bank.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($rekening as $idx => $r): ?>
-                                    <tr class="rekening-item hover:bg-blue-50/20 transition">
-                                        <td class="py-2.5 px-2.5 text-center font-bold text-slate-400 rek-no"><?= $idx + 1 ?></td>
-                                        <td class="py-2.5 px-1.5">
-                                            <input type="text" name="rekening[<?= $idx ?>][nama_bank]" value="<?= esc($r['nama_bank'] ?? '') ?>" placeholder="BCA / Mandiri" 
-                                                   class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition h-[34px]">
+                                    <?php
+                                        $saVal = (float)($r['saldo_awal'] ?? 0);
+                                        $krVal = (float)($r['total_mutasi_kredit'] ?? 0);
+                                        $dbVal = (float)($r['total_mutasi_debit'] ?? 0);
+                                        $blnVal = max(1, (int)($r['jumlah_bulan'] ?? 1));
+                                        $avgVal = (float)($r['rata_rata_kredit'] ?? round($krVal / $blnVal));
+                                    ?>
+                                    <tr class="rekening-item hover:bg-slate-50/80 transition">
+                                        <td class="py-3 px-3 text-center font-bold text-slate-400 rek-no"><?= $idx + 1 ?></td>
+                                        <td class="py-3 px-3 font-bold text-slate-800 whitespace-nowrap">
+                                            <?= esc($r['nama_bank'] ?: '-') ?>
+                                            <input type="hidden" name="rekening[<?= $idx ?>][nama_bank]" value="<?= esc($r['nama_bank'] ?? '') ?>">
                                         </td>
-                                        <td class="py-2.5 px-1.5">
-                                            <input type="text" name="rekening[<?= $idx ?>][periode]" value="<?= esc($r['periode'] ?? '') ?>" placeholder="Jan - Jun 2026" 
-                                                   class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition h-[34px]">
+                                        <td class="py-3 px-3 font-medium text-slate-700 whitespace-nowrap">
+                                            <?= esc($r['periode'] ?: '-') ?>
+                                            <input type="hidden" name="rekening[<?= $idx ?>][periode]" value="<?= esc($r['periode'] ?? '') ?>">
                                         </td>
-                                        <td class="py-2.5 px-1.5">
-                                            <input type="text" name="rekening[<?= $idx ?>][nomor_rekening]" value="<?= esc($r['nomor_rekening'] ?? '') ?>" placeholder="No. rekening" 
-                                                   class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition h-[34px]">
+                                        <td class="py-3 px-3 font-mono text-slate-700 whitespace-nowrap">
+                                            <?= esc($r['nomor_rekening'] ?: '-') ?>
+                                            <input type="hidden" name="rekening[<?= $idx ?>][nomor_rekening]" value="<?= esc($r['nomor_rekening'] ?? '') ?>">
                                         </td>
-                                        <td class="py-2.5 px-1.5">
-                                            <input type="text" name="rekening[<?= $idx ?>][atas_nama]" value="<?= esc($r['atas_nama'] ?? '') ?>" placeholder="Nama pemilik" 
-                                                   class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition h-[34px]">
+                                        <td class="py-3 px-3 font-semibold text-slate-800">
+                                            <?= esc($r['atas_nama'] ?: '-') ?>
+                                            <input type="hidden" name="rekening[<?= $idx ?>][atas_nama]" value="<?= esc($r['atas_nama'] ?? '') ?>">
                                         </td>
-                                        <td class="py-2.5 px-1.5">
-                                            <input type="text" name="rekening[<?= $idx ?>][saldo_awal]" 
-                                                   value="<?= number_format((float)($r['saldo_awal'] ?? 0), 0, ',', '.') ?>" 
-                                                   placeholder="0" class="w-full text-xs font-bold text-right text-emerald-700 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input rek-saldo-awal h-[34px]" 
-                                                   oninput="formatRupiah(this);">
+                                        <td class="py-3 px-3 text-right font-bold text-emerald-700 whitespace-nowrap">
+                                            Rp <?= number_format($saVal, 0, ',', '.') ?>
+                                            <input type="hidden" name="rekening[<?= $idx ?>][saldo_awal]" value="<?= number_format($saVal, 0, ',', '.') ?>" class="rek-saldo-awal">
                                         </td>
-                                        <td class="py-2.5 px-1.5">
-                                            <input type="text" name="rekening[<?= $idx ?>][total_mutasi_kredit]" 
-                                                   value="<?= number_format((float)($r['total_mutasi_kredit'] ?? 0), 0, ',', '.') ?>" 
-                                                   placeholder="0" class="w-full text-xs font-bold text-right text-blue-700 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input rek-kredit h-[34px]" 
-                                                   oninput="formatRupiah(this); hitungRataRataRekening();">
+                                        <td class="py-3 px-3 text-right font-bold text-blue-700 whitespace-nowrap">
+                                            Rp <?= number_format($krVal, 0, ',', '.') ?>
+                                            <input type="hidden" name="rekening[<?= $idx ?>][total_mutasi_kredit]" value="<?= number_format($krVal, 0, ',', '.') ?>" class="rek-kredit">
                                         </td>
-                                        <td class="py-2.5 px-1.5">
-                                            <input type="text" name="rekening[<?= $idx ?>][total_mutasi_debit]" 
-                                                   value="<?= number_format((float)($r['total_mutasi_debit'] ?? 0), 0, ',', '.') ?>" 
-                                                   placeholder="0" class="w-full text-xs font-bold text-right text-slate-800 border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input rek-debit h-[34px]" 
-                                                   oninput="formatRupiah(this); hitungRataRataRekening();">
+                                        <td class="py-3 px-3 text-right font-semibold text-slate-700 whitespace-nowrap">
+                                            Rp <?= number_format($dbVal, 0, ',', '.') ?>
+                                            <input type="hidden" name="rekening[<?= $idx ?>][total_mutasi_debit]" value="<?= number_format($dbVal, 0, ',', '.') ?>" class="rek-debit">
                                         </td>
-                                        <td class="py-2.5 px-1.5">
-                                            <input type="number" name="rekening[<?= $idx ?>][jumlah_bulan]" 
-                                                   value="<?= esc($r['jumlah_bulan'] ?? 6) ?>" min="1" max="24" 
-                                                   class="w-full text-xs font-semibold text-center text-slate-800 border border-slate-200 rounded-lg px-1.5 py-1.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rek-bulan h-[34px]" 
-                                                   oninput="hitungRataRataRekening();">
+                                        <td class="py-3 px-3 text-center font-semibold text-slate-700 whitespace-nowrap">
+                                            <?= $blnVal ?> Bln
+                                            <input type="hidden" name="rekening[<?= $idx ?>][jumlah_bulan]" value="<?= $blnVal ?>" class="rek-bulan">
                                         </td>
-                                        <td class="py-2.5 px-2.5 text-right font-extrabold text-blue-800 bg-blue-50/30 whitespace-nowrap rek-avg-kredit">
-                                            Rp <?= number_format((float)($r['rata_rata_kredit'] ?? 0), 0, ',', '.') ?>
+                                        <td class="py-3 px-3 text-right font-extrabold text-blue-800 bg-blue-50/30 whitespace-nowrap rek-avg-kredit">
+                                            Rp <?= number_format($avgVal, 0, ',', '.') ?>
                                         </td>
-                                        <td class="py-2.5 px-1.5 text-center">
-                                            <button type="button" onclick="hapusBarisTabel(this); updateNomorBarisRekening(); hitungRataRataRekening();" title="Hapus baris" class="inline-flex items-center justify-center w-7 h-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer">
+                                        <td class="py-3 px-3 text-center">
+                                            <button type="button" onclick="hapusBarisRekening(this)" title="Hapus data ini" class="inline-flex items-center justify-center w-7 h-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                             </button>
                                         </td>
@@ -149,35 +105,10 @@
                     </table>
                 </div>
 
-                <!-- Rekap Mutasi Seluruh Bank -->
-                <div class="mt-6 p-5 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/60 border border-blue-200/90 rounded-2xl flex flex-col lg:flex-row items-center justify-between gap-4 shadow-xs">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                        </div>
-                        <div>
-                            <div class="text-xs font-bold text-slate-800 uppercase tracking-wider">Rekapitulasi Mutasi Rekening Koran</div>
-                            <div class="text-xs text-slate-500">Akumulasi rata-rata arus kas masuk (kredit), keluar (debit), dan estimasi rasio HPP usaha.</div>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-4 sm:gap-6 justify-end">
-                        <div class="text-right">
-                            <div class="text-[10px] text-slate-400 font-semibold uppercase">Rata-rata Kredit (Omzet)</div>
-                            <div id="totalAvgKreditGabungan" class="text-base sm:text-lg font-extrabold text-blue-700">Rp 0</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-[10px] text-slate-400 font-semibold uppercase">Rata-rata Debit (Keluar)</div>
-                            <div id="totalAvgDebitGabungan" class="text-base sm:text-lg font-extrabold text-slate-700">Rp 0</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-[10px] text-slate-400 font-semibold uppercase">Estimasi Rasio HPP</div>
-                            <div id="estimasiHppGabungan" class="text-base sm:text-lg font-extrabold text-emerald-600">0%</div>
-                        </div>
-                        <button type="button" onclick="salinOmzetKeLabaRugi()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
-                            Gunakan di Laba Rugi &rarr;
-                        </button>
-                    </div>
-                </div>
+                <!-- Hidden counters untuk kompatibilitas kalkulasi JS -->
+                <span id="totalAvgKreditGabungan" class="hidden">Rp 0</span>
+                <span id="totalAvgDebitGabungan" class="hidden">Rp 0</span>
+                <span id="estimasiHppGabungan" class="hidden">0%</span>
             </div>
 
 <!-- =======================================================
@@ -219,22 +150,12 @@
                 </div>
             </div>
 
-            <!-- Target Baris & Aksi -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1" id="ocrOptionsSection">
-                <div>
-                    <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Target Pengisian Formulir</label>
-                    <select id="selectTargetRekeningRow" class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:border-indigo-500 shadow-2xs cursor-pointer">
-                        <option value="auto">Otomatis (Isi baris 1 atau tambah baris baru jika ada isinya)</option>
-                        <option value="0">Terapkan ke Baris 1 (Gantikan isian)</option>
-                        <option value="new">+ Tambah Sebagai Baris Rekening Baru</option>
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button type="button" onclick="prosesOcrRekeningKoran()" id="btnProsesOcr" class="w-full h-[40px] px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg class="w-4 h-4 text-amber-300" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
-                        <span>Mulai Ekstraksi AI</span>
-                    </button>
-                </div>
+            <!-- Tombol Proses Ekstraksi AI -->
+            <div class="pt-1" id="ocrOptionsSection">
+                <button type="button" onclick="prosesOcrRekeningKoran()" id="btnProsesOcr" class="w-full h-[42px] px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-4 h-4 text-amber-300" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                    <span>Mulai Ekstraksi AI</span>
+                </button>
             </div>
 
             <!-- Loading State -->
