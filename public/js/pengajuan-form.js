@@ -2309,7 +2309,8 @@ function renderListHpp() {
                     </button>
                 </div>
             `;
-        });
+            });
+        }
         containerAll.innerHTML = html;
     }
 
