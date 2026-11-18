@@ -2153,7 +2153,7 @@ function initDaftarHpp() {
     if (daftarHpp.length === 0) {
         const nomAwal = parseNominal(document.getElementById('nomHppRKInput')?.value || 0);
         if (nomAwal > 0) {
-            daftarHpp = [{ nama: 'Biaya Modal / Kulakan Barang', kategori: 'hpp', nominal: nomAwal }];
+            daftarHpp = [{ nama: '', kategori: 'hpp', nominal: nomAwal }];
         } else {
             daftarHpp = [];
         }
@@ -2265,7 +2265,7 @@ function renderListHpp() {
     // Mode Fallback: Container Tunggal (Lama)
     if (containerAll) {
         if (daftarHpp.length === 0) {
-            daftarHpp.push({ nama: 'Biaya Modal / Kulakan Barang', kategori: 'hpp', nominal: 0 });
+            daftarHpp.push({ nama: '', kategori: 'hpp', nominal: 0 });
         }
 
         let html = '';
@@ -2362,7 +2362,7 @@ window.kalkulasiTotalHppDanAset = kalkulasiTotalHppDanAset;
 
 function tambahHpp(nama = '', kategori = 'hpp', nominal = 0) {
     daftarHpp.push({
-        nama: nama || (kategori === 'aset' ? 'Pembelian Aset / Peralatan' : 'Biaya Modal / Kulakan'),
+        nama: nama,
         kategori: kategori,
         nominal: nominal
     });
@@ -2370,7 +2370,7 @@ function tambahHpp(nama = '', kategori = 'hpp', nominal = 0) {
 }
 window.tambahHpp = tambahHpp;
 
-function tambahHppOnly(nama = 'Biaya Bahan / Kulakan', nominal = 0) {
+function tambahHppOnly(nama = '', nominal = 0) {
     daftarHpp.push({
         nama: nama,
         kategori: 'hpp',
@@ -2380,7 +2380,7 @@ function tambahHppOnly(nama = 'Biaya Bahan / Kulakan', nominal = 0) {
 }
 window.tambahHppOnly = tambahHppOnly;
 
-function tambahAsetOnly(nama = 'Pembelian Aset / Peralatan', nominal = 0) {
+function tambahAsetOnly(nama = '', nominal = 0) {
     daftarHpp.push({
         nama: nama,
         kategori: 'aset',
@@ -2525,9 +2525,8 @@ function renderListPendapatan() {
 window.renderListPendapatan = renderListPendapatan;
 
 function tambahPendapatan(nama = '', nominal = 0) {
-    const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA);
     daftarPendapatan.push({ 
-        nama: nama || (isBU ? 'Omset Usaha Tambahan' : 'Pendapatan Lain'), 
+        nama: nama, 
         nominal: nominal 
     });
     renderListPendapatan();
@@ -2548,7 +2547,7 @@ window.hapusPendapatan = hapusPendapatan;
 function updateItemPendapatan(index, field, val) {
     if (!daftarPendapatan[index]) {
         while (daftarPendapatan.length <= index) {
-            daftarPendapatan.push({ nama: 'Gaji Pokok', nominal: 0 });
+            daftarPendapatan.push({ nama: '', nominal: 0 });
         }
     }
     if (field === 'nominal') {

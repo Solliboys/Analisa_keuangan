@@ -47,7 +47,7 @@
         }
         if (empty($listDetailPendapatanBU) && $nomPendapatanBU > 0) {
             $listDetailPendapatanBU = [
-                ['nama' => 'Omset Penjualan Utama', 'nominal' => $nomPendapatanBU]
+                ['nama' => '', 'nominal' => $nomPendapatanBU]
             ];
         }
 
@@ -62,7 +62,7 @@
         }
         if (empty($listDetailHppBU) && $nomHppAwalBU > 0) {
             $listDetailHppBU = [
-                ['nama' => 'Biaya Modal / Kulakan Barang', 'kategori' => 'hpp', 'nominal' => $nomHppAwalBU]
+                ['nama' => '', 'kategori' => 'hpp', 'nominal' => $nomHppAwalBU]
             ];
         }
 
@@ -115,7 +115,7 @@
                         <span class="text-[11px] text-slate-400 font-medium">Rincian sumber pendapatan operasional perusahaan yang dinamis</span>
                     </div>
                 </div>
-                <button type="button" onclick="tambahPendapatan('Omset Penjualan Utama', 0);" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded-xl shadow-2xs transition cursor-pointer self-start sm:self-auto">
+                <button type="button" onclick="tambahPendapatan('', 0);" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded-xl shadow-2xs transition cursor-pointer self-start sm:self-auto">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     <span>Tambah Pendapatan</span>
                 </button>
@@ -163,7 +163,7 @@
                             </h4>
                             <p class="text-[10px] text-slate-400">Biaya pokok barang dagang, pembelian stok bahan, atau modal produksi</p>
                         </div>
-                        <button type="button" onclick="tambahHppOnly('Biaya Bahan / Kulakan', 0);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
+                        <button type="button" onclick="tambahHppOnly('', 0);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
                             <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             <span>Tambah HPP</span>
                         </button>
@@ -181,6 +181,15 @@
                             <span id="nomTotalHppDinamis" class="font-bold text-rose-700 text-xs sm:text-sm">Rp <?= number_format($nomHppAwalBU, 0, ',', '.') ?></span>
                             <span id="badgePersenHpp" class="text-[11px] text-slate-500 font-medium">(<?= esc($persenHppBU) ?>% dari Omzet)</span>
                         </div>
+                    </div>
+
+                    <!-- Laba Kotor Usaha (Gross Profit): Tepat di bawah Subtotal HPP -->
+                    <div class="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl flex justify-between items-center text-xs shadow-2xs mt-2.5">
+                        <div>
+                            <span class="font-bold text-blue-900 text-[11px] uppercase tracking-wider block">Laba Kotor Usaha (Gross Profit):</span>
+                            <span class="text-[10px] text-blue-600 font-medium">* Total Pendapatan / Omset dikurangi Subtotal HPP</span>
+                        </div>
+                        <span id="grossRK" class="text-sm sm:text-base font-black text-blue-700">Rp 0</span>
                     </div>
                 </div>
 
@@ -212,16 +221,13 @@
                     </div>
                 </div>
 
-                <!-- Ringkasan Kotak 2: Total Pengeluaran & Laba Kotor -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 bg-white border border-rose-200 rounded-xl shadow-2xs">
-                    <div class="flex justify-between items-center px-2 py-1">
-                        <span class="font-bold text-slate-700 text-[11px] uppercase tracking-wider">Total Seluruh Pengeluaran:</span>
-                        <span id="nomTotalPengeluaranBU" class="text-sm font-black text-rose-700">Rp 0</span>
+                <!-- Ringkasan Terpisah: Total Seluruh Pengeluaran -->
+                <div class="p-3.5 bg-white border border-rose-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
+                    <div>
+                        <span class="font-bold text-rose-900 text-xs uppercase tracking-wider block">Total Seluruh Pengeluaran:</span>
+                        <span class="text-[10px] text-slate-400 font-medium">* Akumulasi Subtotal HPP (Bahan/Kulakan) + Subtotal Pengeluaran Biasa</span>
                     </div>
-                    <div class="flex justify-between items-center px-2 py-1 border-t sm:border-t-0 sm:border-l border-rose-100 sm:pl-3">
-                        <span class="font-bold text-blue-900 text-[11px] uppercase tracking-wider">Laba Kotor Usaha (Gross Profit):</span>
-                        <span id="grossRK" class="text-sm font-black text-blue-700">Rp 0</span>
-                    </div>
+                    <span id="nomTotalPengeluaranBU" class="text-sm sm:text-base font-black text-rose-700">Rp 0</span>
                 </div>
             </div>
         </div>
@@ -243,7 +249,7 @@
                         <span class="text-[11px] text-slate-400 font-medium">Rincian pembelian aset tetap, mesin produksi, kendaraan, atau peralatan kantor</span>
                     </div>
                 </div>
-                <button type="button" onclick="tambahAsetOnly('Pembelian Aset / Peralatan', 0);" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-white hover:bg-emerald-50 border border-emerald-300 rounded-xl shadow-2xs transition cursor-pointer self-start sm:self-auto">
+                <button type="button" onclick="tambahAsetOnly('', 0);" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-white hover:bg-emerald-50 border border-emerald-300 rounded-xl shadow-2xs transition cursor-pointer self-start sm:self-auto">
                     <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     <span>Tambah Aset</span>
                 </button>
