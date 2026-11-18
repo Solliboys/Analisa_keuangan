@@ -176,17 +176,17 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
     <table>
         <tr class="header-section"><td colspan="2">V. LAPORAN DATA KEUANGAN USAHA</td></tr>
         <tr style="background: #eff6ff; font-style: italic; color: #1e40af;"><td colspan="2">Rumus: Pendapatan - Beban = Laba (Rugi) Bersih</td></tr>
-        <tr><td>Pendapatan Usaha (Penjualan / Omzet) &mdash; [Input Omzet Bulanan]</td><td class="num-right"><?= v($lr['pendapatan'] ?? 0) ?></td></tr>
-        <tr><td>Biaya Modal / Kulakan Produk (HPP) &mdash; [Input HPP]</td><td class="num-right"><?= vParen($lr['hpp'] ?? 0) ?></td></tr>
-        <tr class="highlight-row"><td>Keuntungan Kotor (Pendapatan - HPP)</td><td class="num-right"><?= v($lr['laba_kotor'] ?? 0) ?></td></tr>
-        <tr><td>Beban Gaji Karyawan &mdash; [Input Karyawan / Form]</td><td class="num-right"><?= vParen($lr['beban_gaji'] ?? 0) ?></td></tr>
-        <tr><td>Biaya Sewa, Listrik, Operasional &amp; Promosi &mdash; [Input Beban Pokok]</td><td class="num-right"><?= vParen($lr['beban_operasional'] ?? 0) ?></td></tr>
+        <tr><td>Pendapatan Usaha (Penjualan / Omzet)</td><td class="num-right"><?= v($lr['pendapatan'] ?? 0) ?></td></tr>
+        <tr><td>Biaya Modal / Kulakan Produk (HPP)</td><td class="num-right"><?= vParen($lr['hpp'] ?? 0) ?></td></tr>
+        <tr class="highlight-row"><td>Keuntungan Kotor (Laba Kotor)</td><td class="num-right"><?= v($lr['laba_kotor'] ?? 0) ?></td></tr>
+        <tr><td>Beban Gaji Karyawan</td><td class="num-right"><?= vParen($lr['beban_gaji'] ?? 0) ?></td></tr>
+        <tr><td>Biaya Sewa, Listrik, Operasional &amp; Promosi</td><td class="num-right"><?= vParen($lr['beban_operasional'] ?? 0) ?></td></tr>
         <tr><td>Penyusutan Nilai Alat &amp; Mesin Usaha</td><td class="num-right"><?= vParen($lr['beban_penyusutan'] ?? 0) ?></td></tr>
         <tr class="highlight-row"><td>Keuntungan Operasional Usaha</td><td class="num-right"><?= v($lr['laba_operasional'] ?? 0) ?></td></tr>
         <?php if (!empty($lr['beban_bunga']) && (float)$lr['beban_bunga'] > 0): ?>
-        <tr><td>Biaya Bunga Pinjaman Bank &mdash; [Input Beban Bunga]</td><td class="num-right"><?= vParen($lr['beban_bunga'] ?? 0) ?></td></tr>
+        <tr><td>Biaya Bunga Pinjaman Bank</td><td class="num-right"><?= vParen($lr['beban_bunga'] ?? 0) ?></td></tr>
         <?php endif; ?>
-        <tr class="total-row"><td>KEUNTUNGAN BERSIH AKHIR (LABA BERSIH) &mdash; [Pendapatan - Beban]</td><td class="num-right"><?= v($lr['laba_bersih'] ?? 0) ?></td></tr>
+        <tr class="total-row"><td>KEUNTUNGAN BERSIH AKHIR (LABA BERSIH)</td><td class="num-right"><?= v($lr['laba_bersih'] ?? 0) ?></td></tr>
     </table>
 
     <!-- VI. NERACA KEUANGAN -->
@@ -195,20 +195,20 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         <tr style="background: #eff6ff; font-style: italic; color: #1e40af;"><td colspan="4">Rumus: Aset = Liabilitas + Ekuitas | Ekuitas = Aset - Liabilitas</td></tr>
         <tr style="background: #f1f5f9; font-weight: bold;"><td colspan="2">HARTA PERUSAHAAN (ASET)</td><td colspan="2">UTANG &amp; MODAL SENDIRI</td></tr>
         <tr>
-            <td>Uang Kas &amp; Saldo Bank [Input Kas &amp; Bank]</td><td class="num-right"><?= v($nr['kas_bank'] ?? 0) ?></td>
-            <td>Utang Pembelian ke Supplier [Input Utang Supplier]</td><td class="num-right"><?= v($nr['utang_usaha'] ?? 0) ?></td>
+            <td>Uang Kas &amp; Saldo Bank</td><td class="num-right"><?= v($nr['kas_bank'] ?? 0) ?></td>
+            <td>Utang Pembelian ke Supplier</td><td class="num-right"><?= v($nr['utang_usaha'] ?? 0) ?></td>
         </tr>
         <tr>
-            <td>Tagihan ke Pelanggan (Piutang) [Input Piutang]</td><td class="num-right"><?= v($nr['piutang_usaha'] ?? 0) ?></td>
-            <td>Utang Pinjaman ke Bank [Input Pinjaman Bank]</td><td class="num-right"><?= v(($nr['utang_bank_pendek'] ?? 0) + ($nr['utang_jangka_panjang'] ?? 0)) ?></td>
+            <td>Tagihan ke Pelanggan (Piutang)</td><td class="num-right"><?= v($nr['piutang_usaha'] ?? 0) ?></td>
+            <td>Utang Pinjaman ke Bank</td><td class="num-right"><?= v(($nr['utang_bank_pendek'] ?? 0) + ($nr['utang_jangka_panjang'] ?? 0)) ?></td>
         </tr>
         <tr>
-            <td>Stok Barang Dagang [Input Persediaan]</td><td class="num-right"><?= v($nr['persediaan'] ?? 0) ?></td>
+            <td>Stok Barang Dagang</td><td class="num-right"><?= v($nr['persediaan'] ?? 0) ?></td>
             <td class="highlight-row">Total Seluruh Utang (Liabilitas)</td><td class="num-right highlight-row"><?= v($nr['total_liabilitas'] ?? 0) ?></td>
         </tr>
         <tr class="highlight-row">
             <td>Total Harta Lancar</td><td class="num-right"><?= v($nr['total_aset_lancar'] ?? 0) ?></td>
-            <td>Modal yang Disetor Pemilik [Input Modal]</td><td class="num-right"><?= v($nr['modal_disetor'] ?? 0) ?></td>
+            <td>Modal yang Disetor Pemilik</td><td class="num-right"><?= v($nr['modal_disetor'] ?? 0) ?></td>
         </tr>
         <tr>
             <td>Nilai Sisa Aset Tetap Saat Ini (Neto)</td><td class="num-right"><?= v($nr['aset_tetap_neto'] ?? 0) ?></td>
@@ -229,16 +229,16 @@ echo "\xEF\xBB\xBF"; // UTF-8 BOM
         <tr class="header-section"><td colspan="2">VII. LAPORAN ARUS KAS (HASIL AKHIR ALIRAN KAS)</td></tr>
         <tr style="background: #eff6ff; font-style: italic; color: #1e40af;"><td colspan="2">Rumus: Kenaikan Kas = Kas Operasi + Kas Investasi + Kas Pendanaan | Kas Akhir = Kas Awal + Kenaikan Kas</td></tr>
         <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Arus Kas dari Kegiatan Usaha (Operasional)</td></tr>
-        <tr><td>Keuntungan Bersih (Laba Bersih) &mdash; [Hasil Perhitungan Data Keuangan]</td><td class="num-right"><?= v($ak['laba_bersih'] ?? 0) ?></td></tr>
+        <tr><td>Keuntungan Bersih (Laba Bersih)</td><td class="num-right"><?= v($ak['laba_bersih'] ?? 0) ?></td></tr>
         <tr class="highlight-row"><td>Total Kas dari Kegiatan Usaha (Kas Operasi)</td><td class="num-right"><?= v($ak['kas_operasional'] ?? 0) ?></td></tr>
 
         <tr style="background-color: #f1f5f9; font-weight: bold;"><td colspan="2">Arus Kas Pinjaman &amp; Modal (Pendanaan)</td></tr>
-        <tr><td>Bayar Pokok Pinjaman ke Bank &mdash; [Angsuran Pokok Bulanan]</td><td class="num-right"><?= vParen($ak['cicilan_pokok'] ?? 0) ?></td></tr>
+        <tr><td>Bayar Pokok Pinjaman ke Bank</td><td class="num-right"><?= vParen($ak['cicilan_pokok'] ?? 0) ?></td></tr>
         <tr class="highlight-row"><td>Total Kas Pendanaan &amp; Modal (Kas Pendanaan)</td><td class="num-right"><?= vParen(abs($ak['kas_pendanaan'] ?? 0)) ?></td></tr>
 
         <tr class="highlight-row"><td>Kenaikan (Penurunan) Kas Bersih (Kas Operasi + Kas Investasi + Kas Pendanaan)</td><td class="num-right"><?= v($ak['kenaikan_bersih_kas'] ?? 0) ?></td></tr>
-        <tr><td>Uang Kas di Awal Tahun &mdash; [Saldo Kas Awal]</td><td class="num-right"><?= v($ak['saldo_awal_kas'] ?? 0) ?></td></tr>
-        <tr class="total-row"><td>SISA UANG KAS DI AKHIR TAHUN (KAS AKHIR) &mdash; [Kas Awal + Kenaikan Kas]</td><td class="num-right"><?= v($ak['kas_akhir'] ?? 0) ?></td></tr>
+        <tr><td>Uang Kas di Awal Tahun</td><td class="num-right"><?= v($ak['saldo_awal_kas'] ?? 0) ?></td></tr>
+        <tr class="total-row"><td>SISA UANG KAS DI AKHIR TAHUN (KAS AKHIR)</td><td class="num-right"><?= v($ak['kas_akhir'] ?? 0) ?></td></tr>
     </table>
 
     <!-- VIII. RASIO KEUANGAN -->

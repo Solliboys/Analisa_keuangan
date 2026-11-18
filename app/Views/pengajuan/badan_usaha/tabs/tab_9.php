@@ -10,9 +10,6 @@
                 <p class="text-[11px] text-slate-500">Perhitungan data keuangan operasional dari mutasi rekening koran perusahaan, beban usaha operasional, dan pendapatan non-operasional</p>
             </div>
         </div>
-        <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 shadow-2xs self-start sm:self-auto">
-            Verifikasi Rekening Koran & Cashflow Badan Usaha
-        </span>
     </div>
 
     <!-- Layout Data Keuangan Operasional Perusahaan (Badan Usaha fokus ke Operasional, tanpa Pendapatan Sampingan) -->
@@ -30,9 +27,6 @@
                             <span class="text-[11px] text-slate-400 font-medium">Validasi mutasi rekening koran giro / operasional PT / CV</span>
                         </div>
                     </div>
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold text-blue-700 bg-blue-100/70 border border-blue-200">
-                        Rekening Koran Perusahaan
-                    </span>
                 </div>
 
                 <div class="space-y-4">
@@ -85,6 +79,26 @@
                         if (($nomHppAwalBU <= 0 || abs($nomHppAwalBU - round($nomPendapatanBU * ($persenHppBU / 100))) > 5000000) && $nomPendapatanBU > 0 && $persenHppBU > 0) {
                             $nomHppAwalBU = round($nomPendapatanBU * ($persenHppBU / 100));
                         }
+
+                        $rawDetailHppBU = $keuangan['detail_hpp_rk'] ?? '';
+                        $listDetailHppBU = [];
+                        if (!empty($rawDetailHppBU)) {
+                            $decHpp = json_decode($rawDetailHppBU, true);
+                            if (is_array($decHpp) && count($decHpp) > 0) {
+                                $listDetailHppBU = $decHpp;
+                            }
+                        }
+                        if (empty($listDetailHppBU)) {
+                            if ($nomHppAwalBU > 0) {
+                                $listDetailHppBU = [
+                                    ['nama' => 'Biaya Modal / Kulakan Barang Dagang', 'kategori' => 'hpp', 'nominal' => $nomHppAwalBU]
+                                ];
+                            } else {
+                                $listDetailHppBU = [
+                                    ['nama' => 'Biaya Modal / Kulakan Barang Dagang', 'kategori' => 'hpp', 'nominal' => 0]
+                                ];
+                            }
+                        }
                     ?>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Pendapatan / Omset Usaha Bulanan (Rp)</label>
@@ -95,24 +109,48 @@
                                onblur="if(this.value){ formatRupiah(this); hitungLabaRugi(); }">
                     </div>
 
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="col-span-1">
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">HPP / COGS (%)</label>
-                            <input type="number" step="0.1" name="hpp_persen_rk" id="hpp_persen_rk" 
-                                   value="<?= esc($persenHppBU) ?>" 
-                                   class="w-full text-xs font-bold text-slate-800 text-center border border-slate-200 rounded-xl px-2 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs h-[38px]"
-                                   oninput="hitungLabaRugi();">
+                    <!-- Pengeluaran HPP & Belanja Aset (Dinamis: Bisa Ditambah & Dihapus) -->
+                    <div class="pt-2 border-t border-blue-100/80">
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Pengeluaran HPP &amp; Belanja Aset</label>
+                                <p class="text-[10px] text-slate-400">Rincian pengeluaran kulakan/bahan baku dan pembelian aset usaha yang dinamis</p>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="tambahHpp('Biaya Bahan / Kulakan', 'hpp');" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg shadow-2xs transition cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    <span>Biaya HPP</span>
+                                </button>
+                                <button type="button" onclick="tambahHpp('Pembelian Aset / Peralatan', 'aset');" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-300 rounded-lg shadow-2xs transition cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    <span>Tambah Aset</span>
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-span-2">
-                            <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nominal HPP / Biaya Pokok Produksi</label>
-                            <input type="text" name="hpp_nominal_rk" id="nomHppRKInput" 
-                                   value="<?= number_format($nomHppAwalBU, 0, ',', '.') ?>" 
-                                   placeholder="Rp 0"
-                                   class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]"
-                                   oninput="formatRupiah(this); syncHppNominalKePersen();"
-                                   onblur="if(this.value){ formatRupiah(this); syncHppNominalKePersen(); }">
-                            <span id="nomHppRK" class="hidden">Rp 0</span>
+
+                        <!-- Container List Rincian HPP & Aset Dinamis -->
+                        <div id="containerHppDinamis" class="space-y-2 mb-2.5">
+                            <!-- Diisi oleh renderListHpp() -->
                         </div>
+
+                        <!-- Bar Ringkasan Total HPP & Aset -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 bg-slate-50 border border-slate-200/90 rounded-xl text-xs mb-2 shadow-2xs">
+                            <div class="flex justify-between items-center px-1">
+                                <span class="font-bold text-slate-600 text-[11px] uppercase tracking-wider">Total HPP (Bahan/Kulakan):</span>
+                                <span id="nomTotalHppDinamis" class="font-bold text-blue-700 text-xs sm:text-sm">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between items-center px-1 border-t sm:border-t-0 sm:border-l border-slate-200 sm:pl-3 pt-1 sm:pt-0">
+                                <span class="font-bold text-emerald-800 text-[11px] uppercase tracking-wider">Total Pembelian Aset:</span>
+                                <span id="nomTotalAsetDinamis" class="font-bold text-emerald-700 text-xs sm:text-sm">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <!-- Hidden fields untuk sinkronisasi database & sistem lama -->
+                        <input type="hidden" name="hpp_persen_rk" id="hpp_persen_rk" value="<?= esc($persenHppBU) ?>">
+                        <input type="hidden" name="hpp_nominal_rk" id="nomHppRKInput" value="<?= esc($nomHppAwalBU) ?>">
+                        <input type="hidden" name="detail_hpp_rk" id="detail_hpp_rk" value="<?= esc(!empty($listDetailHppBU) ? json_encode($listDetailHppBU) : '[]') ?>">
+                        <input type="hidden" name="total_aset_hpp_rk" id="total_aset_hpp_rk" value="0">
+                        <span id="nomHppRK" class="hidden">Rp 0</span>
                     </div>
 
                     <div class="p-3.5 bg-blue-50/80 border border-blue-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">

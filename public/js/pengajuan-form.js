@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initDaftarBuktiPendapatanLain();
     initDaftarBebanLain();
     initDaftarPendapatan();
+    initDaftarHpp();
     initAutoSave();
     // Sesuaikan metadata jika form perorangan (fokus pekerjaan)
     const step3El = document.getElementById('step-title-3');
@@ -1471,12 +1472,54 @@ function hitungLabaRugi() {
     }
 
     const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
-    const hppPctRK = parsePersen(document.getElementById('hpp_persen_rk')?.value || 0);
+
+    // Hitung total HPP & total Aset dari daftarHpp jika ada
+    let totalHppDinamis = 0;
+    let totalAsetDinamis = 0;
+    let adaDaftarHpp = false;
+    if (Array.isArray(daftarHpp) && daftarHpp.length > 0) {
+        adaDaftarHpp = true;
+        daftarHpp.forEach(item => {
+            const nom = parseNominal(item.nominal || 0);
+            const kat = (item.kategori || 'hpp').toLowerCase();
+            if (kat === 'aset') {
+                totalAsetDinamis += nom;
+            } else {
+                totalHppDinamis += nom;
+            }
+        });
+    }
+
+    let nomHppRK = 0;
+    if (adaDaftarHpp) {
+        nomHppRK = totalHppDinamis;
+    } else {
+        nomHppRK = isBU ? parseNominal(document.getElementById('nomHppRKInput')?.value || 0) : 0;
+        if (nomHppRK === 0 && isBU) {
+            const hppPctOld = parsePersen(document.getElementById('hpp_persen_rk')?.value || 0);
+            nomHppRK = Math.round(pRK * (hppPctOld / 100));
+        }
+    }
+
+    // Persentase HPP otomatis terhadap omzet
+    let hppPctRK = 0;
+    if (pRK > 0) {
+        hppPctRK = Math.round((nomHppRK / pRK) * 1000) / 10;
+        const elHppPct = document.getElementById('hpp_persen_rk');
+        if (elHppPct) elHppPct.value = hppPctRK;
+    } else {
+        hppPctRK = parsePersen(document.getElementById('hpp_persen_rk')?.value || 0);
+    }
+
+    const badgePersen = document.getElementById('badgePersenHpp');
+    if (badgePersen) {
+        badgePersen.innerText = '(' + hppPctRK + '% dari Omzet)';
+    }
+
     // Validasi: HPP tidak boleh > 100%
     if (isBU && hppPctRK > 100 && pRK > 0) {
-        showToast('⚠️ HPP ' + hppPctRK + '% melebihi 100% dari omzet. Periksa input persen.', 'error');
+        showToast('⚠️ HPP ' + hppPctRK + '% melebihi 100% dari omzet. Periksa rincian pengeluaran.', 'error');
     }
-    const nomHppRK = isBU ? Math.round(pRK * (hppPctRK / 100)) : 0;
     // Validasi: HPP tidak boleh > omzet
     if (isBU && nomHppRK > pRK && pRK > 0) {
         showToast('⚠️ HPP (Rp ' + nomHppRK.toLocaleString('id-ID') + ') melebihi Omzet. Laba Kotor akan negatif!', 'error');
@@ -1590,6 +1633,176 @@ function syncHppNominalKePersen() {
     hitungLabaRugi();
 }
 window.syncHppNominalKePersen = syncHppNominalKePersen;
+
+// ============================================================
+// Inisialisasi & Manajemen Rincian HPP & Belanja Aset (Dinamis: Tambah/Hapus)
+// ============================================================
+let daftarHpp = [];
+
+function initDaftarHpp() {
+    const raw = document.getElementById('detail_hpp_rk')?.value;
+    daftarHpp = [];
+    if (raw && raw !== '[]' && raw !== '') {
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                daftarHpp = parsed;
+            }
+        } catch (e) {
+            console.error('Error parse detail_hpp_rk', e);
+        }
+    }
+
+    if (daftarHpp.length === 0) {
+        const nomAwal = parseNominal(document.getElementById('nomHppRKInput')?.value || 0);
+        if (nomAwal > 0) {
+            daftarHpp = [{ nama: 'Biaya Modal / Kulakan Barang', kategori: 'hpp', nominal: nomAwal }];
+        } else {
+            daftarHpp = [{ nama: 'Biaya Modal / Kulakan Barang', kategori: 'hpp', nominal: 0 }];
+        }
+    }
+
+    renderListHpp();
+}
+window.initDaftarHpp = initDaftarHpp;
+
+function renderListHpp() {
+    const container = document.getElementById('containerHppDinamis');
+    if (!container) return;
+
+    if (daftarHpp.length === 0) {
+        daftarHpp.push({ nama: 'Biaya Modal / Kulakan Barang', kategori: 'hpp', nominal: 0 });
+    }
+
+    let html = '';
+    daftarHpp.forEach((item, index) => {
+        const safeNama = (item.nama || '').replace(/"/g, '&quot;');
+        const kategori = (item.kategori || 'hpp').toLowerCase();
+        const nomVal = parseInt(item.nominal, 10) || 0;
+        const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+        const isAset = (kategori === 'aset');
+
+        html += `
+            <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2 bg-white border ${isAset ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'} rounded-xl shadow-2xs hover:border-blue-300 transition">
+                <div class="w-full sm:flex-1 min-w-0">
+                    <input type="text" value="${safeNama}" 
+                           placeholder="${isAset ? 'Nama Aset (cth: Mesin Produksi, Kendaraan, Alat Kerja)' : 'Keterangan HPP (cth: Kulakan Barang, Bahan Baku)'}" 
+                           class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                           oninput="updateItemHpp(${index}, 'nama', this.value)">
+                </div>
+                <div class="w-36 sm:w-44 shrink-0">
+                    <select onchange="updateItemHpp(${index}, 'kategori', this.value)"
+                            class="w-full text-[11px] font-bold ${isAset ? 'text-emerald-700 bg-emerald-50 border-emerald-300' : 'text-blue-700 bg-blue-50 border-blue-300'} border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-200 cursor-pointer">
+                        <option value="hpp" ${!isAset ? 'selected' : ''}>📦 Biaya HPP (Kulakan)</option>
+                        <option value="aset" ${isAset ? 'selected' : ''}>🏢 Aset / Peralatan</option>
+                    </select>
+                </div>
+                <div class="w-32 sm:w-40 shrink-0">
+                    <div class="relative flex items-center">
+                        <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                        <input type="text" value="${nomStr}" 
+                               placeholder="0" 
+                               class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
+                               oninput="formatRupiah(this); updateItemHpp(${index}, 'nominal', this.value)">
+                    </div>
+                </div>
+                <button type="button" onclick="hapusHpp(${index})" title="Hapus item ini" 
+                        class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+
+    kalkulasiTotalHppDanAset();
+}
+window.renderListHpp = renderListHpp;
+
+function kalkulasiTotalHppDanAset() {
+    let totHpp = 0;
+    let totAset = 0;
+    daftarHpp.forEach(item => {
+        const nom = parseNominal(item.nominal || 0);
+        const kat = (item.kategori || 'hpp').toLowerCase();
+        if (kat === 'aset') {
+            totAset += nom;
+        } else {
+            totHpp += nom;
+        }
+    });
+
+    const hiddenDetail = document.getElementById('detail_hpp_rk');
+    if (hiddenDetail) {
+        hiddenDetail.value = JSON.stringify(daftarHpp);
+    }
+    const hiddenTotalAset = document.getElementById('total_aset_hpp_rk');
+    if (hiddenTotalAset) {
+        hiddenTotalAset.value = totAset;
+    }
+
+    const nomTotalHppEl = document.getElementById('nomTotalHppDinamis');
+    if (nomTotalHppEl) {
+        nomTotalHppEl.innerText = formatRupiahString(totHpp);
+    }
+    const nomTotalAsetEl = document.getElementById('nomTotalAsetDinamis');
+    if (nomTotalAsetEl) {
+        nomTotalAsetEl.innerText = formatRupiahString(totAset);
+    }
+
+    const inputNomHpp = document.getElementById('nomHppRKInput');
+    if (inputNomHpp) {
+        inputNomHpp.value = totHpp;
+    }
+
+    // Jika ada pembelian aset dan form neraca/capex ada, sinkronkan nilai capex
+    const inputCapex = document.querySelector('[name="input_capex"]');
+    if (inputCapex && totAset > 0 && !inputCapex.value) {
+        inputCapex.value = formatRupiahString(totAset);
+    }
+
+    hitungLabaRugi();
+}
+window.kalkulasiTotalHppDanAset = kalkulasiTotalHppDanAset;
+
+function tambahHpp(nama = '', kategori = 'hpp', nominal = 0) {
+    daftarHpp.push({
+        nama: nama || (kategori === 'aset' ? 'Pembelian Aset / Peralatan' : 'Biaya Modal / Kulakan'),
+        kategori: kategori,
+        nominal: nominal
+    });
+    renderListHpp();
+}
+window.tambahHpp = tambahHpp;
+
+function hapusHpp(index) {
+    if (index >= 0 && index < daftarHpp.length) {
+        daftarHpp.splice(index, 1);
+        if (daftarHpp.length === 0) {
+            daftarHpp.push({ nama: 'Biaya Modal / Kulakan Barang', kategori: 'hpp', nominal: 0 });
+        }
+        renderListHpp();
+    }
+}
+window.hapusHpp = hapusHpp;
+
+function updateItemHpp(index, field, val) {
+    if (!daftarHpp[index]) return;
+    if (field === 'nominal') {
+        daftarHpp[index].nominal = parseNominal(val);
+        kalkulasiTotalHppDanAset();
+    } else if (field === 'nama') {
+        daftarHpp[index].nama = val;
+        const hiddenDetail = document.getElementById('detail_hpp_rk');
+        if (hiddenDetail) {
+            hiddenDetail.value = JSON.stringify(daftarHpp);
+        }
+    } else if (field === 'kategori') {
+        daftarHpp[index].kategori = val;
+        renderListHpp();
+    }
+}
+window.updateItemHpp = updateItemHpp;
 
 // ============================================================
 // Inisialisasi & Manajemen Rincian Pendapatan Pokok / Utama (Dinamis: Tambah/Hapus)

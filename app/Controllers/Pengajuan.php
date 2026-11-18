@@ -775,8 +775,38 @@ class Pengajuan extends BaseController
         $pRK   = $this->cleanNumber($input['pendapatan_rk'] ?? 0);
         $detailPendapatanRK = !empty($input['detail_pendapatan_rk']) ? $input['detail_pendapatan_rk'] : null;
         if ($detailPendapatanRK === '[]') $detailPendapatanRK = null;
-        $hppPctRK = (float)($input['hpp_persen_rk'] ?? 60);
-        $hppNomRK = $pRK * ($hppPctRK / 100);
+
+        // Detail HPP & Aset Dinamis
+        $detailHppRK = !empty($input['detail_hpp_rk']) ? $input['detail_hpp_rk'] : null;
+        if ($detailHppRK === '[]') $detailHppRK = null;
+        $totalNomHppDinamis = 0;
+        $totalNomAsetDinamis = 0;
+        if (!empty($detailHppRK)) {
+            $parsedHpp = json_decode($detailHppRK, true);
+            if (is_array($parsedHpp)) {
+                foreach ($parsedHpp as $itemHpp) {
+                    $nom = $this->cleanNumber($itemHpp['nominal'] ?? 0);
+                    $kat = strtolower($itemHpp['kategori'] ?? 'hpp');
+                    if ($kat === 'aset') {
+                        $totalNomAsetDinamis += $nom;
+                    } else {
+                        $totalNomHppDinamis += $nom;
+                    }
+                }
+            }
+        }
+
+        // HPP Nominal & Persentase
+        if (isset($input['hpp_nominal_rk']) && $input['hpp_nominal_rk'] !== '') {
+            $hppNomRK = $this->cleanNumber($input['hpp_nominal_rk']);
+        } elseif ($totalNomHppDinamis > 0) {
+            $hppNomRK = $totalNomHppDinamis;
+        } else {
+            $hppPctAwal = (float)($input['hpp_persen_rk'] ?? 60);
+            $hppNomRK = round($pRK * ($hppPctAwal / 100), 2);
+        }
+
+        $hppPctRK = ($pRK > 0) ? round(($hppNomRK / $pRK) * 100, 2) : (float)($input['hpp_persen_rk'] ?? 0);
         $grossRK  = $pRK - $hppNomRK;
         // Biaya hidup nominal langsung & persentase
         $bhNomRK = isset($input['biaya_hidup_nominal_rk']) ? $this->cleanNumber($input['biaya_hidup_nominal_rk']) : 0;
@@ -837,6 +867,8 @@ class Pengajuan extends BaseController
             'bukti_pendapatan_lain_rk'      => $pathBukti,
             'hpp_persen_rk'                 => $hppPctRK,
             'hpp_nominal_rk'                => $hppNomRK,
+            'detail_hpp_rk'                 => $detailHppRK,
+            'total_aset_hpp_rk'             => $totalNomAsetDinamis,
             'laba_kotor_rk'                 => $grossRK,
             'biaya_hidup_persen_rk'         => $bhPctRK,
             'biaya_hidup_nominal_rk'        => $bhNomRK,
