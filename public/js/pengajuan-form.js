@@ -5,20 +5,24 @@
 const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') : '');
 
 let currentTab = 1;
-const totalTabs = 12; // Proses pengusul dibatasi sampai tahap 12 (Tahap 13 didisabel sementara)
+const totalTabs = 11; // Proses pengusul dibatasi sampai tahap Disbursement (Tahap 12 Repayment & 13 Komite ditiadakan di pengusul)
 
 // Inisialisasi saat halaman dimuat
 document.addEventListener('DOMContentLoaded', () => {
-    hitungKalkulasiAngsuran();
-    hitungCoverageAgunan();
-    hitungTotalSlik();
-    hitungRataRataRekening();
-    hitungLabaRugi();
-    hitungDisbursement();
-    initDaftarBuktiPendapatanLain();
-    initDaftarBebanLain();
-    initDaftarPendapatan();
-    initAutoSave();
+    // 1. Inisialisasi rincian dinamis terlebih dahulu
+    try { initDaftarBuktiPendapatanLain(); } catch(e) { console.warn('initDaftarBuktiPendapatanLain:', e); }
+    try { initDaftarPendapatan(); } catch(e) { console.warn('initDaftarPendapatan:', e); }
+    try { initDaftarHpp(); } catch(e) { console.warn('initDaftarHpp:', e); }
+    try { initDaftarBebanLain(); } catch(e) { console.warn('initDaftarBebanLain:', e); }
+
+    // 2. Kalkulasi keuangan dan kalkulator
+    try { hitungKalkulasiAngsuran(); } catch(e) { console.warn('hitungKalkulasiAngsuran:', e); }
+    try { hitungCoverageAgunan(); } catch(e) { console.warn('hitungCoverageAgunan:', e); }
+    try { hitungTotalSlik(); } catch(e) { console.warn('hitungTotalSlik:', e); }
+    try { hitungRataRataRekening(); } catch(e) { console.warn('hitungRataRataRekening:', e); }
+    try { hitungLabaRugi(); } catch(e) { console.warn('hitungLabaRugi:', e); }
+    try { hitungDisbursement(); } catch(e) { console.warn('hitungDisbursement:', e); }
+    try { initAutoSave(); } catch(e) { console.warn('initAutoSave:', e); }
 
     // Pastikan nama debitur di Tab 1 dan Tab 2 tersinkron sejak awal load
     const initNama1 = document.getElementById('nama_debitur')?.value;
@@ -120,10 +124,9 @@ const stepsMetadata = [
     { title: '6. SLIK / CLIK', sub: 'Sedang dikerjakan', defaultSub: 'Cek riwayat kredit', mainTitle: 'Langkah 6: Cek SLIK OJK & Riwayat', desc: 'Riwayat kolektibilitas kredit pada bank atau lembaga keuangan lain.' },
     { title: '7. Web Check', sub: 'Sedang dikerjakan', defaultSub: 'Verifikasi online', mainTitle: 'Langkah 7: Verifikasi Web & Legal Check', desc: 'Pengecekan profiling web, kepatuhan hukum, dan reputasi usaha.' },
     { title: '8. Rekening Koran', sub: 'Sedang dikerjakan', defaultSub: 'Analisis mutasi', mainTitle: 'Langkah 8: Rekapitulasi Mutasi Rekening Koran', desc: 'Pencatatan arus kas masuk (kredit) dan keluar (debit) untuk validasi omzet usaha riil.' },
-    { title: '9. Laba Rugi', sub: 'Sedang dikerjakan', defaultSub: 'Proyeksi keuangan', mainTitle: 'Langkah 9: Analisis Laba Rugi & Pendapatan', desc: 'Perhitungan omset pendapatan, HPP pengeluaran, laba bersih riil, dan ekstra cashflow.' },
+    { title: '8. Data Keuangan', sub: 'Sedang dikerjakan', defaultSub: 'Proyeksi keuangan', mainTitle: 'Langkah 8: Analisis Data Keuangan & Pendapatan', desc: 'Perhitungan omset pendapatan, HPP pengeluaran, laba bersih riil, dan ekstra cashflow.' },
     { title: '10. Opini Pengusul', sub: 'Sedang dikerjakan', defaultSub: 'Catatan kualitatif', mainTitle: 'Langkah 10: Opini & Pertimbangan Pengusul', desc: 'Evaluasi kualitatif dan pertimbangan pengusul terkait kelayakan usaha, kondisi agunan, dan kebutuhan pembiayaan nasabah.' },
-    { title: '11. Disbursement', sub: 'Sedang dikerjakan', defaultSub: 'Jadwal pencairan', mainTitle: 'Langkah 11: Simulasi Biaya & Pencairan (Disbursement)', desc: 'Rincian seluruh komponen biaya potong muka dan estimasi dana riil yang diterima debitur saat akad.' },
-    { title: '12. Repayment', sub: 'Sedang dikerjakan', defaultSub: 'Kemampuan angsur', mainTitle: 'Langkah 12: Kemampuan Angsur & DSC (Tahap Akhir Pengusul)', desc: 'Pengujian kemampuan bayar debitur terhadap angsuran pinjaman (Standar aman DSC >= 1.30x).' }
+    { title: '11. Disbursement', sub: 'Sedang dikerjakan', defaultSub: 'Jadwal pencairan', mainTitle: 'Langkah 11: Simulasi Biaya & Pencairan (Disbursement)', desc: 'Rincian seluruh komponen biaya potong muka dan estimasi dana riil yang diterima debitur saat akad.' }
 ];
 
 // Status validasi tiap tahap (1 - 12):
@@ -476,12 +479,6 @@ function validateTab(tabNum) {
             const disbPlafonEl = document.getElementById('disbPlafon');
             addError(disbPlafonEl, 'Parameter plafon pinjaman belum terhitung valid');
         }
-    } else if (tabNum === 12) {
-        // Tab 12: Repayment
-        const angsuranPilih = document.getElementById('angsuran_dipilih');
-        if (!angsuranPilih || parseNominal(angsuranPilih.value) <= 0) {
-            addError(angsuranPilih, 'Angsuran acuan repayment wajib diisi lebih dari 0');
-        }
     }
 
     return {
@@ -506,12 +503,12 @@ const findStepIndex = (steps, tab) => {
     return steps.findIndex(s => s == norm || String(s).toLowerCase() === String(norm).toLowerCase());
 };
 
-// Daftar urutan langkah aktif sesuai entitas (Badan Usaha: 12 langkah, Perorangan: 13 langkah)
+// Daftar urutan langkah aktif sesuai entitas (Badan Usaha: 11 langkah, Perorangan: 12 langkah)
 const getActiveSteps = () => {
     if (window.IS_BADAN_USAHA) {
-        return [1, 2, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11, 12];
+        return [1, 2, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11];
     }
-    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11, 12];
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11];
 };
 
 const getDisplayStepNum = (tabNum) => {
@@ -534,7 +531,7 @@ function getStepMeta(tabNum) {
             sub: 'Sedang dikerjakan',
             defaultSub: 'Tampilan laporan',
             mainTitle: `Langkah ${num}: Laporan Pengajuan Pembiayaan`,
-            desc: 'Rekapitulasi dan tampilan dokumen laporan pengajuan kredit.'
+            desc: window.IS_BADAN_USAHA ? 'Rekapitulasi dan tampilan dokumen laporan pengajuan kredit.' : 'Rekapitulasi analisis pendapatan, biaya, posisi harta & utang, kekayaan bersih, serta rasio keuangan.'
         };
     }
     if (norm === 10) {
@@ -558,7 +555,7 @@ function getStepMeta(tabNum) {
         };
     }
     if (norm === 12) {
-        const num = window.IS_BADAN_USAHA ? 12 : 13;
+        const num = 12;
         return {
             title: `${num}. Repayment`,
             sub: 'Sedang dikerjakan',
@@ -803,26 +800,43 @@ function goToTab(tabIndex) {
     if (currentTab === 6 && typeof sinkronisasiDataDebiturKeSlik === 'function') {
         sinkronisasiDataDebiturKeSlik();
     }
-    if (normalizeTab(currentTab) === 'laporan') {
-        const checkHpp = document.getElementById('checkAdaHppPerorangan');
-        const kid = document.getElementById('kredit_id')?.value || 'draft';
-        const savedHpp = sessionStorage.getItem('hpp_perorangan_' + kid);
-        let isUsaha = false;
-        if (checkHpp) {
-            isUsaha = checkHpp.checked;
-        } else if (savedHpp !== null) {
-            isUsaha = (savedHpp === '1');
-        }
-        if (typeof window.gantiKategoriDebitur === 'function') {
-            window.gantiKategoriDebitur(isUsaha ? 'usaha' : 'gaji', false);
-        }
-        if (typeof hitungLabaRugi === 'function') {
-            hitungLabaRugi();
-        }
-        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
-            window.sinkronkanLaporanKeuangan();
-            setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 50);
-            setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 200);
+    const normTabCheck = normalizeTab(currentTab);
+    if (normTabCheck === 8 || normTabCheck === 9 || currentTab === 8 || currentTab === 9) {
+        if (typeof hitungRataRataRekening === 'function') hitungRataRataRekening();
+        if (typeof hitungLabaRugi === 'function') hitungLabaRugi();
+    }
+    if (normTabCheck === 'laporan' || currentTab === 'laporan') {
+        if (window.IS_BADAN_USAHA) {
+            if (typeof hitungDataLaporanDariDOM === 'function' && typeof isiDataLaporanBU === 'function') {
+                try {
+                    const domData = hitungDataLaporanDariDOM();
+                    if (domData) isiDataLaporanBU(domData);
+                } catch(e) { console.warn('Laporan DOM auto-calc:', e); }
+            }
+            if (typeof generateLaporanKeuangan === 'function') {
+                generateLaporanKeuangan(true);
+            }
+        } else {
+            const checkHpp = document.getElementById('checkAdaHppPerorangan');
+            const kid = document.getElementById('kredit_id')?.value || 'draft';
+            const savedHpp = sessionStorage.getItem('hpp_perorangan_' + kid);
+            let isUsaha = false;
+            if (checkHpp) {
+                isUsaha = checkHpp.checked;
+            } else if (savedHpp !== null) {
+                isUsaha = (savedHpp === '1');
+            }
+            if (typeof window.gantiKategoriDebitur === 'function') {
+                window.gantiKategoriDebitur(isUsaha ? 'usaha' : 'gaji', false);
+            }
+            if (typeof hitungLabaRugi === 'function') {
+                hitungLabaRugi();
+            }
+            if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+                window.sinkronkanLaporanKeuangan();
+                setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 50);
+                setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 200);
+            }
         }
     }
 
@@ -1066,14 +1080,18 @@ function hitungCoverageAgunan() {
         totalLV += lv;
     });
 
-    document.getElementById('totalAgunanMV').innerText = formatRupiahString(totalMV);
-    document.getElementById('totalAgunanLV').innerText = formatRupiahString(totalLV);
+    const elTotalMV = document.getElementById('totalAgunanMV');
+    if (elTotalMV) elTotalMV.innerText = formatRupiahString(totalMV);
+    const elTotalLV = document.getElementById('totalAgunanLV');
+    if (elTotalLV) elTotalLV.innerText = formatRupiahString(totalLV);
 
     const covMV = plafon > 0 ? ((totalMV / plafon) * 100).toFixed(1) : 0;
     const covLV = plafon > 0 ? ((totalLV / plafon) * 100).toFixed(1) : 0;
 
-    document.getElementById('coverageMV').innerText = covMV + '%';
-    document.getElementById('coverageLV').innerText = covLV + '%';
+    const elCovMV = document.getElementById('coverageMV');
+    if (elCovMV) elCovMV.innerText = covMV + '%';
+    const elCovLV = document.getElementById('coverageLV');
+    if (elCovLV) elCovLV.innerText = covLV + '%';
 }
 
 // Tambah & Hapus Baris Agunan
@@ -1120,6 +1138,7 @@ function tambahBarisAgunan() {
                                 <option value="SHM Sarusun">SHM Sarusun (Apartemen)</option>
                                 <option value="BPKB Mobil">BPKB Kendaraan Roda 4</option>
                                 <option value="Bilyet Deposito">Bilyet Deposito</option>
+                                <option value="Dan Lain-Lain">Dan Lain-Lain</option>
                             </select>
                         </div>
 
@@ -1261,7 +1280,8 @@ function hitungTotalSlik() {
     document.querySelectorAll('.slik-outstanding').forEach(inp => {
         total += parseNominal(inp.value || 0);
     });
-    document.getElementById('totalOutstandingSlik').innerText = formatRupiahString(total);
+    const elTotalSlik = document.getElementById('totalOutstandingSlik');
+    if (elTotalSlik) elTotalSlik.innerText = formatRupiahString(total);
 }
 
 function tambahBarisSlik() {
@@ -1315,42 +1335,135 @@ function tambahBarisSlik() {
 // Kalkulasi Rekening Koran
 function hitungRataRataRekening() {
     let totalAvgKredit = 0;
+    let totalAvgDebit = 0;
+    let totalKreditAll = 0;
+    let totalDebitAll = 0;
     const items = document.querySelectorAll('.rekening-item');
     items.forEach(item => {
         const kInput = item.querySelector('.rek-kredit');
+        const dInput = item.querySelector('.rek-debit');
         const bInput = item.querySelector('.rek-bulan');
         const labelAvg = item.querySelector('.rek-avg-kredit');
 
         const totalKredit = parseNominal(kInput?.value || 0);
+        const totalDebit = parseNominal(dInput?.value || 0);
         const bulan = Math.max(1, parseInt(bInput?.value || 6));
         const avgKredit = Math.round(totalKredit / bulan);
+        const avgDebit = Math.round(totalDebit / bulan);
 
         if (labelAvg) labelAvg.innerText = formatRupiahString(avgKredit);
         totalAvgKredit += avgKredit;
+        totalAvgDebit += avgDebit;
+        totalKreditAll += totalKredit;
+        totalDebitAll += totalDebit;
     });
 
-    document.getElementById('totalAvgKreditGabungan').innerText = formatRupiahString(totalAvgKredit);
+    const elTotalKredit = document.getElementById('totalAvgKreditGabungan');
+    if (elTotalKredit) elTotalKredit.innerText = formatRupiahString(totalAvgKredit);
+
+    const elTotalDebit = document.getElementById('totalAvgDebitGabungan');
+    if (elTotalDebit) elTotalDebit.innerText = formatRupiahString(totalAvgDebit);
+
+    // Hitung estimasi HPP Murni (%) dari mutasi debit dikurangi beban operasional
+    // Mutasi debit rekening koran adalah total kas keluar (kulakan/HPP + gaji/sewa/listrik/utilitas).
+    // Memisahkan beban operasional memastikan tidak ada double-counting yang menyebabkan rugi.
+    const nomBhEl = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 25000000);
+    const nomBlEl = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
+    const totalBebanOp = (nomBhEl > 0 ? nomBhEl : 25000000) + nomBlEl;
+
+    let hppRatio = 78;
+    if (totalAvgKredit > 0 && totalAvgDebit > 0) {
+        let debitMurni = Math.max(0, totalAvgDebit - totalBebanOp);
+        if (debitMurni > 0 && totalAvgKredit > 0) {
+            let r = Math.round((debitMurni / totalAvgKredit) * 1000) / 10;
+            hppRatio = (r > 82 || r <= 0) ? 78 : r;
+        } else {
+            hppRatio = 78;
+        }
+    }
+
+    const elHpp = document.getElementById('estimasiHppGabungan');
+    if (elHpp) elHpp.innerText = hppRatio > 0 ? (hppRatio + '%') : '78%';
+
+    // Auto-sync ke Tab Laba Rugi Badan Usaha
+    syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, false);
 }
+window.hitungRataRataRekening = hitungRataRataRekening;
+
+function syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, isForce = false) {
+    const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
+    if (!isBU) return;
+
+    const pEl = document.getElementById('pendapatan_rk');
+    const hppEl = document.getElementById('hpp_persen_rk');
+    let changed = false;
+
+    // 1. Sync Omzet / Pendapatan Bulanan: pastikan berformat ribuan bertitik
+    if (totalAvgKredit > 0 && pEl) {
+        const curVal = parseNominal(pEl.value || 0);
+        if (isForce || curVal === 0 || curVal === 250000000 || pEl.getAttribute('data-synced-rek') === '1') {
+            pEl.value = formatRupiahString(totalAvgKredit);
+            pEl.setAttribute('data-synced-rek', '1');
+            changed = true;
+        }
+    }
+
+    // 2. Sync HPP (%): ikuti rasio mutasi HPP murni rekening koran (default 78%)
+    if (hppRatio > 0 && hppEl) {
+        const curHpp = parseFloat(hppEl.value) || 0;
+        if (isForce || curHpp === 0 || curHpp === 60 || curHpp >= 90 || hppEl.getAttribute('data-synced-rek') === '1') {
+            hppEl.value = hppRatio;
+            hppEl.setAttribute('data-synced-rek', '1');
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        hitungLabaRugi();
+    }
+}
+window.syncRekeningKeLabaRugiBU = syncRekeningKeLabaRugiBU;
 
 function salinOmzetKeLabaRugi() {
     let totalAvgKredit = 0;
+    let totalAvgDebit = 0;
+    let totalKreditAll = 0;
+    let totalDebitAll = 0;
     document.querySelectorAll('.rekening-item').forEach(item => {
         const kInput = item.querySelector('.rek-kredit');
+        const dInput = item.querySelector('.rek-debit');
         const bInput = item.querySelector('.rek-bulan');
         const totalKredit = parseNominal(kInput?.value || 0);
+        const totalDebit = parseNominal(dInput?.value || 0);
         const bulan = Math.max(1, parseInt(bInput?.value || 6));
         totalAvgKredit += Math.round(totalKredit / bulan);
+        totalAvgDebit += Math.round(totalDebit / bulan);
+        totalKreditAll += totalKredit;
+        totalDebitAll += totalDebit;
     });
 
     if (totalAvgKredit > 0) {
-        document.getElementById('pendapatan_rk').value = formatRupiahString(totalAvgKredit);
-        hitungLabaRugi();
-        showToast('Omzet rata-rata rekening koran berhasil disalin ke Tab Laba Rugi', 'success');
+        const nomBhEl = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 25000000);
+        const nomBlEl = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
+        const totalBebanOp = (nomBhEl > 0 ? nomBhEl : 25000000) + nomBlEl;
+
+        let debitMurni = Math.max(0, totalAvgDebit - totalBebanOp);
+        let hppRatio = 78;
+        if (debitMurni > 0 && totalAvgKredit > 0) {
+            let r = Math.round((debitMurni / totalAvgKredit) * 1000) / 10;
+            hppRatio = (r > 82 || r <= 0) ? 78 : r;
+        }
+
+        syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, true);
+
+        const msg = `Omzet (Rp ${formatRupiahString(totalAvgKredit)}) & HPP (${hppRatio}%) rekening koran berhasil disalin ke Laba Rugi`;
+        showToast(msg, 'success');
         goToTab(9);
     } else {
         showToast('Isi mutasi kredit rekening koran terlebih dahulu', 'error');
     }
 }
+window.salinOmzetKeLabaRugi = salinOmzetKeLabaRugi;
 
 function tambahBarisRekening() {
     const container = document.getElementById('containerRekening');
@@ -1814,54 +1927,120 @@ function hitungLabaRugi() {
         ? totalPendapatanDinamis
         : parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
 
-    // Sync hidden input pendapatan_rk agar form submit dan generate-laporan konsisten
-    if (document.getElementById('pendapatan_rk')) {
-        document.getElementById('pendapatan_rk').value = pRK;
+    // Sync input pendapatan_rk
+    const pEl = document.getElementById('pendapatan_rk');
+    if (pEl) {
+        if (pEl.type === 'hidden') {
+            pEl.value = pRK;
+        } else {
+            // Field input terlihat (Badan Usaha): jika tidak sedang diketik langsung, pastikan berformat ribuan bertitik
+            if (document.activeElement !== pEl && pRK > 0) {
+                pEl.value = formatRupiahString(pRK);
+            }
+        }
     }
 
     const isBU = Boolean(window.IS_BADAN_USAHA);
     const checkAdaHpp = document.getElementById('checkAdaHppPerorangan');
-    // Jika Badan Usaha: selalu menggunakan HPP. Jika Perorangan: hanya jika checkbox dicentang.
-    const isAdaHpp = isBU ? true : (checkAdaHpp ? checkAdaHpp.checked : false);
+    const isAdaHpp = isBU ? true : (checkAdaHpp ? checkAdaHpp.checked : Boolean(document.getElementById('containerHppOnlyDinamis')));
+
+    // Hitung total HPP & total Aset dari daftarHpp jika ada
+    let totalHppDinamis = 0;
+    let totalAsetDinamis = 0;
+    let adaDaftarHpp = false;
+    if (Array.isArray(daftarHpp) && daftarHpp.length > 0) {
+        adaDaftarHpp = true;
+        daftarHpp.forEach(item => {
+            const nom = parseNominal(item.nominal || 0);
+            const kat = (item.kategori || 'hpp').toLowerCase();
+            if (kat === 'aset') {
+                totalAsetDinamis += nom;
+            } else {
+                totalHppDinamis += nom;
+            }
+        });
+    }
 
     let hppPctRK = 0;
     let nomHppRK = 0;
     let grossRK = pRK;
 
-    if (isAdaHpp) {
-        hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 0);
-        nomHppRK = Math.round(pRK * (hppPctRK / 100));
+    if (isBU || document.getElementById('containerHppOnlyDinamis')) {
+        const containerHppOnly = document.getElementById('containerHppOnlyDinamis');
+        if (containerHppOnly || adaDaftarHpp) {
+            nomHppRK = totalHppDinamis;
+        } else {
+            nomHppRK = parseNominal(document.getElementById('nomHppRKInput')?.value || 0);
+        }
+
+        // Persentase HPP otomatis terhadap omzet
+        if (pRK > 0 && nomHppRK > 0) {
+            hppPctRK = Math.round((nomHppRK / pRK) * 1000) / 10;
+        } else {
+            hppPctRK = 0;
+        }
+        const elHppPct = document.getElementById('hpp_persen_rk');
+        if (elHppPct) elHppPct.value = hppPctRK;
+
+        const badgePersen = document.getElementById('badgePersenHpp');
+        if (badgePersen) {
+            badgePersen.innerText = '(' + hppPctRK + '% dari Omzet)';
+        }
+
+        // Validasi: HPP tidak boleh > 100%
+        if (hppPctRK > 100 && pRK > 0) {
+            showToast('⚠️ HPP ' + hppPctRK + '% melebihi 100% dari omzet. Periksa rincian pengeluaran.', 'error');
+        }
+        // Validasi: HPP tidak boleh > omzet
+        if (nomHppRK > pRK && pRK > 0) {
+            showToast('⚠️ HPP (Rp ' + nomHppRK.toLocaleString('id-ID') + ') melebihi Omzet. Laba Kotor akan negatif!', 'error');
+        }
         grossRK = Math.max(0, pRK - nomHppRK);
     } else {
-        const inputHppPct = document.getElementById('hpp_persen_rk');
-        const inputNomHpp = document.getElementById('nomHppRKInput');
-        if (inputHppPct && !isBU) inputHppPct.value = 0;
-        if (inputNomHpp && !isBU && document.activeElement !== inputNomHpp) {
-            inputNomHpp.value = '0';
+        // Perorangan
+        if (isAdaHpp) {
+            hppPctRK = parsePersen(document.getElementById('hpp_persen_rk')?.value || 0);
+            nomHppRK = Math.round(pRK * (hppPctRK / 100));
+            grossRK = Math.max(0, pRK - nomHppRK);
+        } else {
+            const inputHppPct = document.getElementById('hpp_persen_rk');
+            const inputNomHpp = document.getElementById('nomHppRKInput');
+            if (inputHppPct) inputHppPct.value = 0;
+            if (inputNomHpp && document.activeElement !== inputNomHpp) {
+                inputNomHpp.value = '0';
+            }
+            hppPctRK = 0;
+            nomHppRK = 0;
+            grossRK = pRK;
         }
-        hppPctRK = 0;
-        nomHppRK = 0;
-        grossRK = pRK;
     }
 
-    // Biaya Hidup (langsung nominal rupiah tanpa %)
-    const nomBhRK = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 0);
+    // Biaya Hidup & Beban Lain
+    const inputBhEl = document.getElementById('biaya_hidup_nominal_rk');
+    const isBhManual = inputBhEl && inputBhEl.type !== 'hidden';
+    const nomBhRK = isBhManual ? parseNominal(inputBhEl.value || 0) : 0;
     if (pRK > 0 && document.getElementById('biaya_hidup_persen_rk')) {
         document.getElementById('biaya_hidup_persen_rk').value = (Math.round((nomBhRK / pRK) * 1000) / 10);
     }
 
     // Beban Lain (dihitung dari total rincian beban dinamis)
     let totalBebanLain = 0;
+    const containerBebanLainEl = document.getElementById('containerBebanLain');
     if (Array.isArray(daftarBebanLain) && daftarBebanLain.length > 0) {
         daftarBebanLain.forEach(item => {
             totalBebanLain += parseNominal(item.nominal || 0);
         });
-    } else {
+    } else if (!containerBebanLainEl) {
+        // Fallback hanya jika form tidak memiliki container dinamis
         totalBebanLain = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
     }
 
     if (document.getElementById('beban_lainnya_nominal_rk')) {
         document.getElementById('beban_lainnya_nominal_rk').value = totalBebanLain;
+    }
+    // Jika biaya_hidup_nominal_rk berstatus hidden, sinkronkan nilainya ke totalBebanLain untuk kompatibilitas database/laporan
+    if (inputBhEl && !isBhManual) {
+        inputBhEl.value = totalBebanLain;
     }
     if (pRK > 0 && document.getElementById('beban_lainnya_persen_rk')) {
         document.getElementById('beban_lainnya_persen_rk').value = (Math.round((totalBebanLain / pRK) * 1000) / 10);
@@ -1874,14 +2053,15 @@ function hitungLabaRugi() {
 
     // Total Penghasilan & Pengeluaran (memperhitungkan Laba Kotor jika ada HPP)
     const totalPenghasilanPR = grossRK + pLainRK;
-    const totalPengeluaranPR = nomBhRK + nomBlRK;
+    const totalPengeluaranPR = isBhManual ? (nomBhRK + nomBlRK) : nomBlRK;
 
     // Surplus = Penghasilan (setelah HPP) - Pengeluaran (live preview, tanpa cicilan — cicilan diinput di Tab Laporan)
     const surplusPR = totalPenghasilanPR - totalPengeluaranPR;
 
     // nettRK & totalCashflow untuk kompatibilitas dengan field-field lain
-    const nettRK = grossRK - nomBhRK - nomBlRK;
-    const totalCashflow = isBU ? nettRK : surplusPR;
+    const nettRK = isBhManual ? (grossRK - nomBhRK - nomBlRK) : (grossRK - nomBlRK);
+    const is3Kotak = isBU || Boolean(document.getElementById('containerHppOnlyDinamis'));
+    const totalCashflow = is3Kotak ? nettRK : surplusPR;
 
     if (document.getElementById('nomHppRK')) document.getElementById('nomHppRK').innerText = formatRupiahString(nomHppRK);
     const inputNomHpp = document.getElementById('nomHppRKInput');
@@ -1891,6 +2071,12 @@ function hitungLabaRugi() {
     if (document.getElementById('grossRK')) document.getElementById('grossRK').innerText = formatRupiahString(grossRK);
     if (document.getElementById('nomBiayaHidupRK')) document.getElementById('nomBiayaHidupRK').innerText = formatRupiahString(nomBhRK);
     if (document.getElementById('nomBebanLainRK')) document.getElementById('nomBebanLainRK').innerText = formatRupiahString(nomBlRK);
+    if (document.getElementById('nomTotalPengeluaranBU')) {
+        document.getElementById('nomTotalPengeluaranBU').innerText = formatRupiahString(nomHppRK + nomBlRK);
+    }
+    if (document.getElementById('nomTotalPendapatanDinamis')) {
+        document.getElementById('nomTotalPendapatanDinamis').innerText = formatRupiahString(pRK);
+    }
     if (document.getElementById('nettRK')) document.getElementById('nettRK').innerText = formatRupiahString(nettRK);
     if (document.getElementById('labelTotalPendapatanLain')) {
         document.getElementById('labelTotalPendapatanLain').innerText = formatRupiahString(pLainRK);
@@ -1902,25 +2088,25 @@ function hitungLabaRugi() {
         document.getElementById('nomTotalPendapatanUtama').innerText = formatRupiahString(pRK);
     }
     if (document.getElementById('nomTotalPengeluaranPR')) {
-        document.getElementById('nomTotalPengeluaranPR').innerText = formatRupiahString(totalPengeluaranPR);
+        document.getElementById('nomTotalPengeluaranPR').innerText = formatRupiahString(is3Kotak ? (nomHppRK + nomBlRK) : totalPengeluaranPR);
     }
     if (document.getElementById('nomTotalPenghasilanPR')) {
-        document.getElementById('nomTotalPenghasilanPR').innerText = formatRupiahString(totalPenghasilanPR);
+        document.getElementById('nomTotalPenghasilanPR').innerText = formatRupiahString(is3Kotak ? pRK : totalPenghasilanPR);
     }
     if (document.getElementById('nomSurplusPR')) {
-        document.getElementById('nomSurplusPR').innerText = formatRupiahString(surplusPR);
+        document.getElementById('nomSurplusPR').innerText = formatRupiahString(is3Kotak ? nettRK : surplusPR);
     }
 
     // Track 2: IV
     const pIV = parseNominal(document.getElementById('pendapatan_iv')?.value || 0);
-    const hppPctIV = parseFloat(document.getElementById('hpp_persen_iv')?.value || 60);
+    const hppPctIV = parsePersen(document.getElementById('hpp_persen_iv')?.value || 60);
     const nomHppIV = Math.round(pIV * (hppPctIV / 100));
     const grossIV = pIV - nomHppIV;
 
-    const bhPctIV = parseFloat(document.getElementById('biaya_hidup_persen_iv')?.value || 10);
+    const bhPctIV = parsePersen(document.getElementById('biaya_hidup_persen_iv')?.value || 10);
     const nomBhIV = Math.round(pIV * (bhPctIV / 100));
 
-    const blPctIV = parseFloat(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
+    const blPctIV = parsePersen(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
     const nomBlIV = Math.round(pIV * (blPctIV / 100));
 
     const nettIV = grossIV - nomBhIV - nomBlIV;
@@ -1932,9 +2118,11 @@ function hitungLabaRugi() {
     if (document.getElementById('nettIV')) document.getElementById('nettIV').innerText = formatRupiahString(nettIV);
 
     hitungRasioDSC();
-
     if (typeof window.sinkronkanLaporanKeuangan === 'function') {
         window.sinkronkanLaporanKeuangan();
+    }
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
     }
 }
 
@@ -1957,6 +2145,341 @@ function syncHppNominalKePersen() {
 window.syncHppNominalKePersen = syncHppNominalKePersen;
 
 // ============================================================
+// Inisialisasi & Manajemen Rincian HPP & Belanja Aset (Dinamis: Tambah/Hapus)
+// ============================================================
+let daftarHpp = [];
+
+function initDaftarHpp() {
+    const raw = document.getElementById('detail_hpp_rk')?.value;
+    daftarHpp = [];
+    if (raw && raw !== '[]' && raw !== '') {
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                daftarHpp = parsed;
+            }
+        } catch (e) {
+            console.error('Error parse detail_hpp_rk', e);
+        }
+    }
+
+    if (daftarHpp.length === 0) {
+        const nomAwal = parseNominal(document.getElementById('nomHppRKInput')?.value || 0);
+        if (nomAwal > 0) {
+            daftarHpp = [{ nama: '', kategori: 'hpp', nominal: nomAwal }];
+        } else {
+            daftarHpp = [];
+        }
+    }
+
+    window.daftarHpp = daftarHpp;
+    renderListHpp();
+}
+window.initDaftarHpp = initDaftarHpp;
+
+function renderListHpp() {
+    window.daftarHpp = daftarHpp;
+    const containerAll = document.getElementById('containerHppDinamis');
+    const containerHppOnly = document.getElementById('containerHppOnlyDinamis');
+    const containerAsetOnly = document.getElementById('containerAsetOnlyDinamis');
+
+    if (!containerAll && !containerHppOnly && !containerAsetOnly) return;
+
+    // Mode Terpisah: Kotak 2 untuk HPP (Merah) & Kotak 3 untuk Aset (Hijau)
+    if (containerHppOnly || containerAsetOnly) {
+        let htmlHpp = '';
+        let htmlAset = '';
+        let countHpp = 0;
+        let countAset = 0;
+
+        daftarHpp.forEach((item, index) => {
+            const safeNama = (item.nama || '').replace(/"/g, '&quot;');
+            const kategori = (item.kategori || 'hpp').toLowerCase();
+            const nomVal = parseInt(item.nominal, 10) || 0;
+            const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+            const isAset = (kategori === 'aset');
+
+            if (isAset) {
+                countAset++;
+                htmlAset += `
+                    <div class="flex items-center gap-2 p-2 bg-white border border-emerald-200 rounded-xl shadow-2xs hover:border-emerald-300 transition">
+                        <div class="flex-1 min-w-0">
+                            <input type="text" value="${safeNama}" 
+                                   placeholder="Nama Aset / Peralatan (cth: Mesin Produksi, Mobil Operasional, Komputer)" 
+                                   class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                                   oninput="updateItemHpp(${index}, 'nama', this.value)">
+                        </div>
+                        <div class="w-32 sm:w-44 shrink-0">
+                            <div class="relative flex items-center">
+                                <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                                <input type="text" value="${nomStr}" 
+                                       placeholder="0" 
+                                       class="w-full text-xs font-bold text-slate-800 text-right border border-emerald-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-emerald-50/30 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 transition rupiah-input"
+                                       oninput="formatRupiah(this); updateItemHpp(${index}, 'nominal', this.value)">
+                            </div>
+                        </div>
+                        <button type="button" onclick="hapusHpp(${index})" title="Hapus aset ini" 
+                                class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+            } else {
+                countHpp++;
+                htmlHpp += `
+                    <div class="flex items-center gap-2 p-2 bg-white border border-rose-200 rounded-xl shadow-2xs hover:border-rose-300 transition">
+                        <div class="flex-1 min-w-0">
+                            <input type="text" value="${safeNama}" 
+                                   placeholder="Keterangan HPP (cth: Kulakan Barang Dagang, Pembelian Bahan Baku)" 
+                                   class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                                   oninput="updateItemHpp(${index}, 'nama', this.value)">
+                        </div>
+                        <div class="w-32 sm:w-44 shrink-0">
+                            <div class="relative flex items-center">
+                                <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                                <input type="text" value="${nomStr}" 
+                                       placeholder="0" 
+                                       class="w-full text-xs font-bold text-slate-800 text-right border border-rose-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-rose-50/30 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-100 transition rupiah-input"
+                                       oninput="formatRupiah(this); updateItemHpp(${index}, 'nominal', this.value)">
+                            </div>
+                        </div>
+                        <button type="button" onclick="hapusHpp(${index})" title="Hapus HPP ini" 
+                                class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+            }
+        });
+
+        if (containerHppOnly) {
+            if (countHpp === 0) {
+                containerHppOnly.innerHTML = `
+                    <div class="p-3 text-center border border-dashed border-rose-200 rounded-xl text-slate-400 text-xs bg-rose-50/30">
+                        Belum ada rincian HPP. Klik <strong class="text-rose-600 font-semibold cursor-pointer hover:underline" onclick="tambahHppOnly()">Tambah HPP</strong> untuk menambah pengeluaran kulakan/bahan baku.
+                    </div>
+                `;
+            } else {
+                containerHppOnly.innerHTML = htmlHpp;
+            }
+        }
+
+        if (containerAsetOnly) {
+            if (countAset === 0) {
+                containerAsetOnly.innerHTML = `
+                    <div class="p-3 text-center border border-dashed border-emerald-200 rounded-xl text-slate-400 text-xs bg-emerald-50/30">
+                        Belum ada pembelian aset. Klik <strong class="text-emerald-600 font-semibold cursor-pointer hover:underline" onclick="tambahAsetOnly()">Tambah Aset</strong> jika ada pembelian inventaris/peralatan.
+                    </div>
+                `;
+            } else {
+                containerAsetOnly.innerHTML = htmlAset;
+            }
+        }
+    }
+
+    // Mode Fallback: Container Tunggal (Lama)
+    if (containerAll) {
+        let html = '';
+        if (daftarHpp.length === 0) {
+            html = `
+                <div class="p-3 text-center border border-dashed border-slate-200 rounded-xl text-slate-400 text-xs">
+                    Belum ada data rincian. Klik <strong>Tambah</strong> untuk mengisi.
+                </div>
+            `;
+        } else {
+            daftarHpp.forEach((item, index) => {
+            const safeNama = (item.nama || '').replace(/"/g, '&quot;');
+            const kategori = (item.kategori || 'hpp').toLowerCase();
+            const nomVal = parseInt(item.nominal, 10) || 0;
+            const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+            const isAset = (kategori === 'aset');
+
+            html += `
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2 bg-white border ${isAset ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'} rounded-xl shadow-2xs hover:border-blue-300 transition">
+                    <div class="w-full sm:flex-1 min-w-0">
+                        <input type="text" value="${safeNama}" 
+                               placeholder="${isAset ? 'Nama Aset (cth: Mesin Produksi, Kendaraan, Alat Kerja)' : 'Keterangan HPP (cth: Kulakan Barang, Bahan Baku)'}" 
+                               class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                               oninput="updateItemHpp(${index}, 'nama', this.value)">
+                    </div>
+                    <div class="w-36 sm:w-44 shrink-0">
+                        <select onchange="updateItemHpp(${index}, 'kategori', this.value)"
+                                class="w-full text-[11px] font-bold ${isAset ? 'text-emerald-700 bg-emerald-50 border-emerald-300' : 'text-blue-700 bg-blue-50 border-blue-300'} border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-200 cursor-pointer">
+                            <option value="hpp" ${!isAset ? 'selected' : ''}>📦 Biaya HPP (Kulakan)</option>
+                            <option value="aset" ${isAset ? 'selected' : ''}>🏢 Aset / Peralatan</option>
+                        </select>
+                    </div>
+                    <div class="w-32 sm:w-40 shrink-0">
+                        <div class="relative flex items-center">
+                            <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                            <input type="text" value="${nomStr}" 
+                                   placeholder="0" 
+                                   class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
+                                   oninput="formatRupiah(this); updateItemHpp(${index}, 'nominal', this.value)">
+                        </div>
+                    </div>
+                    <button type="button" onclick="hapusHpp(${index})" title="Hapus item ini" 
+                            class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            `;
+            });
+        }
+        containerAll.innerHTML = html;
+    }
+
+    kalkulasiTotalHppDanAset();
+}
+window.renderListHpp = renderListHpp;
+
+function kalkulasiTotalHppDanAset() {
+    let totHpp = 0;
+    let totAset = 0;
+    daftarHpp.forEach(item => {
+        const nom = parseNominal(item.nominal || 0);
+        const kat = (item.kategori || 'hpp').toLowerCase();
+        if (kat === 'aset') {
+            totAset += nom;
+        } else {
+            totHpp += nom;
+        }
+    });
+
+    window.daftarHpp = daftarHpp;
+
+    // Sinkronkan daftar aset ke window.daftarHarta agar tab laporan langsung merender secara dinamis
+    const listAsetKotak3 = daftarHpp.filter(it => (it.kategori || '').toLowerCase() === 'aset').map(it => ({
+        nama: it.nama || 'Aset / Inventaris',
+        nominal: parseNominal(it.nominal || 0),
+        status: it.status || 'bebas'
+    }));
+    window.daftarHarta = listAsetKotak3;
+
+    const hiddenDetail = document.getElementById('detail_hpp_rk');
+    if (hiddenDetail) {
+        hiddenDetail.value = JSON.stringify(daftarHpp);
+    }
+    const hiddenTotalAset = document.getElementById('total_aset_hpp_rk');
+    if (hiddenTotalAset) {
+        hiddenTotalAset.value = totAset;
+    }
+
+    const nomTotalHppEl = document.getElementById('nomTotalHppDinamis');
+    if (nomTotalHppEl) {
+        nomTotalHppEl.innerText = formatRupiahString(totHpp);
+    }
+    const nomTotalAsetEl = document.getElementById('nomTotalAsetDinamis');
+    if (nomTotalAsetEl) {
+        nomTotalAsetEl.innerText = formatRupiahString(totAset);
+    }
+
+    const inputNomHpp = document.getElementById('nomHppRKInput');
+    if (inputNomHpp) {
+        inputNomHpp.value = totHpp;
+    }
+
+    // Jika ada pembelian aset dan form neraca/capex ada, sinkronkan nilai capex
+    const inputCapex = document.querySelector('[name="input_capex"]');
+    if (inputCapex && totAset > 0 && !inputCapex.value) {
+        inputCapex.value = formatRupiahString(totAset);
+    }
+
+    hitungLabaRugi();
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
+}
+window.kalkulasiTotalHppDanAset = kalkulasiTotalHppDanAset;
+
+function tambahHpp(nama = '', kategori = 'hpp', nominal = 0) {
+    daftarHpp.push({
+        nama: nama,
+        kategori: kategori,
+        nominal: nominal
+    });
+    window.daftarHpp = daftarHpp;
+    renderListHpp();
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
+}
+window.tambahHpp = tambahHpp;
+
+function tambahHppOnly(nama = '', nominal = 0) {
+    daftarHpp.push({
+        nama: nama,
+        kategori: 'hpp',
+        nominal: nominal
+    });
+    window.daftarHpp = daftarHpp;
+    renderListHpp();
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
+}
+window.tambahHppOnly = tambahHppOnly;
+
+function tambahAsetOnly(nama = '', nominal = 0) {
+    daftarHpp.push({
+        nama: nama,
+        kategori: 'aset',
+        nominal: nominal
+    });
+    window.daftarHpp = daftarHpp;
+    renderListHpp();
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
+}
+window.tambahAsetOnly = tambahAsetOnly;
+
+function hapusHpp(index) {
+    if (index >= 0 && index < daftarHpp.length) {
+        daftarHpp.splice(index, 1);
+        window.daftarHpp = daftarHpp;
+        renderListHpp();
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+            window.sinkronkanLaporanKeuangan();
+        }
+    }
+}
+window.hapusHpp = hapusHpp;
+
+function updateItemHpp(index, field, val) {
+    if (!daftarHpp[index]) return;
+    if (field === 'nominal') {
+        daftarHpp[index].nominal = parseNominal(val);
+        window.daftarHpp = daftarHpp;
+        kalkulasiTotalHppDanAset();
+    } else if (field === 'nama') {
+        daftarHpp[index].nama = val;
+        window.daftarHpp = daftarHpp;
+        const hiddenDetail = document.getElementById('detail_hpp_rk');
+        if (hiddenDetail) {
+            hiddenDetail.value = JSON.stringify(daftarHpp);
+        }
+        const listAsetKotak3 = daftarHpp.filter(it => (it.kategori || '').toLowerCase() === 'aset').map(it => ({
+            nama: it.nama || 'Aset / Inventaris',
+            nominal: parseNominal(it.nominal || 0),
+            status: it.status || 'bebas'
+        }));
+        window.daftarHarta = listAsetKotak3;
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+            window.sinkronkanLaporanKeuangan();
+        }
+    } else if (field === 'kategori') {
+        daftarHpp[index].kategori = val;
+        window.daftarHpp = daftarHpp;
+        renderListHpp();
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+            window.sinkronkanLaporanKeuangan();
+        }
+    }
+}
+window.updateItemHpp = updateItemHpp;
+
+// ============================================================
 // Inisialisasi & Manajemen Rincian Pendapatan Pokok / Utama (Dinamis: Tambah/Hapus)
 // ============================================================
 let daftarPendapatan = [];
@@ -1977,10 +2500,13 @@ function initDaftarPendapatan() {
 
     if (daftarPendapatan.length === 0) {
         const nomLama = parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
+        const defaultName = (typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA)
+            ? 'Omset Penjualan Utama'
+            : 'Gaji Pokok';
         if (nomLama > 0) {
-            daftarPendapatan = [{ nama: 'Gaji Pokok', nominal: nomLama }];
+            daftarPendapatan = [{ nama: defaultName, nominal: nomLama }];
         } else {
-            daftarPendapatan = [{ nama: 'Gaji Pokok', nominal: 0 }];
+            daftarPendapatan = [];
         }
     }
 
@@ -1993,44 +2519,50 @@ function renderListPendapatan() {
     const container = document.getElementById('containerPendapatanDinamis');
     if (!container) return;
 
+    const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA) || Boolean(document.getElementById('containerHppOnlyDinamis'));
+
     if (daftarPendapatan.length === 0) {
-        daftarPendapatan.push({ nama: 'Gaji Pokok', nominal: 0 });
-    }
-
-    let html = '';
-    daftarPendapatan.forEach((item, index) => {
-        const safeNama = (item.nama || '').replace(/"/g, '&quot;');
-        const nomVal = parseInt(item.nominal, 10) || 0;
-        const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
-        const deleteBtnHtml = (daftarPendapatan.length > 1) ? `
-            <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
-                    class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-            </button>
-        ` : '';
-
-        html += `
-            <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
-                <div class="flex-1 min-w-0">
-                    <input type="text" value="${safeNama}" 
-                           placeholder="Nama pendapatan (cth: Gaji Pokok, Bonus, Lembur)" 
-                           class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
-                           oninput="updateItemPendapatan(${index}, 'nama', this.value)">
-                </div>
-                <div class="w-36 sm:w-48 shrink-0">
-                    <div class="relative flex items-center">
-                        <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
-                        <input type="text" value="${nomStr}" 
-                               placeholder="0" 
-                               class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
-                               oninput="formatRupiah(this); updateItemPendapatan(${index}, 'nominal', this.value)">
-                    </div>
-                </div>
-                ${deleteBtnHtml}
+        container.innerHTML = `
+            <div class="p-3 text-center border border-dashed border-blue-200 rounded-xl text-slate-400 text-xs bg-blue-50/30">
+                Belum ada rincian pendapatan. Klik <strong class="text-blue-600 font-semibold cursor-pointer hover:underline" onclick="tambahPendapatan()">Tambah Pendapatan</strong>.
             </div>
         `;
-    });
-    container.innerHTML = html;
+    } else {
+        let html = '';
+        daftarPendapatan.forEach((item, index) => {
+            const safeNama = (item.nama || '').replace(/"/g, '&quot;');
+            const nomVal = parseInt(item.nominal, 10) || 0;
+            const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+            const deleteBtnHtml = `
+                <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
+                        class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            `;
+
+            html += `
+                <div class="flex items-center gap-2 p-2 bg-white border border-blue-200 rounded-xl shadow-2xs hover:border-blue-300 transition">
+                    <div class="flex-1 min-w-0">
+                        <input type="text" value="${safeNama}" 
+                               placeholder="${isBU ? 'Sumber Pendapatan (misal: Omset Penjualan Utama, Jasa / Proyek)' : 'Nama pendapatan (cth: Gaji Pokok, Bonus, Lembur)'}" 
+                               class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                               oninput="updateItemPendapatan(${index}, 'nama', this.value)">
+                    </div>
+                    <div class="w-32 sm:w-44 shrink-0">
+                        <div class="relative flex items-center">
+                            <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                            <input type="text" value="${nomStr}" 
+                                   placeholder="0" 
+                                   class="w-full text-xs font-bold text-slate-800 text-right border border-blue-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-blue-50/30 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
+                                   oninput="formatRupiah(this); updateItemPendapatan(${index}, 'nominal', this.value)">
+                        </div>
+                    </div>
+                    ${deleteBtnHtml}
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
 
     let total = 0;
     daftarPendapatan.forEach(item => {
@@ -2042,6 +2574,7 @@ function renderListPendapatan() {
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarPendapatan);
     }
+    window.daftarPendapatan = daftarPendapatan;
     const nomTotalEl = document.getElementById('nomTotalPendapatanDinamis');
     if (nomTotalEl) {
         nomTotalEl.innerText = formatRupiahString(total);
@@ -2052,11 +2585,21 @@ function renderListPendapatan() {
     }
 
     hitungLabaRugi();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
+    if (typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 }
 window.renderListPendapatan = renderListPendapatan;
 
 function tambahPendapatan(nama = '', nominal = 0) {
-    daftarPendapatan.push({ nama: nama, nominal: nominal });
+    daftarPendapatan.push({ 
+        nama: nama, 
+        nominal: nominal 
+    });
+    window.daftarPendapatan = daftarPendapatan;
     renderListPendapatan();
 }
 window.tambahPendapatan = tambahPendapatan;
@@ -2064,9 +2607,7 @@ window.tambahPendapatan = tambahPendapatan;
 function hapusPendapatan(index) {
     if (index >= 0 && index < daftarPendapatan.length) {
         daftarPendapatan.splice(index, 1);
-        if (daftarPendapatan.length === 0) {
-            daftarPendapatan.push({ nama: '', nominal: 0 });
-        }
+        window.daftarPendapatan = daftarPendapatan;
         renderListPendapatan();
     }
 }
@@ -2075,7 +2616,7 @@ window.hapusPendapatan = hapusPendapatan;
 function updateItemPendapatan(index, field, val) {
     if (!daftarPendapatan[index]) {
         while (daftarPendapatan.length <= index) {
-            daftarPendapatan.push({ nama: 'Gaji Pokok', nominal: 0 });
+            daftarPendapatan.push({ nama: '', nominal: 0 });
         }
     }
     if (field === 'nominal') {
@@ -2094,6 +2635,7 @@ function updateItemPendapatan(index, field, val) {
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarPendapatan);
     }
+    window.daftarPendapatan = daftarPendapatan;
     const nomTotalEl = document.getElementById('nomTotalPendapatanDinamis');
     if (nomTotalEl) {
         nomTotalEl.innerText = formatRupiahString(total);
@@ -2104,6 +2646,12 @@ function updateItemPendapatan(index, field, val) {
     }
 
     hitungLabaRugi();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
+    if (typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 }
 window.updateItemPendapatan = updateItemPendapatan;
 
@@ -2116,7 +2664,7 @@ function initDaftarBebanLain() {
     if (raw && raw !== '[]' && raw !== '') {
         try {
             const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
+            if (Array.isArray(parsed) && parsed.length > 0) {
                 daftarBebanLain = parsed;
             }
         } catch (e) {
@@ -2126,10 +2674,12 @@ function initDaftarBebanLain() {
 
     if (daftarBebanLain.length === 0) {
         const nomLama = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
+        const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA) || Boolean(document.getElementById('containerHppOnlyDinamis'));
+        const defaultName = isBU ? 'Beban Operasional Pokok' : 'Beban Lain-Lain';
         if (nomLama > 0) {
-            daftarBebanLain = [{ nama: 'Beban Lain-Lain', nominal: nomLama }];
+            daftarBebanLain = [{ nama: defaultName, nominal: nomLama }];
         } else {
-            daftarBebanLain = [{ nama: '', nominal: 0 }];
+            daftarBebanLain = [];
         }
     }
 
@@ -2142,12 +2692,14 @@ function renderListBebanLain() {
     const container = document.getElementById('containerBebanLain');
     if (!container) return;
 
+    const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA) || Boolean(document.getElementById('containerHppOnlyDinamis'));
+
     if (daftarBebanLain.length === 0) {
         container.innerHTML = `
-                    <div class="p-3 text-center border border-dashed border-slate-200 rounded-xl text-slate-400 text-xs bg-slate-50/50">
-                        Belum ada rincian beban lain. Klik <strong class="text-blue-600 font-semibold cursor-pointer hover:underline" onclick="tambahBebanLain()">+ Tambah Beban</strong> (cth: Biaya Sekolah, dll).
-                    </div>
-                `;
+            <div class="p-3 text-center border border-dashed border-rose-200 rounded-xl text-slate-400 text-xs bg-rose-50/30">
+                Belum ada rincian pengeluaran. Klik <strong class="text-rose-600 font-semibold cursor-pointer hover:underline" onclick="tambahBebanLain()">Tambah Pengeluaran</strong>.
+            </div>
+        `;
     } else {
         let html = '';
         daftarBebanLain.forEach((item, index) => {
@@ -2155,28 +2707,28 @@ function renderListBebanLain() {
             const nomVal = parseInt(item.nominal, 10) || 0;
             const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
             html += `
-                        <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
-                            <div class="flex-1 min-w-0">
-                                <input type="text" value="${safeNama}" 
-                                       placeholder="Keterangan beban (cth: Premi Asuransi, Biaya Tak Terduga)" 
-                                       class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
-                                       oninput="updateItemBebanLain(${index}, 'nama', this.value)">
-                            </div>
-                            <div class="w-32 sm:w-40 shrink-0">
-                                <div class="relative flex items-center">
-                                    <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
-                                    <input type="text" value="${nomStr}" 
-                                           placeholder="0" 
-                                           class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
-                                           oninput="formatRupiah(this); updateItemBebanLain(${index}, 'nominal', this.value)">
-                                </div>
-                            </div>
-                            <button type="button" onclick="hapusBebanLain(${index})" title="Hapus beban ini" 
-                                    class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
+                <div class="flex items-center gap-2 p-2 bg-white border ${isBU ? 'border-rose-200 hover:border-rose-300' : 'border-slate-200 hover:border-blue-200'} rounded-xl shadow-2xs transition">
+                    <div class="flex-1 min-w-0">
+                        <input type="text" value="${safeNama}" 
+                               placeholder="${isBU ? 'Keterangan pengeluaran rutin (cth: Gaji Karyawan, Sewa Kantor, Listrik/Air, Logistik)' : 'Keterangan pengeluaran / beban (cth: Kebutuhan Rumah Tangga, Biaya Sekolah, dll)'}" 
+                               class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                               oninput="updateItemBebanLain(${index}, 'nama', this.value)">
+                    </div>
+                    <div class="w-32 sm:w-44 shrink-0">
+                        <div class="relative flex items-center">
+                            <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                            <input type="text" value="${nomStr}" 
+                                   placeholder="0" 
+                                   class="w-full text-xs font-bold text-slate-800 text-right border ${isBU ? 'border-rose-200 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-100' : 'border-slate-200 bg-slate-50/70 focus:border-blue-500 focus:ring-blue-100'} rounded-lg pl-7 pr-2.5 py-1.5 focus:bg-white focus:ring-1 transition rupiah-input"
+                                   oninput="formatRupiah(this); updateItemBebanLain(${index}, 'nominal', this.value)">
                         </div>
-                    `;
+                    </div>
+                    <button type="button" onclick="hapusBebanLain(${index})" title="Hapus pengeluaran ini" 
+                            class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            `;
         });
         container.innerHTML = html;
     }
@@ -2186,8 +2738,15 @@ function renderListBebanLain() {
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarBebanLain);
     }
+    window.daftarBebanLain = daftarBebanLain;
 
     hitungLabaRugi();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
+    if (typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 }
 window.renderListBebanLain = renderListBebanLain;
 
@@ -2196,6 +2755,7 @@ function tambahBebanLain(nama = '', nominal = 0) {
         nama: nama,
         nominal: nominal
     });
+    window.daftarBebanLain = daftarBebanLain;
     renderListBebanLain();
 }
 window.tambahBebanLain = tambahBebanLain;
@@ -2203,9 +2763,7 @@ window.tambahBebanLain = tambahBebanLain;
 function hapusBebanLain(index) {
     if (index >= 0 && index < daftarBebanLain.length) {
         daftarBebanLain.splice(index, 1);
-        if (daftarBebanLain.length === 0) {
-            daftarBebanLain.push({ nama: '', nominal: 0 });
-        }
+        window.daftarBebanLain = daftarBebanLain;
         renderListBebanLain();
     }
 }
@@ -2224,8 +2782,15 @@ function updateItemBebanLain(index, field, val) {
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarBebanLain);
     }
+    window.daftarBebanLain = daftarBebanLain;
 
     hitungLabaRugi();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
+    if (typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 }
 window.updateItemBebanLain = updateItemBebanLain;
 
@@ -2238,16 +2803,30 @@ function togglePendapatanLain(checked) {
         if (sec) sec.classList.remove('hidden');
         if (info) info.classList.add('hidden');
         if (box) {
-            box.className = 'p-4 rounded-xl border transition mb-5 bg-blue-50/80 border-blue-300 ring-1 ring-blue-200';
+            box.className = 'p-3.5 rounded-xl border transition mb-0 bg-blue-100/60 border-blue-300 ring-1 ring-blue-200';
         }
     } else {
         if (sec) sec.classList.add('hidden');
         if (info) info.classList.remove('hidden');
         if (box) {
-            box.className = 'p-4 rounded-xl border transition mb-5 bg-white border-slate-200 hover:border-slate-300';
+            box.className = 'p-3.5 rounded-xl border transition mb-0 bg-white border-slate-200 hover:border-slate-300';
         }
     }
+
+    // Auto-switch kategori laporan sesuai pilihan:
+    // Dicentang -> Punya Usaha (Wiraswasta), Tidak Dicentang -> Punya Gaji (Karyawan/PNS/Pensiun)
+    const targetKategori = checked ? 'usaha' : 'gaji';
+    if (typeof gantiKategoriDebitur === 'function') {
+        gantiKategoriDebitur(targetKategori);
+    }
+
     hitungLabaRugi();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
+    if (typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 }
 window.togglePendapatanLain = togglePendapatanLain;
 
@@ -2384,11 +2963,11 @@ function renderListBuktiPendapatanLain() {
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
 
-                                <!-- Tombol Lihat File -->
-                                <a href="${fullUrl}" target="_blank" class="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-[11px] border border-blue-200 rounded-lg hover:bg-blue-50 transition shadow-2xs">
+                                <!-- Tombol Lihat File (Popup Modal) -->
+                                <button type="button" onclick="previewDokumenModal('${fullUrl}', '${(item.nama_file || '').replace(/'/g, "\\'")}', 'Bukti Pendapatan')" class="inline-flex items-center gap-1 px-3 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-[11px] border border-blue-200 rounded-lg hover:bg-blue-50 transition shadow-2xs cursor-pointer">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     <span>Lihat File</span>
-                                </a>
+                                </button>
                             </div>
                         </div>
 
@@ -2521,15 +3100,210 @@ async function handlePilihBuktiLain(input) {
 }
 window.handlePilihBuktiLain = handlePilihBuktiLain;
 
+// Handler Upload Bukti Kunjungan OTS (Tab 10 - Opini Pengusul)
+async function uploadBuktiOts(input) {
+    if (!input.files || input.files.length === 0) return;
+    const files = Array.from(input.files);
+
+    const kreditIdInput = document.getElementById('kredit_id');
+    let activeKreditId = kreditIdInput ? kreditIdInput.value : '';
+    if (!activeKreditId && typeof simpanForm === 'function') {
+        await simpanForm(false, false);
+        activeKreditId = kreditIdInput ? kreditIdInput.value : '';
+    }
+
+    if (!activeKreditId) {
+        alert('Harap simpan data pengajuan terlebih dahulu sebelum mengunggah bukti OTS.');
+        input.value = '';
+        return;
+    }
+
+    const btn = document.getElementById('btnUploadOts');
+    const originalBtnHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>Mengunggah...</span>`;
+    }
+
+    let successCount = 0;
+    for (let file of files) {
+        if (file.size > 10 * 1024 * 1024) {
+            alert(`File "${file.name}" melebihi 10MB dan dilewati.`);
+            continue;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('kredit_id', activeKreditId);
+        formData.append('kategori', 'Foto Kunjungan OTS');
+        formData.append('catatan', 'Bukti Kunjungan Lapangan (OTS)');
+
+        try {
+            const res = await fetch(getBaseUrl() + '/pengajuan/upload-dokumen', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.status) {
+                successCount++;
+                const emptyEl = document.getElementById('emptyBuktiOts');
+                if (emptyEl) emptyEl.classList.add('hidden');
+
+                const list = document.getElementById('listBuktiOts');
+                if (list) {
+                    const ext = (data.nama_file.split('.').pop() || 'FILE').toUpperCase();
+                    const isImg = ['JPG', 'JPEG', 'PNG', 'WEBP'].includes(ext);
+                    const isBu = !!window.IS_BADAN_USAHA;
+                    const accentText = isBu ? 'text-indigo-600' : 'text-blue-600';
+                    const accentBg = isBu ? 'bg-indigo-50 border-indigo-100' : 'bg-blue-50 border-blue-100';
+                    const accentBtn = isBu ? 'text-indigo-600 hover:text-indigo-800 bg-indigo-50/60 hover:bg-indigo-100 border-indigo-200' : 'text-blue-600 hover:text-blue-800 bg-blue-50/60 hover:bg-blue-100 border-blue-200';
+
+                    const fileIcon = isImg ? `
+                        <svg class="w-3.5 h-3.5 ${accentText}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    ` : `
+                        <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    `;
+
+                    const itemHtml = `
+                        <div id="otsDocRow_${data.dokumen_id}" class="ots-doc-item flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-xl hover:border-blue-300 transition shadow-2xs text-xs">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-7 h-7 rounded-lg ${accentBg} flex items-center justify-center shrink-0 border">
+                                    ${fileIcon}
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="font-bold text-slate-800 text-[11px] truncate max-w-[170px] sm:max-w-xs" title="${data.nama_file}">${data.nama_file}</p>
+                                    <span class="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/60">Terunggah &bull; ${data.ukuran_kb || '0'} KB</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                <button type="button" onclick="hapusBuktiOts(${data.dokumen_id})" class="inline-flex items-center justify-center p-1.5 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition cursor-pointer" title="Hapus Bukti OTS">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                                <button type="button" onclick="previewDokumenModal('${data.path}', '${(data.nama_file || '').replace(/'/g, "\\'")}', 'Bukti OTS')" class="inline-flex items-center gap-1 px-2.5 py-1 font-bold text-[11px] border rounded-lg transition ${accentBtn} cursor-pointer">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span>Lihat</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    list.insertAdjacentHTML('afterbegin', itemHtml);
+                }
+            }
+        } catch (e) {
+            console.error('Upload OTS error:', e);
+        }
+    }
+
+    if (successCount > 0 && typeof showToast === 'function') {
+        showToast(`${successCount} berkas bukti OTS berhasil diunggah`, 'success');
+    }
+    if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
+    }
+    input.value = '';
+}
+window.uploadBuktiOts = uploadBuktiOts;
+
+// Handler Hapus Bukti OTS
+async function hapusBuktiOts(docId) {
+    let yakin = confirm('Apakah Anda yakin ingin menghapus berkas bukti OTS ini?');
+    if (!yakin) return;
+
+    try {
+        const res = await fetch(getBaseUrl() + '/pengajuan/hapus-dokumen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ dokumen_id: docId })
+        });
+        const data = await res.json();
+        if (data.status) {
+            const row = document.getElementById('otsDocRow_' + docId);
+            if (row) row.remove();
+            const tab5Row = document.getElementById('docRow_' + docId);
+            if (tab5Row) tab5Row.remove();
+
+            const list = document.getElementById('listBuktiOts');
+            if (list && list.querySelectorAll('.ots-doc-item').length === 0) {
+                const empty = document.getElementById('emptyBuktiOts');
+                if (empty) empty.classList.remove('hidden');
+            }
+
+            if (typeof showToast === 'function') {
+                showToast('Bukti OTS berhasil dihapus', 'info');
+            }
+        } else {
+            alert(data.message || 'Gagal menghapus berkas');
+        }
+    } catch (e) {
+        alert('Gagal menghubungi server untuk menghapus dokumen');
+    }
+}
+window.hapusBuktiOts = hapusBuktiOts;
+
+// ========================================================
+// Modal Preview Dokumen Terunggah (Pop-up In-App)
+// ========================================================
+function previewDokumenModal(url, fileName, category) {
+    const modal = document.getElementById('modalPreviewDokumenGlobal');
+    const titleEl = document.getElementById('previewGlobalTitle');
+    const subEl = document.getElementById('previewGlobalSub');
+    const badgeEl = document.getElementById('previewGlobalBadge');
+    const bodyEl = document.getElementById('previewGlobalBody');
+    const dlBtn = document.getElementById('previewGlobalDownloadBtn');
+    const newTabBtn = document.getElementById('previewGlobalOpenNewTabBtn');
+
+    if (!modal || !bodyEl) return;
+
+    if (titleEl) titleEl.textContent = fileName || 'Pratinjau Dokumen';
+    if (subEl) subEl.textContent = fileName || url;
+    if (badgeEl) badgeEl.textContent = category || 'DOKUMEN';
+    if (dlBtn) dlBtn.href = url;
+    if (newTabBtn) newTabBtn.href = url;
+
+    // Detect extension
+    const cleanUrl = (url || '').split('?')[0];
+    const ext = (cleanUrl.split('.').pop() || '').toLowerCase();
+
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) {
+        bodyEl.innerHTML = `<div class="p-2 flex items-center justify-center w-full h-full"><img src="${url}" alt="${fileName || 'Foto Bukti'}" class="max-h-[72vh] max-w-full object-contain rounded-lg shadow-sm"></div>`;
+    } else if (ext === 'pdf') {
+        bodyEl.innerHTML = `<iframe src="${url}#toolbar=1" class="w-full h-[72vh] border-0 rounded-lg"></iframe>`;
+    } else {
+        bodyEl.innerHTML = `<iframe src="${url}" class="w-full h-[72vh] border-0 rounded-lg"></iframe>`;
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+window.previewDokumenModal = previewDokumenModal;
+
+function tutupModalPreviewDokumen() {
+    const modal = document.getElementById('modalPreviewDokumenGlobal');
+    if (modal) {
+        modal.classList.add('hidden');
+        const bodyEl = document.getElementById('previewGlobalBody');
+        if (bodyEl) bodyEl.innerHTML = '';
+        document.body.style.overflow = '';
+    }
+}
+window.tutupModalPreviewDokumen = tutupModalPreviewDokumen;
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        tutupModalPreviewDokumen();
+    }
+});
+
 // Kalkulasi Rasio DSC
 function hitungRasioDSC() {
     const angsuran = parseNominal(document.getElementById('angsuran_dipilih')?.value || 0);
 
     // Nett RK
     const pRK = parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
-    const hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 60);
-    const bhPctRK = parseFloat(document.getElementById('biaya_hidup_persen_rk')?.value || 10);
-    const blPctRK = parseFloat(document.getElementById('beban_lainnya_persen_rk')?.value || 10);
+    const hppPctRK = parsePersen(document.getElementById('hpp_persen_rk')?.value || 60);
+    const bhPctRK = parsePersen(document.getElementById('biaya_hidup_persen_rk')?.value || 10);
+    const blPctRK = parsePersen(document.getElementById('beban_lainnya_persen_rk')?.value || 10);
     const nettRK = pRK - (pRK * (hppPctRK / 100)) - (pRK * (bhPctRK / 100)) - (pRK * (blPctRK / 100));
 
     // Tambahan pendapatan lain jika aktif
@@ -2539,16 +3313,18 @@ function hitungRasioDSC() {
 
     // Nett IV
     const pIV = parseNominal(document.getElementById('pendapatan_iv')?.value || 0);
-    const hppPctIV = parseFloat(document.getElementById('hpp_persen_iv')?.value || 60);
-    const bhPctIV = parseFloat(document.getElementById('biaya_hidup_persen_iv')?.value || 10);
-    const blPctIV = parseFloat(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
+    const hppPctIV = parsePersen(document.getElementById('hpp_persen_iv')?.value || 60);
+    const bhPctIV = parsePersen(document.getElementById('biaya_hidup_persen_iv')?.value || 10);
+    const blPctIV = parsePersen(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
     const nettIV = pIV - (pIV * (hppPctIV / 100)) - (pIV * (bhPctIV / 100)) - (pIV * (blPctIV / 100));
 
     const dscRK = angsuran > 0 ? (totalNettRK / angsuran).toFixed(2) : 0;
     const dscIV = angsuran > 0 ? (nettIV / angsuran).toFixed(2) : 0;
 
-    document.getElementById('labelRasioDSCRK').innerText = dscRK + 'x';
-    document.getElementById('labelRasioDSCIV').innerText = dscIV + 'x';
+    const elRK = document.getElementById('labelRasioDSCRK');
+    if (elRK) elRK.innerText = dscRK + 'x';
+    const elIV = document.getElementById('labelRasioDSCIV');
+    if (elIV) elIV.innerText = dscIV + 'x';
 
     updateDSCBadge('badgeStatusDSCRK', dscRK);
     updateDSCBadge('badgeStatusDSCIV', dscIV);
@@ -2849,10 +3625,10 @@ async function prosesUploadDokumen(input) {
                                 <button type="button" onclick="hapusDokumen(${data.dokumen_id})" class="inline-flex items-center justify-center p-2 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition shadow-2xs cursor-pointer" title="Hapus Berkas Dokumen">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
-                                <a href="${data.path}" target="_blank" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-200 rounded-xl hover:bg-blue-50 transition shadow-2xs">
+                                <button type="button" onclick="previewDokumenModal('${data.path}', '${(data.nama_file || '').replace(/'/g, "\\'")}', '${kategoriLabel}')" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-blue-600 hover:text-blue-800 font-bold text-xs border border-blue-200 rounded-xl hover:bg-blue-50 transition shadow-2xs cursor-pointer">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                                     <span>Lihat File</span>
-                                </a>
+                                </button>
                             </div>
                         </div>
                     `;
@@ -3002,6 +3778,14 @@ async function simpanForm(isComplete = false, showNotification = true) {
         if (document.getElementById('nama_debitur_tab2')) document.getElementById('nama_debitur_tab2').value = resolvedNama;
     }
 
+    // Pastikan alamat domisili tersinkron jika mode alamat berbeda tidak aktif
+    const chkDomBeda = document.getElementById('domisili_beda_ktp');
+    const txtDom = document.getElementById('alamat_domisili');
+    const txtKtp = document.getElementById('alamat_ktp');
+    if (chkDomBeda && !chkDomBeda.checked && txtDom && txtKtp) {
+        txtDom.value = txtKtp.value;
+    }
+
     if (isComplete) {
         if (!resolvedNama) {
             showToast('Nama Debitur wajib diisi!', 'error');
@@ -3091,17 +3875,20 @@ async function simpanForm(isComplete = false, showNotification = true) {
                     window.location.href = getBaseUrl() + '/pengajuan';
                 }, 1200);
             }
+            return data.kredit_id || true;
         } else {
             const pesanGagal = data.message || 'Gagal menyimpan data';
             if (ind) {
                 ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Gagal menyimpan';
                 ind.title = pesanGagal;
             }
-            showToast(pesanGagal, 'error');
+            if (showNotification) showToast(pesanGagal, 'error');
+            return false;
         }
     } catch (err) {
         if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Error koneksi';
         if (showNotification) showToast('Gagal terhubung ke server database', 'error');
+        return false;
     } finally {
         if (btnDraft && originalDraftHtml) {
             btnDraft.disabled = false;
@@ -3521,8 +4308,46 @@ function formatRupiahString(num) {
 }
 
 function parseNominal(val) {
+    if (typeof val === 'number') return Math.round(val);
+    if (!val) return 0;
+    let s = String(val).trim();
+    if (s === '' || s === '-') return 0;
+    // Format float database misal "250000000.00" atau "125000.5" (hanya ada 1 titik dan merupakan pecahan desimal)
+    if (/^\d+\.\d{1,4}$/.test(s)) {
+        return Math.round(parseFloat(s)) || 0;
+    }
+    // Format rupiah dengan koma sen di akhir misal "250.000.000,00"
+    if (/,\d{1,2}$/.test(s)) {
+        s = s.split(',')[0];
+    }
+    return parseInt(s.replace(/[^0-9]/g, ''), 10) || 0;
+}
+
+/**
+ * parsePersen — parser khusus untuk input nilai persen (0–100).
+ * Mendukung desimal dengan titik MAUPUN koma: "42.3" dan "42,3" → 42.3
+ * Berbeda dengan parseNominal (rupiah) yang menganggap titik = pemisah ribuan.
+ */
+function parsePersen(val) {
     if (typeof val === 'number') return val;
-    return parseInt(String(val).replace(/[^0-9]/g, ''), 10) || 0;
+    const s = String(val).trim();
+    if (s === '' || s === '-') return 0;
+    // Jika ada koma: jadikan titik desimal, buang titik ribuan sebelumnya
+    if (s.indexOf(',') !== -1) {
+        // Format "1.234,56" atau "42,3"
+        const noThousand = s.replace(/\./g, '').replace(',', '.');
+        return parseFloat(noThousand) || 0;
+    }
+    // Hanya titik: bedakan apakah desimal atau ribuan
+    const dots = (s.match(/\./g) || []).length;
+    if (dots === 1) {
+        // Satu titik — anggap desimal (42.3 → 42.3)
+        const f = parseFloat(s.replace(/[^0-9.]/g, ''));
+        // Validasi batas wajar persen (0–100)
+        return isNaN(f) ? 0 : f;
+    }
+    // Lebih dari satu titik → pasti ribuan, buang titik
+    return parseFloat(s.replace(/\./g, '').replace(/[^0-9]/g, '')) || 0;
 }
 
 function showToast(text, type = 'info') {
@@ -4791,7 +5616,7 @@ function sesuaikanFormAgunan(item) {
             inputLvPct.value = '50';
             if (typeof hitungCoverageAgunan === 'function') hitungCoverageAgunan();
         }
-    } else if (val === 'Bilyet Deposito') {
+    } else if (val === 'Bilyet Deposito' || val === 'Dan Lain-Lain' || val === 'Dan Lain-lain' || (val && val.toLowerCase().indexOf('lain') !== -1)) {
         setField(wrapAlamat, 'Bank Penerbit & Kantor Cabang', 'Contoh: Bank BPR SA / Bank Mandiri KC Bandung', false);
         setField(wrapNomor, 'Nomor Bilyet Deposito & No. Rekening', 'No. Seri Bilyet Deposito & No. Rekening', false);
         setField(wrapPemilik, 'Nama Pemilik Rekening Bilyet', 'Sesuai nama di Bilyet Deposito / KTP', false);

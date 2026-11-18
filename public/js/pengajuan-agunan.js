@@ -44,7 +44,7 @@ function sesuaikanFormAgunan(item) {
             inputLvPct.value = '50';
             if (typeof hitungCoverageAgunan === 'function') hitungCoverageAgunan();
         }
-    } else if (val === 'Bilyet Deposito' || val.indexOf('Deposito') !== -1) {
+    } else if (val === 'Bilyet Deposito' || val.indexOf('Deposito') !== -1 || val === 'Dan Lain-Lain' || val === 'Dan Lain-lain' || (val && val.toLowerCase().indexOf('lain') !== -1)) {
         // HIDE Luas Tanah, Luas Bangunan, Status IMB
         setField(wrapImb, '', '', true);
         setField(wrapTanah, '', '', true);
@@ -88,11 +88,11 @@ function sesuaikanFormAgunan(item) {
 window.sesuaikanFormAgunan = sesuaikanFormAgunan;
 
 function inisialisasiSemuaAgunan() {
-    document.querySelectorAll('.agunan-item').forEach(function(item) {
+    document.querySelectorAll('.agunan-item').forEach(function (item) {
         sesuaikanFormAgunan(item);
     });
-    document.querySelectorAll('select[name$="[jenis_agunan]"]').forEach(function(sel) {
-        sel.onchange = function() {
+    document.querySelectorAll('select[name$="[jenis_agunan]"]').forEach(function (sel) {
+        sel.onchange = function () {
             sesuaikanFormAgunan(this.closest('.agunan-item'));
         };
     });
@@ -105,7 +105,7 @@ setTimeout(inisialisasiSemuaAgunan, 500);
 // Hook ke tambahBarisAgunan jika dipanggil
 if (typeof window.tambahBarisAgunan === 'function') {
     var _oldTambah = window.tambahBarisAgunan;
-    window.tambahBarisAgunan = function() {
+    window.tambahBarisAgunan = function () {
         _oldTambah();
         setTimeout(inisialisasiSemuaAgunan, 50);
     };

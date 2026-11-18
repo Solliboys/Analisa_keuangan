@@ -37,27 +37,76 @@ class LaporanKeuanganService
     private function hitungLaporanBadanUsaha(array $input): array
     {
         // 1. LABA RUGI
+        // Detail Pendapatan Dinamis (Kotak 1 Tab 9)
+        $detailPendapatanList = [];
+        if (!empty($input['detail_pendapatan_rk'])) {
+            $parsedPend = is_array($input['detail_pendapatan_rk']) ? $input['detail_pendapatan_rk'] : json_decode($input['detail_pendapatan_rk'], true);
+            if (is_array($parsedPend)) {
+                $detailPendapatanList = $parsedPend;
+            }
+        }
+
         $pendapatan = $this->cleanNumber($input['pendapatan'] ?? $input['pendapatan_rk'] ?? 0);
+        if (!empty($detailPendapatanList)) {
+            $sumPend = 0;
+            foreach ($detailPendapatanList as $dp) {
+                $sumPend += $this->cleanNumber($dp['nominal'] ?? 0);
+            }
+            if ($sumPend > 0) {
+                $pendapatan = $sumPend;
+            }
+        }
+
+        // Detail HPP & Belanja Aset Dinamis (Kotak 2B & Kotak 3 Tab 9)
+        $detailHppList = [];
+        $detailAsetList = [];
+        if (!empty($input['detail_hpp_rk'])) {
+            $parsedHpp = is_array($input['detail_hpp_rk']) ? $input['detail_hpp_rk'] : json_decode($input['detail_hpp_rk'], true);
+            if (is_array($parsedHpp)) {
+                foreach ($parsedHpp as $itemHpp) {
+                    $kat = strtolower($itemHpp['kategori'] ?? 'hpp');
+                    if ($kat === 'aset') {
+                        $detailAsetList[] = $itemHpp;
+                    } else {
+                        $detailHppList[] = $itemHpp;
+                    }
+                }
+            }
+        }
 
         // HPP
-        $defaultHpp = 60;
-        $hppPct = isset($input['hpp_persen']) ? (float)$input['hpp_persen'] : (isset($input['hpp_persen_rk']) ? (float)$input['hpp_persen_rk'] : $defaultHpp);
         $hppNom = isset($input['hpp']) && $input['hpp'] !== ''
             ? $this->cleanNumber($input['hpp'])
             : $this->cleanNumber($input['hpp_nominal_rk'] ?? 0);
-        if ($hppNom == 0 && $pendapatan > 0 && $hppPct > 0) {
-            $hppNom = round($pendapatan * ($hppPct / 100), 2);
+
+        if (!empty($detailHppList)) {
+            $sumHpp = 0;
+            foreach ($detailHppList as $ih) {
+                $sumHpp += $this->cleanNumber($ih['nominal'] ?? 0);
+            }
+            if ($sumHpp > 0) {
+                $hppNom = $sumHpp;
+            }
+        }
+
+        if ($hppNom > 0 && $pendapatan > 0) {
+            $hppPct = round(($hppNom / $pendapatan) * 100, 2);
+        } else {
+            $hppPct = (float)($input['hpp_persen'] ?? $input['hpp_persen_rk'] ?? 78);
+            if ($hppNom == 0 && $pendapatan > 0 && $hppPct > 0) {
+                $hppNom = round($pendapatan * ($hppPct / 100), 2);
+            }
         }
         $labaKotor = max(0, $pendapatan - $hppNom);
 
-        // Beban Operasional Pokok Usaha (Gaji karyawan tetap, sewa kantor/gudang usaha, listrik, air & utilitas operasional)
+        // Beban Operasional Pokok Usaha
         $bebanOperasional = $this->cleanNumber($input['beban_operasional'] ?? $input['biaya_hidup_nominal_rk'] ?? 0);
         $bebanSewa = $this->cleanNumber($input['beban_sewa'] ?? 0);
         if ($bebanSewa > 0 && $bebanOperasional == 0) {
             $bebanOperasional = $bebanSewa;
         }
 
-        // Rincian Beban Usaha & Administrasi Lainnya (Dinamis dari Tab 8)
+        // Rincian Beban Usaha & Administrasi Lainnya (Dinamis dari Tab 9)
         $detailBebanList = [];
         if (!empty($input['detail_beban_lainnya_rk'])) {
             $rawDetail = is_array($input['detail_beban_lainnya_rk'])
@@ -76,16 +125,34 @@ class LaporanKeuanganService
             }
             if ($sumDetail > 0) {
                 $bebanLainnya = $sumDetail;
+                // Jika bebanOperasional sama persis dengan bebanLainnya (hasil sinkronisasi form hidden), hindari dobel hitung
+                if ($bebanOperasional == $bebanLainnya) {
+                    $bebanOperasional = 0;
+                }
             }
         }
 
-        // Beban gaji karyawan telah digabung ke beban operasional pokok usaha
-        $bebanGaji = 0;
+        // Beban Gaji Karyawan (jika ada daftar_karyawan atau beban_gaji terpisah)
+        $bebanGaji = $this->cleanNumber($input['beban_gaji'] ?? 0);
+        if ($bebanGaji == 0 && !empty($input['daftar_karyawan'])) {
+            $karyawanList = is_array($input['daftar_karyawan'])
+                ? $input['daftar_karyawan']
+                : json_decode($input['daftar_karyawan'], true);
+            if (is_array($karyawanList)) {
+                foreach ($karyawanList as $k) {
+                    $bebanGaji += $this->cleanNumber($k['gaji'] ?? $k['nominal_gaji'] ?? 0);
+                }
+            }
+        }
 
-        // Penyusutan Aset Tetap (Dihapus dari Laba Rugi Operasional sesuai instruksi)
-        $penyusutanTahunan = 0;
+        // Penyusutan Aset Tetap
+        $penyusutanTahunan = isset($input['beban_depresiasi']) && $input['beban_depresiasi'] !== ''
+            ? $this->cleanNumber($input['beban_depresiasi'])
+            : (isset($input['beban_penyusutan']) && $input['beban_penyusutan'] !== ''
+                ? $this->cleanNumber($input['beban_penyusutan'])
+                : 0);
 
-        $totalBebanOp = $bebanOperasional + $bebanLainnya;
+        $totalBebanOp = $bebanGaji + $bebanOperasional + $bebanLainnya + $penyusutanTahunan;
         $labaOperasional = $labaKotor - $totalBebanOp;
 
         // Badan Usaha: TIDAK ADA pendapatan lain-lain
@@ -94,28 +161,33 @@ class LaporanKeuanganService
         $bebanBunga = $this->cleanNumber($input['input_beban_bunga'] ?? $input['beban_bunga'] ?? 0);
         $labaSebelumPjk = $labaOperasional + $pendapatanLain - $bebanBunga;
 
-        // Pajak Usaha Badan Usaha ditiadakan / dihapus
-        $pajakNom = 0;
-        $labaBersih = $labaSebelumPjk;
+        // Pajak Usaha Badan Usaha (jika ada input beban pajak)
+        $pajakNom = isset($input['input_beban_pajak']) && $input['input_beban_pajak'] !== ''
+            ? $this->cleanNumber($input['input_beban_pajak'])
+            : (isset($input['pajak']) && $input['pajak'] !== '' ? $this->cleanNumber($input['pajak']) : 0);
+        $labaBersih = $labaSebelumPjk - $pajakNom;
 
         $labaRugi = [
-            'pendapatan'         => $pendapatan,
-            'hpp'                => $hppNom,
-            'hpp_persen'         => $hppPct,
-            'laba_kotor'         => $labaKotor,
-            'beban_gaji'         => $bebanGaji,
-            'beban_sewa'         => $bebanSewa,
+            'pendapatan'           => $pendapatan,
+            'detail_pendapatan'    => $detailPendapatanList,
+            'hpp'                  => $hppNom,
+            'detail_hpp'           => $detailHppList,
+            'detail_aset'          => $detailAsetList,
+            'hpp_persen'           => $hppPct,
+            'laba_kotor'           => $labaKotor,
+            'beban_gaji'           => $bebanGaji,
+            'beban_sewa'           => $bebanSewa,
             'beban_operasional'    => $bebanOperasional,
             'beban_lainnya'        => $bebanLainnya,
             'detail_beban_lainnya' => $detailBebanList,
             'beban_penyusutan'     => $penyusutanTahunan,
-            'total_beban_op'     => $totalBebanOp,
-            'laba_operasional'   => $labaOperasional,
-            'pendapatan_lain'    => 0,
-            'beban_bunga'        => $bebanBunga,
-            'laba_sebelum_pajak' => $labaSebelumPjk,
-            'pajak'              => $pajakNom,
-            'laba_bersih'        => $labaBersih,
+            'total_beban_op'       => $totalBebanOp,
+            'laba_operasional'     => $labaOperasional,
+            'pendapatan_lain'      => 0,
+            'beban_bunga'          => $bebanBunga,
+            'laba_sebelum_pajak'   => $labaSebelumPjk,
+            'pajak'                => $pajakNom,
+            'laba_bersih'          => $labaBersih,
         ];
 
         // 2. ASUMSI & SALDO AWAL
@@ -132,37 +204,49 @@ class LaporanKeuanganService
         $saldoAwalModal      = $this->cleanNumber($input['neraca_awal_modal_disetor'] ?? $input['saldo_awal_modal'] ?? ($input['modal_disetor'] ?? 0));
         $saldoAwalLabaDitahan= $this->cleanNumber($input['neraca_awal_laba_ditahan'] ?? $input['laba_ditahan_awal'] ?? 0);
 
-        // Piutang Akhir
+        // Piutang Akhir (Murni input riil pengguna — jika tidak diinput maka Rp 0)
         $piutangInput = isset($input['input_piutang_akhir']) && $input['input_piutang_akhir'] !== ''
             ? $input['input_piutang_akhir']
             : (isset($input['piutang_usaha']) && $input['piutang_usaha'] !== '' ? $input['piutang_usaha'] : null);
         $piutangAkhir = ($piutangInput !== null)
             ? $this->cleanNumber($piutangInput)
-            : round(($dso / 365) * $pendapatan, 2);
-        $piutangSumber = ($piutangInput !== null) ? 'input' : 'estimasi';
+            : 0;
+        $piutangSumber = 'input';
 
-        // Persediaan Akhir
+        // Persediaan Akhir (Murni input riil pengguna — jika tidak diinput maka Rp 0)
         $persediaanInput = isset($input['input_persediaan_akhir']) && $input['input_persediaan_akhir'] !== ''
             ? $input['input_persediaan_akhir']
             : (isset($input['persediaan']) && $input['persediaan'] !== '' ? $input['persediaan'] : null);
         $persediaanAkhir = ($persediaanInput !== null)
             ? $this->cleanNumber($persediaanInput)
-            : round(($dio / 365) * $hppNom, 2);
-        $persediaanSumber = ($persediaanInput !== null) ? 'input' : 'estimasi';
+            : 0;
+        $persediaanSumber = 'input';
 
-        // Utang Usaha Akhir
+        // Utang Usaha Akhir (Murni input riil pengguna — jika tidak diinput maka Rp 0)
         $utangUsahaInput = isset($input['input_utang_usaha_akhir']) && $input['input_utang_usaha_akhir'] !== ''
             ? $input['input_utang_usaha_akhir']
             : (isset($input['utang_usaha']) && $input['utang_usaha'] !== '' ? $input['utang_usaha'] : null);
         $utangUsahaAkhir = ($utangUsahaInput !== null)
             ? $this->cleanNumber($utangUsahaInput)
-            : round(($dpo / 365) * $hppNom, 2);
-        $utangUsahaSumber = ($utangUsahaInput !== null) ? 'input' : 'estimasi';
+            : 0;
+        $utangUsahaSumber = 'input';
 
         // Pembelian & Nilai Aset Tetap (Neraca)
         $hargaPerolehanAset = $this->cleanNumber($input['neraca_aset_tetap_bruto'] ?? $input['harga_perolehan_aset_tetap'] ?? $input['harga_perolehan'] ?? 0);
         $umurEkonomis       = max(1, (int)($input['input_capex_umur_ekonomis'] ?? $input['umur_ekonomis_tahun'] ?? 5));
         $pembelianAsetTetap = $this->cleanNumber($input['input_capex'] ?? $input['pembelian_aset_tetap'] ?? 0);
+        if ($pembelianAsetTetap <= 0 && !empty($input['total_aset_hpp_rk'])) {
+            $pembelianAsetTetap = $this->cleanNumber($input['total_aset_hpp_rk']);
+        }
+        if ($pembelianAsetTetap <= 0 && !empty($detailAsetList)) {
+            $sumAset = 0;
+            foreach ($detailAsetList as $da) {
+                $sumAset += $this->cleanNumber($da['nominal'] ?? 0);
+            }
+            if ($sumAset > 0) {
+                $pembelianAsetTetap = $sumAset;
+            }
+        }
         if ($pembelianAsetTetap <= 0 && !empty($input['tujuan_pembiayaan']) && stripos($input['tujuan_pembiayaan'], 'investasi') !== false) {
             $pembelianAsetTetap = $this->cleanNumber($input['plafon_pengajuan'] ?? $input['plafon'] ?? 0);
         }
@@ -280,6 +364,7 @@ class LaporanKeuanganService
             'umur_ekonomis_tahun'        => $umurEkonomis,
             'penyusutan_tahunan'         => $penyusutanTahunan,
             'aset_tetap_neto'            => $asetTetapNeto,
+            'detail_aset'                => $detailAsetList,
             'total_aset'                 => $totalAset,
             'utang_usaha'                => $utangUsahaAkhir,
             'utang_usaha_sumber'         => $utangUsahaSumber,
@@ -441,15 +526,88 @@ class LaporanKeuanganService
             'kas_akhir'            => $kasAkhir,
         ];
 
+        // 3. NERACA HARTA & UTANG PERORANGAN (USAHA & PRIBADI)
+        $hartaKasUsaha     = $this->cleanNumber($input['harta_kas_usaha'] ?? ($input['keu_harta_kas_usaha'] ?? ($input['input_harta_kas_usaha'] ?? 0)));
+        $hartaPiutangUsaha = $this->cleanNumber($input['harta_piutang_usaha'] ?? ($input['keu_harta_piutang_usaha'] ?? ($input['input_harta_piutang_usaha'] ?? 0)));
+        $hartaStokUsaha    = $this->cleanNumber($input['harta_stok_usaha'] ?? ($input['keu_harta_stok_usaha'] ?? ($input['input_harta_stok_usaha'] ?? 0)));
+        $hartaAlatUsaha    = $this->cleanNumber($input['harta_alat_usaha'] ?? ($input['keu_harta_alat_usaha'] ?? ($input['input_harta_alat_usaha'] ?? 0)));
+        $subtotalAsetUsaha = $hartaKasUsaha + $hartaPiutangUsaha + $hartaStokUsaha + $hartaAlatUsaha;
+
+        $hartaTabungan     = $this->cleanNumber($input['harta_tabungan'] ?? ($input['keu_harta_tabungan'] ?? ($input['input_harta_tabungan'] ?? ($input['input_harta_gaji_tabungan'] ?? 0))));
+        $hartaDeposito     = $this->cleanNumber($input['harta_deposito'] ?? ($input['keu_harta_deposito'] ?? ($input['input_harta_deposito'] ?? ($input['input_harta_gaji_deposito'] ?? 0))));
+        $statusDeposito    = trim($input['status_deposito'] ?? ($input['keu_status_deposito'] ?? ($input['status_gaji_deposito'] ?? 'bebas')));
+
+        $hartaTanah        = $this->cleanNumber($input['harta_tanah'] ?? ($input['keu_harta_tanah'] ?? ($input['input_harta_tanah'] ?? ($input['input_harta_gaji_tanah'] ?? 0))));
+        $statusTanah       = trim($input['status_tanah'] ?? ($input['keu_status_tanah'] ?? ($input['status_gaji_tanah'] ?? 'bebas')));
+
+        $hartaBangunan     = $this->cleanNumber($input['harta_bangunan'] ?? ($input['keu_harta_bangunan'] ?? ($input['input_harta_bangunan'] ?? ($input['input_harta_gaji_bangunan'] ?? 0))));
+        $statusBangunan    = trim($input['status_bangunan'] ?? ($input['keu_status_bangunan'] ?? ($input['status_gaji_bangunan'] ?? 'bebas')));
+
+        $hartaKendaraan    = $this->cleanNumber($input['harta_kendaraan'] ?? ($input['keu_harta_kendaraan'] ?? ($input['input_harta_kendaraan'] ?? ($input['input_harta_gaji_kendaraan'] ?? 0))));
+        $statusKendaraan   = trim($input['status_kendaraan'] ?? ($input['keu_status_kendaraan'] ?? ($input['status_gaji_kendaraan'] ?? 'bebas')));
+
+        $subtotalAsetPribadiBruto = $hartaTabungan + $hartaDeposito + $hartaTanah + $hartaBangunan + $hartaKendaraan;
+        $totalHartaBruto          = $subtotalAsetUsaha + $subtotalAsetPribadiBruto;
+
+        // Filter: Dikecualikan jika berstatus jaminan / belum pasti
+        $asetTerikat = 0;
+        if ($statusDeposito === 'terikat')  $asetTerikat += $hartaDeposito;
+        if ($statusTanah !== 'bebas')       $asetTerikat += $hartaTanah;
+        if ($statusBangunan !== 'bebas')    $asetTerikat += $hartaBangunan;
+        if ($statusKendaraan !== 'bebas')   $asetTerikat += $hartaKendaraan;
+
+        $totalHartaEligible = max(0, $totalHartaBruto - $asetTerikat);
+        $totalUtangRiil     = $this->cleanNumber($input['total_utang_riil'] ?? 0);
+        $kekayaanBersih     = $totalHartaEligible - $totalUtangRiil;
+
+        $neracaPerorangan = [
+            'aset_usaha' => [
+                'kas'        => $hartaKasUsaha,
+                'piutang'    => $hartaPiutangUsaha,
+                'persediaan' => $hartaStokUsaha,
+                'peralatan'  => $hartaAlatUsaha,
+                'subtotal'   => $subtotalAsetUsaha,
+            ],
+            'aset_pribadi' => [
+                'tabungan'          => $hartaTabungan,
+                'deposito'          => $hartaDeposito,
+                'status_deposito'   => $statusDeposito,
+                'tanah'             => $hartaTanah,
+                'status_tanah'      => $statusTanah,
+                'bangunan'          => $hartaBangunan,
+                'status_bangunan'   => $statusBangunan,
+                'kendaraan'         => $hartaKendaraan,
+                'status_kendaraan'  => $statusKendaraan,
+                'subtotal_bruto'    => $subtotalAsetPribadiBruto,
+                'aset_terikat'      => $asetTerikat,
+                'subtotal_eligible' => max(0, $subtotalAsetPribadiBruto - $asetTerikat),
+            ],
+            'total_harta_bruto'    => $totalHartaBruto,
+            'aset_terikat_jaminan' => $asetTerikat,
+            'total_harta_eligible' => $totalHartaEligible,
+            'total_utang_riil'     => $totalUtangRiil,
+            'total_angsuran'       => $this->cleanNumber($input['total_angsuran_bulanan'] ?? $cicilanBerjalan),
+            'kekayaan_bersih'      => $kekayaanBersih,
+        ];
+
+        $rasioPerorangan = [
+            'dsr'              => (float)($input['rasio_dsr'] ?? 0),
+            'dar'              => (float)($input['rasio_dar'] ?? 0),
+            'der'              => (float)($input['rasio_der'] ?? 0),
+            'ltv'              => (float)($input['rasio_ltv'] ?? 0),
+            'liquidity_buffer' => (float)($input['rasio_liquidity_buffer'] ?? 0),
+        ];
+
         return [
-            'tipe_pemohon' => 'karyawan',
-            'laba_rugi'    => $labaRugi,
-            'arus_kas'     => $arusKas,
-            'neraca'       => null,
-            'asumsi'       => [],
-            'validasi'     => [
-                'status_neraca'  => 'Tidak Berlaku (Karyawan)',
-                'selisih_neraca' => 0,
+            'tipe_pemohon'   => 'karyawan',
+            'laba_rugi'      => $labaRugi,
+            'arus_kas'       => $arusKas,
+            'neraca'         => $neracaPerorangan,
+            'analisis_rasio' => $rasioPerorangan,
+            'asumsi'         => [],
+            'validasi'       => [
+                'status_neraca'  => ($totalHartaEligible >= $totalUtangRiil) ? 'Solven (Positif)' : 'Perhatian (Defisit)',
+                'selisih_neraca' => $kekayaanBersih,
                 'status_kas'     => 'Cocok',
                 'selisih_kas'    => 0,
                 'is_seimbang'    => true,

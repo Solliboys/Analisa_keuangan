@@ -13,7 +13,7 @@ class AddFotoToUsers extends Migration
                 'type'       => 'VARCHAR',
                 'constraint' => '255',
                 'null'       => true,
-                'after'      => 'nomor_hp'
+                'after'      => 'nama_lengkap'
             ]
         ];
         if (!$this->db->fieldExists('foto', 'users')) {

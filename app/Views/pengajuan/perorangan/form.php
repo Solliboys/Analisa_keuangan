@@ -54,43 +54,42 @@
     <main class="w-full px-4 sm:px-6 lg:px-8 py-6 flex-1">
         <div class="flex flex-col lg:flex-row items-start gap-8">
             
-            <!-- SIDEBAR STEPPER KIRI (1 - 13) -->
+            <!-- SIDEBAR STEPPER KIRI (1 - 12) -->
             <aside class="w-full lg:w-80 shrink-0 sticky top-20 bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs max-h-[calc(100vh-140px)] flex flex-col">
                 <!-- Stepper Progress Header -->
                 <div class="flex items-center justify-between pb-3 shrink-0">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                        Tahap <span id="sidebarTahapNum">1</span> dari 13
+                        Tahap <span id="sidebarTahapNum">1</span> dari 12
                     </span>
                     <span id="sidebarTahapBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60">
-                        1/13
+                        1/12
                     </span>
                 </div>
 
                 <!-- Horizontal Progress Bar -->
                 <div class="h-1.5 w-full bg-slate-100 rounded-full mb-4 overflow-hidden shrink-0">
-                    <div id="progressBarFill" class="h-full bg-blue-600 rounded-full transition-all duration-300" style="width: 7.7%;"></div>
+                    <div id="progressBarFill" class="h-full bg-blue-600 rounded-full transition-all duration-300" style="width: 8.3%;"></div>
                 </div>
 
-                <!-- Vertical Stepper List (13 Tahap Pengusul) -->
+                <!-- Vertical Stepper List (12 Tahap Pengusul) -->
                 <?php
                 $sidebarSteps = [
-                    1  => ['target' => 1,         'title' => '1. Aplikasi',       'sub' => 'Parameter dasar'],
-                    2  => ['target' => 2,         'title' => '2. Info Pribadi',   'sub' => 'Data demografi'],
-                    3  => ['target' => 3,         'title' => '3. Pekerjaan',      'sub' => 'Data pekerjaan'],
-                    4  => ['target' => 4,         'title' => '4. Jaminan',        'sub' => 'Agunan kredit'],
-                    5  => ['target' => 5,         'title' => '5. Dokumen',        'sub' => 'Unggah berkas'],
-                    6  => ['target' => 6,         'title' => '6. SLIK / CLIK',    'sub' => 'Cek riwayat kredit'],
-                    7  => ['target' => 7,         'title' => '7. Web Check',      'sub' => 'Verifikasi online'],
-                    8  => ['target' => 8,         'title' => '8. Rekening Koran', 'sub' => 'Analisis mutasi'],
-                    9  => ['target' => 9,         'title' => '9. Laba Rugi',      'sub' => 'Proyeksi keuangan'],
-                    10 => ['target' => 'laporan', 'title' => '10. Laporan',       'sub' => 'Tampilan laporan'],
-                    11 => ['target' => 10,        'title' => '11. Opini Pengusul','sub' => 'Catatan kualitatif'],
-                    12 => ['target' => 11,        'title' => '12. Disbursement',  'sub' => 'Jadwal pencairan'],
-                    13 => ['target' => 12,        'title' => '13. Repayment',     'sub' => 'Kemampuan angsur'],
+                    1  => ['target' => 1,         'title' => '1. Aplikasi',                 'sub' => 'Parameter dasar'],
+                    2  => ['target' => 2,         'title' => '2. Info Pribadi',             'sub' => 'Data demografi'],
+                    3  => ['target' => 3,         'title' => '3. Pekerjaan',                'sub' => 'Data pekerjaan'],
+                    4  => ['target' => 4,         'title' => '4. Jaminan',                  'sub' => 'Agunan kredit'],
+                    5  => ['target' => 5,         'title' => '5. Dokumen',                  'sub' => 'Unggah berkas'],
+                    6  => ['target' => 6,         'title' => '6. SLIK / CLIK',              'sub' => 'Cek riwayat kredit'],
+                    7  => ['target' => 7,         'title' => '7. Web Check',                'sub' => 'Verifikasi online'],
+                    8  => ['target' => 8,         'title' => '8. Rekening Koran',           'sub' => 'Analisis mutasi'],
+                    9  => ['target' => 9,         'title' => '9. Data Keuangan',            'sub' => 'Pemasukan & beban'],
+                    10 => ['target' => 'laporan', 'title' => '10. Laporan',                 'sub' => 'Tampilan laporan'],
+                    11 => ['target' => 10,        'title' => '11. Opini Pengusul',          'sub' => 'Catatan kualitatif'],
+                    12 => ['target' => 11,        'title' => '12. Disbursement',            'sub' => 'Jadwal pencairan'],
                 ];
                 ?>
-                <!-- Vertical Stepper List (13 Tahap Pengusul) -->
+                <!-- Vertical Stepper List (12 Tahap Pengusul) -->
                 <div class="flex-1 overflow-y-auto scroll-smooth space-y-1 relative pr-1" id="verticalStepperList">
                     <?php foreach ($sidebarSteps as $stepNum => $step): ?>
                         <?php 
@@ -189,7 +188,7 @@
                                     </div>
                                     <p class="text-xs text-purple-800 mt-2.5 flex items-center gap-1.5 font-medium">
                                         <svg class="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        <span>Silakan perbaiki isian pada langkah terkait di bawah. Setelah selesai, buka <strong>Langkah 12 (Repayment)</strong> lalu klik <strong>"Simpan & Selesai Pengajuan"</strong> untuk mengirim ulang ke Reviewer.</span>
+                                        <span>Silakan perbaiki isian pada langkah terkait di bawah. Setelah selesai, buka <strong>Langkah 12 (Disbursement)</strong> lalu klik <strong>"Simpan & Selesai Pengajuan"</strong> untuk mengirim ulang ke Reviewer.</span>
                                     </p>
                                 </div>
                             </div>
@@ -223,7 +222,11 @@
 
                     <?= $this->include('pengajuan/tabs/tab_11') ?>
 
-                    <?= $this->include('pengajuan/tabs/tab_12') ?>
+                    <!-- Parameter Angsuran & Status Pengajuan -->
+                    <input type="hidden" name="angsuran_balloon" id="angsuran_balloon" value="<?= number_format((float)($keuangan['angsuran_balloon'] ?? 0), 0, ',', '.') ?>">
+                    <input type="hidden" name="angsuran_installment" id="angsuran_installment" value="<?= number_format((float)($keuangan['angsuran_installment'] ?? 0), 0, ',', '.') ?>">
+                    <input type="hidden" name="angsuran_dipilih" id="angsuran_dipilih" value="<?= number_format((float)($keuangan['angsuran_dipilih'] ?? 0), 0, ',', '.') ?>">
+                    <input type="hidden" name="status_pengajuan" id="status_pengajuan" value="<?= esc($kredit['status_pengajuan'] ?? 'Draft') ?>">
 
                     <?= $this->include('pengajuan/tabs/tab_13') ?>
 
@@ -239,7 +242,7 @@
                 &larr; Sebelumnya
             </button>
             <div class="flex items-center gap-2">
-                <span id="tabStepLabel" class="text-xs font-semibold text-slate-500 hidden sm:inline">Langkah 1 dari 13</span>
+                <span id="tabStepLabel" class="text-xs font-semibold text-slate-500 hidden sm:inline">Langkah 1 dari 12</span>
             </div>
             <div class="flex items-center gap-3">
                 <button type="button" id="btnSimpanDraft" onclick="simpanForm(false, true)" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-2xs">

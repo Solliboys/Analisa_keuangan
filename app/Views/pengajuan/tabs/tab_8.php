@@ -196,20 +196,28 @@
                 </div>
 
                 <!-- Rekap Mutasi Seluruh Bank -->
-                <div class="mt-6 p-5 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/60 border border-blue-200/90 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+                <div class="mt-6 p-5 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/60 border border-blue-200/90 rounded-2xl flex flex-col lg:flex-row items-center justify-between gap-4 shadow-xs">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                         </div>
                         <div>
-                            <div class="text-xs font-bold text-slate-800 uppercase tracking-wider">Total Omzet Arus Kas Mutasi Kredit</div>
-                            <div class="text-xs text-slate-500">Akumulasi rata-rata arus kas masuk per bulan dari seluruh rekening bank terdaftar.</div>
+                            <div class="text-xs font-bold text-slate-800 uppercase tracking-wider">Rekapitulasi Mutasi Rekening Koran</div>
+                            <div class="text-xs text-slate-500">Akumulasi rata-rata arus kas masuk (kredit), keluar (debit), dan estimasi rasio HPP usaha.</div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4">
+                    <div class="flex flex-wrap items-center gap-4 sm:gap-6 justify-end">
                         <div class="text-right">
-                            <div class="text-[11px] text-slate-400 font-semibold uppercase">Rata-rata Gabungan / Bulan</div>
-                            <div id="totalAvgKreditGabungan" class="text-lg font-extrabold text-blue-700">Rp 0</div>
+                            <div class="text-[10px] text-slate-400 font-semibold uppercase">Rata-rata Kredit (Omzet)</div>
+                            <div id="totalAvgKreditGabungan" class="text-base sm:text-lg font-extrabold text-blue-700">Rp 0</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[10px] text-slate-400 font-semibold uppercase">Rata-rata Debit (Keluar)</div>
+                            <div id="totalAvgDebitGabungan" class="text-base sm:text-lg font-extrabold text-slate-700">Rp 0</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[10px] text-slate-400 font-semibold uppercase">Estimasi Rasio HPP</div>
+                            <div id="estimasiHppGabungan" class="text-base sm:text-lg font-extrabold text-emerald-600">0%</div>
                         </div>
                         <button type="button" onclick="salinOmzetKeLabaRugi()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
                             Gunakan di Laba Rugi &rarr;

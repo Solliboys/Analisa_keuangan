@@ -1,3 +1,15 @@
+<?php
+$otsDocs = [];
+if (!empty($dokumen) && is_array($dokumen)) {
+    foreach ($dokumen as $d) {
+        $kat = strtolower($d['kategori_dokumen'] ?? '');
+        $cat = strtolower($d['catatan_dokumen'] ?? '');
+        if (strpos($kat, 'ots') !== false || strpos($cat, 'ots') !== false || strpos($kat, 'kunjungan') !== false) {
+            $otsDocs[] = $d;
+        }
+    }
+}
+?>
 <div id="tab-10" class="tab-panel bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs">
     <!-- Section Header (Badan Usaha) -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 mb-6">
@@ -102,6 +114,75 @@
                 </div>
                 <textarea id="business_catatan" name="business_catatan" rows="3" placeholder="Hasil observasi fisik dan survei On The Spot (OTS) di kantor pusat, gudang inventaris, atau workshop pabrik: dinamika kerja karyawan, kesiapan mesin produksi, dan keteraturan arsip administrasi..."
                           class="w-full text-xs font-medium text-slate-800 border border-slate-200 rounded-2xl p-3.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition shadow-2xs leading-relaxed"><?= esc($analisa['business_catatan'] ?? '') ?></textarea>
+
+                <!-- Area Bukti Upload Foto / Dokumen Kunjungan OTS -->
+                <div class="mt-3.5 pt-3.5 border-t border-slate-200/80">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                                Bukti Foto / Dokumen OTS
+                            </label>
+                        </div>
+                        <input type="file" id="inputUploadOts" class="hidden" accept=".jpg,.jpeg,.png,.webp,.pdf" multiple onchange="uploadBuktiOts(this)">
+                        <button type="button" id="btnUploadOts" onclick="document.getElementById('inputUploadOts').click()" 
+                                class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[11px] font-bold rounded-lg border border-indigo-200 transition shadow-2xs cursor-pointer">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>Unggah Bukti</span>
+                        </button>
+                    </div>
+
+                    <!-- Dropzone Ringkas -->
+                    <div onclick="document.getElementById('inputUploadOts').click()" 
+                         class="border border-dashed border-indigo-200 hover:border-indigo-400 bg-indigo-50/20 hover:bg-indigo-50/50 rounded-xl p-3 text-center cursor-pointer transition group">
+                        <p class="text-[11px] font-semibold text-slate-600 group-hover:text-indigo-700 flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <span>Klik untuk pilih foto / dokumen kunjungan OTS</span>
+                        </p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Mendukung format JPG, PNG, WEBP, atau PDF (Maks. 10MB per file)</p>
+                    </div>
+
+                    <!-- List Bukti OTS yang sudah diupload -->
+                    <div id="listBuktiOts" class="space-y-2 mt-2.5">
+                        <div id="emptyBuktiOts" class="text-center py-3 px-2 border border-slate-100 rounded-xl bg-slate-50/50 <?= !empty($otsDocs) ? 'hidden' : '' ?>">
+                            <p class="text-[11px] text-slate-400">Belum ada foto atau dokumen bukti kunjungan OTS yang diunggah.</p>
+                        </div>
+                        <?php if (!empty($otsDocs)): ?>
+                            <?php foreach ($otsDocs as $doc): ?>
+                                <?php
+                                    $ext = strtoupper(pathinfo($doc['nama_file_asli'] ?? '', PATHINFO_EXTENSION) ?: 'FILE');
+                                    $isImg = in_array($ext, ['JPG', 'JPEG', 'PNG', 'WEBP']);
+                                    $ukuranKb = number_format(($doc['ukuran_file_bytes'] ?? 0) / 1024, 1);
+                                    $namaFileDisplay = $doc['nama_file_asli'] ?? 'Bukti OTS';
+                                ?>
+                                <div id="otsDocRow_<?= $doc['dokumen_id'] ?>" class="ots-doc-item flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 transition shadow-2xs text-xs">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-7 h-7 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+                                            <?php if ($isImg): ?>
+                                                <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                            <?php else: ?>
+                                                <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="font-bold text-slate-800 text-[11px] truncate max-w-[170px] sm:max-w-xs" title="<?= esc($namaFileDisplay) ?>"><?= esc($namaFileDisplay) ?></p>
+                                            <span class="text-[10px] text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/60">Terunggah &bull; <?= $ukuranKb ?> KB</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <button type="button" onclick="hapusBuktiOts(<?= $doc['dokumen_id'] ?>)" class="inline-flex items-center justify-center p-1.5 text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition cursor-pointer" title="Hapus Bukti OTS">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                        <button type="button" onclick="previewDokumenModal('<?= base_url($doc['path_file']) ?>', '<?= esc(addslashes($namaFileDisplay)) ?>', 'Bukti Kunjungan OTS')" class="inline-flex items-center gap-1 px-2.5 py-1 text-indigo-600 hover:text-indigo-800 font-bold text-[11px] bg-indigo-50/60 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition cursor-pointer">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                            <span>Lihat</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
 
             <!-- 4. Rincian Kebutuhan Modal Kerja Perusahaan -->

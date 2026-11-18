@@ -388,6 +388,8 @@ class Pengajuan extends BaseController
         // Ambil data usaha pertama jika dikirim sebagai array dinamis usaha
         $firstUsaha = (!empty($input['usaha']) && is_array($input['usaha'])) ? ($input['usaha'][0] ?? []) : [];
         $valNamaUsaha = !empty($firstUsaha['nama_usaha']) ? $firstUsaha['nama_usaha'] : ($input['nama_usaha'] ?? '');
+        $valJenisPekerjaan = !empty($firstUsaha['jenis_pekerjaan']) ? $firstUsaha['jenis_pekerjaan'] : ($input['jenis_pekerjaan'] ?? '');
+        $valStatusPekerjaan = !empty($firstUsaha['status_pekerjaan']) ? $firstUsaha['status_pekerjaan'] : ($input['status_pekerjaan'] ?? '');
         $valBidangUsaha = !empty($firstUsaha['bidang_usaha']) ? $firstUsaha['bidang_usaha'] : ($input['bidang_usaha'] ?? ($input['jenis_usaha'] ?? ''));
         $valJabatan = !empty($firstUsaha['jabatan']) ? $firstUsaha['jabatan'] : ($input['jabatan'] ?? '');
         $valLamaUsaha = !empty($firstUsaha['lama_usaha']) ? $firstUsaha['lama_usaha'] : ($input['lama_usaha'] ?? '');
@@ -429,6 +431,7 @@ class Pengajuan extends BaseController
             'nomor_hp'                => $input['nomor_hp'] ?? '',
             'nomor_emergency'         => $input['nomor_emergency'] ?? '',
             'nama_kontak_darurat'     => $input['nama_kontak_darurat'] ?? ($input['nama_ibu_kandung'] ?? ''),
+            'hubungan_kontak_darurat' => $input['hubungan_kontak_darurat'] ?? '',
             'npwp_pribadi'            => $input['npwp_pribadi'] ?? '',
             'nama_ibu_kandung'        => $input['nama_kontak_darurat'] ?? ($input['nama_ibu_kandung'] ?? ''),
             'tempat_tanggal_lahir'    => (!empty($input['tempat_lahir']) && !empty($input['tanggal_lahir']))
@@ -442,6 +445,7 @@ class Pengajuan extends BaseController
             'sk_perubahan'            => $input['sk_perubahan'] ?? '',
             'nama_usaha'              => $valNamaUsaha,
             'jabatan'                 => $valJabatan,
+            'status_pekerjaan'        => $valStatusPekerjaan,
             'lama_usaha'              => $valLamaUsaha,
             'alamat_usaha'            => $valAlamatUsaha,
             'npwp_usaha'              => $valNpwpUsaha,
@@ -628,6 +632,8 @@ class Pengajuan extends BaseController
                     'kredit_id'                => $kreditId,
                     'is_utama'                 => $isFirst ? 1 : 0,
                     'nama_usaha'               => $row['nama_usaha'] ?? '',
+                    'jenis_pekerjaan'          => $row['jenis_pekerjaan'] ?? '',
+                    'status_pekerjaan'         => $row['status_pekerjaan'] ?? '',
                     'bidang_usaha'             => $row['bidang_usaha'] ?? '',
                     'jabatan'                  => $row['jabatan'] ?? '',
                     'lama_usaha'               => $row['lama_usaha'] ?? '',
@@ -643,6 +649,8 @@ class Pengajuan extends BaseController
                 'kredit_id'                => $kreditId,
                 'is_utama'                 => 1,
                 'nama_usaha'               => $input['nama_usaha'] ?? '',
+                'jenis_pekerjaan'          => $input['jenis_pekerjaan'] ?? '',
+                'status_pekerjaan'         => $input['status_pekerjaan'] ?? '',
                 'bidang_usaha'             => $input['bidang_usaha'] ?? ($input['jenis_usaha'] ?? ''),
                 'jabatan'                  => $input['jabatan'] ?? '',
                 'lama_usaha'               => $input['lama_usaha'] ?? '',
@@ -818,6 +826,14 @@ class Pengajuan extends BaseController
         $pRK   = $this->cleanNumber($input['pendapatan_rk'] ?? 0);
         $detailPendapatanRK = !empty($input['detail_pendapatan_rk']) ? $input['detail_pendapatan_rk'] : null;
         if ($detailPendapatanRK === '[]') $detailPendapatanRK = null;
+        if ($pRK == 0 && !empty($detailPendapatanRK)) {
+            $parsedPend = is_array($detailPendapatanRK) ? $detailPendapatanRK : json_decode($detailPendapatanRK, true);
+            if (is_array($parsedPend)) {
+                foreach ($parsedPend as $dp) {
+                    $pRK += $this->cleanNumber($dp['nominal'] ?? 0);
+                }
+            }
+        }
         $isBU = false;
         if (!empty($input['jenis_debitur'])) {
             $isBU = (stripos($input['jenis_debitur'], 'badan') !== false || stripos($input['jenis_debitur'], 'pt') !== false || stripos($input['jenis_debitur'], 'cv') !== false);
@@ -827,10 +843,38 @@ class Pengajuan extends BaseController
             $isBU = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false);
         }
         $defaultHppPct = $isBU ? 60 : 0;
-        $hppPctRK = isset($input['hpp_persen_rk']) && $input['hpp_persen_rk'] !== '' ? (float)$input['hpp_persen_rk'] : $defaultHppPct;
-        $hppNomRK = isset($input['hpp_nominal_rk']) && $input['hpp_nominal_rk'] !== '' && (float)$input['hpp_nominal_rk'] > 0
-            ? $this->cleanNumber($input['hpp_nominal_rk'])
-            : $pRK * ($hppPctRK / 100);
+
+        // Detail HPP & Aset Dinamis
+        $detailHppRK = !empty($input['detail_hpp_rk']) ? $input['detail_hpp_rk'] : null;
+        if ($detailHppRK === '[]') $detailHppRK = null;
+        $totalNomHppDinamis = 0;
+        $totalNomAsetDinamis = 0;
+        if (!empty($detailHppRK)) {
+            $parsedHpp = json_decode($detailHppRK, true);
+            if (is_array($parsedHpp)) {
+                foreach ($parsedHpp as $itemHpp) {
+                    $nom = $this->cleanNumber($itemHpp['nominal'] ?? 0);
+                    $kat = strtolower($itemHpp['kategori'] ?? 'hpp');
+                    if ($kat === 'aset') {
+                        $totalNomAsetDinamis += $nom;
+                    } else {
+                        $totalNomHppDinamis += $nom;
+                    }
+                }
+            }
+        }
+
+        // HPP Nominal & Persentase
+        if (isset($input['hpp_nominal_rk']) && $input['hpp_nominal_rk'] !== '') {
+            $hppNomRK = $this->cleanNumber($input['hpp_nominal_rk']);
+        } elseif ($totalNomHppDinamis > 0) {
+            $hppNomRK = $totalNomHppDinamis;
+        } else {
+            $hppPctAwal = isset($input['hpp_persen_rk']) && $input['hpp_persen_rk'] !== '' ? (float)$input['hpp_persen_rk'] : $defaultHppPct;
+            $hppNomRK = round($pRK * ($hppPctAwal / 100), 2);
+        }
+
+        $hppPctRK = ($pRK > 0) ? round(($hppNomRK / $pRK) * 100, 2) : (float)($input['hpp_persen_rk'] ?? 0);
         $grossRK  = max(0, $pRK - $hppNomRK);
         // Biaya hidup nominal langsung & persentase
         $bhNomRK = isset($input['biaya_hidup_nominal_rk']) ? $this->cleanNumber($input['biaya_hidup_nominal_rk']) : 0;
@@ -843,16 +887,37 @@ class Pengajuan extends BaseController
 
         // Beban lain nominal langsung & rincian beban lainnya
         $blNomRK = isset($input['beban_lainnya_nominal_rk']) ? $this->cleanNumber($input['beban_lainnya_nominal_rk']) : 0;
+        $detailBebanRK = !empty($input['detail_beban_lainnya_rk']) ? $input['detail_beban_lainnya_rk'] : null;
+        if ($detailBebanRK === '[]') $detailBebanRK = null;
+
+        // Jika beban lain nol tapi ada detail rincian beban dinamis, hitung akumulasinya
+        if ($blNomRK == 0 && !empty($detailBebanRK)) {
+            $decBeban = is_array($detailBebanRK) ? $detailBebanRK : json_decode($detailBebanRK, true);
+            if (is_array($decBeban)) {
+                foreach ($decBeban as $itemB) {
+                    $blNomRK += $this->cleanNumber($itemB['nominal'] ?? 0);
+                }
+            }
+        }
+
+        // Biaya hidup nominal langsung & persentase
+        $bhNomRK = isset($input['biaya_hidup_nominal_rk']) ? $this->cleanNumber($input['biaya_hidup_nominal_rk']) : 0;
+        // Jika biaya hidup 0 dan beban lain terisi dari daftar dinamis, samakan agar tetap kompatibel
+        if ($bhNomRK == 0 && $blNomRK > 0) {
+            $bhNomRK = $blNomRK;
+        }
+
         if ($blNomRK == 0 && !empty($input['beban_lainnya_persen_rk']) && $pRK > 0) {
             $blPctRK = (float)$input['beban_lainnya_persen_rk'];
             $blNomRK = $pRK * ($blPctRK / 100);
         } else {
             $blPctRK = $pRK > 0 ? round(($blNomRK / $pRK) * 100, 2) : (float)($input['beban_lainnya_persen_rk'] ?? 0);
         }
-        $detailBebanRK = !empty($input['detail_beban_lainnya_rk']) ? $input['detail_beban_lainnya_rk'] : null;
-        if ($detailBebanRK === '[]') $detailBebanRK = null;
+        $bhPctRK = $pRK > 0 ? round(($bhNomRK / $pRK) * 100, 2) : (float)($input['biaya_hidup_persen_rk'] ?? 0);
 
-        $nettRK   = $grossRK - $bhNomRK - $blNomRK;
+        // Pengeluaran bulanan total (jika input biaya hidup dihapus dari form dan murni beban dinamis)
+        $totalPengeluaranBulanan = ($bhNomRK > 0 && $bhNomRK != $blNomRK) ? ($bhNomRK + $blNomRK) : $blNomRK;
+        $nettRK   = $grossRK - $totalPengeluaranBulanan;
 
         $pIV   = $this->cleanNumber($input['pendapatan_iv'] ?? 0);
         $hppPctIV = (float)($input['hpp_persen_iv'] ?? 60);
@@ -875,11 +940,182 @@ class Pengajuan extends BaseController
 
         $totalNettRK = $nettRK + $pLainRK;
         $angsuran = $this->cleanNumber($input['angsuran_dipilih'] ?? 0);
+        if ($angsuran <= 0) {
+            $angsuranBalloon = $this->cleanNumber($input['angsuran_balloon'] ?? 0);
+            $angsuranInstallment = $this->cleanNumber($input['angsuran_installment'] ?? 0);
+            $angsuran = $angsuranInstallment > 0 ? $angsuranInstallment : $angsuranBalloon;
+        }
         $dscRK = $angsuran > 0 ? round($totalNettRK / $angsuran, 2) : 0;
         $dscIV = $angsuran > 0 ? round($nettIV / $angsuran, 2) : 0;
 
         $statusRK = $dscRK >= 1.3 ? 'Aman' : ($dscRK >= 1.0 ? 'Hati-hati' : 'Berisiko');
         $statusIV = $dscIV >= 1.3 ? 'Aman' : ($dscIV >= 1.0 ? 'Hati-hati' : 'Berisiko');
+
+        // =========================================================================
+        // EKSTRAKSI & KALKULASI DATA HARTA & UTANG PERORANGAN (TAB 9 & TAB 10)
+        // =========================================================================
+        $hartaKasUsaha     = $this->cleanNumber($input['keu_harta_kas_usaha'] ?? ($input['input_harta_kas_usaha'] ?? 0));
+        $hartaPiutangUsaha = $this->cleanNumber($input['keu_harta_piutang_usaha'] ?? ($input['input_harta_piutang_usaha'] ?? 0));
+        $hartaStokUsaha    = $this->cleanNumber($input['keu_harta_stok_usaha'] ?? ($input['input_harta_stok_usaha'] ?? 0));
+        $hartaAlatUsaha    = $this->cleanNumber($input['keu_harta_alat_usaha'] ?? ($input['input_harta_alat_usaha'] ?? 0));
+        $subtotalAsetUsaha = $hartaKasUsaha + $hartaPiutangUsaha + $hartaStokUsaha + $hartaAlatUsaha;
+
+        $hartaTabungan     = $this->cleanNumber($input['keu_harta_tabungan'] ?? ($input['input_harta_tabungan'] ?? ($input['input_harta_gaji_tabungan'] ?? 0)));
+        $hartaDeposito     = $this->cleanNumber($input['keu_harta_deposito'] ?? ($input['input_harta_deposito'] ?? ($input['input_harta_gaji_deposito'] ?? 0)));
+        $statusDeposito    = trim($input['keu_status_deposito'] ?? ($input['status_deposito'] ?? ($input['status_gaji_deposito'] ?? 'bebas')));
+
+        $hartaTanah        = $this->cleanNumber($input['keu_harta_tanah'] ?? ($input['input_harta_tanah'] ?? ($input['input_harta_gaji_tanah'] ?? 0)));
+        $statusTanah       = trim($input['keu_status_tanah'] ?? ($input['status_tanah'] ?? ($input['status_gaji_tanah'] ?? 'bebas')));
+
+        $hartaBangunan     = $this->cleanNumber($input['keu_harta_bangunan'] ?? ($input['input_harta_bangunan'] ?? ($input['input_harta_gaji_bangunan'] ?? 0)));
+        $statusBangunan    = trim($input['keu_status_bangunan'] ?? ($input['status_bangunan'] ?? ($input['status_gaji_bangunan'] ?? 'bebas')));
+
+        $hartaKendaraan    = $this->cleanNumber($input['keu_harta_kendaraan'] ?? ($input['input_harta_kendaraan'] ?? ($input['input_harta_gaji_kendaraan'] ?? 0)));
+        $statusKendaraan   = trim($input['keu_status_kendaraan'] ?? ($input['status_kendaraan'] ?? ($input['status_gaji_kendaraan'] ?? 'bebas')));
+
+        $subtotalAsetPribadiBruto = $hartaTabungan + $hartaDeposito + $hartaTanah + $hartaBangunan + $hartaKendaraan;
+        $totalHartaBruto          = $subtotalAsetUsaha + $subtotalAsetPribadiBruto;
+
+        // Filter: Dikecualikan jika berstatus sedang dijaminkan / belum pasti kepemilikannya
+        $asetTerikat = 0;
+        if ($statusDeposito === 'terikat')  $asetTerikat += $hartaDeposito;
+        if ($statusTanah !== 'bebas')       $asetTerikat += $hartaTanah;
+        if ($statusBangunan !== 'bebas')    $asetTerikat += $hartaBangunan;
+        if ($statusKendaraan !== 'bebas')   $asetTerikat += $hartaKendaraan;
+
+        $totalHartaEligible = max(0, $totalHartaBruto - $asetTerikat);
+
+        // Ekstraksi Daftar Harta & Utang jika dikirim melalui detail_harta_json
+        $rawDetailHartaPost = $input['detail_harta_json'] ?? '';
+        $listHartaPost = [];
+        $listUtangPost = [];
+        if (!empty($rawDetailHartaPost)) {
+            $decHPost = json_decode($rawDetailHartaPost, true);
+            if (is_array($decHPost)) {
+                if (isset($decHPost['daftar_harta']) && is_array($decHPost['daftar_harta'])) {
+                    $listHartaPost = $decHPost['daftar_harta'];
+                }
+                if (isset($decHPost['daftar_utang']) && is_array($decHPost['daftar_utang'])) {
+                    $listUtangPost = $decHPost['daftar_utang'];
+                }
+            }
+        }
+
+        if (!empty($listHartaPost)) {
+            $totalHartaBruto = 0;
+            $asetTerikat = 0;
+            foreach ($listHartaPost as $h) {
+                $nom = $this->cleanNumber($h['nominal'] ?? 0);
+                $totalHartaBruto += $nom;
+                if (($h['status'] ?? 'bebas') === 'terikat') {
+                    $asetTerikat += $nom;
+                }
+            }
+            $totalHartaEligible = max(0, $totalHartaBruto - $asetTerikat);
+        }
+
+        // Tarik Data Utang Komprehensif dari SLIK OJK
+        $dataSlik = $this->slikModel->where('kredit_id', $kreditId)->findAll();
+        $totOutSlik = 0;
+        $totAngsSlik = 0;
+        if (!empty($dataSlik) && is_array($dataSlik)) {
+            foreach ($dataSlik as $slk) {
+                $out = (float)($slk['outstanding'] ?? 0);
+                $angs = (float)($slk['angsuran'] ?? 0);
+                if ($angs <= 0 && $out > 0) $angs = round($out / 24);
+                $totOutSlik += $out;
+                $totAngsSlik += $angs;
+            }
+        }
+        if ($totAngsSlik <= 0) $totAngsSlik = $angsuran;
+        if ($totOutSlik <= 0) $totOutSlik = $totAngsSlik * 18;
+
+        $subtotalUtangDinamis = 0;
+        $subtotalAngsuranDinamis = 0;
+        if (!empty($listUtangPost)) {
+            foreach ($listUtangPost as $u) {
+                $subtotalUtangDinamis += $this->cleanNumber($u['nominal'] ?? 0);
+                $subtotalAngsuranDinamis += $this->cleanNumber($u['angsuran'] ?? 0);
+            }
+            $totalUtangRiil = $totOutSlik + $subtotalUtangDinamis;
+            $totAngsSlik += $subtotalAngsuranDinamis;
+        } else {
+            $utangDagang = $this->cleanNumber($input['keu_neraca_utang_dagang'] ?? ($input['utang_dagang'] ?? ($input['neraca_utang_usaha'] ?? round($hppNomRK * 0.15))));
+            $utangBankInput = $this->cleanNumber($input['keu_neraca_utang_bank'] ?? ($input['neraca_utang_bank_lancar'] ?? 0));
+            $utangBank = $utangBankInput > 0 ? $utangBankInput : $totOutSlik;
+            $utangKoperasi = $this->cleanNumber($input['keu_neraca_utang_koperasi'] ?? 0);
+            $utangLain = $this->cleanNumber($input['keu_neraca_utang_lain'] ?? 0);
+            $totalUtangRiil = $utangBank + $utangDagang + $utangKoperasi + $utangLain;
+        }
+        $kekayaanBersih = max(0, $totalHartaEligible - $totalUtangRiil);
+        $modalDisetor = $this->cleanNumber($input['keu_neraca_modal_disetor'] ?? ($input['neraca_modal_disetor'] ?? 0));
+
+        // Estimasi Angsuran Fasilitas Kredit Baru
+        $kreditData = $this->kreditModel->find($kreditId) ?? [];
+        $plafonBaru = (float)($kreditData['plafon_pengajuan'] ?? 0);
+        $tenorBaru  = (int)($kreditData['tenor_bulan'] ?? 12);
+        if ($tenorBaru <= 0) $tenorBaru = 12;
+        $bungaBaruPct = (float)($kreditData['bunga_per_bulan'] ?? 1.25);
+        $angsBaru = ($plafonBaru > 0) ? round(($plafonBaru / $tenorBaru) + ($plafonBaru * ($bungaBaruPct / 100))) : 0;
+        $totAngsuranGabungan = $totAngsSlik + $angsBaru;
+
+        // DSCR Dinamis (Kapasitas Surplus vs Total Beban Angsuran Gabungan)
+        $surplusKapasitas = $totalNettRK;
+        $dscrDinamis = ($totAngsuranGabungan > 0) ? round($surplusKapasitas / $totAngsuranGabungan, 2) : ($surplusKapasitas > 0 ? 99.99 : 0);
+        $dscRK = $dscrDinamis;
+        $statusRK = $dscRK >= 1.25 ? 'Aman' : ($dscRK >= 1.0 ? 'Hati-hati' : 'Berisiko');
+
+        // 5 Rasio Finansial
+        $pemasukanAcuan = $pRK + $pLainRK;
+        $dsr = ($pemasukanAcuan > 0) ? round(($totAngsuranGabungan / $pemasukanAcuan) * 100, 1) : 0;
+        $dar = ($totalHartaEligible > 0) ? round(($totalUtangRiil / $totalHartaEligible) * 100, 1) : 0;
+        $der = ($kekayaanBersih > 0) ? round($totalUtangRiil / $kekayaanBersih, 2) : 0;
+        $agunanBebas = ($statusTanah === 'bebas' ? $hartaTanah : 0) + ($statusBangunan === 'bebas' ? $hartaBangunan : 0);
+        $ltv = ($agunanBebas > 0 && $plafonBaru > 0) ? round(($plafonBaru / $agunanBebas) * 100, 1) : 0;
+        $kasLiquidBebas = $hartaKasUsaha + $hartaTabungan + ($statusDeposito === 'bebas' ? $hartaDeposito : 0);
+        $bebanBulanan = $totalPengeluaranBulanan + $totAngsuranGabungan;
+        $buffer = ($bebanBulanan > 0) ? round($kasLiquidBebas / $bebanBulanan, 1) : 0;
+
+        $detailHartaJson = json_encode([
+            'aset_usaha' => [
+                'kas'       => $hartaKasUsaha,
+                'piutang'   => $hartaPiutangUsaha,
+                'persediaan'=> $hartaStokUsaha,
+                'peralatan' => $hartaAlatUsaha,
+                'subtotal'  => $subtotalAsetUsaha,
+            ],
+            'aset_pribadi' => [
+                'tabungan'         => $hartaTabungan,
+                'deposito'         => $hartaDeposito,
+                'status_deposito'  => $statusDeposito,
+                'tanah'            => $hartaTanah,
+                'status_tanah'     => $statusTanah,
+                'bangunan'         => $hartaBangunan,
+                'status_bangunan'  => $statusBangunan,
+                'kendaraan'        => $hartaKendaraan,
+                'status_kendaraan' => $statusKendaraan,
+                'subtotal_bruto'   => $subtotalAsetPribadiBruto,
+                'aset_terikat'     => $asetTerikat,
+                'subtotal_eligible'=> max(0, $subtotalAsetPribadiBruto - $asetTerikat),
+            ],
+            'total_harta_bruto'    => $totalHartaBruto,
+            'total_harta_eligible' => $totalHartaEligible,
+            'total_utang'          => $totalUtangRiil,
+            'kekayaan_bersih'      => $kekayaanBersih,
+            'slik' => [
+                'outstanding'       => $totOutSlik,
+                'angsuran_slik'     => $totAngsSlik,
+                'angsuran_baru'     => $angsBaru,
+                'angsuran_gabungan' => $totAngsuranGabungan,
+            ],
+            'rasio' => [
+                'dsr'             => $dsr,
+                'dar'             => $dar,
+                'der'             => $der,
+                'ltv'             => $ltv,
+                'liquidity_buffer'=> $buffer,
+            ]
+        ]);
 
         $dataKeu = [
             'kredit_id'                     => $kreditId,
@@ -891,6 +1127,8 @@ class Pengajuan extends BaseController
             'bukti_pendapatan_lain_rk'      => $pathBukti,
             'hpp_persen_rk'                 => $hppPctRK,
             'hpp_nominal_rk'                => $hppNomRK,
+            'detail_hpp_rk'                 => $detailHppRK,
+            'total_aset_hpp_rk'             => $totalNomAsetDinamis,
             'laba_kotor_rk'                 => $grossRK,
             'biaya_hidup_persen_rk'         => $bhPctRK,
             'biaya_hidup_nominal_rk'        => $bhNomRK,
@@ -943,6 +1181,38 @@ class Pengajuan extends BaseController
             'input_pinjaman_baru'           => $this->cleanNumber($input['input_pinjaman_baru'] ?? 0),
             'input_setoran_modal'           => $this->cleanNumber($input['input_setoran_modal'] ?? 0),
             'neraca_hari_stok_dio'          => !empty($input['neraca_hari_stok_dio']) ? (int)$input['neraca_hari_stok_dio'] : 45,
+
+            // === HARTA & NERACA PERORANGAN (TAB 9 & TAB 10) ===
+            'harta_kas_usaha'               => $hartaKasUsaha,
+            'harta_piutang_usaha'           => $hartaPiutangUsaha,
+            'harta_stok_usaha'              => $hartaStokUsaha,
+            'harta_alat_usaha'              => $hartaAlatUsaha,
+            'harta_tabungan'                => $hartaTabungan,
+            'harta_deposito'                => $hartaDeposito,
+            'status_deposito'               => $statusDeposito,
+            'harta_tanah'                   => $hartaTanah,
+            'status_tanah'                  => $statusTanah,
+            'harta_bangunan'                => $hartaBangunan,
+            'status_bangunan'               => $statusBangunan,
+            'harta_kendaraan'               => $hartaKendaraan,
+            'status_kendaraan'              => $statusKendaraan,
+            'total_harta_bruto'             => $totalHartaBruto,
+            'aset_terikat_jaminan'          => $asetTerikat,
+            'total_harta_eligible'          => $totalHartaEligible,
+            'total_utang_riil'              => $totalUtangRiil,
+            'total_angsuran_bulanan'        => $totAngsuranGabungan,
+            'kekayaan_bersih'               => $kekayaanBersih,
+            'neraca_utang_usaha'            => $utangDagang,
+            'neraca_utang_bank_lancar'      => $utangBank,
+            'neraca_modal_disetor'          => $modalDisetor,
+            'neraca_laba_ditahan'           => $kekayaanBersih,
+            'neraca_total_ekuitas'          => $modalDisetor + $kekayaanBersih,
+            'rasio_dsr'                     => $dsr,
+            'rasio_dar'                     => $dar,
+            'rasio_der'                     => $der,
+            'rasio_ltv'                     => $ltv,
+            'rasio_liquidity_buffer'        => $buffer,
+            'detail_harta_json'             => $detailHartaJson,
         ];
 
         $keuCols = $this->keuanganModel->db->getFieldNames('kredit_keuangan_dsc');
@@ -1478,6 +1748,11 @@ class Pengajuan extends BaseController
 
         $omzet = $this->cleanNumber($input['pendapatan_rk'] ?? ($input['pendapatan_iv'] ?? 0));
         $angsuran = $this->cleanNumber($input['angsuran_dipilih'] ?? 0);
+        if ($angsuran <= 0) {
+            $angsuranBalloon = $this->cleanNumber($input['angsuran_balloon'] ?? 0);
+            $angsuranInstallment = $this->cleanNumber($input['angsuran_installment'] ?? 0);
+            $angsuran = $angsuranInstallment > 0 ? $angsuranInstallment : $angsuranBalloon;
+        }
         $isBUAi = (stripos($input['jenis_debitur'] ?? '', 'badan') !== false || stripos($input['jenis_debitur'] ?? '', 'pt') !== false || stripos($input['jenis_debitur'] ?? '', 'cv') !== false);
         $defaultHppAi = $isBUAi ? 60 : 0;
         $hppPct = isset($input['hpp_persen_rk']) && $input['hpp_persen_rk'] !== '' ? (float)$input['hpp_persen_rk'] : $defaultHppAi;
@@ -2513,15 +2788,36 @@ class Pengajuan extends BaseController
             'daftar_karyawan' => $kredit['daftar_karyawan'] ?? '[]',
         ]);
 
-        // Jika pendapatan di laba rugi kosong, ambil dari total mutasi kredit rekening koran (Tahap 8)
+        // Jika pendapatan & HPP di laba rugi kosong, ambil dari mutasi rekening koran (Tahap 7 / 8)
+        $totMutasiKredit = 0;
+        $totMutasiDebit  = 0;
+        foreach ($dataRekening as $r) {
+            $m = max(1, (int)($r['jumlah_bulan'] ?? 6));
+            $k = (float)($r['total_mutasi_kredit'] ?? 0);
+            $d = (float)($r['total_mutasi_debit'] ?? 0);
+            $totMutasiKredit += round($k / $m);
+            $totMutasiDebit  += round($d / $m);
+        }
+
         if (empty($calcInput['pendapatan']) && empty($calcInput['pendapatan_rk'])) {
-            $totMutasi = 0;
-            foreach ($dataRekening as $r) {
-                $totMutasi += (float)($r['total_mutasi_kredit'] ?? 0);
+            if ($totMutasiKredit > 0) {
+                $calcInput['pendapatan_rk'] = $totMutasiKredit;
+                $calcInput['pendapatan']    = $totMutasiKredit;
             }
-            if ($totMutasi > 0) {
-                $calcInput['pendapatan_rk'] = $totMutasi;
-                $calcInput['pendapatan']    = $totMutasi;
+        }
+
+        if ($totMutasiKredit > 0 && $totMutasiDebit > 0) {
+            $totalOpEst      = (float)($calcInput['biaya_hidup_nominal_rk'] ?? 25000000);
+            $bebanLainEst    = (float)($calcInput['beban_lainnya_nominal_rk'] ?? 0);
+            $totalBebanOpEst = ($totalOpEst > 0 ? $totalOpEst : 25000000) + $bebanLainEst;
+            $hppMurniEst     = max(0, $totMutasiDebit - $totalBebanOpEst);
+            $ratioHpp        = ($totMutasiKredit > 0 && $hppMurniEst > 0) ? round(($hppMurniEst / $totMutasiKredit) * 100, 1) : 78;
+            if ($ratioHpp > 82 || $ratioHpp <= 0) {
+                $ratioHpp = 78;
+            }
+            if (empty($calcInput['hpp_persen_rk']) || (float)$calcInput['hpp_persen_rk'] == 60 || (float)$calcInput['hpp_persen_rk'] >= 90) {
+                $calcInput['hpp_persen_rk'] = $ratioHpp;
+                $calcInput['hpp_persen']    = $ratioHpp;
             }
         }
 
