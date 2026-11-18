@@ -2053,6 +2053,12 @@ function hitungLabaRugi() {
     if (document.getElementById('grossRK')) document.getElementById('grossRK').innerText = formatRupiahString(grossRK);
     if (document.getElementById('nomBiayaHidupRK')) document.getElementById('nomBiayaHidupRK').innerText = formatRupiahString(nomBhRK);
     if (document.getElementById('nomBebanLainRK')) document.getElementById('nomBebanLainRK').innerText = formatRupiahString(nomBlRK);
+    if (document.getElementById('nomTotalPengeluaranBU')) {
+        document.getElementById('nomTotalPengeluaranBU').innerText = formatRupiahString(nomHppRK + nomBlRK);
+    }
+    if (document.getElementById('nomTotalPendapatanDinamis')) {
+        document.getElementById('nomTotalPendapatanDinamis').innerText = formatRupiahString(pRK);
+    }
     if (document.getElementById('nettRK')) document.getElementById('nettRK').innerText = formatRupiahString(nettRK);
     if (document.getElementById('labelTotalPendapatanLain')) {
         document.getElementById('labelTotalPendapatanLain').innerText = formatRupiahString(pLainRK);
@@ -2151,53 +2157,151 @@ function initDaftarHpp() {
 window.initDaftarHpp = initDaftarHpp;
 
 function renderListHpp() {
-    const container = document.getElementById('containerHppDinamis');
-    if (!container) return;
+    const containerAll = document.getElementById('containerHppDinamis');
+    const containerHppOnly = document.getElementById('containerHppOnlyDinamis');
+    const containerAsetOnly = document.getElementById('containerAsetOnlyDinamis');
 
-    if (daftarHpp.length === 0) {
-        daftarHpp.push({ nama: 'Biaya Modal / Kulakan Barang', kategori: 'hpp', nominal: 0 });
+    if (!containerAll && !containerHppOnly && !containerAsetOnly) return;
+
+    // Mode Terpisah: Kotak 2 untuk HPP (Merah) & Kotak 3 untuk Aset (Hijau)
+    if (containerHppOnly || containerAsetOnly) {
+        let htmlHpp = '';
+        let htmlAset = '';
+        let countHpp = 0;
+        let countAset = 0;
+
+        daftarHpp.forEach((item, index) => {
+            const safeNama = (item.nama || '').replace(/"/g, '&quot;');
+            const kategori = (item.kategori || 'hpp').toLowerCase();
+            const nomVal = parseInt(item.nominal, 10) || 0;
+            const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+            const isAset = (kategori === 'aset');
+
+            if (isAset) {
+                countAset++;
+                htmlAset += `
+                    <div class="flex items-center gap-2 p-2 bg-white border border-emerald-200 rounded-xl shadow-2xs hover:border-emerald-300 transition">
+                        <div class="flex-1 min-w-0">
+                            <input type="text" value="${safeNama}" 
+                                   placeholder="Nama Aset / Peralatan (cth: Mesin Produksi, Mobil Operasional, Komputer)" 
+                                   class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                                   oninput="updateItemHpp(${index}, 'nama', this.value)">
+                        </div>
+                        <div class="w-32 sm:w-44 shrink-0">
+                            <div class="relative flex items-center">
+                                <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                                <input type="text" value="${nomStr}" 
+                                       placeholder="0" 
+                                       class="w-full text-xs font-bold text-slate-800 text-right border border-emerald-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-emerald-50/30 focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-100 transition rupiah-input"
+                                       oninput="formatRupiah(this); updateItemHpp(${index}, 'nominal', this.value)">
+                            </div>
+                        </div>
+                        <button type="button" onclick="hapusHpp(${index})" title="Hapus aset ini" 
+                                class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+            } else {
+                countHpp++;
+                htmlHpp += `
+                    <div class="flex items-center gap-2 p-2 bg-white border border-rose-200 rounded-xl shadow-2xs hover:border-rose-300 transition">
+                        <div class="flex-1 min-w-0">
+                            <input type="text" value="${safeNama}" 
+                                   placeholder="Keterangan HPP (cth: Kulakan Barang Dagang, Pembelian Bahan Baku)" 
+                                   class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                                   oninput="updateItemHpp(${index}, 'nama', this.value)">
+                        </div>
+                        <div class="w-32 sm:w-44 shrink-0">
+                            <div class="relative flex items-center">
+                                <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                                <input type="text" value="${nomStr}" 
+                                       placeholder="0" 
+                                       class="w-full text-xs font-bold text-slate-800 text-right border border-rose-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-rose-50/30 focus:bg-white focus:border-rose-500 focus:ring-1 focus:ring-rose-100 transition rupiah-input"
+                                       oninput="formatRupiah(this); updateItemHpp(${index}, 'nominal', this.value)">
+                            </div>
+                        </div>
+                        <button type="button" onclick="hapusHpp(${index})" title="Hapus HPP ini" 
+                                class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+            }
+        });
+
+        if (containerHppOnly) {
+            if (countHpp === 0) {
+                containerHppOnly.innerHTML = `
+                    <div class="p-3 text-center border border-dashed border-rose-200 rounded-xl text-slate-400 text-xs bg-rose-50/30">
+                        Belum ada rincian HPP. Klik <strong class="text-rose-600 font-semibold cursor-pointer hover:underline" onclick="tambahHppOnly()">+ Tambah HPP</strong> untuk menambah pengeluaran kulakan/bahan baku.
+                    </div>
+                `;
+            } else {
+                containerHppOnly.innerHTML = htmlHpp;
+            }
+        }
+
+        if (containerAsetOnly) {
+            if (countAset === 0) {
+                containerAsetOnly.innerHTML = `
+                    <div class="p-3 text-center border border-dashed border-emerald-200 rounded-xl text-slate-400 text-xs bg-emerald-50/30">
+                        Belum ada pembelian aset. Klik <strong class="text-emerald-600 font-semibold cursor-pointer hover:underline" onclick="tambahAsetOnly()">+ Tambah Aset</strong> jika ada pembelian inventaris/peralatan.
+                    </div>
+                `;
+            } else {
+                containerAsetOnly.innerHTML = htmlAset;
+            }
+        }
     }
 
-    let html = '';
-    daftarHpp.forEach((item, index) => {
-        const safeNama = (item.nama || '').replace(/"/g, '&quot;');
-        const kategori = (item.kategori || 'hpp').toLowerCase();
-        const nomVal = parseInt(item.nominal, 10) || 0;
-        const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
-        const isAset = (kategori === 'aset');
+    // Mode Fallback: Container Tunggal (Lama)
+    if (containerAll) {
+        if (daftarHpp.length === 0) {
+            daftarHpp.push({ nama: 'Biaya Modal / Kulakan Barang', kategori: 'hpp', nominal: 0 });
+        }
 
-        html += `
-            <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2 bg-white border ${isAset ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'} rounded-xl shadow-2xs hover:border-blue-300 transition">
-                <div class="w-full sm:flex-1 min-w-0">
-                    <input type="text" value="${safeNama}" 
-                           placeholder="${isAset ? 'Nama Aset (cth: Mesin Produksi, Kendaraan, Alat Kerja)' : 'Keterangan HPP (cth: Kulakan Barang, Bahan Baku)'}" 
-                           class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
-                           oninput="updateItemHpp(${index}, 'nama', this.value)">
-                </div>
-                <div class="w-36 sm:w-44 shrink-0">
-                    <select onchange="updateItemHpp(${index}, 'kategori', this.value)"
-                            class="w-full text-[11px] font-bold ${isAset ? 'text-emerald-700 bg-emerald-50 border-emerald-300' : 'text-blue-700 bg-blue-50 border-blue-300'} border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-200 cursor-pointer">
-                        <option value="hpp" ${!isAset ? 'selected' : ''}>📦 Biaya HPP (Kulakan)</option>
-                        <option value="aset" ${isAset ? 'selected' : ''}>🏢 Aset / Peralatan</option>
-                    </select>
-                </div>
-                <div class="w-32 sm:w-40 shrink-0">
-                    <div class="relative flex items-center">
-                        <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
-                        <input type="text" value="${nomStr}" 
-                               placeholder="0" 
-                               class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
-                               oninput="formatRupiah(this); updateItemHpp(${index}, 'nominal', this.value)">
+        let html = '';
+        daftarHpp.forEach((item, index) => {
+            const safeNama = (item.nama || '').replace(/"/g, '&quot;');
+            const kategori = (item.kategori || 'hpp').toLowerCase();
+            const nomVal = parseInt(item.nominal, 10) || 0;
+            const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+            const isAset = (kategori === 'aset');
+
+            html += `
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2 bg-white border ${isAset ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'} rounded-xl shadow-2xs hover:border-blue-300 transition">
+                    <div class="w-full sm:flex-1 min-w-0">
+                        <input type="text" value="${safeNama}" 
+                               placeholder="${isAset ? 'Nama Aset (cth: Mesin Produksi, Kendaraan, Alat Kerja)' : 'Keterangan HPP (cth: Kulakan Barang, Bahan Baku)'}" 
+                               class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                               oninput="updateItemHpp(${index}, 'nama', this.value)">
                     </div>
+                    <div class="w-36 sm:w-44 shrink-0">
+                        <select onchange="updateItemHpp(${index}, 'kategori', this.value)"
+                                class="w-full text-[11px] font-bold ${isAset ? 'text-emerald-700 bg-emerald-50 border-emerald-300' : 'text-blue-700 bg-blue-50 border-blue-300'} border rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-200 cursor-pointer">
+                            <option value="hpp" ${!isAset ? 'selected' : ''}>📦 Biaya HPP (Kulakan)</option>
+                            <option value="aset" ${isAset ? 'selected' : ''}>🏢 Aset / Peralatan</option>
+                        </select>
+                    </div>
+                    <div class="w-32 sm:w-40 shrink-0">
+                        <div class="relative flex items-center">
+                            <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                            <input type="text" value="${nomStr}" 
+                                   placeholder="0" 
+                                   class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
+                                   oninput="formatRupiah(this); updateItemHpp(${index}, 'nominal', this.value)">
+                        </div>
+                    </div>
+                    <button type="button" onclick="hapusHpp(${index})" title="Hapus item ini" 
+                            class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
                 </div>
-                <button type="button" onclick="hapusHpp(${index})" title="Hapus item ini" 
-                        class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
-            </div>
-        `;
-    });
-    container.innerHTML = html;
+            `;
+        });
+        containerAll.innerHTML = html;
+    }
 
     kalkulasiTotalHppDanAset();
 }
@@ -2259,12 +2363,29 @@ function tambahHpp(nama = '', kategori = 'hpp', nominal = 0) {
 }
 window.tambahHpp = tambahHpp;
 
+function tambahHppOnly(nama = 'Biaya Bahan / Kulakan', nominal = 0) {
+    daftarHpp.push({
+        nama: nama,
+        kategori: 'hpp',
+        nominal: nominal
+    });
+    renderListHpp();
+}
+window.tambahHppOnly = tambahHppOnly;
+
+function tambahAsetOnly(nama = 'Pembelian Aset / Peralatan', nominal = 0) {
+    daftarHpp.push({
+        nama: nama,
+        kategori: 'aset',
+        nominal: nominal
+    });
+    renderListHpp();
+}
+window.tambahAsetOnly = tambahAsetOnly;
+
 function hapusHpp(index) {
     if (index >= 0 && index < daftarHpp.length) {
         daftarHpp.splice(index, 1);
-        if (daftarHpp.length === 0) {
-            daftarHpp.push({ nama: 'Biaya Modal / Kulakan Barang', kategori: 'hpp', nominal: 0 });
-        }
         renderListHpp();
     }
 }
@@ -2309,10 +2430,13 @@ function initDaftarPendapatan() {
 
     if (daftarPendapatan.length === 0) {
         const nomLama = parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
+        const defaultName = (typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA)
+            ? 'Omset Penjualan Utama'
+            : 'Gaji Pokok';
         if (nomLama > 0) {
-            daftarPendapatan = [{ nama: 'Gaji Pokok', nominal: nomLama }];
+            daftarPendapatan = [{ nama: defaultName, nominal: nomLama }];
         } else {
-            daftarPendapatan = [{ nama: 'Gaji Pokok', nominal: 0 }];
+            daftarPendapatan = [{ nama: defaultName, nominal: 0 }];
         }
     }
 
@@ -2325,44 +2449,50 @@ function renderListPendapatan() {
     const container = document.getElementById('containerPendapatanDinamis');
     if (!container) return;
 
+    const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA);
+
     if (daftarPendapatan.length === 0) {
-        daftarPendapatan.push({ nama: 'Gaji Pokok', nominal: 0 });
-    }
-
-    let html = '';
-    daftarPendapatan.forEach((item, index) => {
-        const safeNama = (item.nama || '').replace(/"/g, '&quot;');
-        const nomVal = parseInt(item.nominal, 10) || 0;
-        const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
-        const deleteBtnHtml = (daftarPendapatan.length > 1) ? `
-            <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
-                    class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-            </button>
-        ` : '';
-
-        html += `
-            <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
-                <div class="flex-1 min-w-0">
-                    <input type="text" value="${safeNama}" 
-                           placeholder="Nama pendapatan (cth: Gaji Pokok, Bonus, Lembur)" 
-                           class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
-                           oninput="updateItemPendapatan(${index}, 'nama', this.value)">
-                </div>
-                <div class="w-36 sm:w-48 shrink-0">
-                    <div class="relative flex items-center">
-                        <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
-                        <input type="text" value="${nomStr}" 
-                               placeholder="0" 
-                               class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
-                               oninput="formatRupiah(this); updateItemPendapatan(${index}, 'nominal', this.value)">
-                    </div>
-                </div>
-                ${deleteBtnHtml}
+        container.innerHTML = `
+            <div class="p-3 text-center border border-dashed border-blue-200 rounded-xl text-slate-400 text-xs bg-blue-50/30">
+                Belum ada rincian pendapatan. Klik <strong class="text-blue-600 font-semibold cursor-pointer hover:underline" onclick="tambahPendapatan()">+ Tambah Pendapatan</strong>.
             </div>
         `;
-    });
-    container.innerHTML = html;
+    } else {
+        let html = '';
+        daftarPendapatan.forEach((item, index) => {
+            const safeNama = (item.nama || '').replace(/"/g, '&quot;');
+            const nomVal = parseInt(item.nominal, 10) || 0;
+            const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
+            const deleteBtnHtml = (daftarPendapatan.length > 1) ? `
+                <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
+                        class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            ` : '';
+
+            html += `
+                <div class="flex items-center gap-2 p-2 bg-white border border-blue-200 rounded-xl shadow-2xs hover:border-blue-300 transition">
+                    <div class="flex-1 min-w-0">
+                        <input type="text" value="${safeNama}" 
+                               placeholder="${isBU ? 'Sumber Pendapatan (misal: Omset Penjualan Utama, Jasa / Proyek)' : 'Nama pendapatan (cth: Gaji Pokok, Bonus, Lembur)'}" 
+                               class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                               oninput="updateItemPendapatan(${index}, 'nama', this.value)">
+                    </div>
+                    <div class="w-32 sm:w-44 shrink-0">
+                        <div class="relative flex items-center">
+                            <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                            <input type="text" value="${nomStr}" 
+                                   placeholder="0" 
+                                   class="w-full text-xs font-bold text-slate-800 text-right border border-blue-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-blue-50/30 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
+                                   oninput="formatRupiah(this); updateItemPendapatan(${index}, 'nominal', this.value)">
+                        </div>
+                    </div>
+                    ${deleteBtnHtml}
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
 
     let total = 0;
     daftarPendapatan.forEach(item => {
@@ -2388,7 +2518,11 @@ function renderListPendapatan() {
 window.renderListPendapatan = renderListPendapatan;
 
 function tambahPendapatan(nama = '', nominal = 0) {
-    daftarPendapatan.push({ nama: nama, nominal: nominal });
+    const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA);
+    daftarPendapatan.push({ 
+        nama: nama || (isBU ? 'Omset Usaha Tambahan' : 'Pendapatan Lain'), 
+        nominal: nominal 
+    });
     renderListPendapatan();
 }
 window.tambahPendapatan = tambahPendapatan;
@@ -2448,7 +2582,7 @@ function initDaftarBebanLain() {
     if (raw && raw !== '[]' && raw !== '') {
         try {
             const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) {
+            if (Array.isArray(parsed) && parsed.length > 0) {
                 daftarBebanLain = parsed;
             }
         } catch (e) {
@@ -2458,8 +2592,10 @@ function initDaftarBebanLain() {
 
     if (daftarBebanLain.length === 0) {
         const nomLama = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
+        const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA);
+        const defaultName = isBU ? 'Beban Operasional Pokok' : 'Beban Lain-Lain';
         if (nomLama > 0) {
-            daftarBebanLain = [{ nama: 'Beban Lain-Lain', nominal: nomLama }];
+            daftarBebanLain = [{ nama: defaultName, nominal: nomLama }];
         } else {
             daftarBebanLain = [{ nama: '', nominal: 0 }];
         }
@@ -2474,12 +2610,14 @@ function renderListBebanLain() {
     const container = document.getElementById('containerBebanLain');
     if (!container) return;
 
+    const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA);
+
     if (daftarBebanLain.length === 0) {
         container.innerHTML = `
-                    <div class="p-3 text-center border border-dashed border-slate-200 rounded-xl text-slate-400 text-xs bg-slate-50/50">
-                        Belum ada rincian beban lain. Klik <strong class="text-blue-600 font-semibold cursor-pointer hover:underline" onclick="tambahBebanLain()">+ Tambah Beban</strong> (cth: Biaya Sekolah, dll).
-                    </div>
-                `;
+            <div class="p-3 text-center border border-dashed border-rose-200 rounded-xl text-slate-400 text-xs bg-rose-50/30">
+                Belum ada rincian pengeluaran biasa. Klik <strong class="text-rose-600 font-semibold cursor-pointer hover:underline" onclick="tambahBebanLain()">+ Tambah Pengeluaran Biasa</strong>.
+            </div>
+        `;
     } else {
         let html = '';
         daftarBebanLain.forEach((item, index) => {
@@ -2487,28 +2625,28 @@ function renderListBebanLain() {
             const nomVal = parseInt(item.nominal, 10) || 0;
             const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
             html += `
-                        <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
-                            <div class="flex-1 min-w-0">
-                                <input type="text" value="${safeNama}" 
-                                       placeholder="Keterangan pengeluaran / beban (cth: Kebutuhan Rumah Tangga, Biaya Sekolah, dll)" 
-                                       class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
-                                       oninput="updateItemBebanLain(${index}, 'nama', this.value)">
-                            </div>
-                            <div class="w-32 sm:w-40 shrink-0">
-                                <div class="relative flex items-center">
-                                    <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
-                                    <input type="text" value="${nomStr}" 
-                                           placeholder="0" 
-                                           class="w-full text-xs font-bold text-slate-800 text-right border border-slate-200 rounded-lg pl-7 pr-2.5 py-1.5 bg-slate-50/70 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition rupiah-input"
-                                           oninput="formatRupiah(this); updateItemBebanLain(${index}, 'nominal', this.value)">
-                                </div>
-                            </div>
-                            <button type="button" onclick="hapusBebanLain(${index})" title="Hapus beban ini" 
-                                    class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
+                <div class="flex items-center gap-2 p-2 bg-white border ${isBU ? 'border-rose-200 hover:border-rose-300' : 'border-slate-200 hover:border-blue-200'} rounded-xl shadow-2xs transition">
+                    <div class="flex-1 min-w-0">
+                        <input type="text" value="${safeNama}" 
+                               placeholder="${isBU ? 'Keterangan pengeluaran rutin (cth: Gaji Karyawan, Sewa Kantor, Listrik/Air, Logistik)' : 'Keterangan pengeluaran / beban (cth: Kebutuhan Rumah Tangga, Biaya Sekolah, dll)'}" 
+                               class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
+                               oninput="updateItemBebanLain(${index}, 'nama', this.value)">
+                    </div>
+                    <div class="w-32 sm:w-44 shrink-0">
+                        <div class="relative flex items-center">
+                            <span class="absolute left-2.5 text-[10px] font-bold text-slate-400 select-none">Rp</span>
+                            <input type="text" value="${nomStr}" 
+                                   placeholder="0" 
+                                   class="w-full text-xs font-bold text-slate-800 text-right border ${isBU ? 'border-rose-200 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-100' : 'border-slate-200 bg-slate-50/70 focus:border-blue-500 focus:ring-blue-100'} rounded-lg pl-7 pr-2.5 py-1.5 focus:bg-white focus:ring-1 transition rupiah-input"
+                                   oninput="formatRupiah(this); updateItemBebanLain(${index}, 'nominal', this.value)">
                         </div>
-                    `;
+                    </div>
+                    <button type="button" onclick="hapusBebanLain(${index})" title="Hapus pengeluaran ini" 
+                            class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            `;
         });
         container.innerHTML = html;
     }
@@ -4061,8 +4199,19 @@ function formatRupiahString(num) {
 }
 
 function parseNominal(val) {
-    if (typeof val === 'number') return val;
-    return parseInt(String(val).replace(/[^0-9]/g, ''), 10) || 0;
+    if (typeof val === 'number') return Math.round(val);
+    if (!val) return 0;
+    let s = String(val).trim();
+    if (s === '' || s === '-') return 0;
+    // Format float database misal "250000000.00" atau "125000.5" (hanya ada 1 titik dan merupakan pecahan desimal)
+    if (/^\d+\.\d{1,4}$/.test(s)) {
+        return Math.round(parseFloat(s)) || 0;
+    }
+    // Format rupiah dengan koma sen di akhir misal "250.000.000,00"
+    if (/,\d{1,2}$/.test(s)) {
+        s = s.split(',')[0];
+    }
+    return parseInt(s.replace(/[^0-9]/g, ''), 10) || 0;
 }
 
 /**

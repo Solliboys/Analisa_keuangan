@@ -826,6 +826,14 @@ class Pengajuan extends BaseController
         $pRK   = $this->cleanNumber($input['pendapatan_rk'] ?? 0);
         $detailPendapatanRK = !empty($input['detail_pendapatan_rk']) ? $input['detail_pendapatan_rk'] : null;
         if ($detailPendapatanRK === '[]') $detailPendapatanRK = null;
+        if ($pRK == 0 && !empty($detailPendapatanRK)) {
+            $parsedPend = is_array($detailPendapatanRK) ? $detailPendapatanRK : json_decode($detailPendapatanRK, true);
+            if (is_array($parsedPend)) {
+                foreach ($parsedPend as $dp) {
+                    $pRK += $this->cleanNumber($dp['nominal'] ?? 0);
+                }
+            }
+        }
         $isBU = false;
         if (!empty($input['jenis_debitur'])) {
             $isBU = (stripos($input['jenis_debitur'], 'badan') !== false || stripos($input['jenis_debitur'], 'pt') !== false || stripos($input['jenis_debitur'], 'cv') !== false);

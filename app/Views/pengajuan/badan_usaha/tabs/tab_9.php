@@ -7,246 +7,338 @@
             </div>
             <div>
                 <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">ANALISA DATA KEUANGAN & BEBAN USAHA (BADAN USAHA / PERUSAHAAN)</h3>
-                <p class="text-[11px] text-slate-500">Perhitungan data keuangan operasional dari mutasi rekening koran perusahaan, beban usaha operasional, dan pendapatan non-operasional</p>
+                <p class="text-[11px] text-slate-500">Perhitungan data keuangan operasional dari mutasi rekening koran perusahaan, beban usaha operasional, dan belanja aset</p>
             </div>
         </div>
     </div>
 
-    <!-- Layout Data Keuangan Operasional Perusahaan (Badan Usaha fokus ke Operasional, tanpa Pendapatan Sampingan) -->
+    <?php
+        // Cek akumulasi mutasi rekening koran untuk auto-sync omzet dan HPP awal
+        $totRekKreditBU = 0;
+        $totRekDebitBU  = 0;
+        if (!empty($rekening) && is_array($rekening)) {
+            foreach ($rekening as $rk) {
+                $m = max(1, (int)($rk['jumlah_bulan'] ?? 6));
+                $k = (float)($rk['total_mutasi_kredit'] ?? 0);
+                $d = (float)($rk['total_mutasi_debit'] ?? 0);
+                $totRekKreditBU += round($k / $m);
+                $totRekDebitBU  += round($d / $m);
+            }
+        }
+        $autoOmzetRekBU = ($totRekKreditBU > 0) ? $totRekKreditBU : 0;
+
+        // Estimasi beban operasional awal untuk memisahkan HPP murni dari mutasi debit
+        $bebanOpAwalBU   = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 25000000);
+        $bebanLainAwalBU = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
+        $totalOpAwalBU   = ($bebanOpAwalBU > 0 ? $bebanOpAwalBU : 25000000) + $bebanLainAwalBU;
+
+        // HPP Murni = Mutasi Debit - Beban Operasional agar tidak double-counting (maksimal 78% agar tidak rugi)
+        $debitMurniBU = max(0, $totRekDebitBU - $totalOpAwalBU);
+        $autoHppRekBU = ($totRekKreditBU > 0 && $debitMurniBU > 0) 
+            ? round(($debitMurniBU / $totRekKreditBU) * 100, 1) 
+            : 78;
+        if ($autoHppRekBU > 82 || $autoHppRekBU <= 0) {
+            $autoHppRekBU = 78;
+        }
+
+        $nomPendapatanBU = (float)($keuangan['pendapatan_rk'] ?? 0);
+        if ($nomPendapatanBU <= 0 && $autoOmzetRekBU > 0) {
+            $nomPendapatanBU = $autoOmzetRekBU;
+        }
+        if ($nomPendapatanBU <= 0) {
+            $nomPendapatanBU = 250000000;
+        }
+
+        $persenHppBU = (float)($keuangan['hpp_persen_rk'] ?? 0);
+        if (($persenHppBU <= 0 || $persenHppBU == 60 || $persenHppBU >= 90) && $autoHppRekBU > 0) {
+            $persenHppBU = $autoHppRekBU;
+        }
+        if ($persenHppBU <= 0) {
+            $persenHppBU = 78;
+        }
+
+        $nomHppAwalBU = (float)($keuangan['hpp_nominal_rk'] ?? 0);
+        if (($nomHppAwalBU <= 0 || abs($nomHppAwalBU - round($nomPendapatanBU * ($persenHppBU / 100))) > 5000000) && $nomPendapatanBU > 0 && $persenHppBU > 0) {
+            $nomHppAwalBU = round($nomPendapatanBU * ($persenHppBU / 100));
+        }
+
+        // 1. Data Rincian Pendapatan Dinamis
+        $rawDetailPendapatanBU = $keuangan['detail_pendapatan_rk'] ?? '';
+        $listDetailPendapatanBU = [];
+        if (!empty($rawDetailPendapatanBU)) {
+            $decP = json_decode($rawDetailPendapatanBU, true);
+            if (is_array($decP) && count($decP) > 0) {
+                $listDetailPendapatanBU = $decP;
+            }
+        }
+        if (empty($listDetailPendapatanBU)) {
+            $listDetailPendapatanBU = [
+                ['nama' => 'Omset Penjualan Utama', 'nominal' => $nomPendapatanBU]
+            ];
+        }
+
+        // 2. Data Rincian HPP & Belanja Aset Dinamis
+        $rawDetailHppBU = $keuangan['detail_hpp_rk'] ?? '';
+        $listDetailHppBU = [];
+        if (!empty($rawDetailHppBU)) {
+            $decHpp = json_decode($rawDetailHppBU, true);
+            if (is_array($decHpp) && count($decHpp) > 0) {
+                $listDetailHppBU = $decHpp;
+            }
+        }
+        if (empty($listDetailHppBU)) {
+            if ($nomHppAwalBU > 0) {
+                $listDetailHppBU = [
+                    ['nama' => 'Biaya Modal / Kulakan Barang Dagang', 'kategori' => 'hpp', 'nominal' => $nomHppAwalBU]
+                ];
+            } else {
+                $listDetailHppBU = [
+                    ['nama' => 'Biaya Modal / Kulakan Barang Dagang', 'kategori' => 'hpp', 'nominal' => 0]
+                ];
+            }
+        }
+
+        // 3. Data Rincian Pengeluaran Biasa Dinamis
+        $nomBebanOperasional = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 0);
+        $rawDetailBeban = $keuangan['detail_beban_lainnya_rk'] ?? '';
+        $listDetailBeban = [];
+        if (!empty($rawDetailBeban)) {
+            $decBeban = json_decode($rawDetailBeban, true);
+            if (is_array($decBeban) && count($decBeban) > 0) {
+                $listDetailBeban = $decBeban;
+            }
+        }
+        if (empty($listDetailBeban)) {
+            $nomBebanLama = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
+            if ($nomBebanOperasional > 0 && $nomBebanLama > 0 && $nomBebanLama < $nomPendapatanBU) {
+                $listDetailBeban = [
+                    ['nama' => 'Beban Operasional Pokok (Gaji & Sewa)', 'nominal' => $nomBebanOperasional],
+                    ['nama' => 'Beban Usaha & Utilitas Lainnya', 'nominal' => $nomBebanLama]
+                ];
+            } elseif ($nomBebanOperasional > 0) {
+                $listDetailBeban = [
+                    ['nama' => 'Beban Operasional Pokok (Gaji & Sewa)', 'nominal' => $nomBebanOperasional]
+                ];
+            } elseif ($nomBebanLama > 0 && $nomBebanLama < $nomPendapatanBU) {
+                $listDetailBeban = [
+                    ['nama' => 'Beban Usaha & Operasional', 'nominal' => $nomBebanLama]
+                ];
+            } else {
+                $listDetailBeban = [
+                    ['nama' => 'Gaji Karyawan & Upah Operasional', 'nominal' => 20000000],
+                    ['nama' => 'Sewa Kantor & Utilitas (Listrik/Air/Internet)', 'nominal' => 5000000]
+                ];
+            }
+        }
+    ?>
+
+    <!-- Layout 3 Kotak Data Keuangan Badan Usaha (1: Pendapatan [Biru], 2: Pengeluaran [Merah], 3: Aset [Hijau]) -->
     <div class="space-y-6">
-        <!-- Card Data Keuangan Operasional Perusahaan -->
-        <div class="p-6 bg-blue-50/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between shadow-2xs hover:border-blue-300 transition">
-            <div>
-                <div class="flex items-center justify-between pb-3 mb-5 border-b border-blue-100">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-extrabold text-xs shadow-xs">
-                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        </div>
+        
+        <!-- ======================================================== -->
+        <!-- KOTAK 1: PENDAPATAN / OMSET USAHA (AKSEN BIRU DIKIT)     -->
+        <!-- ======================================================== -->
+        <div class="p-5 sm:p-6 bg-blue-50/25 rounded-2xl border border-blue-200/90 shadow-2xs hover:border-blue-300 transition">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 mb-4 border-b border-blue-100 gap-2">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                        1
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <span>PENDAPATAN / OMSET USAHA BULANAN</span>
+                            <span class="px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700 rounded-full">Pemasukan</span>
+                        </h3>
+                        <span class="text-[11px] text-slate-400 font-medium">Rincian sumber pendapatan operasional perusahaan yang dinamis</span>
+                    </div>
+                </div>
+                <button type="button" onclick="tambahPendapatan('Omset Usaha Tambahan', 0);" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded-xl shadow-2xs transition cursor-pointer self-start sm:self-auto">
+                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>+ Tambah Pendapatan</span>
+                </button>
+            </div>
+
+            <!-- Container List Rincian Pendapatan Dinamis -->
+            <div id="containerPendapatanDinamis" class="space-y-2 mb-3">
+                <!-- Diisi oleh renderListPendapatan() -->
+            </div>
+
+            <!-- Bar Ringkasan Total Pendapatan Bulanan -->
+            <div class="p-3 bg-white border border-blue-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
+                <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Total Pendapatan / Omset Bulanan:</span>
+                <span id="nomTotalPendapatanDinamis" class="text-sm font-black text-blue-700">Rp 0</span>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- KOTAK 2: PENGELUARAN USAHA (HPP & PENGELUARAN BIASA) (MERAH) -->
+        <!-- ======================================================== -->
+        <div class="p-5 sm:p-6 bg-rose-50/20 rounded-2xl border border-rose-200/90 shadow-2xs hover:border-rose-300 transition">
+            <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-rose-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                        2
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <span>PENGELUARAN USAHA (HPP &amp; PENGELUARAN BIASA)</span>
+                            <span class="px-2 py-0.5 text-[10px] font-semibold bg-rose-100 text-rose-700 rounded-full">Pengeluaran</span>
+                        </h3>
+                        <span class="text-[11px] text-slate-400 font-medium">Rincian modal bahan/kulakan (HPP) dan pengeluaran operasional rutin yang dinamis</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-5">
+                <!-- Sub-Bagian 2A: Pengeluaran HPP (Bahan Baku / Kulakan Barang) -->
+                <div class="p-4 bg-white/80 rounded-xl border border-rose-100 shadow-2xs">
+                    <div class="flex items-center justify-between mb-2.5">
                         <div>
-                            <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Data Keuangan Operasional Perusahaan</h3>
-                            <span class="text-[11px] text-slate-400 font-medium">Validasi mutasi rekening koran giro / operasional PT / CV</span>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                A. Pengeluaran HPP (Bahan Baku / Modal Kulakan)
+                            </h4>
+                            <p class="text-[10px] text-slate-400">Biaya pokok barang dagang, pembelian stok bahan, atau modal produksi</p>
+                        </div>
+                        <button type="button" onclick="tambahHppOnly('Biaya Bahan / Kulakan', 0);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>+ Tambah HPP</span>
+                        </button>
+                    </div>
+
+                    <!-- Container List HPP Dinamis -->
+                    <div id="containerHppOnlyDinamis" class="space-y-2 mb-2.5">
+                        <!-- Diisi oleh renderListHpp() -->
+                    </div>
+
+                    <!-- Subtotal HPP -->
+                    <div class="p-2.5 bg-rose-50/60 border border-rose-200/70 rounded-xl flex justify-between items-center text-xs">
+                        <span class="font-bold text-slate-600 text-[11px] uppercase tracking-wider">Subtotal HPP (Bahan/Kulakan):</span>
+                        <div class="flex items-center gap-1.5">
+                            <span id="nomTotalHppDinamis" class="font-bold text-rose-700 text-xs sm:text-sm">Rp 0</span>
+                            <span id="badgePersenHpp" class="text-[11px] text-slate-500 font-medium"></span>
                         </div>
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    <?php
-                        // Cek akumulasi mutasi rekening koran untuk auto-sync omzet dan HPP awal
-                        $totRekKreditBU = 0;
-                        $totRekDebitBU  = 0;
-                        if (!empty($rekening) && is_array($rekening)) {
-                            foreach ($rekening as $rk) {
-                                $m = max(1, (int)($rk['jumlah_bulan'] ?? 6));
-                                $k = (float)($rk['total_mutasi_kredit'] ?? 0);
-                                $d = (float)($rk['total_mutasi_debit'] ?? 0);
-                                $totRekKreditBU += round($k / $m);
-                                $totRekDebitBU  += round($d / $m);
-                            }
-                        }
-                        $autoOmzetRekBU = ($totRekKreditBU > 0) ? $totRekKreditBU : 0;
-
-                        // Estimasi beban operasional awal untuk memisahkan HPP murni dari mutasi debit
-                        $bebanOpAwalBU   = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 25000000);
-                        $bebanLainAwalBU = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
-                        $totalOpAwalBU   = ($bebanOpAwalBU > 0 ? $bebanOpAwalBU : 25000000) + $bebanLainAwalBU;
-
-                        // HPP Murni = Mutasi Debit - Beban Operasional agar tidak double-counting (maksimal 78% agar tidak rugi)
-                        $debitMurniBU = max(0, $totRekDebitBU - $totalOpAwalBU);
-                        $autoHppRekBU = ($totRekKreditBU > 0 && $debitMurniBU > 0) 
-                            ? round(($debitMurniBU / $totRekKreditBU) * 100, 1) 
-                            : 78;
-                        if ($autoHppRekBU > 82 || $autoHppRekBU <= 0) {
-                            $autoHppRekBU = 78;
-                        }
-
-                        $nomPendapatanBU = (float)($keuangan['pendapatan_rk'] ?? 0);
-                        if ($nomPendapatanBU <= 0 && $autoOmzetRekBU > 0) {
-                            $nomPendapatanBU = $autoOmzetRekBU;
-                        }
-                        if ($nomPendapatanBU <= 0) {
-                            $nomPendapatanBU = 250000000;
-                        }
-
-                        $persenHppBU = (float)($keuangan['hpp_persen_rk'] ?? 0);
-                        if (($persenHppBU <= 0 || $persenHppBU == 60 || $persenHppBU >= 90) && $autoHppRekBU > 0) {
-                            $persenHppBU = $autoHppRekBU;
-                        }
-                        if ($persenHppBU <= 0) {
-                            $persenHppBU = 78;
-                        }
-
-                        $nomHppAwalBU = (float)($keuangan['hpp_nominal_rk'] ?? 0);
-                        if (($nomHppAwalBU <= 0 || abs($nomHppAwalBU - round($nomPendapatanBU * ($persenHppBU / 100))) > 5000000) && $nomPendapatanBU > 0 && $persenHppBU > 0) {
-                            $nomHppAwalBU = round($nomPendapatanBU * ($persenHppBU / 100));
-                        }
-
-                        $rawDetailHppBU = $keuangan['detail_hpp_rk'] ?? '';
-                        $listDetailHppBU = [];
-                        if (!empty($rawDetailHppBU)) {
-                            $decHpp = json_decode($rawDetailHppBU, true);
-                            if (is_array($decHpp) && count($decHpp) > 0) {
-                                $listDetailHppBU = $decHpp;
-                            }
-                        }
-                        if (empty($listDetailHppBU)) {
-                            if ($nomHppAwalBU > 0) {
-                                $listDetailHppBU = [
-                                    ['nama' => 'Biaya Modal / Kulakan Barang Dagang', 'kategori' => 'hpp', 'nominal' => $nomHppAwalBU]
-                                ];
-                            } else {
-                                $listDetailHppBU = [
-                                    ['nama' => 'Biaya Modal / Kulakan Barang Dagang', 'kategori' => 'hpp', 'nominal' => 0]
-                                ];
-                            }
-                        }
-                    ?>
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Pendapatan / Omset Usaha Bulanan (Rp)</label>
-                        <input type="text" name="pendapatan_rk" id="pendapatan_rk" 
-                               value="<?= number_format($nomPendapatanBU, 0, ',', '.') ?>" 
-                               class="w-full text-sm font-bold text-blue-700 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[42px]"
-                               oninput="formatRupiah(this); hitungLabaRugi();"
-                               onblur="if(this.value){ formatRupiah(this); hitungLabaRugi(); }">
+                <!-- Sub-Bagian 2B: Pengeluaran Biasa (Operasional, Gaji, Sewa, Logistik, dll) -->
+                <div class="p-4 bg-white/80 rounded-xl border border-rose-100 shadow-2xs">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                B. Pengeluaran Biasa (Beban Operasional &amp; Administrasi)
+                            </h4>
+                            <p class="text-[10px] text-slate-400">Gaji karyawan tetap, sewa kantor/gudang, listrik & utilitas, logistik, operasional rutin, dll</p>
+                        </div>
+                        <button type="button" onclick="tambahBebanLain('', 0);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>+ Tambah Pengeluaran Biasa</span>
+                        </button>
                     </div>
 
-                    <!-- Pengeluaran HPP & Belanja Aset (Dinamis: Bisa Ditambah & Dihapus) -->
-                    <div class="pt-2 border-t border-blue-100/80">
-                        <div class="flex items-center justify-between mb-2">
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Pengeluaran HPP &amp; Belanja Aset</label>
-                                <p class="text-[10px] text-slate-400">Rincian pengeluaran kulakan/bahan baku dan pembelian aset usaha yang dinamis</p>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <button type="button" onclick="tambahHpp('Biaya Bahan / Kulakan', 'hpp');" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg shadow-2xs transition cursor-pointer">
-                                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                    <span>Biaya HPP</span>
-                                </button>
-                                <button type="button" onclick="tambahHpp('Pembelian Aset / Peralatan', 'aset');" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-300 rounded-lg shadow-2xs transition cursor-pointer">
-                                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                    <span>Tambah Aset</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Container List Rincian HPP & Aset Dinamis -->
-                        <div id="containerHppDinamis" class="space-y-2 mb-2.5">
-                            <!-- Diisi oleh renderListHpp() -->
-                        </div>
-
-                        <!-- Bar Ringkasan Total HPP & Aset -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 bg-slate-50 border border-slate-200/90 rounded-xl text-xs mb-2 shadow-2xs">
-                            <div class="flex justify-between items-center px-1">
-                                <span class="font-bold text-slate-600 text-[11px] uppercase tracking-wider">Total HPP (Bahan/Kulakan):</span>
-                                <span id="nomTotalHppDinamis" class="font-bold text-blue-700 text-xs sm:text-sm">Rp 0</span>
-                            </div>
-                            <div class="flex justify-between items-center px-1 border-t sm:border-t-0 sm:border-l border-slate-200 sm:pl-3 pt-1 sm:pt-0">
-                                <span class="font-bold text-emerald-800 text-[11px] uppercase tracking-wider">Total Pembelian Aset:</span>
-                                <span id="nomTotalAsetDinamis" class="font-bold text-emerald-700 text-xs sm:text-sm">Rp 0</span>
-                            </div>
-                        </div>
-
-                        <!-- Hidden fields untuk sinkronisasi database & sistem lama -->
-                        <input type="hidden" name="hpp_persen_rk" id="hpp_persen_rk" value="<?= esc($persenHppBU) ?>">
-                        <input type="hidden" name="hpp_nominal_rk" id="nomHppRKInput" value="<?= esc($nomHppAwalBU) ?>">
-                        <input type="hidden" name="detail_hpp_rk" id="detail_hpp_rk" value="<?= esc(!empty($listDetailHppBU) ? json_encode($listDetailHppBU) : '[]') ?>">
-                        <input type="hidden" name="total_aset_hpp_rk" id="total_aset_hpp_rk" value="0">
-                        <span id="nomHppRK" class="hidden">Rp 0</span>
+                    <!-- Container List Beban Dinamis -->
+                    <div id="containerBebanLain" class="space-y-2 mb-2.5">
+                        <!-- Diisi oleh renderListBebanLain() -->
                     </div>
 
-                    <div class="p-3.5 bg-blue-50/80 border border-blue-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
-                        <span class="font-bold text-blue-900">Laba Kotor Usaha (Gross Profit):</span>
+                    <!-- Subtotal Pengeluaran Biasa -->
+                    <div class="p-2.5 bg-rose-50/60 border border-rose-200/70 rounded-xl flex justify-between items-center text-xs">
+                        <span class="font-bold text-slate-600 text-[11px] uppercase tracking-wider">Subtotal Pengeluaran Biasa:</span>
+                        <span id="nomBebanLainRK" class="font-bold text-rose-700 text-xs sm:text-sm">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Ringkasan Kotak 2: Total Pengeluaran & Laba Kotor -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 bg-white border border-rose-200 rounded-xl shadow-2xs">
+                    <div class="flex justify-between items-center px-2 py-1">
+                        <span class="font-bold text-slate-700 text-[11px] uppercase tracking-wider">Total Seluruh Pengeluaran:</span>
+                        <span id="nomTotalPengeluaranBU" class="text-sm font-black text-rose-700">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between items-center px-2 py-1 border-t sm:border-t-0 sm:border-l border-rose-100 sm:pl-3">
+                        <span class="font-bold text-blue-900 text-[11px] uppercase tracking-wider">Laba Kotor Usaha (Gross Profit):</span>
                         <span id="grossRK" class="text-sm font-black text-blue-700">Rp 0</span>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Beban Operasional Pokok Usaha (Gaji Karyawan, Sewa Kantor/Gudang, Utilitas Pabrik/Kantor) -->
-                    <?php
-                        $nomBebanOperasional = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 0);
-                        if ($nomBebanOperasional <= 0 && !empty($keuangan['pendapatan_rk'])) {
-                            $nomBebanOperasional = ((float)$keuangan['pendapatan_rk']) * (((float)($keuangan['biaya_hidup_persen_rk'] ?? 10)) / 100);
-                        }
-                        if ($nomBebanOperasional <= 0) {
-                            $nomBebanOperasional = 25000000;
-                        }
-
-                        $rawDetailBeban = $keuangan['detail_beban_lainnya_rk'] ?? '';
-                        $listDetailBeban = [];
-                        if (!empty($rawDetailBeban)) {
-                            $decBeban = json_decode($rawDetailBeban, true);
-                            if (is_array($decBeban)) {
-                                $listDetailBeban = $decBeban;
-                            }
-                        }
-                        if (empty($listDetailBeban)) {
-                            $nomBebanLama = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
-                            if ($nomBebanLama > 0) {
-                                $listDetailBeban = [['nama' => 'Beban Operasional Lainnya', 'nominal' => $nomBebanLama]];
-                            }
-                        }
-                    ?>
+        <!-- ======================================================== -->
+        <!-- KOTAK 3: BELANJA / PEMBELIAN ASET USAHA (AKSEN HIJAU)    -->
+        <!-- ======================================================== -->
+        <div class="p-5 sm:p-6 bg-emerald-50/20 rounded-2xl border border-emerald-200/90 shadow-2xs hover:border-emerald-300 transition">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 mb-4 border-b border-emerald-100 gap-2">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                        3
+                    </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Beban Operasional Pokok Usaha (Rp/Bulan)</label>
-                        <p class="text-[10px] text-slate-400 mb-1.5">Gaji karyawan tetap, sewa kantor/gudang usaha, listrik, air & utilitas operasional</p>
-                        <input type="text" name="biaya_hidup_nominal_rk" id="biaya_hidup_nominal_rk" 
-                               value="<?= number_format($nomBebanOperasional, 0, ',', '.') ?>" 
-                               class="w-full text-xs font-bold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs rupiah-input h-[38px]"
-                               placeholder="Rp 0"
-                               oninput="formatRupiah(this); hitungLabaRugi();">
-                        <input type="hidden" name="biaya_hidup_persen_rk" id="biaya_hidup_persen_rk" value="<?= esc($keuangan['biaya_hidup_persen_rk'] ?? 10) ?>">
-                    </div>
-
-                    <!-- Beban Usaha & Administrasi Umum Lainnya -->
-                    <div class="pt-2 border-t border-blue-100/80">
-                        <div class="flex items-center justify-between mb-2">
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Beban Usaha & Administrasi Umum Lainnya</label>
-                                <p class="text-[10px] text-slate-400">Rincian beban (misal: Biaya Logistik/Kirim, Perawatan Mesin/Aset, Legalitas/Pajak, dll)</p>
-                            </div>
-                            <button type="button" onclick="tambahBebanLain();" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded-lg shadow-2xs transition">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                                <span>Tambah Beban Usaha</span>
-                            </button>
-                        </div>
-
-                        <!-- Container List Rincian Beban Dinamis -->
-                        <div id="containerBebanLain" class="space-y-2 mb-2.5">
-                            <!-- Diisi oleh renderListBebanLain() -->
-                        </div>
-
-                        <!-- Bar Total Nominal Beban Lain -->
-                        <div class="p-2.5 bg-white border border-slate-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
-                            <span class="font-bold text-slate-600 text-[11px] uppercase tracking-wider">Total Beban Usaha Lain:</span>
-                            <span id="nomBebanLainRK" class="font-bold text-blue-700 text-xs sm:text-sm">Rp 0</span>
-                        </div>
-
-                        <!-- Hidden fields untuk database -->
-                        <input type="hidden" name="beban_lainnya_nominal_rk" id="beban_lainnya_nominal_rk" value="<?= esc($keuangan['beban_lainnya_nominal_rk'] ?? 0) ?>">
-                        <input type="hidden" name="detail_beban_lainnya_rk" id="detail_beban_lainnya_rk" value="<?= esc(!empty($listDetailBeban) ? json_encode($listDetailBeban) : '[]') ?>">
-                        <input type="hidden" name="beban_lainnya_persen_rk" id="beban_lainnya_persen_rk" value="<?= esc($keuangan['beban_lainnya_persen_rk'] ?? 10) ?>">
+                        <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <span>BELANJA / PEMBELIAN ASET USAHA</span>
+                            <span class="px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full">Investasi / Capex</span>
+                        </h3>
+                        <span class="text-[11px] text-slate-400 font-medium">Rincian pembelian aset tetap, mesin produksi, kendaraan, atau peralatan kantor</span>
                     </div>
                 </div>
+                <button type="button" onclick="tambahAsetOnly('Pembelian Aset / Peralatan', 0);" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-white hover:bg-emerald-50 border border-emerald-300 rounded-xl shadow-2xs transition cursor-pointer self-start sm:self-auto">
+                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>+ Tambah Aset</span>
+                </button>
             </div>
 
-            <div class="mt-6 p-4 bg-blue-600 text-white rounded-2xl flex items-center justify-between gap-4 shadow-xs">
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    </div>
-                    <div class="min-w-0">
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-blue-200 truncate">Laba Operasional Usaha (EBITDA)</div>
-                        <div class="text-xs font-extrabold text-white truncate">Rekening Koran Perusahaan</div>
-                    </div>
+            <!-- Container List Aset Dinamis -->
+            <div id="containerAsetOnlyDinamis" class="space-y-2 mb-3">
+                <!-- Diisi oleh renderListHpp() -->
+            </div>
+
+            <!-- Bar Ringkasan Total Aset Kotak 3 -->
+            <div class="p-3 bg-white border border-emerald-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
+                <div>
+                    <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Total Pembelian Aset:</span>
+                    <p class="text-[10px] text-slate-400">* Pembelian aset dicatat sebagai belanja modal (Capex) dan tidak memotong Laba Kotor</p>
                 </div>
-                <div class="text-right shrink-0">
-                    <span id="nettRK" class="text-lg sm:text-xl font-black text-white tracking-tight whitespace-nowrap block">Rp 0</span>
-                </div>
+                <span id="nomTotalAsetDinamis" class="text-sm font-black text-emerald-700">Rp 0</span>
             </div>
         </div>
-            <!-- Hidden input compatibilitas (Badan Usaha tidak memiliki pendapatan sampingan) -->
-            <input type="hidden" name="ada_bukti_pendapatan_lain_rk" id="ada_bukti_pendapatan_lain_rk" value="0">
-            <input type="hidden" name="pendapatan_lain_rk" id="pendapatan_lain_rk" value="0">
-            <input type="hidden" name="bukti_pendapatan_lain_rk" id="bukti_pendapatan_lain_rk" value="">
-            <input type="hidden" name="keterangan_pendapatan_lain_rk" id="keterangan_pendapatan_lain_rk" value="">
-            <span id="labelTotalPendapatanLain" class="hidden">Rp 0</span>
-            <span id="totalCashflowBersih" class="hidden">Rp 0</span>
+
+        <!-- ======================================================== -->
+        <!-- BANNER TOTAL: LABA OPERASIONAL USAHA (EBITDA)            -->
+        <!-- ======================================================== -->
+        <div class="p-4 sm:p-5 bg-gradient-to-r from-blue-700 to-indigo-700 text-white rounded-2xl flex items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                </div>
+                <div class="min-w-0">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-blue-200 truncate">Laba Operasional Usaha (EBITDA)</div>
+                    <div class="text-xs sm:text-sm font-extrabold text-white truncate">Pendapatan dikurangi HPP &amp; Pengeluaran Biasa</div>
+                </div>
+            </div>
+            <div class="text-right shrink-0">
+                <span id="nettRK" class="text-xl sm:text-2xl font-black text-white tracking-tight whitespace-nowrap block">Rp 0</span>
+            </div>
         </div>
+
+        <!-- Hidden inputs untuk database dan kompatibilitas sistem -->
+        <input type="hidden" name="pendapatan_rk" id="pendapatan_rk" value="<?= esc($nomPendapatanBU) ?>">
+        <input type="hidden" name="detail_pendapatan_rk" id="detail_pendapatan_rk" value="<?= esc(!empty($listDetailPendapatanBU) ? json_encode($listDetailPendapatanBU) : '[]') ?>">
+        <input type="hidden" name="hpp_persen_rk" id="hpp_persen_rk" value="<?= esc($persenHppBU) ?>">
+        <input type="hidden" name="hpp_nominal_rk" id="nomHppRKInput" value="<?= esc($nomHppAwalBU) ?>">
+        <input type="hidden" name="detail_hpp_rk" id="detail_hpp_rk" value="<?= esc(!empty($listDetailHppBU) ? json_encode($listDetailHppBU) : '[]') ?>">
+        <input type="hidden" name="total_aset_hpp_rk" id="total_aset_hpp_rk" value="0">
+        <input type="hidden" name="biaya_hidup_nominal_rk" id="biaya_hidup_nominal_rk" value="<?= esc($nomBebanOperasional) ?>">
+        <input type="hidden" name="biaya_hidup_persen_rk" id="biaya_hidup_persen_rk" value="<?= esc($keuangan['biaya_hidup_persen_rk'] ?? 10) ?>">
+        <input type="hidden" name="beban_lainnya_nominal_rk" id="beban_lainnya_nominal_rk" value="<?= esc($keuangan['beban_lainnya_nominal_rk'] ?? 0) ?>">
+        <input type="hidden" name="detail_beban_lainnya_rk" id="detail_beban_lainnya_rk" value="<?= esc(!empty($listDetailBeban) ? json_encode($listDetailBeban) : '[]') ?>">
+        <input type="hidden" name="beban_lainnya_persen_rk" id="beban_lainnya_persen_rk" value="<?= esc($keuangan['beban_lainnya_persen_rk'] ?? 10) ?>">
+
+        <span id="nomHppRK" class="hidden">Rp 0</span>
+        <span id="nomBiayaHidupRK" class="hidden">Rp 0</span>
+        <input type="hidden" name="ada_bukti_pendapatan_lain_rk" id="ada_bukti_pendapatan_lain_rk" value="0">
+        <input type="hidden" name="pendapatan_lain_rk" id="pendapatan_lain_rk" value="0">
+        <input type="hidden" name="bukti_pendapatan_lain_rk" id="bukti_pendapatan_lain_rk" value="">
+        <input type="hidden" name="keterangan_pendapatan_lain_rk" id="keterangan_pendapatan_lain_rk" value="">
+        <span id="labelTotalPendapatanLain" class="hidden">Rp 0</span>
+        <span id="totalCashflowBersih" class="hidden">Rp 0</span>
     </div>
+</div>

@@ -38,6 +38,14 @@ class LaporanKeuanganService
     {
         // 1. LABA RUGI
         $pendapatan = $this->cleanNumber($input['pendapatan'] ?? $input['pendapatan_rk'] ?? 0);
+        if ($pendapatan == 0 && !empty($input['detail_pendapatan_rk'])) {
+            $parsedPend = is_array($input['detail_pendapatan_rk']) ? $input['detail_pendapatan_rk'] : json_decode($input['detail_pendapatan_rk'], true);
+            if (is_array($parsedPend)) {
+                foreach ($parsedPend as $dp) {
+                    $pendapatan += $this->cleanNumber($dp['nominal'] ?? 0);
+                }
+            }
+        }
 
         // HPP
         $hppNom = isset($input['hpp']) && $input['hpp'] !== ''
