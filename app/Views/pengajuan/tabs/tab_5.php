@@ -248,7 +248,11 @@ async function uploadBerkasDokumenTab5(input) {
     if (!file) return;
 
     if (file.type === 'application/pdf' && file.size > 5 * 1024 * 1024) {
-        alert('Ukuran file PDF melebihi 5MB. Silakan kompres terlebih dahulu.');
+        if (typeof showToast === 'function') {
+            showToast('Ukuran file PDF melebihi 5MB. Silakan kompres terlebih dahulu.', 'error');
+        } else {
+            alert('Ukuran file PDF melebihi 5MB. Silakan kompres terlebih dahulu.');
+        }
         input.value = '';
         return;
     }
@@ -256,12 +260,16 @@ async function uploadBerkasDokumenTab5(input) {
     const kreditIdInput = document.getElementById('kredit_id');
     let activeKreditId = kreditIdInput ? kreditIdInput.value : '';
     if (!activeKreditId && typeof simpanForm === 'function') {
-        await simpanForm(false, false);
-        activeKreditId = kreditIdInput ? kreditIdInput.value : '';
+        const savedId = await simpanForm(false, false);
+        activeKreditId = (kreditIdInput && kreditIdInput.value) ? kreditIdInput.value : (savedId || '');
     }
 
     if (!activeKreditId) {
-        alert('Harap simpan data form terlebih dahulu sebelum mengunggah dokumen.');
+        if (typeof showToast === 'function') {
+            showToast('Harap simpan data form terlebih dahulu sebelum mengunggah dokumen.', 'error');
+        } else {
+            alert('Harap simpan data form terlebih dahulu sebelum mengunggah dokumen.');
+        }
         return;
     }
 

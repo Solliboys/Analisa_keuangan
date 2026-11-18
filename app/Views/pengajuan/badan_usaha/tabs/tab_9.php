@@ -6,8 +6,8 @@
                 8
             </div>
             <div>
-                <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">ANALISA LABA RUGI & BEBAN USAHA (BADAN USAHA / PERUSAHAAN)</h3>
-                <p class="text-[11px] text-slate-500">Perhitungan laba rugi operasional dari mutasi rekening koran perusahaan, beban usaha operasional, dan pendapatan non-operasional</p>
+                <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">ANALISA DATA KEUANGAN & BEBAN USAHA (BADAN USAHA / PERUSAHAAN)</h3>
+                <p class="text-[11px] text-slate-500">Perhitungan data keuangan operasional dari mutasi rekening koran perusahaan, beban usaha operasional, dan pendapatan non-operasional</p>
             </div>
         </div>
         <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 shadow-2xs self-start sm:self-auto">
@@ -15,9 +15,9 @@
         </span>
     </div>
 
-    <!-- Layout Laba Rugi Operasional Perusahaan (Badan Usaha fokus ke Operasional, tanpa Pendapatan Sampingan) -->
+    <!-- Layout Data Keuangan Operasional Perusahaan (Badan Usaha fokus ke Operasional, tanpa Pendapatan Sampingan) -->
     <div class="space-y-6">
-        <!-- Card Laba Rugi Operasional Perusahaan -->
+        <!-- Card Data Keuangan Operasional Perusahaan -->
         <div class="p-6 bg-blue-50/40 rounded-2xl border border-blue-200/80 flex flex-col justify-between shadow-2xs hover:border-blue-300 transition">
             <div>
                 <div class="flex items-center justify-between pb-3 mb-5 border-b border-blue-100">
@@ -26,7 +26,7 @@
                             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                         </div>
                         <div>
-                            <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Laba Rugi Operasional Perusahaan</h3>
+                            <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider">Data Keuangan Operasional Perusahaan</h3>
                             <span class="text-[11px] text-slate-400 font-medium">Validasi mutasi rekening koran giro / operasional PT / CV</span>
                         </div>
                     </div>
@@ -50,7 +50,20 @@
                             }
                         }
                         $autoOmzetRekBU = ($totRekKreditBU > 0) ? $totRekKreditBU : 0;
-                        $autoHppRekBU   = ($totRekKreditBU > 0 && $totRekDebitBU > 0) ? round(($totRekDebitBU / $totRekKreditBU) * 100, 1) : 0;
+
+                        // Estimasi beban operasional awal untuk memisahkan HPP murni dari mutasi debit
+                        $bebanOpAwalBU   = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 25000000);
+                        $bebanLainAwalBU = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
+                        $totalOpAwalBU   = ($bebanOpAwalBU > 0 ? $bebanOpAwalBU : 25000000) + $bebanLainAwalBU;
+
+                        // HPP Murni = Mutasi Debit - Beban Operasional agar tidak double-counting (maksimal 78% agar tidak rugi)
+                        $debitMurniBU = max(0, $totRekDebitBU - $totalOpAwalBU);
+                        $autoHppRekBU = ($totRekKreditBU > 0 && $debitMurniBU > 0) 
+                            ? round(($debitMurniBU / $totRekKreditBU) * 100, 1) 
+                            : 78;
+                        if ($autoHppRekBU > 82 || $autoHppRekBU <= 0) {
+                            $autoHppRekBU = 78;
+                        }
 
                         $nomPendapatanBU = (float)($keuangan['pendapatan_rk'] ?? 0);
                         if ($nomPendapatanBU <= 0 && $autoOmzetRekBU > 0) {
@@ -61,15 +74,15 @@
                         }
 
                         $persenHppBU = (float)($keuangan['hpp_persen_rk'] ?? 0);
-                        if (($persenHppBU <= 0 || $persenHppBU == 60) && $autoHppRekBU > 0) {
+                        if (($persenHppBU <= 0 || $persenHppBU == 60 || $persenHppBU >= 90) && $autoHppRekBU > 0) {
                             $persenHppBU = $autoHppRekBU;
                         }
                         if ($persenHppBU <= 0) {
-                            $persenHppBU = 60;
+                            $persenHppBU = 78;
                         }
 
                         $nomHppAwalBU = (float)($keuangan['hpp_nominal_rk'] ?? 0);
-                        if ($nomHppAwalBU <= 0 && $nomPendapatanBU > 0 && $persenHppBU > 0) {
+                        if (($nomHppAwalBU <= 0 || abs($nomHppAwalBU - round($nomPendapatanBU * ($persenHppBU / 100))) > 5000000) && $nomPendapatanBU > 0 && $persenHppBU > 0) {
                             $nomHppAwalBU = round($nomPendapatanBU * ($persenHppBU / 100));
                         }
                     ?>

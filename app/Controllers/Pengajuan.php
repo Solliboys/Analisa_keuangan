@@ -2384,8 +2384,15 @@ class Pengajuan extends BaseController
         }
 
         if ($totMutasiKredit > 0 && $totMutasiDebit > 0) {
-            $ratioHpp = round(($totMutasiDebit / $totMutasiKredit) * 100, 1);
-            if (empty($calcInput['hpp_persen_rk']) || (float)$calcInput['hpp_persen_rk'] == 60) {
+            $totalOpEst      = (float)($calcInput['biaya_hidup_nominal_rk'] ?? 25000000);
+            $bebanLainEst    = (float)($calcInput['beban_lainnya_nominal_rk'] ?? 0);
+            $totalBebanOpEst = ($totalOpEst > 0 ? $totalOpEst : 25000000) + $bebanLainEst;
+            $hppMurniEst     = max(0, $totMutasiDebit - $totalBebanOpEst);
+            $ratioHpp        = ($totMutasiKredit > 0 && $hppMurniEst > 0) ? round(($hppMurniEst / $totMutasiKredit) * 100, 1) : 78;
+            if ($ratioHpp > 82 || $ratioHpp <= 0) {
+                $ratioHpp = 78;
+            }
+            if (empty($calcInput['hpp_persen_rk']) || (float)$calcInput['hpp_persen_rk'] == 60 || (float)$calcInput['hpp_persen_rk'] >= 90) {
                 $calcInput['hpp_persen_rk'] = $ratioHpp;
                 $calcInput['hpp_persen']    = $ratioHpp;
             }

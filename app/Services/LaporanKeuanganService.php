@@ -40,11 +40,11 @@ class LaporanKeuanganService
         $pendapatan = $this->cleanNumber($input['pendapatan'] ?? $input['pendapatan_rk'] ?? 0);
 
         // HPP
-        $hppPct = (float)($input['hpp_persen'] ?? $input['hpp_persen_rk'] ?? 60);
+        $hppPct = (float)($input['hpp_persen'] ?? $input['hpp_persen_rk'] ?? 78);
         $hppNom = isset($input['hpp']) && $input['hpp'] !== ''
             ? $this->cleanNumber($input['hpp'])
             : $this->cleanNumber($input['hpp_nominal_rk'] ?? 0);
-        if ($hppNom == 0 && $pendapatan > 0 && $hppPct > 0) {
+        if (($hppNom == 0 || ($pendapatan > 0 && abs($hppNom - round($pendapatan * ($hppPct / 100))) > 1000)) && $pendapatan > 0 && $hppPct > 0) {
             $hppNom = round($pendapatan * ($hppPct / 100), 2);
         }
         $labaKotor = max(0, $pendapatan - $hppNom);
