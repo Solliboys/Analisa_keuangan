@@ -1,0 +1,2 @@
+cd web/otwapproved.gusaha.id/public_html/writable/logs
+ls -lt
