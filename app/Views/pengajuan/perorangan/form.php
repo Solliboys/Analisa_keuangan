@@ -54,40 +54,39 @@
     <main class="w-full px-4 sm:px-6 lg:px-8 py-6 flex-1">
         <div class="flex flex-col lg:flex-row items-start gap-8">
             
-            <!-- SIDEBAR STEPPER KIRI (1 - 13) -->
+            <!-- SIDEBAR STEPPER KIRI (1 - 12) -->
             <aside class="w-full lg:w-80 shrink-0 sticky top-20 bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs max-h-[calc(100vh-140px)] flex flex-col">
                 <!-- Stepper Progress Header -->
                 <div class="flex items-center justify-between pb-3 shrink-0">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                        Tahap <span id="sidebarTahapNum">1</span> dari 13
+                        Tahap <span id="sidebarTahapNum">1</span> dari 12
                     </span>
                     <span id="sidebarTahapBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60">
-                        1/13
+                        1/12
                     </span>
                 </div>
 
                 <!-- Horizontal Progress Bar -->
                 <div class="h-1.5 w-full bg-slate-100 rounded-full mb-4 overflow-hidden shrink-0">
-                    <div id="progressBarFill" class="h-full bg-blue-600 rounded-full transition-all duration-300" style="width: 7.7%;"></div>
+                    <div id="progressBarFill" class="h-full bg-blue-600 rounded-full transition-all duration-300" style="width: 8.3%;"></div>
                 </div>
 
-                <!-- Vertical Stepper List (13 Tahap Pengusul) -->
+                <!-- Vertical Stepper List (12 Tahap Pengusul) -->
                 <?php
                 $sidebarSteps = [
-                    1  => ['target' => 1,         'title' => '1. Aplikasi',       'sub' => 'Parameter dasar'],
-                    2  => ['target' => 2,         'title' => '2. Info Pribadi',   'sub' => 'Data demografi'],
-                    3  => ['target' => 3,         'title' => '3. Pekerjaan',      'sub' => 'Data pekerjaan'],
-                    4  => ['target' => 4,         'title' => '4. Jaminan',        'sub' => 'Agunan kredit'],
-                    5  => ['target' => 5,         'title' => '5. Dokumen',        'sub' => 'Unggah berkas'],
-                    6  => ['target' => 6,         'title' => '6. SLIK / CLIK',    'sub' => 'Cek riwayat kredit'],
-                    7  => ['target' => 7,         'title' => '7. Web Check',      'sub' => 'Verifikasi online'],
-                    8  => ['target' => 8,         'title' => '8. Rekening Koran', 'sub' => 'Analisis mutasi'],
-                    9  => ['target' => 9,         'title' => '9. Data Keuangan',  'sub' => 'Proyeksi keuangan'],
-                    10 => ['target' => 'laporan', 'title' => '10. Laporan',       'sub' => 'Tampilan laporan'],
-                    11 => ['target' => 10,        'title' => '11. Opini Pengusul','sub' => 'Catatan kualitatif'],
-                    12 => ['target' => 11,        'title' => '12. Disbursement',  'sub' => 'Jadwal pencairan'],
-                    13 => ['target' => 12,        'title' => '13. Repayment',     'sub' => 'Kemampuan angsur'],
+                    1  => ['target' => 1,         'title' => '1. Aplikasi',                 'sub' => 'Parameter dasar'],
+                    2  => ['target' => 2,         'title' => '2. Info Pribadi',             'sub' => 'Data demografi'],
+                    3  => ['target' => 3,         'title' => '3. Pekerjaan',                'sub' => 'Data pekerjaan'],
+                    4  => ['target' => 4,         'title' => '4. Jaminan',                  'sub' => 'Agunan kredit'],
+                    5  => ['target' => 5,         'title' => '5. Dokumen',                  'sub' => 'Unggah berkas'],
+                    6  => ['target' => 6,         'title' => '6. SLIK / CLIK',              'sub' => 'Cek riwayat kredit'],
+                    7  => ['target' => 7,         'title' => '7. Web Check',                'sub' => 'Verifikasi online'],
+                    8  => ['target' => 8,         'title' => '8. Rekening Koran',           'sub' => 'Analisis mutasi'],
+                    9  => ['target' => 9,         'title' => '9. Data Keuangan',            'sub' => 'Pemasukan & beban'],
+                    10 => ['target' => 'laporan', 'title' => '10. Laporan & Disbursement',  'sub' => 'Laporan & Pencairan'],
+                    11 => ['target' => 10,        'title' => '11. Opini Pengusul',          'sub' => 'Catatan kualitatif'],
+                    12 => ['target' => 12,        'title' => '12. Repayment',               'sub' => 'Kemampuan angsur'],
                 ];
                 ?>
                 <!-- Vertical Stepper List (13 Tahap Pengusul) -->
@@ -220,8 +219,6 @@
                     <?= $this->include('pengajuan/perorangan/tabs/tab_laporan') ?>
 
                     <?= $this->include('pengajuan/perorangan/tabs/tab_10') ?>
-
-                    <?= $this->include('pengajuan/tabs/tab_11') ?>
 
                     <?= $this->include('pengajuan/tabs/tab_12') ?>
 

@@ -467,12 +467,12 @@ const findStepIndex = (steps, tab) => {
     return steps.findIndex(s => s == norm || String(s).toLowerCase() === String(norm).toLowerCase());
 };
 
-// Daftar urutan langkah aktif sesuai entitas (Badan Usaha: 12 langkah, Perorangan: 13 langkah)
+// Daftar urutan langkah aktif sesuai entitas (Badan Usaha: 12 langkah, Perorangan: 12 langkah)
 const getActiveSteps = () => {
     if (window.IS_BADAN_USAHA) {
         return [1, 2, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11, 12];
     }
-    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11, 12];
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 'laporan', 10, 12];
 };
 
 const getDisplayStepNum = (tabNum) => {
@@ -491,11 +491,11 @@ function getStepMeta(tabNum) {
     if (norm === 'laporan') {
         const num = window.IS_BADAN_USAHA ? 9 : 10;
         return {
-            title: `${num}. Laporan`,
+            title: window.IS_BADAN_USAHA ? `${num}. Laporan` : `${num}. Laporan & Disbursement`,
             sub: 'Sedang dikerjakan',
-            defaultSub: 'Tampilan laporan',
-            mainTitle: `Langkah ${num}: Laporan Pengajuan Pembiayaan`,
-            desc: 'Rekapitulasi dan tampilan dokumen laporan pengajuan kredit.'
+            defaultSub: window.IS_BADAN_USAHA ? 'Tampilan laporan' : 'Laporan & Pencairan',
+            mainTitle: window.IS_BADAN_USAHA ? `Langkah ${num}: Laporan Pengajuan Pembiayaan` : `Langkah ${num}: Laporan Analisis Keuangan & Disbursement`,
+            desc: window.IS_BADAN_USAHA ? 'Rekapitulasi dan tampilan dokumen laporan pengajuan kredit.' : 'Rekapitulasi analisis pendapatan, biaya, posisi harta & utang, kekayaan bersih, serta simulasi pencairan bersih.'
         };
     }
     if (norm === 10) {
@@ -519,7 +519,7 @@ function getStepMeta(tabNum) {
         };
     }
     if (norm === 12) {
-        const num = window.IS_BADAN_USAHA ? 12 : 13;
+        const num = window.IS_BADAN_USAHA ? 12 : 12;
         return {
             title: `${num}. Repayment`,
             sub: 'Sedang dikerjakan',
@@ -1360,8 +1360,8 @@ function hitungLabaRugi() {
         document.getElementById('pendapatan_rk').value = pRK;
     }
 
-    const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
-    const hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 0);
+    const isBU = Boolean(window.IS_BADAN_USAHA);
+    const hppPctRK = isBU ? parseFloat(document.getElementById('hpp_persen_rk')?.value || 0) : 0;
     const nomHppRK = isBU ? Math.round(pRK * (hppPctRK / 100)) : 0;
     const grossRK = isBU ? Math.max(0, pRK - nomHppRK) : pRK;
 
@@ -1459,6 +1459,9 @@ function hitungLabaRugi() {
     if (document.getElementById('nettIV')) document.getElementById('nettIV').innerText = formatRupiahString(nettIV);
 
     hitungRasioDSC();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
 }
 
 // Sinkronisasi dua arah saat user mengetik Nominal HPP langsung
@@ -1559,6 +1562,7 @@ function renderListPendapatan() {
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarPendapatan);
     }
+    window.daftarPendapatan = daftarPendapatan;
     const nomTotalEl = document.getElementById('nomTotalPendapatanDinamis');
     if (nomTotalEl) {
         nomTotalEl.innerText = formatRupiahString(total);
@@ -1569,11 +1573,18 @@ function renderListPendapatan() {
     }
 
     hitungLabaRugi();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
+    if (typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 }
 window.renderListPendapatan = renderListPendapatan;
 
 function tambahPendapatan(nama = '', nominal = 0) {
     daftarPendapatan.push({ nama: nama, nominal: nominal });
+    window.daftarPendapatan = daftarPendapatan;
     renderListPendapatan();
 }
 window.tambahPendapatan = tambahPendapatan;
@@ -1584,6 +1595,7 @@ function hapusPendapatan(index) {
         if (daftarPendapatan.length === 0) {
             daftarPendapatan.push({ nama: '', nominal: 0 });
         }
+        window.daftarPendapatan = daftarPendapatan;
         renderListPendapatan();
     }
 }
@@ -1606,6 +1618,7 @@ function updateItemPendapatan(index, field, val) {
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarPendapatan);
     }
+    window.daftarPendapatan = daftarPendapatan;
     const nomTotalEl = document.getElementById('nomTotalPendapatanDinamis');
     if (nomTotalEl) {
         nomTotalEl.innerText = formatRupiahString(total);
@@ -1616,6 +1629,12 @@ function updateItemPendapatan(index, field, val) {
     }
 
     hitungLabaRugi();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
+    if (typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 }
 window.updateItemPendapatan = updateItemPendapatan;
 
@@ -1696,8 +1715,15 @@ function renderListBebanLain() {
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarBebanLain);
     }
+    window.daftarBebanLain = daftarBebanLain;
 
     hitungLabaRugi();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
+    if (typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 }
 window.renderListBebanLain = renderListBebanLain;
 
@@ -1706,6 +1732,7 @@ function tambahBebanLain(nama = '', nominal = 0) {
         nama: nama,
         nominal: nominal
     });
+    window.daftarBebanLain = daftarBebanLain;
     renderListBebanLain();
 }
 window.tambahBebanLain = tambahBebanLain;
@@ -1716,6 +1743,7 @@ function hapusBebanLain(index) {
         if (daftarBebanLain.length === 0) {
             daftarBebanLain.push({ nama: '', nominal: 0 });
         }
+        window.daftarBebanLain = daftarBebanLain;
         renderListBebanLain();
     }
 }
@@ -1733,8 +1761,15 @@ function updateItemBebanLain(index, field, val) {
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarBebanLain);
     }
+    window.daftarBebanLain = daftarBebanLain;
 
     hitungLabaRugi();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
+    if (typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 }
 window.updateItemBebanLain = updateItemBebanLain;
 
@@ -1747,16 +1782,30 @@ function togglePendapatanLain(checked) {
         if (sec) sec.classList.remove('hidden');
         if (info) info.classList.add('hidden');
         if (box) {
-            box.className = 'p-4 rounded-xl border transition mb-5 bg-blue-50/80 border-blue-300 ring-1 ring-blue-200';
+            box.className = 'p-3.5 rounded-xl border transition mb-0 bg-blue-100/60 border-blue-300 ring-1 ring-blue-200';
         }
     } else {
         if (sec) sec.classList.add('hidden');
         if (info) info.classList.remove('hidden');
         if (box) {
-            box.className = 'p-4 rounded-xl border transition mb-5 bg-white border-slate-200 hover:border-slate-300';
+            box.className = 'p-3.5 rounded-xl border transition mb-0 bg-white border-slate-200 hover:border-slate-300';
         }
     }
+
+    // Auto-switch kategori laporan sesuai pilihan:
+    // Dicentang -> Punya Usaha (Wiraswasta), Tidak Dicentang -> Punya Gaji (Karyawan/PNS/Pensiun)
+    const targetKategori = checked ? 'usaha' : 'gaji';
+    if (typeof gantiKategoriDebitur === 'function') {
+        gantiKategoriDebitur(targetKategori);
+    }
+
     hitungLabaRugi();
+    if (typeof hitungSemuaDataKeuangan === 'function') {
+        hitungSemuaDataKeuangan();
+    }
+    if (typeof sinkronkanLaporanKeuangan === 'function') {
+        sinkronkanLaporanKeuangan();
+    }
 }
 window.togglePendapatanLain = togglePendapatanLain;
 

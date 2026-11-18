@@ -904,6 +904,35 @@ class Pengajuan extends BaseController
 
         $totalHartaEligible = max(0, $totalHartaBruto - $asetTerikat);
 
+        // Ekstraksi Daftar Harta & Utang jika dikirim melalui detail_harta_json
+        $rawDetailHartaPost = $input['detail_harta_json'] ?? '';
+        $listHartaPost = [];
+        $listUtangPost = [];
+        if (!empty($rawDetailHartaPost)) {
+            $decHPost = json_decode($rawDetailHartaPost, true);
+            if (is_array($decHPost)) {
+                if (isset($decHPost['daftar_harta']) && is_array($decHPost['daftar_harta'])) {
+                    $listHartaPost = $decHPost['daftar_harta'];
+                }
+                if (isset($decHPost['daftar_utang']) && is_array($decHPost['daftar_utang'])) {
+                    $listUtangPost = $decHPost['daftar_utang'];
+                }
+            }
+        }
+
+        if (!empty($listHartaPost)) {
+            $totalHartaBruto = 0;
+            $asetTerikat = 0;
+            foreach ($listHartaPost as $h) {
+                $nom = $this->cleanNumber($h['nominal'] ?? 0);
+                $totalHartaBruto += $nom;
+                if (($h['status'] ?? 'bebas') === 'terikat') {
+                    $asetTerikat += $nom;
+                }
+            }
+            $totalHartaEligible = max(0, $totalHartaBruto - $asetTerikat);
+        }
+
         // Tarik Data Utang Komprehensif dari SLIK OJK
         $dataSlik = $this->slikModel->where('kredit_id', $kreditId)->findAll();
         $totOutSlik = 0;
@@ -920,9 +949,25 @@ class Pengajuan extends BaseController
         if ($totAngsSlik <= 0) $totAngsSlik = $angsuran;
         if ($totOutSlik <= 0) $totOutSlik = $totAngsSlik * 18;
 
-        $utangDagang = (float)($input['utang_dagang'] ?? round($hppNomRK * 0.15));
-        $totalUtangRiil = $totOutSlik + $utangDagang;
-        $kekayaanBersih = $totalHartaEligible - $totalUtangRiil;
+        $subtotalUtangDinamis = 0;
+        $subtotalAngsuranDinamis = 0;
+        if (!empty($listUtangPost)) {
+            foreach ($listUtangPost as $u) {
+                $subtotalUtangDinamis += $this->cleanNumber($u['nominal'] ?? 0);
+                $subtotalAngsuranDinamis += $this->cleanNumber($u['angsuran'] ?? 0);
+            }
+            $totalUtangRiil = $totOutSlik + $subtotalUtangDinamis;
+            $totAngsSlik += $subtotalAngsuranDinamis;
+        } else {
+            $utangDagang = $this->cleanNumber($input['keu_neraca_utang_dagang'] ?? ($input['utang_dagang'] ?? ($input['neraca_utang_usaha'] ?? round($hppNomRK * 0.15))));
+            $utangBankInput = $this->cleanNumber($input['keu_neraca_utang_bank'] ?? ($input['neraca_utang_bank_lancar'] ?? 0));
+            $utangBank = $utangBankInput > 0 ? $utangBankInput : $totOutSlik;
+            $utangKoperasi = $this->cleanNumber($input['keu_neraca_utang_koperasi'] ?? 0);
+            $utangLain = $this->cleanNumber($input['keu_neraca_utang_lain'] ?? 0);
+            $totalUtangRiil = $utangBank + $utangDagang + $utangKoperasi + $utangLain;
+        }
+        $kekayaanBersih = max(0, $totalHartaEligible - $totalUtangRiil);
+        $modalDisetor = $this->cleanNumber($input['keu_neraca_modal_disetor'] ?? ($input['neraca_modal_disetor'] ?? 0));
 
         // Estimasi Angsuran Fasilitas Kredit Baru
         $kreditData = $this->kreditModel->find($kreditId) ?? [];
@@ -932,6 +977,12 @@ class Pengajuan extends BaseController
         $bungaBaruPct = (float)($kreditData['bunga_per_bulan'] ?? 1.25);
         $angsBaru = ($plafonBaru > 0) ? round(($plafonBaru / $tenorBaru) + ($plafonBaru * ($bungaBaruPct / 100))) : 0;
         $totAngsuranGabungan = $totAngsSlik + $angsBaru;
+
+        // DSCR Dinamis (Kapasitas Surplus vs Total Beban Angsuran Gabungan)
+        $surplusKapasitas = $totalNettRK;
+        $dscrDinamis = ($totAngsuranGabungan > 0) ? round($surplusKapasitas / $totAngsuranGabungan, 2) : ($surplusKapasitas > 0 ? 99.99 : 0);
+        $dscRK = $dscrDinamis;
+        $statusRK = $dscRK >= 1.25 ? 'Aman' : ($dscRK >= 1.0 ? 'Hati-hati' : 'Berisiko');
 
         // 5 Rasio Finansial
         $pemasukanAcuan = $pRK + $pLainRK;
@@ -1068,6 +1119,11 @@ class Pengajuan extends BaseController
             'total_utang_riil'              => $totalUtangRiil,
             'total_angsuran_bulanan'        => $totAngsuranGabungan,
             'kekayaan_bersih'               => $kekayaanBersih,
+            'neraca_utang_usaha'            => $utangDagang,
+            'neraca_utang_bank_lancar'      => $utangBank,
+            'neraca_modal_disetor'          => $modalDisetor,
+            'neraca_laba_ditahan'           => $kekayaanBersih,
+            'neraca_total_ekuitas'          => $modalDisetor + $kekayaanBersih,
             'rasio_dsr'                     => $dsr,
             'rasio_dar'                     => $dar,
             'rasio_der'                     => $der,
