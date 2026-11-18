@@ -134,7 +134,7 @@
         </div>
 
         <!-- ======================================================== -->
-        <!-- KOTAK 2: PENGELUARAN USAHA (HPP & PENGELUARAN BIASA) (MERAH) -->
+        <!-- KOTAK 2: PENGELUARAN USAHA (MERAH)                      -->
         <!-- ======================================================== -->
         <div class="p-5 sm:p-6 bg-rose-50/20 rounded-2xl border border-rose-200/90 shadow-2xs hover:border-rose-300 transition">
             <div class="flex items-center justify-between pb-3.5 mb-4 border-b border-rose-100">
@@ -144,22 +144,50 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                            <span>PENGELUARAN USAHA (HPP &amp; PENGELUARAN BIASA)</span>
+                            <span>PENGELUARAN USAHA</span>
                             <span class="px-2 py-0.5 text-[10px] font-semibold bg-rose-100 text-rose-700 rounded-full">Pengeluaran</span>
                         </h3>
-                        <span class="text-[11px] text-slate-400 font-medium">Rincian modal bahan/kulakan (HPP) dan pengeluaran operasional rutin yang dinamis</span>
+                        <span class="text-[11px] text-slate-400 font-medium">Rincian pengeluaran operasional rutin dan modal bahan/kulakan (HPP) yang dinamis</span>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-5">
-                <!-- Sub-Bagian 2A: Pengeluaran HPP (Bahan Baku / Kulakan Barang) -->
+                <!-- Sub-Bagian 2A: Pengeluaran (Beban Operasional & Administrasi) - DI ATAS -->
                 <div class="p-4 bg-white/80 rounded-xl border border-rose-100 shadow-2xs">
                     <div class="flex items-center justify-between mb-2.5">
                         <div>
                             <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                                 <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                                A. Pengeluaran HPP (Bahan Baku / Modal Kulakan)
+                                A. Pengeluaran (Beban Operasional &amp; Administrasi)
+                            </h4>
+                            <p class="text-[10px] text-slate-400">Gaji karyawan tetap, sewa kantor/gudang, listrik & utilitas, logistik, operasional rutin, dll</p>
+                        </div>
+                        <button type="button" onclick="tambahBebanLain('', 0);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>Tambah Pengeluaran</span>
+                        </button>
+                    </div>
+
+                    <!-- Container List Beban Dinamis -->
+                    <div id="containerBebanLain" class="space-y-2 mb-2.5">
+                        <!-- Diisi oleh renderListBebanLain() -->
+                    </div>
+
+                    <!-- Subtotal Pengeluaran -->
+                    <div class="p-2.5 bg-rose-50/60 border border-rose-200/70 rounded-xl flex justify-between items-center text-xs">
+                        <span class="font-bold text-slate-600 text-[11px] uppercase tracking-wider">Subtotal Pengeluaran:</span>
+                        <span id="nomBebanLainRK" class="font-bold text-rose-700 text-xs sm:text-sm">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Sub-Bagian 2B: Pengeluaran HPP (Bahan Baku / Modal Kulakan) - DI BAWAH -->
+                <div class="p-4 bg-white/80 rounded-xl border border-rose-100 shadow-2xs">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                B. Pengeluaran HPP (Bahan Baku / Modal Kulakan)
                             </h4>
                             <p class="text-[10px] text-slate-400">Biaya pokok barang dagang, pembelian stok bahan, atau modal produksi</p>
                         </div>
@@ -193,39 +221,11 @@
                     </div>
                 </div>
 
-                <!-- Sub-Bagian 2B: Pengeluaran Biasa (Operasional, Gaji, Sewa, Logistik, dll) -->
-                <div class="p-4 bg-white/80 rounded-xl border border-rose-100 shadow-2xs">
-                    <div class="flex items-center justify-between mb-2.5">
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                                B. Pengeluaran Biasa (Beban Operasional &amp; Administrasi)
-                            </h4>
-                            <p class="text-[10px] text-slate-400">Gaji karyawan tetap, sewa kantor/gudang, listrik & utilitas, logistik, operasional rutin, dll</p>
-                        </div>
-                        <button type="button" onclick="tambahBebanLain('', 0);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
-                            <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            <span>Tambah Pengeluaran Biasa</span>
-                        </button>
-                    </div>
-
-                    <!-- Container List Beban Dinamis -->
-                    <div id="containerBebanLain" class="space-y-2 mb-2.5">
-                        <!-- Diisi oleh renderListBebanLain() -->
-                    </div>
-
-                    <!-- Subtotal Pengeluaran Biasa -->
-                    <div class="p-2.5 bg-rose-50/60 border border-rose-200/70 rounded-xl flex justify-between items-center text-xs">
-                        <span class="font-bold text-slate-600 text-[11px] uppercase tracking-wider">Subtotal Pengeluaran Biasa:</span>
-                        <span id="nomBebanLainRK" class="font-bold text-rose-700 text-xs sm:text-sm">Rp 0</span>
-                    </div>
-                </div>
-
                 <!-- Ringkasan Terpisah: Total Seluruh Pengeluaran -->
                 <div class="p-3.5 bg-white border border-rose-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
                     <div>
                         <span class="font-bold text-rose-900 text-xs uppercase tracking-wider block">Total Seluruh Pengeluaran:</span>
-                        <span class="text-[10px] text-slate-400 font-medium">* Akumulasi Subtotal HPP (Bahan/Kulakan) + Subtotal Pengeluaran Biasa</span>
+                        <span class="text-[10px] text-slate-400 font-medium">* Akumulasi Subtotal Pengeluaran + Subtotal HPP (Bahan/Kulakan)</span>
                     </div>
                     <span id="nomTotalPengeluaranBU" class="text-sm sm:text-base font-black text-rose-700">Rp 0</span>
                 </div>

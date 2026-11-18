@@ -2264,12 +2264,15 @@ function renderListHpp() {
 
     // Mode Fallback: Container Tunggal (Lama)
     if (containerAll) {
-        if (daftarHpp.length === 0) {
-            daftarHpp.push({ nama: '', kategori: 'hpp', nominal: 0 });
-        }
-
         let html = '';
-        daftarHpp.forEach((item, index) => {
+        if (daftarHpp.length === 0) {
+            html = `
+                <div class="p-3 text-center border border-dashed border-slate-200 rounded-xl text-slate-400 text-xs">
+                    Belum ada data rincian. Klik <strong>Tambah</strong> untuk mengisi.
+                </div>
+            `;
+        } else {
+            daftarHpp.forEach((item, index) => {
             const safeNama = (item.nama || '').replace(/"/g, '&quot;');
             const kategori = (item.kategori || 'hpp').toLowerCase();
             const nomVal = parseInt(item.nominal, 10) || 0;
@@ -2470,12 +2473,12 @@ function renderListPendapatan() {
             const safeNama = (item.nama || '').replace(/"/g, '&quot;');
             const nomVal = parseInt(item.nominal, 10) || 0;
             const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
-            const deleteBtnHtml = (daftarPendapatan.length > 1) ? `
+            const deleteBtnHtml = `
                 <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
                         class="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center border border-slate-200 hover:border-rose-200 transition shrink-0 cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
-            ` : '';
+            `;
 
             html += `
                 <div class="flex items-center gap-2 p-2 bg-white border border-blue-200 rounded-xl shadow-2xs hover:border-blue-300 transition">
@@ -2536,9 +2539,6 @@ window.tambahPendapatan = tambahPendapatan;
 function hapusPendapatan(index) {
     if (index >= 0 && index < daftarPendapatan.length) {
         daftarPendapatan.splice(index, 1);
-        if (daftarPendapatan.length === 0) {
-            daftarPendapatan.push({ nama: '', nominal: 0 });
-        }
         renderListPendapatan();
     }
 }
@@ -2621,7 +2621,7 @@ function renderListBebanLain() {
     if (daftarBebanLain.length === 0) {
         container.innerHTML = `
             <div class="p-3 text-center border border-dashed border-rose-200 rounded-xl text-slate-400 text-xs bg-rose-50/30">
-                Belum ada rincian pengeluaran biasa. Klik <strong class="text-rose-600 font-semibold cursor-pointer hover:underline" onclick="tambahBebanLain()">Tambah Pengeluaran Biasa</strong>.
+                Belum ada rincian pengeluaran. Klik <strong class="text-rose-600 font-semibold cursor-pointer hover:underline" onclick="tambahBebanLain()">Tambah Pengeluaran</strong>.
             </div>
         `;
     } else {
@@ -2679,9 +2679,6 @@ window.tambahBebanLain = tambahBebanLain;
 function hapusBebanLain(index) {
     if (index >= 0 && index < daftarBebanLain.length) {
         daftarBebanLain.splice(index, 1);
-        if (daftarBebanLain.length === 0) {
-            daftarBebanLain.push({ nama: '', nominal: 0 });
-        }
         renderListBebanLain();
     }
 }
