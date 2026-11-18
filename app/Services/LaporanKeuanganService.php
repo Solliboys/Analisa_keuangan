@@ -440,15 +440,88 @@ class LaporanKeuanganService
             'kas_akhir'            => $kasAkhir,
         ];
 
+        // 3. NERACA HARTA & UTANG PERORANGAN (USAHA & PRIBADI)
+        $hartaKasUsaha     = $this->cleanNumber($input['harta_kas_usaha'] ?? ($input['keu_harta_kas_usaha'] ?? ($input['input_harta_kas_usaha'] ?? 0)));
+        $hartaPiutangUsaha = $this->cleanNumber($input['harta_piutang_usaha'] ?? ($input['keu_harta_piutang_usaha'] ?? ($input['input_harta_piutang_usaha'] ?? 0)));
+        $hartaStokUsaha    = $this->cleanNumber($input['harta_stok_usaha'] ?? ($input['keu_harta_stok_usaha'] ?? ($input['input_harta_stok_usaha'] ?? 0)));
+        $hartaAlatUsaha    = $this->cleanNumber($input['harta_alat_usaha'] ?? ($input['keu_harta_alat_usaha'] ?? ($input['input_harta_alat_usaha'] ?? 0)));
+        $subtotalAsetUsaha = $hartaKasUsaha + $hartaPiutangUsaha + $hartaStokUsaha + $hartaAlatUsaha;
+
+        $hartaTabungan     = $this->cleanNumber($input['harta_tabungan'] ?? ($input['keu_harta_tabungan'] ?? ($input['input_harta_tabungan'] ?? ($input['input_harta_gaji_tabungan'] ?? 0))));
+        $hartaDeposito     = $this->cleanNumber($input['harta_deposito'] ?? ($input['keu_harta_deposito'] ?? ($input['input_harta_deposito'] ?? ($input['input_harta_gaji_deposito'] ?? 0))));
+        $statusDeposito    = trim($input['status_deposito'] ?? ($input['keu_status_deposito'] ?? ($input['status_gaji_deposito'] ?? 'bebas')));
+
+        $hartaTanah        = $this->cleanNumber($input['harta_tanah'] ?? ($input['keu_harta_tanah'] ?? ($input['input_harta_tanah'] ?? ($input['input_harta_gaji_tanah'] ?? 0))));
+        $statusTanah       = trim($input['status_tanah'] ?? ($input['keu_status_tanah'] ?? ($input['status_gaji_tanah'] ?? 'bebas')));
+
+        $hartaBangunan     = $this->cleanNumber($input['harta_bangunan'] ?? ($input['keu_harta_bangunan'] ?? ($input['input_harta_bangunan'] ?? ($input['input_harta_gaji_bangunan'] ?? 0))));
+        $statusBangunan    = trim($input['status_bangunan'] ?? ($input['keu_status_bangunan'] ?? ($input['status_gaji_bangunan'] ?? 'bebas')));
+
+        $hartaKendaraan    = $this->cleanNumber($input['harta_kendaraan'] ?? ($input['keu_harta_kendaraan'] ?? ($input['input_harta_kendaraan'] ?? ($input['input_harta_gaji_kendaraan'] ?? 0))));
+        $statusKendaraan   = trim($input['status_kendaraan'] ?? ($input['keu_status_kendaraan'] ?? ($input['status_gaji_kendaraan'] ?? 'bebas')));
+
+        $subtotalAsetPribadiBruto = $hartaTabungan + $hartaDeposito + $hartaTanah + $hartaBangunan + $hartaKendaraan;
+        $totalHartaBruto          = $subtotalAsetUsaha + $subtotalAsetPribadiBruto;
+
+        // Filter: Dikecualikan jika berstatus jaminan / belum pasti
+        $asetTerikat = 0;
+        if ($statusDeposito === 'terikat')  $asetTerikat += $hartaDeposito;
+        if ($statusTanah !== 'bebas')       $asetTerikat += $hartaTanah;
+        if ($statusBangunan !== 'bebas')    $asetTerikat += $hartaBangunan;
+        if ($statusKendaraan !== 'bebas')   $asetTerikat += $hartaKendaraan;
+
+        $totalHartaEligible = max(0, $totalHartaBruto - $asetTerikat);
+        $totalUtangRiil     = $this->cleanNumber($input['total_utang_riil'] ?? 0);
+        $kekayaanBersih     = $totalHartaEligible - $totalUtangRiil;
+
+        $neracaPerorangan = [
+            'aset_usaha' => [
+                'kas'        => $hartaKasUsaha,
+                'piutang'    => $hartaPiutangUsaha,
+                'persediaan' => $hartaStokUsaha,
+                'peralatan'  => $hartaAlatUsaha,
+                'subtotal'   => $subtotalAsetUsaha,
+            ],
+            'aset_pribadi' => [
+                'tabungan'          => $hartaTabungan,
+                'deposito'          => $hartaDeposito,
+                'status_deposito'   => $statusDeposito,
+                'tanah'             => $hartaTanah,
+                'status_tanah'      => $statusTanah,
+                'bangunan'          => $hartaBangunan,
+                'status_bangunan'   => $statusBangunan,
+                'kendaraan'         => $hartaKendaraan,
+                'status_kendaraan'  => $statusKendaraan,
+                'subtotal_bruto'    => $subtotalAsetPribadiBruto,
+                'aset_terikat'      => $asetTerikat,
+                'subtotal_eligible' => max(0, $subtotalAsetPribadiBruto - $asetTerikat),
+            ],
+            'total_harta_bruto'    => $totalHartaBruto,
+            'aset_terikat_jaminan' => $asetTerikat,
+            'total_harta_eligible' => $totalHartaEligible,
+            'total_utang_riil'     => $totalUtangRiil,
+            'total_angsuran'       => $this->cleanNumber($input['total_angsuran_bulanan'] ?? $cicilanBerjalan),
+            'kekayaan_bersih'      => $kekayaanBersih,
+        ];
+
+        $rasioPerorangan = [
+            'dsr'              => (float)($input['rasio_dsr'] ?? 0),
+            'dar'              => (float)($input['rasio_dar'] ?? 0),
+            'der'              => (float)($input['rasio_der'] ?? 0),
+            'ltv'              => (float)($input['rasio_ltv'] ?? 0),
+            'liquidity_buffer' => (float)($input['rasio_liquidity_buffer'] ?? 0),
+        ];
+
         return [
-            'tipe_pemohon' => 'karyawan',
-            'laba_rugi'    => $labaRugi,
-            'arus_kas'     => $arusKas,
-            'neraca'       => null,
-            'asumsi'       => [],
-            'validasi'     => [
-                'status_neraca'  => 'Tidak Berlaku (Karyawan)',
-                'selisih_neraca' => 0,
+            'tipe_pemohon'   => 'karyawan',
+            'laba_rugi'      => $labaRugi,
+            'arus_kas'       => $arusKas,
+            'neraca'         => $neracaPerorangan,
+            'analisis_rasio' => $rasioPerorangan,
+            'asumsi'         => [],
+            'validasi'       => [
+                'status_neraca'  => ($totalHartaEligible >= $totalUtangRiil) ? 'Solven (Positif)' : 'Perhatian (Defisit)',
+                'selisih_neraca' => $kekayaanBersih,
                 'status_kas'     => 'Cocok',
                 'selisih_kas'    => 0,
                 'is_seimbang'    => true,

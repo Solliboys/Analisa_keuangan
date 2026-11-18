@@ -1365,8 +1365,10 @@ function hitungLabaRugi() {
     const nomHppRK = isBU ? Math.round(pRK * (hppPctRK / 100)) : 0;
     const grossRK = isBU ? Math.max(0, pRK - nomHppRK) : pRK;
 
-    // Biaya Hidup (langsung nominal rupiah tanpa %)
-    const nomBhRK = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 0);
+    // Biaya Hidup & Beban Lain
+    const inputBhEl = document.getElementById('biaya_hidup_nominal_rk');
+    const isBhManual = inputBhEl && inputBhEl.type !== 'hidden';
+    const nomBhRK = isBhManual ? parseNominal(inputBhEl.value || 0) : 0;
     if (pRK > 0 && document.getElementById('biaya_hidup_persen_rk')) {
         document.getElementById('biaya_hidup_persen_rk').value = (Math.round((nomBhRK / pRK) * 1000) / 10);
     }
@@ -1384,6 +1386,10 @@ function hitungLabaRugi() {
     if (document.getElementById('beban_lainnya_nominal_rk')) {
         document.getElementById('beban_lainnya_nominal_rk').value = totalBebanLain;
     }
+    // Jika biaya_hidup_nominal_rk berstatus hidden, sinkronkan nilainya ke totalBebanLain untuk kompatibilitas database/laporan
+    if (inputBhEl && !isBhManual) {
+        inputBhEl.value = totalBebanLain;
+    }
     if (pRK > 0 && document.getElementById('beban_lainnya_persen_rk')) {
         document.getElementById('beban_lainnya_persen_rk').value = (Math.round((totalBebanLain / pRK) * 1000) / 10);
     }
@@ -1395,13 +1401,13 @@ function hitungLabaRugi() {
 
     // Total Penghasilan & Pengeluaran (memperhitungkan Laba Kotor jika ada HPP)
     const totalPenghasilanPR = grossRK + pLainRK;
-    const totalPengeluaranPR = nomBhRK + nomBlRK;
+    const totalPengeluaranPR = isBhManual ? (nomBhRK + nomBlRK) : nomBlRK;
 
     // Surplus = Penghasilan (setelah HPP) - Pengeluaran (live preview, tanpa cicilan — cicilan diinput di Tab Laporan)
     const surplusPR = totalPenghasilanPR - totalPengeluaranPR;
 
     // nettRK & totalCashflow untuk kompatibilitas dengan field-field lain
-    const nettRK = grossRK - nomBhRK - nomBlRK;
+    const nettRK = isBhManual ? (grossRK - nomBhRK - nomBlRK) : (grossRK - nomBlRK);
     const totalCashflow = isBU ? nettRK : surplusPR;
 
     if (document.getElementById('nomHppRK')) document.getElementById('nomHppRK').innerText = formatRupiahString(nomHppRK);
@@ -1663,7 +1669,7 @@ function renderListBebanLain() {
                         <div class="flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-xl shadow-2xs hover:border-blue-200 transition">
                             <div class="flex-1 min-w-0">
                                 <input type="text" value="${safeNama}" 
-                                       placeholder="Keterangan beban (cth: Premi Asuransi, Biaya Tak Terduga)" 
+                                       placeholder="Keterangan pengeluaran / beban (cth: Kebutuhan Rumah Tangga, Biaya Sekolah, dll)" 
                                        class="w-full text-xs font-semibold text-slate-800 border-0 bg-transparent px-2 py-1 focus:ring-0 placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
                                        oninput="updateItemBebanLain(${index}, 'nama', this.value)">
                             </div>

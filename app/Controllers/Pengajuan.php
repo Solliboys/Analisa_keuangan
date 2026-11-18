@@ -811,16 +811,37 @@ class Pengajuan extends BaseController
 
         // Beban lain nominal langsung & rincian beban lainnya
         $blNomRK = isset($input['beban_lainnya_nominal_rk']) ? $this->cleanNumber($input['beban_lainnya_nominal_rk']) : 0;
+        $detailBebanRK = !empty($input['detail_beban_lainnya_rk']) ? $input['detail_beban_lainnya_rk'] : null;
+        if ($detailBebanRK === '[]') $detailBebanRK = null;
+
+        // Jika beban lain nol tapi ada detail rincian beban dinamis, hitung akumulasinya
+        if ($blNomRK == 0 && !empty($detailBebanRK)) {
+            $decBeban = is_array($detailBebanRK) ? $detailBebanRK : json_decode($detailBebanRK, true);
+            if (is_array($decBeban)) {
+                foreach ($decBeban as $itemB) {
+                    $blNomRK += $this->cleanNumber($itemB['nominal'] ?? 0);
+                }
+            }
+        }
+
+        // Biaya hidup nominal langsung & persentase
+        $bhNomRK = isset($input['biaya_hidup_nominal_rk']) ? $this->cleanNumber($input['biaya_hidup_nominal_rk']) : 0;
+        // Jika biaya hidup 0 dan beban lain terisi dari daftar dinamis, samakan agar tetap kompatibel
+        if ($bhNomRK == 0 && $blNomRK > 0) {
+            $bhNomRK = $blNomRK;
+        }
+
         if ($blNomRK == 0 && !empty($input['beban_lainnya_persen_rk']) && $pRK > 0) {
             $blPctRK = (float)$input['beban_lainnya_persen_rk'];
             $blNomRK = $pRK * ($blPctRK / 100);
         } else {
             $blPctRK = $pRK > 0 ? round(($blNomRK / $pRK) * 100, 2) : (float)($input['beban_lainnya_persen_rk'] ?? 0);
         }
-        $detailBebanRK = !empty($input['detail_beban_lainnya_rk']) ? $input['detail_beban_lainnya_rk'] : null;
-        if ($detailBebanRK === '[]') $detailBebanRK = null;
+        $bhPctRK = $pRK > 0 ? round(($bhNomRK / $pRK) * 100, 2) : (float)($input['biaya_hidup_persen_rk'] ?? 0);
 
-        $nettRK   = $grossRK - $bhNomRK - $blNomRK;
+        // Pengeluaran bulanan total (jika input biaya hidup dihapus dari form dan murni beban dinamis)
+        $totalPengeluaranBulanan = ($bhNomRK > 0 && $bhNomRK != $blNomRK) ? ($bhNomRK + $blNomRK) : $blNomRK;
+        $nettRK   = $grossRK - $totalPengeluaranBulanan;
 
         $pIV   = $this->cleanNumber($input['pendapatan_iv'] ?? 0);
         $hppPctIV = (float)($input['hpp_persen_iv'] ?? 60);
@@ -848,6 +869,121 @@ class Pengajuan extends BaseController
 
         $statusRK = $dscRK >= 1.3 ? 'Aman' : ($dscRK >= 1.0 ? 'Hati-hati' : 'Berisiko');
         $statusIV = $dscIV >= 1.3 ? 'Aman' : ($dscIV >= 1.0 ? 'Hati-hati' : 'Berisiko');
+
+        // =========================================================================
+        // EKSTRAKSI & KALKULASI DATA HARTA & UTANG PERORANGAN (TAB 9 & TAB 10)
+        // =========================================================================
+        $hartaKasUsaha     = $this->cleanNumber($input['keu_harta_kas_usaha'] ?? ($input['input_harta_kas_usaha'] ?? 0));
+        $hartaPiutangUsaha = $this->cleanNumber($input['keu_harta_piutang_usaha'] ?? ($input['input_harta_piutang_usaha'] ?? 0));
+        $hartaStokUsaha    = $this->cleanNumber($input['keu_harta_stok_usaha'] ?? ($input['input_harta_stok_usaha'] ?? 0));
+        $hartaAlatUsaha    = $this->cleanNumber($input['keu_harta_alat_usaha'] ?? ($input['input_harta_alat_usaha'] ?? 0));
+        $subtotalAsetUsaha = $hartaKasUsaha + $hartaPiutangUsaha + $hartaStokUsaha + $hartaAlatUsaha;
+
+        $hartaTabungan     = $this->cleanNumber($input['keu_harta_tabungan'] ?? ($input['input_harta_tabungan'] ?? ($input['input_harta_gaji_tabungan'] ?? 0)));
+        $hartaDeposito     = $this->cleanNumber($input['keu_harta_deposito'] ?? ($input['input_harta_deposito'] ?? ($input['input_harta_gaji_deposito'] ?? 0)));
+        $statusDeposito    = trim($input['keu_status_deposito'] ?? ($input['status_deposito'] ?? ($input['status_gaji_deposito'] ?? 'bebas')));
+
+        $hartaTanah        = $this->cleanNumber($input['keu_harta_tanah'] ?? ($input['input_harta_tanah'] ?? ($input['input_harta_gaji_tanah'] ?? 0)));
+        $statusTanah       = trim($input['keu_status_tanah'] ?? ($input['status_tanah'] ?? ($input['status_gaji_tanah'] ?? 'bebas')));
+
+        $hartaBangunan     = $this->cleanNumber($input['keu_harta_bangunan'] ?? ($input['input_harta_bangunan'] ?? ($input['input_harta_gaji_bangunan'] ?? 0)));
+        $statusBangunan    = trim($input['keu_status_bangunan'] ?? ($input['status_bangunan'] ?? ($input['status_gaji_bangunan'] ?? 'bebas')));
+
+        $hartaKendaraan    = $this->cleanNumber($input['keu_harta_kendaraan'] ?? ($input['input_harta_kendaraan'] ?? ($input['input_harta_gaji_kendaraan'] ?? 0)));
+        $statusKendaraan   = trim($input['keu_status_kendaraan'] ?? ($input['status_kendaraan'] ?? ($input['status_gaji_kendaraan'] ?? 'bebas')));
+
+        $subtotalAsetPribadiBruto = $hartaTabungan + $hartaDeposito + $hartaTanah + $hartaBangunan + $hartaKendaraan;
+        $totalHartaBruto          = $subtotalAsetUsaha + $subtotalAsetPribadiBruto;
+
+        // Filter: Dikecualikan jika berstatus sedang dijaminkan / belum pasti kepemilikannya
+        $asetTerikat = 0;
+        if ($statusDeposito === 'terikat')  $asetTerikat += $hartaDeposito;
+        if ($statusTanah !== 'bebas')       $asetTerikat += $hartaTanah;
+        if ($statusBangunan !== 'bebas')    $asetTerikat += $hartaBangunan;
+        if ($statusKendaraan !== 'bebas')   $asetTerikat += $hartaKendaraan;
+
+        $totalHartaEligible = max(0, $totalHartaBruto - $asetTerikat);
+
+        // Tarik Data Utang Komprehensif dari SLIK OJK
+        $dataSlik = $this->slikModel->where('kredit_id', $kreditId)->findAll();
+        $totOutSlik = 0;
+        $totAngsSlik = 0;
+        if (!empty($dataSlik) && is_array($dataSlik)) {
+            foreach ($dataSlik as $slk) {
+                $out = (float)($slk['outstanding'] ?? 0);
+                $angs = (float)($slk['angsuran'] ?? 0);
+                if ($angs <= 0 && $out > 0) $angs = round($out / 24);
+                $totOutSlik += $out;
+                $totAngsSlik += $angs;
+            }
+        }
+        if ($totAngsSlik <= 0) $totAngsSlik = $angsuran;
+        if ($totOutSlik <= 0) $totOutSlik = $totAngsSlik * 18;
+
+        $utangDagang = (float)($input['utang_dagang'] ?? round($hppNomRK * 0.15));
+        $totalUtangRiil = $totOutSlik + $utangDagang;
+        $kekayaanBersih = $totalHartaEligible - $totalUtangRiil;
+
+        // Estimasi Angsuran Fasilitas Kredit Baru
+        $kreditData = $this->kreditModel->find($kreditId) ?? [];
+        $plafonBaru = (float)($kreditData['plafon_pengajuan'] ?? 0);
+        $tenorBaru  = (int)($kreditData['tenor_bulan'] ?? 12);
+        if ($tenorBaru <= 0) $tenorBaru = 12;
+        $bungaBaruPct = (float)($kreditData['bunga_per_bulan'] ?? 1.25);
+        $angsBaru = ($plafonBaru > 0) ? round(($plafonBaru / $tenorBaru) + ($plafonBaru * ($bungaBaruPct / 100))) : 0;
+        $totAngsuranGabungan = $totAngsSlik + $angsBaru;
+
+        // 5 Rasio Finansial
+        $pemasukanAcuan = $pRK + $pLainRK;
+        $dsr = ($pemasukanAcuan > 0) ? round(($totAngsuranGabungan / $pemasukanAcuan) * 100, 1) : 0;
+        $dar = ($totalHartaEligible > 0) ? round(($totalUtangRiil / $totalHartaEligible) * 100, 1) : 0;
+        $der = ($kekayaanBersih > 0) ? round($totalUtangRiil / $kekayaanBersih, 2) : 0;
+        $agunanBebas = ($statusTanah === 'bebas' ? $hartaTanah : 0) + ($statusBangunan === 'bebas' ? $hartaBangunan : 0);
+        $ltv = ($agunanBebas > 0 && $plafonBaru > 0) ? round(($plafonBaru / $agunanBebas) * 100, 1) : 0;
+        $kasLiquidBebas = $hartaKasUsaha + $hartaTabungan + ($statusDeposito === 'bebas' ? $hartaDeposito : 0);
+        $bebanBulanan = $totalPengeluaranBulanan + $totAngsuranGabungan;
+        $buffer = ($bebanBulanan > 0) ? round($kasLiquidBebas / $bebanBulanan, 1) : 0;
+
+        $detailHartaJson = json_encode([
+            'aset_usaha' => [
+                'kas'       => $hartaKasUsaha,
+                'piutang'   => $hartaPiutangUsaha,
+                'persediaan'=> $hartaStokUsaha,
+                'peralatan' => $hartaAlatUsaha,
+                'subtotal'  => $subtotalAsetUsaha,
+            ],
+            'aset_pribadi' => [
+                'tabungan'         => $hartaTabungan,
+                'deposito'         => $hartaDeposito,
+                'status_deposito'  => $statusDeposito,
+                'tanah'            => $hartaTanah,
+                'status_tanah'     => $statusTanah,
+                'bangunan'         => $hartaBangunan,
+                'status_bangunan'  => $statusBangunan,
+                'kendaraan'        => $hartaKendaraan,
+                'status_kendaraan' => $statusKendaraan,
+                'subtotal_bruto'   => $subtotalAsetPribadiBruto,
+                'aset_terikat'     => $asetTerikat,
+                'subtotal_eligible'=> max(0, $subtotalAsetPribadiBruto - $asetTerikat),
+            ],
+            'total_harta_bruto'    => $totalHartaBruto,
+            'total_harta_eligible' => $totalHartaEligible,
+            'total_utang'          => $totalUtangRiil,
+            'kekayaan_bersih'      => $kekayaanBersih,
+            'slik' => [
+                'outstanding'       => $totOutSlik,
+                'angsuran_slik'     => $totAngsSlik,
+                'angsuran_baru'     => $angsBaru,
+                'angsuran_gabungan' => $totAngsuranGabungan,
+            ],
+            'rasio' => [
+                'dsr'             => $dsr,
+                'dar'             => $dar,
+                'der'             => $der,
+                'ltv'             => $ltv,
+                'liquidity_buffer'=> $buffer,
+            ]
+        ]);
 
         $dataKeu = [
             'kredit_id'                     => $kreditId,
@@ -911,6 +1047,33 @@ class Pengajuan extends BaseController
             'input_pinjaman_baru'           => $this->cleanNumber($input['input_pinjaman_baru'] ?? 0),
             'input_setoran_modal'           => $this->cleanNumber($input['input_setoran_modal'] ?? 0),
             'neraca_hari_stok_dio'          => !empty($input['neraca_hari_stok_dio']) ? (int)$input['neraca_hari_stok_dio'] : 45,
+
+            // === HARTA & NERACA PERORANGAN (TAB 9 & TAB 10) ===
+            'harta_kas_usaha'               => $hartaKasUsaha,
+            'harta_piutang_usaha'           => $hartaPiutangUsaha,
+            'harta_stok_usaha'              => $hartaStokUsaha,
+            'harta_alat_usaha'              => $hartaAlatUsaha,
+            'harta_tabungan'                => $hartaTabungan,
+            'harta_deposito'                => $hartaDeposito,
+            'status_deposito'               => $statusDeposito,
+            'harta_tanah'                   => $hartaTanah,
+            'status_tanah'                  => $statusTanah,
+            'harta_bangunan'                => $hartaBangunan,
+            'status_bangunan'               => $statusBangunan,
+            'harta_kendaraan'               => $hartaKendaraan,
+            'status_kendaraan'              => $statusKendaraan,
+            'total_harta_bruto'             => $totalHartaBruto,
+            'aset_terikat_jaminan'          => $asetTerikat,
+            'total_harta_eligible'          => $totalHartaEligible,
+            'total_utang_riil'              => $totalUtangRiil,
+            'total_angsuran_bulanan'        => $totAngsuranGabungan,
+            'kekayaan_bersih'               => $kekayaanBersih,
+            'rasio_dsr'                     => $dsr,
+            'rasio_dar'                     => $dar,
+            'rasio_der'                     => $der,
+            'rasio_ltv'                     => $ltv,
+            'rasio_liquidity_buffer'        => $buffer,
+            'detail_harta_json'             => $detailHartaJson,
         ];
 
         $keuCols = $this->keuanganModel->db->getFieldNames('kredit_keuangan_dsc');
