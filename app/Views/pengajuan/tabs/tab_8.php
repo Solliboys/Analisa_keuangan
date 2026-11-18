@@ -33,7 +33,7 @@
                                 <th class="py-3 px-3 text-right">Mutasi Debit</th>
                                 <th class="py-3 px-3 text-center">Bln</th>
                                 <th class="py-3 px-3 text-right text-blue-700 bg-blue-50/40">Rata² Kredit / Bln</th>
-                                <th class="py-3 px-3 text-center w-12">Aksi</th>
+                                <th class="py-3 px-3 text-center w-28">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="containerRekening" class="divide-y divide-slate-100 text-xs">
@@ -93,10 +93,17 @@
                                         <td class="py-3 px-3 text-right font-extrabold text-blue-800 bg-blue-50/30 whitespace-nowrap rek-avg-kredit">
                                             Rp <?= number_format($avgVal, 0, ',', '.') ?>
                                         </td>
-                                        <td class="py-3 px-3 text-center">
-                                            <button type="button" onclick="hapusBarisRekening(this)" title="Hapus data ini" class="inline-flex items-center justify-center w-7 h-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
+                                        <td class="py-3 px-3 text-center whitespace-nowrap">
+                                            <input type="hidden" name="rekening[<?= $idx ?>][file_rekening]" value="<?= esc($r['file_rekening'] ?? '') ?>" class="rek-file-path">
+                                            <div class="inline-flex items-center justify-center gap-1.5">
+                                                <button type="button" onclick="bukaModalPreviewRekeningPdf('<?= esc($r['file_rekening'] ?? '', 'js') ?>', '<?= esc(($r['nama_bank'] ?: 'Rekening Koran') . (!empty($r['periode']) ? ' (' . $r['periode'] . ')' : ''), 'js') ?>')" title="Lihat berkas PDF / Gambar rekening koran" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-indigo-500 hover:bg-indigo-50 text-indigo-600 rounded-lg text-[11px] font-bold transition cursor-pointer shadow-2xs">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                    <span>Detail</span>
+                                                </button>
+                                                <button type="button" onclick="hapusBarisRekening(this)" title="Hapus data ini" class="inline-flex items-center justify-center w-7 h-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -277,6 +284,46 @@
             <button type="button" id="btnTerapkanOcr" onclick="terapkanHasilOcrKeFormulir()" class="hidden px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold rounded-xl transition shadow-sm flex items-center gap-1.5 cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                 <span>Terapkan ke Formulir Rekening Koran</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =======================================================
+     MODAL PREVIEW BERKAS PDF / GAMBAR REKENING KORAN
+======================================================== -->
+<div id="modalPreviewRekeningPdf" onclick="if(event.target === this) tutupModalPreviewRekeningPdf()" class="fixed inset-0 z-50 bg-slate-900/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full p-4 sm:p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200 max-h-[92vh] flex flex-col">
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-3.5 border-b border-slate-100 shrink-0 gap-3">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                </div>
+                <div class="min-w-0">
+                    <h3 class="text-sm sm:text-base font-bold text-slate-900 truncate" id="previewRekPdfTitle">Detail Dokumen Rekening Koran</h3>
+                    <p class="text-[11px] text-slate-500 truncate" id="previewRekPdfSub">Pratinjau berkas mutasi bank yang diunggah</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a id="btnBukaRekPdfTabBaru" href="#" target="_blank" class="hidden px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-bold transition items-center gap-1">
+                    <span>Buka di Tab Baru ↗</span>
+                </a>
+                <button type="button" onclick="tutupModalPreviewRekeningPdf()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-auto py-3 min-h-[400px] flex items-center justify-center bg-slate-50/70 rounded-xl mt-3 border border-slate-100" id="previewRekPdfContainer">
+            <!-- Diisi dinamis via JS -->
+        </div>
+
+        <!-- Footer -->
+        <div class="flex items-center justify-end pt-3.5 border-t border-slate-100 shrink-0 mt-3">
+            <button type="button" onclick="tutupModalPreviewRekeningPdf()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl transition cursor-pointer">
+                Tutup
             </button>
         </div>
     </div>

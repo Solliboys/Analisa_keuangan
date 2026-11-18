@@ -23,6 +23,7 @@ class KreditRekeningModel extends Model
         'jumlah_bulan',
         'rata_rata_kredit',
         'rata_rata_debit',
+        'file_rekening',
     ];
 
     protected $useTimestamps = false;

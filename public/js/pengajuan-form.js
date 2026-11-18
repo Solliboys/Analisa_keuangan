@@ -1561,6 +1561,7 @@ function tambahBarisRekening() {
 // FITUR EKSTRAKSI AI REKENING KORAN (OCR)
 // ==========================================
 let currentOcrRekeningData = null;
+let currentOcrRekeningFile = null;
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -1690,6 +1691,11 @@ async function prosesOcrRekeningKoran() {
 
         if (resJson.status && resJson.data) {
             currentOcrRekeningData = resJson.data;
+            currentOcrRekeningFile = {
+                path: resJson.file_path || '',
+                url: resJson.file_url || '',
+                name: resJson.file_name || ''
+            };
             const d = resJson.data;
 
             // Isi kartu hasil ekstraksi
@@ -1873,6 +1879,10 @@ function terapkanHasilOcrKeFormulir() {
     const saStr = saldoAwalNum > 0 ? formatRupiahString(saldoAwalNum).replace(/^Rp\s*/, '') : '0';
     const krStr = kreditNum > 0 ? formatRupiahString(kreditNum).replace(/^Rp\s*/, '') : '0';
     const dbStr = debitNum > 0 ? formatRupiahString(debitNum).replace(/^Rp\s*/, '') : '0';
+    const filePath = (currentOcrRekeningFile && currentOcrRekeningFile.path) ? currentOcrRekeningFile.path : '';
+    const detailTitle = `${namaBank}${periode && periode !== '-' ? ' (' + periode + ')' : ''}`;
+    const safeFilePathJs = filePath.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    const safeTitleJs = detailTitle.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
     const rowHtml = `
         <tr class="rekening-item hover:bg-slate-50/80 transition bg-indigo-50/30">
@@ -1912,10 +1922,17 @@ function terapkanHasilOcrKeFormulir() {
             <td class="py-3 px-3 text-right font-extrabold text-blue-800 bg-blue-50/30 whitespace-nowrap rek-avg-kredit">
                 ${formatRupiahString(avgKreditNum)}
             </td>
-            <td class="py-3 px-3 text-center">
-                <button type="button" onclick="hapusBarisRekening(this)" title="Hapus data ini" class="inline-flex items-center justify-center w-7 h-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
+            <td class="py-3 px-3 text-center whitespace-nowrap">
+                <input type="hidden" name="rekening[${idx}][file_rekening]" value="${escapeHtml(filePath)}" class="rek-file-path">
+                <div class="inline-flex items-center justify-center gap-1.5">
+                    <button type="button" onclick="bukaModalPreviewRekeningPdf('${safeFilePathJs}', '${safeTitleJs}')" title="Lihat berkas PDF / Gambar rekening koran" class="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-indigo-500 hover:bg-indigo-50 text-indigo-600 rounded-lg text-[11px] font-bold transition cursor-pointer shadow-2xs">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        <span>Detail</span>
+                    </button>
+                    <button type="button" onclick="hapusBarisRekening(this)" title="Hapus data ini" class="inline-flex items-center justify-center w-7 h-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
             </td>
         </tr>
     `;
@@ -1926,6 +1943,7 @@ function terapkanHasilOcrKeFormulir() {
 
     // Reset state modal untuk import berikutnya
     currentOcrRekeningData = null;
+    currentOcrRekeningFile = null;
 
     // Jalankan kalkulasi rata-rata
     hitungRataRataRekening();
@@ -1953,10 +1971,71 @@ function terapkanHasilOcrKeFormulir() {
     if (newRow) newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+function bukaModalPreviewRekeningPdf(filePath, title) {
+    const modal = document.getElementById('modalPreviewRekeningPdf');
+    const container = document.getElementById('previewRekPdfContainer');
+    const titleEl = document.getElementById('previewRekPdfTitle');
+    const subEl = document.getElementById('previewRekPdfSub');
+    const btnTabBaru = document.getElementById('btnBukaRekPdfTabBaru');
+    if (!modal || !container) return;
+
+    if (titleEl) titleEl.innerText = title || 'Detail Dokumen Rekening Koran';
+
+    if (!filePath || !String(filePath).trim()) {
+        if (subEl) subEl.innerText = 'Berkas belum tersedia';
+        if (btnTabBaru) {
+            btnTabBaru.classList.add('hidden');
+            btnTabBaru.classList.remove('inline-flex');
+        }
+        container.innerHTML = `
+            <div class="p-8 text-center space-y-2">
+                <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                </div>
+                <p class="text-xs font-bold text-slate-700">Berkas PDF / Gambar Belum Tersedia</p>
+                <p class="text-[11px] text-slate-400 max-w-sm mx-auto">Data rekening ini belum memiliki lampiran berkas. Silakan unggah ulang melalui tombol <strong>Import Rekening Koran (AI)</strong>.</p>
+            </div>
+        `;
+        modal.classList.remove('hidden');
+        return;
+    }
+
+    const baseUrl = (typeof getBaseUrl === 'function') ? getBaseUrl() : (window.BASE_URL || '');
+    const fullUrl = String(filePath).startsWith('http')
+        ? filePath
+        : (baseUrl + '/' + String(filePath).replace(/^\/+/, ''));
+    const fileName = String(filePath).split('/').pop() || 'dokumen_rekening_koran';
+    const isPdf = /\.pdf($|\?)/i.test(filePath);
+
+    if (subEl) subEl.innerText = fileName;
+    if (btnTabBaru) {
+        btnTabBaru.href = fullUrl;
+        btnTabBaru.classList.remove('hidden');
+        btnTabBaru.classList.add('inline-flex');
+    }
+
+    if (isPdf) {
+        container.innerHTML = `<iframe src="${escapeHtml(fullUrl)}" class="w-full h-[68vh] rounded-xl border border-slate-200 bg-white shadow-inner"></iframe>`;
+    } else {
+        container.innerHTML = `<img src="${escapeHtml(fullUrl)}" alt="${escapeHtml(title || 'Rekening Koran')}" class="max-h-[68vh] max-w-full object-contain rounded-xl shadow-sm bg-white p-1 border border-slate-200">`;
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function tutupModalPreviewRekeningPdf() {
+    const modal = document.getElementById('modalPreviewRekeningPdf');
+    const container = document.getElementById('previewRekPdfContainer');
+    if (modal) modal.classList.add('hidden');
+    if (container) container.innerHTML = '';
+}
+
 // Expose fungsi ke window agar dapat dipanggil dari inline HTML
 window.bukaModalUploadOcrRekening = bukaModalUploadOcrRekening;
 window.tutupModalUploadOcrRekening = tutupModalUploadOcrRekening;
 window.handleOcrFileSelected = handleOcrFileSelected;
+window.bukaModalPreviewRekeningPdf = bukaModalPreviewRekeningPdf;
+window.tutupModalPreviewRekeningPdf = tutupModalPreviewRekeningPdf;
 window.prosesOcrRekeningKoran = prosesOcrRekeningKoran;
 window.toggleOcrTransaksiTable = toggleOcrTransaksiTable;
 window.terapkanHasilOcrKeFormulir = terapkanHasilOcrKeFormulir;

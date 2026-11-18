@@ -824,7 +824,8 @@ class Pengajuan extends BaseController
                     'total_mutasi_debit'  => $debit,
                     'jumlah_bulan'        => $months,
                     'rata_rata_kredit'    => round($credit / $months, 2),
-                    'rata_rata_debit'     => round($debit / $months, 2)
+                    'rata_rata_debit'     => round($debit / $months, 2),
+                    'file_rekening'       => $row['file_rekening'] ?? ''
                 ];
                 if (!empty($rekCols)) {
                     $dataRek = array_intersect_key($dataRek, array_flip($rekCols));
