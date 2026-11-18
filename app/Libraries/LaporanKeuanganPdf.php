@@ -31,24 +31,24 @@ class LaporanKeuanganPdf
             $totalPages = 3;
             // Lembar 1: Ringkasan Pengajuan, SLIK, Rekening, Agunan & Web Check
             $this->renderPageCover($totalPages);
-            // Lembar 2: Laporan Laba Rugi & Arus Kas
-            $this->renderPageLabaRugiArusKas(2, $totalPages);
-            // Lembar 3: Neraca, Rasio Keuangan & Pengesahan
-            $this->renderPageNeracaRasio(3, $totalPages);
+            // Lembar 2: Laba Rugi dulu, terus Neraca dulu
+            $this->renderPageLabaRugiNeraca(2, $totalPages);
+            // Lembar 3: Hasil akhirnya baru Arus Kas, Analisa Rasio & Pengesahan
+            $this->renderPageArusKasRasio(3, $totalPages);
         } elseif ($target === 'lr') {
             $totalPages = 1;
             $this->renderPageLabaRugiOnly(1, $totalPages);
-        } elseif ($target === 'ak') {
-            $totalPages = 1;
-            $this->renderPageArusKasOnly(1, $totalPages);
         } elseif ($target === 'nr') {
             $totalPages = 1;
             $this->renderPageNeracaRasio(1, $totalPages);
+        } elseif ($target === 'ak') {
+            $totalPages = 1;
+            $this->renderPageArusKasOnly(1, $totalPages);
         } else {
             $totalPages = 3;
             $this->renderPageCover($totalPages);
-            $this->renderPageLabaRugiArusKas(2, $totalPages);
-            $this->renderPageNeracaRasio(3, $totalPages);
+            $this->renderPageLabaRugiNeraca(2, $totalPages);
+            $this->renderPageArusKasRasio(3, $totalPages);
         }
 
         return $this->buildPdfString();
@@ -152,7 +152,7 @@ class LaporanKeuanganPdf
         $bidangUsaha = $k['bidang_usaha'] ?? 'Perdagangan & Distribusi';
         $alamat = $k['alamat_usaha'] ?? $k['alamat_domisili'] ?? 'Jakarta Barat';
 
-        $plafon = (float)($k['plafon_pengajuan'] ?? 1000000000);
+        $plafon = (float)($k['plafon_pengajuan'] ?? 600000000);
         $tenor  = (int)($k['tenor_bulan'] ?? 12);
         $bunga  = (float)($k['bunga_per_tahun'] ?? 12);
         $tujuan = $k['tujuan_pembiayaan'] ?? 'Modal Kerja Operasional Usaha';
@@ -195,8 +195,8 @@ class LaporanKeuanganPdf
         $this->text(108, $y + 17, 'Tujuan Kredit', 8.2, false, 100, 116, 139);
         $this->text(142, $y + 17, ': ' . substr($tujuan, 0, 26), 8.2, false, 15, 23, 42);
 
-        $this->text(108, $y + 23, 'Status Data', 8.2, false, 100, 116, 139);
-        $this->text(142, $y + 23, ': Lengkap & Terverifikasi', 8.2, true, 22, 101, 52);
+        $this->text(108, $y + 23, 'Jaminan Kredit', 8.2, false, 100, 116, 139);
+        $this->text(142, $y + 23, ': ' . substr($k['jenis_jaminan'] ?? 'BPKB Kendaraan Roda 2', 0, 26), 8.2, true, 29, 78, 216);
 
         $y += $box1H + 4;
 
@@ -277,7 +277,7 @@ class LaporanKeuanganPdf
             $lrPendapatan = (float)($this->hasil['laba_rugi']['pendapatan'] ?? 0);
             $totMutasiKredit = $lrPendapatan;
             $totRataKredit   = round($lrPendapatan / 12, 0);
-            $this->text(18, $y + 3.5, 'Rekapitulasi mutasi kas masuk mengikuti omzet usaha Laba Rugi', 8.0, false, 100, 116, 139);
+            $this->text(18, $y + 3.5, 'Rekapitulasi mutasi kas masuk mengikuti omzet usaha Data Keuangan', 8.0, false, 100, 116, 139);
             $y += 4.8;
         }
 
@@ -347,43 +347,51 @@ class LaporanKeuanganPdf
     }
 
     /**
-     * LEMBAR 2: LAPORAN LABA RUGI & ARUS KAS
+     * LEMBAR 2: LAPORAN LABA RUGI & NERACA KEUANGAN
+     * Urutan: Laba Rugi dulu, terus Neraca dulu
      */
-    protected function renderPageLabaRugiArusKas(int $page, int $totalPages): void
+    protected function renderPageLabaRugiNeraca(int $page, int $totalPages): void
     {
         $this->addPage();
-        $y = $this->renderHeaderAndTitle('Laporan Finansial Komprehensif: Laba Rugi & Arus Kas');
+        $y = $this->renderHeaderAndTitle('Laporan Finansial Komprehensif: Data Keuangan & Neraca');
 
         $lr = $this->hasil['laba_rugi'] ?? [];
-        $ak = $this->hasil['arus_kas'] ?? [];
+        $nr = $this->hasil['neraca'] ?? [];
 
-        $karyawanList = !empty($this->kredit['daftar_karyawan']) ? json_decode($this->kredit['daftar_karyawan'], true) : [];
-        $karyawanJml  = is_array($karyawanList) && count($karyawanList) > 0 ? count($karyawanList) : 2;
+        // VI. DATA KEUANGAN
+        $y += 1.5;
+        $this->rect(15, $y, 180, 6.0, 29, 78, 216);
+        $this->text(18, $y + 4.2, 'VI. LAPORAN DATA KEUANGAN (RINGKASAN & SUMBER DATA)', 9.0, true, 255, 255, 255);
+        $y += 7.0;
 
-        // I. LABA RUGI
-        $y += 2;
-        $this->rect(15, $y, 180, 6.5, 29, 78, 216);
-        $this->text(18, $y + 4.5, 'VI. LAPORAN LABA RUGI KOMPREHENSIF (TAHAP 9)', 9.5, true, 255, 255, 255);
-        $y += 7.5;
+        // Subtitle Rumus
+        $this->text(18, $y + 3.0, 'Rumus: Pendapatan - Beban = Laba (Rugi) Bersih', 7.5, false, 71, 85, 105);
+        $y += 4.5;
 
         $lrRows = [
-            ['desc' => 'Pendapatan Usaha (Penjualan Bersih)', 'val' => $this->rp($lr['pendapatan'] ?? 0), 'type' => 'normal'],
-            ['desc' => 'Harga Pokok Penjualan (HPP)', 'val' => $this->rpParen($lr['hpp'] ?? 0), 'type' => 'normal'],
-            ['desc' => 'Laba Kotor (Gross Profit)', 'val' => $this->rp($lr['laba_kotor'] ?? 0), 'type' => 'highlight'],
-            ['desc' => 'Beban Gaji Karyawan (' . $karyawanJml . ' karyawan)', 'val' => $this->rpParen($lr['beban_gaji'] ?? 0), 'type' => 'normal'],
-            ['desc' => 'Sewa, Utilitas, Operasional & Pemasaran', 'val' => $this->rpParen($lr['beban_operasional'] ?? 0), 'type' => 'normal'],
-            ['desc' => 'Beban Penyusutan / Depresiasi Aset', 'val' => $this->rpParen($lr['beban_penyusutan'] ?? 0), 'type' => 'normal'],
-            ['desc' => 'Laba Operasional (Operating Profit / EBIT)', 'val' => $this->rp($lr['laba_operasional'] ?? 0), 'type' => 'highlight'],
+            ['desc' => 'Pendapatan Usaha', 'sub' => 'dari input Penjualan/Omzet', 'val' => $this->rp($lr['pendapatan'] ?? 0), 'type' => 'normal'],
+            ['desc' => 'Harga Pokok Penjualan (HPP)', 'sub' => 'dari input Biaya Modal/Kulakan', 'val' => $this->rpParen($lr['hpp'] ?? 0), 'type' => 'normal'],
+            ['desc' => 'Laba Kotor (Gross Profit)', 'sub' => 'Pendapatan - HPP', 'val' => $this->rp($lr['laba_kotor'] ?? 0), 'type' => 'highlight'],
         ];
 
-        if (!empty($lr['beban_bunga']) && (float)$lr['beban_bunga'] > 0) {
-            $lrRows[] = ['desc' => 'Beban Bunga Pinjaman Bank', 'val' => $this->rpParen($lr['beban_bunga'] ?? 0), 'type' => 'normal'];
+        if (!empty($lr['beban_gaji']) && (float)$lr['beban_gaji'] > 0) {
+            $lrRows[] = ['desc' => 'Beban Gaji Karyawan', 'sub' => 'dari rincian karyawan', 'val' => $this->rpParen($lr['beban_gaji']), 'type' => 'normal'];
         }
 
-        $lrRows[] = ['desc' => 'LABA BERSIH (NET PROFIT)', 'val' => $this->rp($lr['laba_bersih'] ?? 0), 'type' => 'total'];
+        $lrRows[] = ['desc' => 'Beban Operasional Pokok', 'sub' => 'dari input Beban Operasional', 'val' => $this->rpParen($lr['beban_operasional'] ?? 0), 'type' => 'normal'];
+
+        if (!empty($lr['beban_penyusutan']) && (float)$lr['beban_penyusutan'] > 0) {
+            $lrRows[] = ['desc' => 'Penyusutan Alat & Mesin Usaha', 'sub' => 'depresiasi aset usaha', 'val' => $this->rpParen($lr['beban_penyusutan']), 'type' => 'normal'];
+        }
+
+        if (!empty($lr['beban_bunga']) && (float)$lr['beban_bunga'] > 0) {
+            $lrRows[] = ['desc' => 'Biaya Bunga Pinjaman Bank', 'sub' => 'dari input Pinjaman Bank', 'val' => $this->rpParen($lr['beban_bunga'] ?? 0), 'type' => 'normal'];
+        }
+
+        $lrRows[] = ['desc' => 'LABA BERSIH (NET PROFIT)', 'sub' => 'hasil perhitungan data keuangan', 'val' => $this->rp($lr['laba_bersih'] ?? 0), 'type' => 'total'];
 
         foreach ($lrRows as $r) {
-            $rowH = 5.2;
+            $rowH = 4.8;
             if ($r['type'] === 'highlight') {
                 $this->rect(15, $y, 180, $rowH, 241, 245, 249);
             } elseif ($r['type'] === 'total') {
@@ -394,37 +402,164 @@ class LaporanKeuanganPdf
             $tcG  = ($r['type'] === 'total') ? 64 : 23;
             $tcB  = ($r['type'] === 'total') ? 175 : 42;
 
-            $this->text(18, $y + 3.8, $r['desc'], 8.8, $bold, $tcR, $tcG, $tcB);
-            $this->text(125, $y + 3.8, $r['val'], 8.8, $bold, $tcR, $tcG, $tcB, 'R', 67);
-            $y += ($r['type'] === 'total') ? ($rowH + 1.5) : $rowH;
+            $this->text(18, $y + 3.5, $r['desc'], 8.2, $bold, $tcR, $tcG, $tcB);
+            if (!empty($r['sub'])) {
+                $this->text(82, $y + 3.5, '-> ' . $r['sub'], 7.2, false, 100, 116, 139);
+            }
+            $this->text(125, $y + 3.5, $r['val'], 8.5, $bold, $tcR, $tcG, $tcB, 'R', 67);
+            $y += ($r['type'] === 'total') ? ($rowH + 1.2) : $rowH;
         }
 
-        // II. ARUS KAS
-        $y += 4;
-        $this->rect(15, $y, 180, 6.5, 29, 78, 216);
-        $this->text(18, $y + 4.5, 'VII. LAPORAN ARUS KAS (CASH FLOW STATEMENT)', 9.5, true, 255, 255, 255);
-        $y += 7.5;
+        // VII. NERACA KEUANGAN
+        $y += 4.0;
+        $this->rect(15, $y, 180, 6.0, 29, 78, 216);
+        $this->text(18, $y + 4.2, 'VII. NERACA KEUANGAN (POSISI HARTA, UTANG & EKUITAS)', 9.0, true, 255, 255, 255);
+        $y += 7.0;
+
+        // Subtitle Rumus
+        $this->text(18, $y + 3.0, 'Rumus: Aset = Liabilitas + Ekuitas | Ekuitas = Aset - Liabilitas', 7.5, false, 71, 85, 105);
+        $y += 4.5;
+
+        // Two Column Layout
+        $col1X = 15;  $colW = 87;
+        $col2X = 108;
+
+        // Header Kolom
+        $this->text($col1X, $y + 3.2, 'AKTIVA / ASET', 8.5, true, 29, 78, 216);
+        $this->text($col2X, $y + 3.2, 'PASIVA / LIABILITAS & EKUITAS', 8.5, true, 29, 78, 216);
+        $y += 5.0;
+
+        // Left rows (Aktiva)
+        $leftY = $y;
+        $this->text($col1X, $leftY + 3.0, 'Aset Lancar', 7.8, true, 71, 85, 105);
+        $leftY += 4.0;
+        $asetLancar = [
+            ['desc' => 'Kas & Setara Kas', 'sub' => 'dari input Kas & Saldo Bank', 'val' => $this->rp($nr['kas_bank'] ?? 0), 'type' => 'normal'],
+            ['desc' => 'Piutang Usaha', 'sub' => 'dari input Tagihan Pelanggan', 'val' => $this->rp($nr['piutang_usaha'] ?? 0), 'type' => 'normal'],
+            ['desc' => 'Persediaan Barang', 'sub' => 'dari input Stok Barang', 'val' => $this->rp($nr['persediaan'] ?? 0), 'type' => 'normal'],
+            ['desc' => 'Total Aset Lancar', 'sub' => '', 'val' => $this->rp($nr['total_aset_lancar'] ?? 0), 'type' => 'highlight'],
+        ];
+        foreach ($asetLancar as $r) {
+            $hasSub = !empty($r['sub']);
+            $h = $hasSub ? 6.5 : 4.8;
+            if ($r['type'] === 'highlight') $this->rect($col1X, $leftY, $colW, $h, 241, 245, 249);
+            $this->text($col1X + 2, $leftY + 3.2, $r['desc'], 7.8, $r['type'] !== 'normal');
+            if ($hasSub) {
+                $this->text($col1X + 2, $leftY + 5.8, '-> ' . $r['sub'], 6.5, false, 100, 116, 139);
+            }
+            $this->text($col1X + 45, $leftY + ($hasSub ? 4.0 : 3.2), $r['val'], 8.0, $r['type'] !== 'normal', 15, 23, 42, 'R', 40);
+            $leftY += $h;
+        }
+
+        if (!empty($nr['aset_tetap_neto']) && (float)$nr['aset_tetap_neto'] > 0) {
+            $leftY += 1.5;
+            $this->text($col1X, $leftY + 3.0, 'Aset Tetap', 7.8, true, 71, 85, 105);
+            $leftY += 4.0;
+            $asetTetap = [
+                ['desc' => 'Aset Tetap Neto', 'val' => $this->rp($nr['aset_tetap_neto'] ?? 0), 'type' => 'highlight'],
+            ];
+            foreach ($asetTetap as $r) {
+                $h = 4.8;
+                if ($r['type'] === 'highlight') $this->rect($col1X, $leftY, $colW, $h, 241, 245, 249);
+                $this->text($col1X + 2, $leftY + 3.2, $r['desc'], 7.8, $r['type'] !== 'normal');
+                $this->text($col1X + 45, $leftY + 3.2, $r['val'], 8.0, $r['type'] !== 'normal', 15, 23, 42, 'R', 40);
+                $leftY += $h;
+            }
+        }
+
+        // Right rows (Pasiva)
+        $rightY = $y;
+        $utangBank = (float)($nr['utang_bank_pendek'] ?? 0) + (float)($nr['utang_jangka_panjang'] ?? 0);
+        $this->text($col2X, $rightY + 3.0, 'Utang (Liabilitas)', 7.8, true, 71, 85, 105);
+        $rightY += 4.0;
+        $liab = [
+            ['desc' => 'Utang Supplier', 'sub' => 'dari input Utang Supplier', 'val' => $this->rp($nr['utang_usaha'] ?? 0), 'type' => 'normal'],
+        ];
+        if ($utangBank > 0) {
+            $liab[] = ['desc' => 'Utang Bank', 'sub' => 'dari input Pinjaman Bank', 'val' => $this->rp($utangBank), 'type' => 'normal'];
+        }
+        $liab[] = ['desc' => 'TOTAL UTANG (LIABILITAS)', 'sub' => '', 'val' => $this->rp($nr['total_liabilitas'] ?? 0), 'type' => 'highlight'];
+
+        foreach ($liab as $r) {
+            $hasSub = !empty($r['sub']);
+            $h = $hasSub ? 6.5 : 4.8;
+            if ($r['type'] === 'highlight') $this->rect($col2X, $rightY, $colW, $h, 241, 245, 249);
+            $this->text($col2X + 2, $rightY + 3.2, $r['desc'], 7.8, $r['type'] !== 'normal');
+            if ($hasSub) {
+                $this->text($col2X + 2, $rightY + 5.8, '-> ' . $r['sub'], 6.5, false, 100, 116, 139);
+            }
+            $this->text($col2X + 45, $rightY + ($hasSub ? 4.0 : 3.2), $r['val'], 8.0, $r['type'] !== 'normal', 15, 23, 42, 'R', 40);
+            $rightY += $h;
+        }
+
+        $rightY += 1.5;
+        $this->text($col2X, $rightY + 3.0, 'Modal (Ekuitas)', 7.8, true, 71, 85, 105);
+        $rightY += 4.0;
+        $ekuitas = [];
+        if (!empty($nr['modal_disetor']) && (float)$nr['modal_disetor'] > 0) {
+            $ekuitas[] = ['desc' => 'Modal Disetor', 'val' => $this->rp($nr['modal_disetor'] ?? 0), 'type' => 'normal'];
+        }
+        $ekuitas[] = ['desc' => 'Laba Ditahan', 'val' => $this->rp($nr['laba_ditahan_akhir'] ?? 0), 'type' => 'normal'];
+        $ekuitas[] = ['desc' => 'TOTAL MODAL (EKUITAS)', 'val' => $this->rp($nr['total_ekuitas'] ?? 0), 'type' => 'highlight'];
+
+        foreach ($ekuitas as $r) {
+            $h = 4.8;
+            if ($r['type'] === 'highlight') $this->rect($col2X, $rightY, $colW, $h, 241, 245, 249);
+            $this->text($col2X + 2, $rightY + 3.2, $r['desc'], 7.8, $r['type'] !== 'normal');
+            $this->text($col2X + 45, $rightY + 3.2, $r['val'], 8.0, $r['type'] !== 'normal', 15, 23, 42, 'R', 40);
+            $rightY += $h;
+        }
+
+        // Total Banners (Solid Blue)
+        $maxY = max($leftY, $rightY) + 3.0;
+        $bannerH = 7.5;
+        $this->rect($col1X, $maxY, $colW, $bannerH, 29, 78, 216);
+        $this->text($col1X + 3, $maxY + 4.8, 'TOTAL ASET', 9.0, true, 255, 255, 255);
+        $this->text($col1X + 40, $maxY + 4.8, $this->rp($nr['total_aset'] ?? 0), 9.2, true, 255, 255, 255, 'R', 44);
+
+        $this->rect($col2X, $maxY, $colW, $bannerH, 29, 78, 216);
+        $this->text($col2X + 3, $maxY + 4.8, 'TOTAL UTANG + MODAL', 8.5, true, 255, 255, 255);
+        $this->text($col2X + 45, $maxY + 4.8, $this->rp($nr['total_liabilitas_ekuitas'] ?? 0), 9.2, true, 255, 255, 255, 'R', 39);
+
+        $this->renderFooter($page, $totalPages);
+    }
+
+    /**
+     * LEMBAR 3: ARUS KAS (HASIL AKHIR), ANALISA RASIO & PENGESAHAN
+     */
+    protected function renderPageArusKasRasio(int $page, int $totalPages): void
+    {
+        $this->addPage();
+        $y = $this->renderHeaderAndTitle('Laporan Arus Kas (Hasil Akhir), Analisa Rasio & Pengesahan');
+
+        $ak = $this->hasil['arus_kas'] ?? [];
+        $lr = $this->hasil['laba_rugi'] ?? [];
+        $nr = $this->hasil['neraca'] ?? [];
+
+        // VIII. ARUS KAS (HASIL AKHIR)
+        $y += 1.5;
+        $this->rect(15, $y, 180, 6.0, 29, 78, 216);
+        $this->text(18, $y + 4.2, 'VIII. LAPORAN ARUS KAS (HASIL AKHIR ALIRAN KAS USAHA)', 9.0, true, 255, 255, 255);
+        $y += 7.0;
+
+        // Subtitle Rumus
+        $this->text(18, $y + 3.0, 'Rumus: Kenaikan Kas = Kas Operasi + Kas Investasi + Kas Pendanaan | Kas Akhir = Kas Awal + Kas Operasi + Kas Investasi + Kas Pendanaan', 7.0, false, 71, 85, 105);
+        $y += 4.5;
 
         $akSections = [
             [
                 'header' => 'AKTIVITAS OPERASIONAL',
                 'rows' => [
-                    ['desc' => 'Laba Bersih', 'val' => $this->rp($ak['laba_bersih'] ?? 0), 'type' => 'normal'],
-                    ['desc' => 'Perubahan Piutang Usaha', 'val' => $this->rpParen($ak['kenaikan_piutang'] ?? 0), 'type' => 'normal'],
-                    ['desc' => 'Perubahan Persediaan', 'val' => $this->rpParen($ak['kenaikan_persediaan'] ?? 0), 'type' => 'normal'],
-                    ['desc' => 'Perubahan Utang Usaha', 'val' => $this->rp($ak['kenaikan_utang_usaha'] ?? 0), 'type' => 'normal'],
-                    ['desc' => 'Kas Bersih dari Aktivitas Operasi', 'val' => $this->rp($ak['kas_operasional'] ?? 0), 'type' => 'highlight'],
+                    ['desc' => 'Kas Bersih Operasi Usaha', 'sub' => 'Laba Bersih + Perubahan Modal Kerja', 'val' => $this->rp($ak['kas_operasional'] ?? 0), 'type' => 'highlight'],
                 ]
             ],
         ];
 
-        // Aktivitas Investasi: Hanya ditampilkan jika ada belanja aset (Capex)
         if (!empty($ak['pembelian_aset_tetap']) && (float)$ak['pembelian_aset_tetap'] > 0) {
             $akSections[] = [
                 'header' => 'AKTIVITAS INVESTASI',
                 'rows' => [
-                    ['desc' => 'Pembelian Aset Tetap (Capital Expenditure)', 'val' => $this->rpParen($ak['pembelian_aset_tetap'] ?? 0), 'type' => 'normal'],
-                    ['desc' => 'Kas Bersih untuk Aktivitas Investasi', 'val' => $this->rpParen(abs($ak['kas_investasi'] ?? 0)), 'type' => 'highlight'],
+                    ['desc' => 'Pembelian Aset Tetap (Investasi)', 'sub' => 'pengeluaran modal / capex', 'val' => $this->rpParen(abs($ak['kas_investasi'] ?? $ak['pembelian_aset_tetap'])), 'type' => 'highlight'],
                 ]
             ];
         }
@@ -432,23 +567,27 @@ class LaporanKeuanganPdf
         $akSections[] = [
             'header' => 'AKTIVITAS PENDANAAN',
             'rows' => [
-                ['desc' => 'Pembayaran Pokok Utang Bank', 'val' => $this->rpParen($ak['cicilan_pokok'] ?? 0), 'type' => 'normal'],
-                ['desc' => 'Kas Bersih untuk Aktivitas Pendanaan', 'val' => $this->rpParen(abs($ak['kas_pendanaan'] ?? 0)), 'type' => 'highlight'],
+                ['desc' => 'Pembayaran Pokok Utang Bank', 'sub' => 'dari input Pinjaman Bank', 'val' => $this->rpParen($ak['cicilan_pokok'] ?? 0), 'type' => 'normal'],
+                ['desc' => 'Kas Bersih Aktivitas Pendanaan', 'sub' => 'total cicilan pokok', 'val' => $this->rpParen(abs($ak['kas_pendanaan'] ?? 0)), 'type' => 'highlight'],
             ]
         ];
 
+        $subKenaikan = (!empty($ak['pembelian_aset_tetap']) && (float)$ak['pembelian_aset_tetap'] > 0)
+            ? 'Kas Operasi + Investasi + Pendanaan'
+            : 'Kas Operasi + Pendanaan';
+
         $akSections[] = [
-            'header' => 'REKONSILIASI SALDO KAS',
+            'header' => 'REKONSILIASI SALDO KAS (HASIL AKHIR)',
             'rows' => [
-                ['desc' => 'Kenaikan (Penurunan) Kas Bersih', 'val' => $this->rp($ak['kenaikan_bersih_kas'] ?? 0), 'type' => 'normal'],
-                ['desc' => 'Saldo Kas Awal Periode', 'val' => $this->rp($ak['saldo_awal_kas'] ?? 0), 'type' => 'normal'],
-                ['desc' => 'SALDO KAS AKHIR PERIODE', 'val' => $this->rp($ak['kas_akhir'] ?? 0), 'type' => 'total'],
+                ['desc' => 'Kenaikan (Penurunan) Kas Bersih', 'sub' => $subKenaikan, 'val' => $this->rp($ak['kenaikan_bersih_kas'] ?? 0), 'type' => 'normal'],
+                ['desc' => 'Saldo Kas Awal Periode', 'sub' => 'dari input Saldo Rekening', 'val' => $this->rp($ak['saldo_awal_kas'] ?? 0), 'type' => 'normal'],
+                ['desc' => 'SALDO KAS AKHIR PERIODE', 'sub' => 'hasil perhitungan arus kas', 'val' => $this->rp($ak['kas_akhir'] ?? 0), 'type' => 'total'],
             ]
         ];
 
         foreach ($akSections as $sec) {
-            $this->text(18, $y + 3.8, $sec['header'], 8.0, true, 29, 78, 216);
-            $y += 4.8;
+            $this->text(18, $y + 3.5, $sec['header'], 7.8, true, 29, 78, 216);
+            $y += 4.5;
 
             foreach ($sec['rows'] as $r) {
                 $rowH = 4.8;
@@ -462,138 +601,16 @@ class LaporanKeuanganPdf
                 $tcG  = ($r['type'] === 'total') ? 64 : 23;
                 $tcB  = ($r['type'] === 'total') ? 175 : 42;
 
-                $this->text(18, $y + 3.6, $r['desc'], 8.5, $bold, $tcR, $tcG, $tcB);
-                $this->text(125, $y + 3.6, $r['val'], 8.5, $bold, $tcR, $tcG, $tcB, 'R', 67);
+                $this->text(18, $y + 3.5, $r['desc'], 8.2, $bold, $tcR, $tcG, $tcB);
+                if (!empty($r['sub'])) {
+                    $this->text(82, $y + 3.5, '-> ' . $r['sub'], 7.2, false, 100, 116, 139);
+                }
+                $this->text(125, $y + 3.5, $r['val'], 8.5, $bold, $tcR, $tcG, $tcB, 'R', 67);
                 $y += ($r['type'] === 'total') ? ($rowH + 1.2) : $rowH;
             }
         }
 
-        $this->renderFooter($page, $totalPages);
-    }
-
-    /**
-     * LEMBAR 3: NERACA KEUANGAN, ANALISA RASIO & LEMBAR PENGESAHAN
-     */
-    protected function renderPageNeracaRasio(int $page, int $totalPages): void
-    {
-        $this->addPage();
-        $y = $this->renderHeaderAndTitle('Neraca Keuangan, Analisa Rasio Finansial & Pengesahan');
-
-        $nr = $this->hasil['neraca'] ?? [];
-        $lr = $this->hasil['laba_rugi'] ?? [];
-
-        $y += 2;
-        $this->rect(15, $y, 180, 6.5, 29, 78, 216);
-        $this->text(18, $y + 4.5, 'VIII. NERACA KEUANGAN SEIMBANG (BALANCE SHEET)', 9.5, true, 255, 255, 255);
-        $y += 8.5;
-
-        // Two Column Layout
-        $col1X = 15;  $colW = 87;
-        $col2X = 108;
-
-        // Header Kolom
-        $this->text($col1X, $y + 3.5, 'AKTIVA / ASET', 9.0, true, 29, 78, 216);
-        $this->text($col2X, $y + 3.5, 'PASIVA / LIABILITAS & EKUITAS', 9.0, true, 29, 78, 216);
-        $y += 6;
-
-        // Left rows
-        $leftY = $y;
-        $this->text($col1X, $leftY + 3.2, 'Aset Lancar', 8.2, true, 71, 85, 105);
-        $leftY += 4.5;
-        $asetLancar = [
-            ['desc' => 'Kas & Setara Kas', 'val' => $this->rp($nr['kas_bank'] ?? 0), 'type' => 'normal'],
-            ['desc' => 'Piutang Usaha', 'val' => $this->rp($nr['piutang_usaha'] ?? 0), 'type' => 'normal'],
-            ['desc' => 'Persediaan Barang', 'val' => $this->rp($nr['persediaan'] ?? 0), 'type' => 'normal'],
-            ['desc' => 'Total Aset Lancar', 'val' => $this->rp($nr['total_aset_lancar'] ?? 0), 'type' => 'highlight'],
-        ];
-        foreach ($asetLancar as $r) {
-            $h = 5.0;
-            if ($r['type'] === 'highlight') $this->rect($col1X, $leftY, $colW, $h, 241, 245, 249);
-            $this->text($col1X + 2, $leftY + 3.5, $r['desc'], 8.5, $r['type'] !== 'normal');
-            $this->text($col1X + 45, $leftY + 3.5, $r['val'], 8.5, $r['type'] !== 'normal', 15, 23, 42, 'R', 40);
-            $leftY += $h;
-        }
-
-        // Aset Tetap: Hanya ditampilkan jika ada aset tetap (> 0)
-        if (!empty($nr['aset_tetap_neto']) && (float)$nr['aset_tetap_neto'] > 0) {
-            $leftY += 3;
-            $this->text($col1X, $leftY + 3.2, 'Aset Tetap', 8.2, true, 71, 85, 105);
-            $leftY += 4.5;
-            $asetTetap = [
-                ['desc' => 'Aset Tetap Neto', 'val' => $this->rp($nr['aset_tetap_neto'] ?? 0), 'type' => 'normal'],
-                ['desc' => 'Total Aset Tetap', 'val' => $this->rp($nr['aset_tetap_neto'] ?? 0), 'type' => 'highlight'],
-            ];
-            foreach ($asetTetap as $r) {
-                $h = 5.0;
-                if ($r['type'] === 'highlight') $this->rect($col1X, $leftY, $colW, $h, 241, 245, 249);
-                $this->text($col1X + 2, $leftY + 3.5, $r['desc'], 8.5, $r['type'] !== 'normal');
-                $this->text($col1X + 45, $leftY + 3.5, $r['val'], 8.5, $r['type'] !== 'normal', 15, 23, 42, 'R', 40);
-                $leftY += $h;
-            }
-        }
-
-        // Right rows
-        $rightY = $y;
-        $utangBank = (float)($nr['utang_bank_pendek'] ?? 0) + (float)($nr['utang_jangka_panjang'] ?? 0);
-        $this->text($col2X, $rightY + 3.2, ($utangBank > 0 ? 'Utang Usaha & Bank' : 'Utang Usaha'), 8.2, true, 71, 85, 105);
-        $rightY += 4.5;
-        $liab = [
-            ['desc' => 'Utang Usaha', 'val' => $this->rp($nr['utang_usaha'] ?? 0), 'type' => 'normal'],
-        ];
-        if ($utangBank > 0) {
-            $liab[] = ['desc' => 'Utang Bank', 'val' => $this->rp($utangBank), 'type' => 'normal'];
-        }
-        $liab[] = ['desc' => 'Total Liabilitas', 'val' => $this->rp($nr['total_liabilitas'] ?? 0), 'type' => 'highlight'];
-
-        foreach ($liab as $r) {
-            $h = 5.0;
-            if ($r['type'] === 'highlight') $this->rect($col2X, $rightY, $colW, $h, 241, 245, 249);
-            $this->text($col2X + 2, $rightY + 3.5, $r['desc'], 8.5, $r['type'] !== 'normal');
-            $this->text($col2X + 45, $rightY + 3.5, $r['val'], 8.5, $r['type'] !== 'normal', 15, 23, 42, 'R', 40);
-            $rightY += $h;
-        }
-
-        $rightY += 3;
-        $this->text($col2X, $rightY + 3.2, 'Ekuitas', 8.2, true, 71, 85, 105);
-        $rightY += 4.5;
-        $ekuitas = [];
-        if (!empty($nr['modal_disetor']) && (float)$nr['modal_disetor'] > 0) {
-            $ekuitas[] = ['desc' => 'Modal Disetor', 'val' => $this->rp($nr['modal_disetor'] ?? 0), 'type' => 'normal'];
-        }
-        $ekuitas[] = ['desc' => 'Laba Ditahan', 'val' => $this->rp($nr['laba_ditahan_akhir'] ?? 0), 'type' => 'normal'];
-        $ekuitas[] = ['desc' => 'Total Ekuitas', 'val' => $this->rp($nr['total_ekuitas'] ?? 0), 'type' => 'highlight'];
-
-        foreach ($ekuitas as $r) {
-            $h = 5.0;
-            if ($r['type'] === 'highlight') $this->rect($col2X, $rightY, $colW, $h, 241, 245, 249);
-            $this->text($col2X + 2, $rightY + 3.5, $r['desc'], 8.5, $r['type'] !== 'normal');
-            $this->text($col2X + 45, $rightY + 3.5, $r['val'], 8.5, $r['type'] !== 'normal', 15, 23, 42, 'R', 40);
-            $rightY += $h;
-        }
-
-        // Total Banners (Solid Blue)
-        $maxY = max($leftY, $rightY) + 4;
-        $bannerH = 8.5;
-        $this->rect($col1X, $maxY, $colW, $bannerH, 29, 78, 216);
-        $this->text($col1X + 3, $maxY + 5.5, 'TOTAL ASET', 9.5, true, 255, 255, 255);
-        $this->text($col1X + 40, $maxY + 5.5, $this->rp($nr['total_aset'] ?? 0), 10.0, true, 255, 255, 255, 'R', 44);
-
-        $this->rect($col2X, $maxY, $colW, $bannerH, 29, 78, 216);
-        $this->text($col2X + 3, $maxY + 5.5, 'TOTAL LIABILITAS & EKUITAS', 8.8, true, 255, 255, 255);
-        $this->text($col2X + 45, $maxY + 5.5, $this->rp($nr['total_liabilitas_ekuitas'] ?? 0), 10.0, true, 255, 255, 255, 'R', 39);
-
-        // Validation Box
-        $valY = $maxY + $bannerH + 3.5;
-        $this->rect(15, $valY, 180, 7, 240, 253, 244);
-        $this->line(15, $valY, 195, $valY, 187, 247, 208, 0.5);
-        $this->line(15, $valY + 7, 195, $valY + 7, 187, 247, 208, 0.5);
-        $this->line(15, $valY, 15, $valY + 7, 187, 247, 208, 0.5);
-        $this->line(195, $valY, 195, $valY + 7, 187, 247, 208, 0.5);
-
-        $this->text(18, $valY + 4.8, 'Neraca Seimbang: Selisih Rp 0 (Validasi Sistem Lulus 100%)', 8.8, true, 22, 101, 52);
-        $this->text(150, $valY + 4.8, 'TERVERIFIKASI', 8.8, true, 21, 128, 61, 'R', 42);
-
-        $y = $valY + 11;
+        $y += 3.0;
 
         // IX. RASIO KEUANGAN UTAMA (NO DSCR - Only NPM, Current Ratio, DER)
         $this->rect(15, $y, 180, 6.0, 29, 78, 216);
@@ -624,18 +641,18 @@ class LaporanKeuanganPdf
         $this->line(15 + $cardW, $y, 15 + $cardW, $y + $cardH, 226, 232, 240);
         $this->text(18, $y + 4.5, 'Margin Laba Bersih (NPM)', 8.0, true, 100, 116, 139);
         $this->text(18, $y + 11.5, $npm . ' %', 13.0, true, 29, 78, 216);
-        $this->text(18, $y + 15.2, 'Benchmark Industri: >= 10%', 7.2, false, 100, 116, 139);
+        $this->text(18, $y + 15.0, 'Standar Sehat: >= 10.0%', 7.0, false, 22, 101, 52);
 
-        // Card 2: Current Ratio
+        // Card 2: CR
         $cX2 = 15 + $cardW + 3;
         $this->rect($cX2, $y, $cardW, $cardH, 248, 250, 252);
         $this->line($cX2, $y, $cX2 + $cardW, $y, 226, 232, 240);
         $this->line($cX2, $y + $cardH, $cX2 + $cardW, $y + $cardH, 226, 232, 240);
         $this->line($cX2, $y, $cX2, $y + $cardH, 226, 232, 240);
         $this->line($cX2 + $cardW, $y, $cX2 + $cardW, $y + $cardH, 226, 232, 240);
-        $this->text($cX2 + 3, $y + 4.5, 'Current Ratio (Rasio Lancar)', 8.0, true, 100, 116, 139);
+        $this->text($cX2 + 3, $y + 4.5, 'Current Ratio (CR)', 8.0, true, 100, 116, 139);
         $this->text($cX2 + 3, $y + 11.5, $cr . ' %', 13.0, true, 22, 101, 52);
-        $this->text($cX2 + 3, $y + 15.2, 'Benchmark Sehat: >= 120%', 7.2, false, 100, 116, 139);
+        $this->text($cX2 + 3, $y + 15.0, 'Likuiditas Lancar: >= 100%', 7.0, false, 22, 101, 52);
 
         // Card 3: DER
         $cX3 = $cX2 + $cardW + 3;
@@ -644,16 +661,16 @@ class LaporanKeuanganPdf
         $this->line($cX3, $y + $cardH, $cX3 + $cardW, $y + $cardH, 226, 232, 240);
         $this->line($cX3, $y, $cX3, $y + $cardH, 226, 232, 240);
         $this->line($cX3 + $cardW, $y, $cX3 + $cardW, $y + $cardH, 226, 232, 240);
-        $this->text($cX3 + 3, $y + 4.5, 'Debt to Equity Ratio (DER)', 8.0, true, 100, 116, 139);
-        $this->text($cX3 + 3, $y + 11.5, $der . ' x', 13.0, true, 180, 83, 9);
-        $this->text($cX3 + 3, $y + 15.2, 'Batas Maksimum: <= 3.0x', 7.2, false, 100, 116, 139);
+        $this->text($cX3 + 3, $y + 4.5, 'Debt to Equity (DER)', 8.0, true, 100, 116, 139);
+        $this->text($cX3 + 3, $y + 11.5, $der . ' x', 13.0, true, 29, 78, 216);
+        $this->text($cX3 + 3, $y + 15.0, 'Ambang Solvabilitas: <= 2.5x', 7.0, false, 22, 101, 52);
 
-        $y += $cardH + 6;
+        $y += $cardH + 4;
 
-        // X. PENGESAHAN & TANDA TANGAN KOMITE KREDIT
-        $this->rect(15, $y, 180, 5.5, 71, 85, 105);
-        $this->text(18, $y + 3.8, 'X. LEMBAR REKOMENDASI & PENGESAHAN ANALISA KREDIT', 8.5, true, 255, 255, 255);
-        $y += 7.0;
+        // X. LEMBAR PERSETUJUAN & PENGESAHAN
+        $this->rect(15, $y, 180, 6.0, 29, 78, 216);
+        $this->text(18, $y + 4.2, 'X. LEMBAR PENGESAHAN & PERSETUJUAN KOMITE', 8.8, true, 255, 255, 255);
+        $y += 7.5;
 
         $ttdW = 58;
         $ttdH = 28;
@@ -696,10 +713,18 @@ class LaporanKeuanganPdf
         $this->renderFooter($page, $totalPages);
     }
 
+    /**
+     * RENDER NERACA KHUSUS JIKA TARGET HANYA 'nr'
+     */
+    protected function renderPageNeracaRasio(int $page, int $totalPages): void
+    {
+        $this->renderPageLabaRugiNeraca($page, $totalPages);
+    }
+
     protected function renderPageLabaRugiOnly(int $page, int $totalPages): void
     {
         $this->addPage();
-        $y = $this->renderHeaderAndTitle('Laporan Laba Rugi');
+        $y = $this->renderHeaderAndTitle('Laporan Data Keuangan');
 
         $lr = $this->hasil['laba_rugi'] ?? [];
         $karyawanList = !empty($this->kredit['daftar_karyawan']) ? json_decode($this->kredit['daftar_karyawan'], true) : [];
@@ -707,7 +732,7 @@ class LaporanKeuanganPdf
 
         $y += 4;
         $this->rect(15, $y, 180, 7.0, 29, 78, 216);
-        $this->text(18, $y + 5.0, 'LAPORAN LABA RUGI KOMPREHENSIF', 10.0, true, 255, 255, 255);
+        $this->text(18, $y + 5.0, 'LAPORAN DATA KEUANGAN KOMPREHENSIF', 10.0, true, 255, 255, 255);
         $y += 9.0;
 
         $lrRows = [
@@ -762,24 +787,11 @@ class LaporanKeuanganPdf
             [
                 'header' => 'AKTIVITAS OPERASIONAL',
                 'rows' => [
-                    ['desc' => 'Laba Bersih', 'val' => $this->rp($ak['laba_bersih'] ?? 0), 'type' => 'normal'],
-                    ['desc' => 'Perubahan Piutang Usaha', 'val' => $this->rpParen($ak['kenaikan_piutang'] ?? 0), 'type' => 'normal'],
-                    ['desc' => 'Perubahan Persediaan', 'val' => $this->rpParen($ak['kenaikan_persediaan'] ?? 0), 'type' => 'normal'],
-                    ['desc' => 'Perubahan Utang Usaha', 'val' => $this->rp($ak['kenaikan_utang_usaha'] ?? 0), 'type' => 'normal'],
+                    ['desc' => 'Laba Bersih Usaha', 'val' => $this->rp($ak['laba_bersih'] ?? 0), 'type' => 'normal'],
                     ['desc' => 'Kas Bersih Operasi', 'val' => $this->rp($ak['kas_operasional'] ?? 0), 'type' => 'highlight'],
                 ]
             ],
         ];
-
-        if (!empty($ak['pembelian_aset_tetap']) && (float)$ak['pembelian_aset_tetap'] > 0) {
-            $akSections[] = [
-                'header' => 'AKTIVITAS INVESTASI',
-                'rows' => [
-                    ['desc' => 'Pembelian Aset Tetap', 'val' => $this->rpParen($ak['pembelian_aset_tetap'] ?? 0), 'type' => 'normal'],
-                    ['desc' => 'Kas Bersih Investasi', 'val' => $this->rpParen(abs($ak['kas_investasi'] ?? 0)), 'type' => 'highlight'],
-                ]
-            ];
-        }
 
         $akSections[] = [
             'header' => 'AKTIVITAS PENDANAAN',

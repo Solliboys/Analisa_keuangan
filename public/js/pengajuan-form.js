@@ -120,7 +120,7 @@ const stepsMetadata = [
     { title: '6. SLIK / CLIK', sub: 'Sedang dikerjakan', defaultSub: 'Cek riwayat kredit', mainTitle: 'Langkah 6: Cek SLIK OJK & Riwayat', desc: 'Riwayat kolektibilitas kredit pada bank atau lembaga keuangan lain.' },
     { title: '7. Web Check', sub: 'Sedang dikerjakan', defaultSub: 'Verifikasi online', mainTitle: 'Langkah 7: Verifikasi Web & Legal Check', desc: 'Pengecekan profiling web, kepatuhan hukum, dan reputasi usaha.' },
     { title: '8. Rekening Koran', sub: 'Sedang dikerjakan', defaultSub: 'Analisis mutasi', mainTitle: 'Langkah 8: Rekapitulasi Mutasi Rekening Koran', desc: 'Pencatatan arus kas masuk (kredit) dan keluar (debit) untuk validasi omzet usaha riil.' },
-    { title: '9. Laba Rugi', sub: 'Sedang dikerjakan', defaultSub: 'Proyeksi keuangan', mainTitle: 'Langkah 9: Analisis Laba Rugi & Pendapatan', desc: 'Perhitungan omset pendapatan, HPP pengeluaran, laba bersih riil, dan ekstra cashflow.' },
+    { title: '8. Data Keuangan', sub: 'Sedang dikerjakan', defaultSub: 'Proyeksi keuangan', mainTitle: 'Langkah 8: Analisis Data Keuangan & Pendapatan', desc: 'Perhitungan omset pendapatan, HPP pengeluaran, laba bersih riil, dan ekstra cashflow.' },
     { title: '10. Opini Pengusul', sub: 'Sedang dikerjakan', defaultSub: 'Catatan kualitatif', mainTitle: 'Langkah 10: Opini & Pertimbangan Pengusul', desc: 'Evaluasi kualitatif dan pertimbangan pengusul terkait kelayakan usaha, kondisi agunan, dan kebutuhan pembiayaan nasabah.' },
     { title: '11. Disbursement', sub: 'Sedang dikerjakan', defaultSub: 'Jadwal pencairan', mainTitle: 'Langkah 11: Simulasi Biaya & Pencairan (Disbursement)', desc: 'Rincian seluruh komponen biaya potong muka dan estimasi dana riil yang diterima debitur saat akad.' }
 ];
@@ -786,26 +786,43 @@ function goToTab(tabIndex) {
     if (currentTab === 6 && typeof sinkronisasiDataDebiturKeSlik === 'function') {
         sinkronisasiDataDebiturKeSlik();
     }
-    if (normalizeTab(currentTab) === 'laporan') {
-        const checkHpp = document.getElementById('checkAdaHppPerorangan');
-        const kid = document.getElementById('kredit_id')?.value || 'draft';
-        const savedHpp = sessionStorage.getItem('hpp_perorangan_' + kid);
-        let isUsaha = false;
-        if (checkHpp) {
-            isUsaha = checkHpp.checked;
-        } else if (savedHpp !== null) {
-            isUsaha = (savedHpp === '1');
-        }
-        if (typeof window.gantiKategoriDebitur === 'function') {
-            window.gantiKategoriDebitur(isUsaha ? 'usaha' : 'gaji', false);
-        }
-        if (typeof hitungLabaRugi === 'function') {
-            hitungLabaRugi();
-        }
-        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
-            window.sinkronkanLaporanKeuangan();
-            setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 50);
-            setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 200);
+    const normTabCheck = normalizeTab(currentTab);
+    if (normTabCheck === 8 || normTabCheck === 9 || currentTab === 8 || currentTab === 9) {
+        if (typeof hitungRataRataRekening === 'function') hitungRataRataRekening();
+        if (typeof hitungLabaRugi === 'function') hitungLabaRugi();
+    }
+    if (normTabCheck === 'laporan' || currentTab === 'laporan') {
+        if (window.IS_BADAN_USAHA) {
+            if (typeof hitungDataLaporanDariDOM === 'function' && typeof isiDataLaporanBU === 'function') {
+                try {
+                    const domData = hitungDataLaporanDariDOM();
+                    if (domData) isiDataLaporanBU(domData);
+                } catch(e) { console.warn('Laporan DOM auto-calc:', e); }
+            }
+            if (typeof generateLaporanKeuangan === 'function') {
+                generateLaporanKeuangan(true);
+            }
+        } else {
+            const checkHpp = document.getElementById('checkAdaHppPerorangan');
+            const kid = document.getElementById('kredit_id')?.value || 'draft';
+            const savedHpp = sessionStorage.getItem('hpp_perorangan_' + kid);
+            let isUsaha = false;
+            if (checkHpp) {
+                isUsaha = checkHpp.checked;
+            } else if (savedHpp !== null) {
+                isUsaha = (savedHpp === '1');
+            }
+            if (typeof window.gantiKategoriDebitur === 'function') {
+                window.gantiKategoriDebitur(isUsaha ? 'usaha' : 'gaji', false);
+            }
+            if (typeof hitungLabaRugi === 'function') {
+                hitungLabaRugi();
+            }
+            if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+                window.sinkronkanLaporanKeuangan();
+                setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 50);
+                setTimeout(() => { if (typeof window.sinkronkanLaporanKeuangan === 'function') window.sinkronkanLaporanKeuangan(); }, 200);
+            }
         }
     }
 
@@ -1299,42 +1316,135 @@ function tambahBarisSlik() {
 // Kalkulasi Rekening Koran
 function hitungRataRataRekening() {
     let totalAvgKredit = 0;
+    let totalAvgDebit = 0;
+    let totalKreditAll = 0;
+    let totalDebitAll = 0;
     const items = document.querySelectorAll('.rekening-item');
     items.forEach(item => {
         const kInput = item.querySelector('.rek-kredit');
+        const dInput = item.querySelector('.rek-debit');
         const bInput = item.querySelector('.rek-bulan');
         const labelAvg = item.querySelector('.rek-avg-kredit');
 
         const totalKredit = parseNominal(kInput?.value || 0);
+        const totalDebit = parseNominal(dInput?.value || 0);
         const bulan = Math.max(1, parseInt(bInput?.value || 6));
         const avgKredit = Math.round(totalKredit / bulan);
+        const avgDebit = Math.round(totalDebit / bulan);
 
         if (labelAvg) labelAvg.innerText = formatRupiahString(avgKredit);
         totalAvgKredit += avgKredit;
+        totalAvgDebit += avgDebit;
+        totalKreditAll += totalKredit;
+        totalDebitAll += totalDebit;
     });
 
-    document.getElementById('totalAvgKreditGabungan').innerText = formatRupiahString(totalAvgKredit);
+    const elTotalKredit = document.getElementById('totalAvgKreditGabungan');
+    if (elTotalKredit) elTotalKredit.innerText = formatRupiahString(totalAvgKredit);
+
+    const elTotalDebit = document.getElementById('totalAvgDebitGabungan');
+    if (elTotalDebit) elTotalDebit.innerText = formatRupiahString(totalAvgDebit);
+
+    // Hitung estimasi HPP Murni (%) dari mutasi debit dikurangi beban operasional
+    // Mutasi debit rekening koran adalah total kas keluar (kulakan/HPP + gaji/sewa/listrik/utilitas).
+    // Memisahkan beban operasional memastikan tidak ada double-counting yang menyebabkan rugi.
+    const nomBhEl = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 25000000);
+    const nomBlEl = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
+    const totalBebanOp = (nomBhEl > 0 ? nomBhEl : 25000000) + nomBlEl;
+
+    let hppRatio = 78;
+    if (totalAvgKredit > 0 && totalAvgDebit > 0) {
+        let debitMurni = Math.max(0, totalAvgDebit - totalBebanOp);
+        if (debitMurni > 0 && totalAvgKredit > 0) {
+            let r = Math.round((debitMurni / totalAvgKredit) * 1000) / 10;
+            hppRatio = (r > 82 || r <= 0) ? 78 : r;
+        } else {
+            hppRatio = 78;
+        }
+    }
+
+    const elHpp = document.getElementById('estimasiHppGabungan');
+    if (elHpp) elHpp.innerText = hppRatio > 0 ? (hppRatio + '%') : '78%';
+
+    // Auto-sync ke Tab Laba Rugi Badan Usaha
+    syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, false);
 }
+window.hitungRataRataRekening = hitungRataRataRekening;
+
+function syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, isForce = false) {
+    const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
+    if (!isBU) return;
+
+    const pEl = document.getElementById('pendapatan_rk');
+    const hppEl = document.getElementById('hpp_persen_rk');
+    let changed = false;
+
+    // 1. Sync Omzet / Pendapatan Bulanan: pastikan berformat ribuan bertitik
+    if (totalAvgKredit > 0 && pEl) {
+        const curVal = parseNominal(pEl.value || 0);
+        if (isForce || curVal === 0 || curVal === 250000000 || pEl.getAttribute('data-synced-rek') === '1') {
+            pEl.value = formatRupiahString(totalAvgKredit);
+            pEl.setAttribute('data-synced-rek', '1');
+            changed = true;
+        }
+    }
+
+    // 2. Sync HPP (%): ikuti rasio mutasi HPP murni rekening koran (default 78%)
+    if (hppRatio > 0 && hppEl) {
+        const curHpp = parseFloat(hppEl.value) || 0;
+        if (isForce || curHpp === 0 || curHpp === 60 || curHpp >= 90 || hppEl.getAttribute('data-synced-rek') === '1') {
+            hppEl.value = hppRatio;
+            hppEl.setAttribute('data-synced-rek', '1');
+            changed = true;
+        }
+    }
+
+    if (changed) {
+        hitungLabaRugi();
+    }
+}
+window.syncRekeningKeLabaRugiBU = syncRekeningKeLabaRugiBU;
 
 function salinOmzetKeLabaRugi() {
     let totalAvgKredit = 0;
+    let totalAvgDebit = 0;
+    let totalKreditAll = 0;
+    let totalDebitAll = 0;
     document.querySelectorAll('.rekening-item').forEach(item => {
         const kInput = item.querySelector('.rek-kredit');
+        const dInput = item.querySelector('.rek-debit');
         const bInput = item.querySelector('.rek-bulan');
         const totalKredit = parseNominal(kInput?.value || 0);
+        const totalDebit = parseNominal(dInput?.value || 0);
         const bulan = Math.max(1, parseInt(bInput?.value || 6));
         totalAvgKredit += Math.round(totalKredit / bulan);
+        totalAvgDebit += Math.round(totalDebit / bulan);
+        totalKreditAll += totalKredit;
+        totalDebitAll += totalDebit;
     });
 
     if (totalAvgKredit > 0) {
-        document.getElementById('pendapatan_rk').value = formatRupiahString(totalAvgKredit);
-        hitungLabaRugi();
-        showToast('Omzet rata-rata rekening koran berhasil disalin ke Tab Laba Rugi', 'success');
+        const nomBhEl = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 25000000);
+        const nomBlEl = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
+        const totalBebanOp = (nomBhEl > 0 ? nomBhEl : 25000000) + nomBlEl;
+
+        let debitMurni = Math.max(0, totalAvgDebit - totalBebanOp);
+        let hppRatio = 78;
+        if (debitMurni > 0 && totalAvgKredit > 0) {
+            let r = Math.round((debitMurni / totalAvgKredit) * 1000) / 10;
+            hppRatio = (r > 82 || r <= 0) ? 78 : r;
+        }
+
+        syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, true);
+
+        const msg = `Omzet (Rp ${formatRupiahString(totalAvgKredit)}) & HPP (${hppRatio}%) rekening koran berhasil disalin ke Laba Rugi`;
+        showToast(msg, 'success');
         goToTab(9);
     } else {
         showToast('Isi mutasi kredit rekening koran terlebih dahulu', 'error');
     }
 }
+window.salinOmzetKeLabaRugi = salinOmzetKeLabaRugi;
 
 function tambahBarisRekening() {
     const container = document.getElementById('containerRekening');
@@ -1798,9 +1908,17 @@ function hitungLabaRugi() {
         ? totalPendapatanDinamis
         : parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
 
-    // Sync hidden input pendapatan_rk agar form submit dan generate-laporan konsisten
-    if (document.getElementById('pendapatan_rk')) {
-        document.getElementById('pendapatan_rk').value = pRK;
+    // Sync input pendapatan_rk
+    const pEl = document.getElementById('pendapatan_rk');
+    if (pEl) {
+        if (pEl.type === 'hidden') {
+            pEl.value = pRK;
+        } else {
+            // Field input terlihat (Badan Usaha): jika tidak sedang diketik langsung, pastikan berformat ribuan bertitik
+            if (document.activeElement !== pEl && pRK > 0) {
+                pEl.value = formatRupiahString(pRK);
+            }
+        }
     }
 
     const isBU = Boolean(window.IS_BADAN_USAHA);
@@ -1813,8 +1931,16 @@ function hitungLabaRugi() {
     let grossRK = pRK;
 
     if (isAdaHpp) {
-        hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 0);
+        hppPctRK = parsePersen(document.getElementById('hpp_persen_rk')?.value || 0);
+        // Validasi: HPP tidak boleh > 100%
+        if (isBU && hppPctRK > 100 && pRK > 0) {
+            showToast('⚠️ HPP ' + hppPctRK + '% melebihi 100% dari omzet. Periksa input persen.', 'error');
+        }
         nomHppRK = Math.round(pRK * (hppPctRK / 100));
+        // Validasi: HPP tidak boleh > omzet
+        if (isBU && nomHppRK > pRK && pRK > 0) {
+            showToast('⚠️ HPP (Rp ' + nomHppRK.toLocaleString('id-ID') + ') melebihi Omzet. Laba Kotor akan negatif!', 'error');
+        }
         grossRK = Math.max(0, pRK - nomHppRK);
     } else {
         const inputHppPct = document.getElementById('hpp_persen_rk');
@@ -1903,14 +2029,14 @@ function hitungLabaRugi() {
 
     // Track 2: IV
     const pIV = parseNominal(document.getElementById('pendapatan_iv')?.value || 0);
-    const hppPctIV = parseFloat(document.getElementById('hpp_persen_iv')?.value || 60);
+    const hppPctIV = parsePersen(document.getElementById('hpp_persen_iv')?.value || 60);
     const nomHppIV = Math.round(pIV * (hppPctIV / 100));
     const grossIV = pIV - nomHppIV;
 
-    const bhPctIV = parseFloat(document.getElementById('biaya_hidup_persen_iv')?.value || 10);
+    const bhPctIV = parsePersen(document.getElementById('biaya_hidup_persen_iv')?.value || 10);
     const nomBhIV = Math.round(pIV * (bhPctIV / 100));
 
-    const blPctIV = parseFloat(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
+    const blPctIV = parsePersen(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
     const nomBlIV = Math.round(pIV * (blPctIV / 100));
 
     const nettIV = grossIV - nomBhIV - nomBlIV;
@@ -2712,9 +2838,9 @@ function hitungRasioDSC() {
 
     // Nett RK
     const pRK = parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
-    const hppPctRK = parseFloat(document.getElementById('hpp_persen_rk')?.value || 60);
-    const bhPctRK = parseFloat(document.getElementById('biaya_hidup_persen_rk')?.value || 10);
-    const blPctRK = parseFloat(document.getElementById('beban_lainnya_persen_rk')?.value || 10);
+    const hppPctRK = parsePersen(document.getElementById('hpp_persen_rk')?.value || 60);
+    const bhPctRK = parsePersen(document.getElementById('biaya_hidup_persen_rk')?.value || 10);
+    const blPctRK = parsePersen(document.getElementById('beban_lainnya_persen_rk')?.value || 10);
     const nettRK = pRK - (pRK * (hppPctRK / 100)) - (pRK * (bhPctRK / 100)) - (pRK * (blPctRK / 100));
 
     // Tambahan pendapatan lain jika aktif
@@ -2724,9 +2850,9 @@ function hitungRasioDSC() {
 
     // Nett IV
     const pIV = parseNominal(document.getElementById('pendapatan_iv')?.value || 0);
-    const hppPctIV = parseFloat(document.getElementById('hpp_persen_iv')?.value || 60);
-    const bhPctIV = parseFloat(document.getElementById('biaya_hidup_persen_iv')?.value || 10);
-    const blPctIV = parseFloat(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
+    const hppPctIV = parsePersen(document.getElementById('hpp_persen_iv')?.value || 60);
+    const bhPctIV = parsePersen(document.getElementById('biaya_hidup_persen_iv')?.value || 10);
+    const blPctIV = parsePersen(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
     const nettIV = pIV - (pIV * (hppPctIV / 100)) - (pIV * (bhPctIV / 100)) - (pIV * (blPctIV / 100));
 
     const dscRK = angsuran > 0 ? (totalNettRK / angsuran).toFixed(2) : 0;
@@ -3286,17 +3412,20 @@ async function simpanForm(isComplete = false, showNotification = true) {
                     window.location.href = getBaseUrl() + '/pengajuan';
                 }, 1200);
             }
+            return data.kredit_id || true;
         } else {
             const pesanGagal = data.message || 'Gagal menyimpan data';
             if (ind) {
                 ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Gagal menyimpan';
                 ind.title = pesanGagal;
             }
-            showToast(pesanGagal, 'error');
+            if (showNotification) showToast(pesanGagal, 'error');
+            return false;
         }
     } catch (err) {
         if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span> Error koneksi';
         if (showNotification) showToast('Gagal terhubung ke server database', 'error');
+        return false;
     } finally {
         if (btnDraft && originalDraftHtml) {
             btnDraft.disabled = false;
@@ -3718,6 +3847,33 @@ function formatRupiahString(num) {
 function parseNominal(val) {
     if (typeof val === 'number') return val;
     return parseInt(String(val).replace(/[^0-9]/g, ''), 10) || 0;
+}
+
+/**
+ * parsePersen — parser khusus untuk input nilai persen (0–100).
+ * Mendukung desimal dengan titik MAUPUN koma: "42.3" dan "42,3" → 42.3
+ * Berbeda dengan parseNominal (rupiah) yang menganggap titik = pemisah ribuan.
+ */
+function parsePersen(val) {
+    if (typeof val === 'number') return val;
+    const s = String(val).trim();
+    if (s === '' || s === '-') return 0;
+    // Jika ada koma: jadikan titik desimal, buang titik ribuan sebelumnya
+    if (s.indexOf(',') !== -1) {
+        // Format "1.234,56" atau "42,3"
+        const noThousand = s.replace(/\./g, '').replace(',', '.');
+        return parseFloat(noThousand) || 0;
+    }
+    // Hanya titik: bedakan apakah desimal atau ribuan
+    const dots = (s.match(/\./g) || []).length;
+    if (dots === 1) {
+        // Satu titik — anggap desimal (42.3 → 42.3)
+        const f = parseFloat(s.replace(/[^0-9.]/g, ''));
+        // Validasi batas wajar persen (0–100)
+        return isNaN(f) ? 0 : f;
+    }
+    // Lebih dari satu titik → pasti ribuan, buang titik
+    return parseFloat(s.replace(/\./g, '').replace(/[^0-9]/g, '')) || 0;
 }
 
 function showToast(text, type = 'info') {

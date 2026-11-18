@@ -40,12 +40,11 @@ class LaporanKeuanganService
         $pendapatan = $this->cleanNumber($input['pendapatan'] ?? $input['pendapatan_rk'] ?? 0);
 
         // HPP
-        $defaultHpp = 60;
-        $hppPct = isset($input['hpp_persen']) ? (float)$input['hpp_persen'] : (isset($input['hpp_persen_rk']) ? (float)$input['hpp_persen_rk'] : $defaultHpp);
+        $hppPct = (float)($input['hpp_persen'] ?? $input['hpp_persen_rk'] ?? 78);
         $hppNom = isset($input['hpp']) && $input['hpp'] !== ''
             ? $this->cleanNumber($input['hpp'])
             : $this->cleanNumber($input['hpp_nominal_rk'] ?? 0);
-        if ($hppNom == 0 && $pendapatan > 0 && $hppPct > 0) {
+        if (($hppNom == 0 || ($pendapatan > 0 && abs($hppNom - round($pendapatan * ($hppPct / 100))) > 1000)) && $pendapatan > 0 && $hppPct > 0) {
             $hppNom = round($pendapatan * ($hppPct / 100), 2);
         }
         $labaKotor = max(0, $pendapatan - $hppNom);
@@ -79,13 +78,27 @@ class LaporanKeuanganService
             }
         }
 
-        // Beban gaji karyawan telah digabung ke beban operasional pokok usaha
-        $bebanGaji = 0;
+        // Beban Gaji Karyawan (jika ada daftar_karyawan atau beban_gaji terpisah)
+        $bebanGaji = $this->cleanNumber($input['beban_gaji'] ?? 0);
+        if ($bebanGaji == 0 && !empty($input['daftar_karyawan'])) {
+            $karyawanList = is_array($input['daftar_karyawan'])
+                ? $input['daftar_karyawan']
+                : json_decode($input['daftar_karyawan'], true);
+            if (is_array($karyawanList)) {
+                foreach ($karyawanList as $k) {
+                    $bebanGaji += $this->cleanNumber($k['gaji'] ?? $k['nominal_gaji'] ?? 0);
+                }
+            }
+        }
 
-        // Penyusutan Aset Tetap (Dihapus dari Laba Rugi Operasional sesuai instruksi)
-        $penyusutanTahunan = 0;
+        // Penyusutan Aset Tetap
+        $penyusutanTahunan = isset($input['beban_depresiasi']) && $input['beban_depresiasi'] !== ''
+            ? $this->cleanNumber($input['beban_depresiasi'])
+            : (isset($input['beban_penyusutan']) && $input['beban_penyusutan'] !== ''
+                ? $this->cleanNumber($input['beban_penyusutan'])
+                : 0);
 
-        $totalBebanOp = $bebanOperasional + $bebanLainnya;
+        $totalBebanOp = $bebanGaji + $bebanOperasional + $bebanLainnya + $penyusutanTahunan;
         $labaOperasional = $labaKotor - $totalBebanOp;
 
         // Badan Usaha: TIDAK ADA pendapatan lain-lain
@@ -94,9 +107,11 @@ class LaporanKeuanganService
         $bebanBunga = $this->cleanNumber($input['input_beban_bunga'] ?? $input['beban_bunga'] ?? 0);
         $labaSebelumPjk = $labaOperasional + $pendapatanLain - $bebanBunga;
 
-        // Pajak Usaha Badan Usaha ditiadakan / dihapus
-        $pajakNom = 0;
-        $labaBersih = $labaSebelumPjk;
+        // Pajak Usaha Badan Usaha (jika ada input beban pajak)
+        $pajakNom = isset($input['input_beban_pajak']) && $input['input_beban_pajak'] !== ''
+            ? $this->cleanNumber($input['input_beban_pajak'])
+            : (isset($input['pajak']) && $input['pajak'] !== '' ? $this->cleanNumber($input['pajak']) : 0);
+        $labaBersih = $labaSebelumPjk - $pajakNom;
 
         $labaRugi = [
             'pendapatan'         => $pendapatan,

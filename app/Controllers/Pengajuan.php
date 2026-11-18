@@ -2694,15 +2694,36 @@ class Pengajuan extends BaseController
             'daftar_karyawan' => $kredit['daftar_karyawan'] ?? '[]',
         ]);
 
-        // Jika pendapatan di laba rugi kosong, ambil dari total mutasi kredit rekening koran (Tahap 8)
+        // Jika pendapatan & HPP di laba rugi kosong, ambil dari mutasi rekening koran (Tahap 7 / 8)
+        $totMutasiKredit = 0;
+        $totMutasiDebit  = 0;
+        foreach ($dataRekening as $r) {
+            $m = max(1, (int)($r['jumlah_bulan'] ?? 6));
+            $k = (float)($r['total_mutasi_kredit'] ?? 0);
+            $d = (float)($r['total_mutasi_debit'] ?? 0);
+            $totMutasiKredit += round($k / $m);
+            $totMutasiDebit  += round($d / $m);
+        }
+
         if (empty($calcInput['pendapatan']) && empty($calcInput['pendapatan_rk'])) {
-            $totMutasi = 0;
-            foreach ($dataRekening as $r) {
-                $totMutasi += (float)($r['total_mutasi_kredit'] ?? 0);
+            if ($totMutasiKredit > 0) {
+                $calcInput['pendapatan_rk'] = $totMutasiKredit;
+                $calcInput['pendapatan']    = $totMutasiKredit;
             }
-            if ($totMutasi > 0) {
-                $calcInput['pendapatan_rk'] = $totMutasi;
-                $calcInput['pendapatan']    = $totMutasi;
+        }
+
+        if ($totMutasiKredit > 0 && $totMutasiDebit > 0) {
+            $totalOpEst      = (float)($calcInput['biaya_hidup_nominal_rk'] ?? 25000000);
+            $bebanLainEst    = (float)($calcInput['beban_lainnya_nominal_rk'] ?? 0);
+            $totalBebanOpEst = ($totalOpEst > 0 ? $totalOpEst : 25000000) + $bebanLainEst;
+            $hppMurniEst     = max(0, $totMutasiDebit - $totalBebanOpEst);
+            $ratioHpp        = ($totMutasiKredit > 0 && $hppMurniEst > 0) ? round(($hppMurniEst / $totMutasiKredit) * 100, 1) : 78;
+            if ($ratioHpp > 82 || $ratioHpp <= 0) {
+                $ratioHpp = 78;
+            }
+            if (empty($calcInput['hpp_persen_rk']) || (float)$calcInput['hpp_persen_rk'] == 60 || (float)$calcInput['hpp_persen_rk'] >= 90) {
+                $calcInput['hpp_persen_rk'] = $ratioHpp;
+                $calcInput['hpp_persen']    = $ratioHpp;
             }
         }
 
