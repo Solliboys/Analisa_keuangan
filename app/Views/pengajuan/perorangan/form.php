@@ -83,7 +83,7 @@
                     6  => ['target' => 6,         'title' => '6. SLIK / CLIK',    'sub' => 'Cek riwayat kredit'],
                     7  => ['target' => 7,         'title' => '7. Web Check',      'sub' => 'Verifikasi online'],
                     8  => ['target' => 8,         'title' => '8. Rekening Koran', 'sub' => 'Analisis mutasi'],
-                    9  => ['target' => 9,         'title' => '9. Laba Rugi',      'sub' => 'Proyeksi keuangan'],
+                    9  => ['target' => 9,         'title' => '9. Data Keuangan',  'sub' => 'Proyeksi keuangan'],
                     10 => ['target' => 'laporan', 'title' => '10. Laporan',       'sub' => 'Tampilan laporan'],
                     11 => ['target' => 10,        'title' => '11. Opini Pengusul','sub' => 'Catatan kualitatif'],
                     12 => ['target' => 11,        'title' => '12. Disbursement',  'sub' => 'Jadwal pencairan'],
