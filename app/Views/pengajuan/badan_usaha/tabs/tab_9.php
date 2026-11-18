@@ -13,7 +13,7 @@
     </div>
 
     <?php
-        // Cek akumulasi mutasi rekening koran untuk auto-sync omzet dan HPP awal
+        // Cek akumulasi mutasi rekening koran untuk auto-sync jika ada
         $totRekKreditBU = 0;
         $totRekDebitBU  = 0;
         if (!empty($rekening) && is_array($rekening)) {
@@ -27,82 +27,50 @@
         }
         $autoOmzetRekBU = ($totRekKreditBU > 0) ? $totRekKreditBU : 0;
 
-        // Estimasi beban operasional awal untuk memisahkan HPP murni dari mutasi debit
-        $bebanOpAwalBU   = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 25000000);
-        $bebanLainAwalBU = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
-        $totalOpAwalBU   = ($bebanOpAwalBU > 0 ? $bebanOpAwalBU : 25000000) + $bebanLainAwalBU;
-
-        // HPP Murni = Mutasi Debit - Beban Operasional agar tidak double-counting (maksimal 78% agar tidak rugi)
-        $debitMurniBU = max(0, $totRekDebitBU - $totalOpAwalBU);
-        $autoHppRekBU = ($totRekKreditBU > 0 && $debitMurniBU > 0) 
-            ? round(($debitMurniBU / $totRekKreditBU) * 100, 1) 
-            : 78;
-        if ($autoHppRekBU > 82 || $autoHppRekBU <= 0) {
-            $autoHppRekBU = 78;
-        }
-
+        // Nominal awal murni dari database (default 0 / kosongan jika belum diisi)
         $nomPendapatanBU = (float)($keuangan['pendapatan_rk'] ?? 0);
         if ($nomPendapatanBU <= 0 && $autoOmzetRekBU > 0) {
             $nomPendapatanBU = $autoOmzetRekBU;
         }
-        if ($nomPendapatanBU <= 0) {
-            $nomPendapatanBU = 250000000;
-        }
 
         $persenHppBU = (float)($keuangan['hpp_persen_rk'] ?? 0);
-        if (($persenHppBU <= 0 || $persenHppBU == 60 || $persenHppBU >= 90) && $autoHppRekBU > 0) {
-            $persenHppBU = $autoHppRekBU;
-        }
-        if ($persenHppBU <= 0) {
-            $persenHppBU = 78;
-        }
-
         $nomHppAwalBU = (float)($keuangan['hpp_nominal_rk'] ?? 0);
-        if (($nomHppAwalBU <= 0 || abs($nomHppAwalBU - round($nomPendapatanBU * ($persenHppBU / 100))) > 5000000) && $nomPendapatanBU > 0 && $persenHppBU > 0) {
-            $nomHppAwalBU = round($nomPendapatanBU * ($persenHppBU / 100));
-        }
 
-        // 1. Data Rincian Pendapatan Dinamis
+        // 1. Data Rincian Pendapatan Dinamis (Default Kosongan)
         $rawDetailPendapatanBU = $keuangan['detail_pendapatan_rk'] ?? '';
         $listDetailPendapatanBU = [];
-        if (!empty($rawDetailPendapatanBU)) {
+        if (!empty($rawDetailPendapatanBU) && $rawDetailPendapatanBU !== '[]') {
             $decP = json_decode($rawDetailPendapatanBU, true);
             if (is_array($decP) && count($decP) > 0) {
                 $listDetailPendapatanBU = $decP;
             }
         }
-        if (empty($listDetailPendapatanBU)) {
+        if (empty($listDetailPendapatanBU) && $nomPendapatanBU > 0) {
             $listDetailPendapatanBU = [
                 ['nama' => 'Omset Penjualan Utama', 'nominal' => $nomPendapatanBU]
             ];
         }
 
-        // 2. Data Rincian HPP & Belanja Aset Dinamis
+        // 2. Data Rincian HPP & Belanja Aset Dinamis (Default Kosongan)
         $rawDetailHppBU = $keuangan['detail_hpp_rk'] ?? '';
         $listDetailHppBU = [];
-        if (!empty($rawDetailHppBU)) {
+        if (!empty($rawDetailHppBU) && $rawDetailHppBU !== '[]') {
             $decHpp = json_decode($rawDetailHppBU, true);
             if (is_array($decHpp) && count($decHpp) > 0) {
                 $listDetailHppBU = $decHpp;
             }
         }
-        if (empty($listDetailHppBU)) {
-            if ($nomHppAwalBU > 0) {
-                $listDetailHppBU = [
-                    ['nama' => 'Biaya Modal / Kulakan Barang Dagang', 'kategori' => 'hpp', 'nominal' => $nomHppAwalBU]
-                ];
-            } else {
-                $listDetailHppBU = [
-                    ['nama' => 'Biaya Modal / Kulakan Barang Dagang', 'kategori' => 'hpp', 'nominal' => 0]
-                ];
-            }
+        if (empty($listDetailHppBU) && $nomHppAwalBU > 0) {
+            $listDetailHppBU = [
+                ['nama' => 'Biaya Modal / Kulakan Barang', 'kategori' => 'hpp', 'nominal' => $nomHppAwalBU]
+            ];
         }
 
-        // 3. Data Rincian Pengeluaran Biasa Dinamis
+        // 3. Data Rincian Pengeluaran Biasa Dinamis (Default Kosongan)
         $nomBebanOperasional = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 0);
         $rawDetailBeban = $keuangan['detail_beban_lainnya_rk'] ?? '';
         $listDetailBeban = [];
-        if (!empty($rawDetailBeban)) {
+        if (!empty($rawDetailBeban) && $rawDetailBeban !== '[]') {
             $decBeban = json_decode($rawDetailBeban, true);
             if (is_array($decBeban) && count($decBeban) > 0) {
                 $listDetailBeban = $decBeban;
@@ -110,23 +78,18 @@
         }
         if (empty($listDetailBeban)) {
             $nomBebanLama = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
-            if ($nomBebanOperasional > 0 && $nomBebanLama > 0 && $nomBebanLama < $nomPendapatanBU) {
+            if ($nomBebanOperasional > 0 && $nomBebanLama > 0) {
                 $listDetailBeban = [
-                    ['nama' => 'Beban Operasional Pokok (Gaji & Sewa)', 'nominal' => $nomBebanOperasional],
-                    ['nama' => 'Beban Usaha & Utilitas Lainnya', 'nominal' => $nomBebanLama]
+                    ['nama' => 'Beban Operasional Pokok', 'nominal' => $nomBebanOperasional],
+                    ['nama' => 'Beban Usaha Lainnya', 'nominal' => $nomBebanLama]
                 ];
             } elseif ($nomBebanOperasional > 0) {
                 $listDetailBeban = [
-                    ['nama' => 'Beban Operasional Pokok (Gaji & Sewa)', 'nominal' => $nomBebanOperasional]
+                    ['nama' => 'Beban Operasional Pokok', 'nominal' => $nomBebanOperasional]
                 ];
-            } elseif ($nomBebanLama > 0 && $nomBebanLama < $nomPendapatanBU) {
+            } elseif ($nomBebanLama > 0) {
                 $listDetailBeban = [
                     ['nama' => 'Beban Usaha & Operasional', 'nominal' => $nomBebanLama]
-                ];
-            } else {
-                $listDetailBeban = [
-                    ['nama' => 'Gaji Karyawan & Upah Operasional', 'nominal' => 20000000],
-                    ['nama' => 'Sewa Kantor & Utilitas (Listrik/Air/Internet)', 'nominal' => 5000000]
                 ];
             }
         }
@@ -152,9 +115,9 @@
                         <span class="text-[11px] text-slate-400 font-medium">Rincian sumber pendapatan operasional perusahaan yang dinamis</span>
                     </div>
                 </div>
-                <button type="button" onclick="tambahPendapatan('Omset Usaha Tambahan', 0);" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded-xl shadow-2xs transition cursor-pointer self-start sm:self-auto">
+                <button type="button" onclick="tambahPendapatan('Omset Penjualan Utama', 0);" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-700 bg-white hover:bg-blue-50 border border-blue-300 rounded-xl shadow-2xs transition cursor-pointer self-start sm:self-auto">
                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    <span>+ Tambah Pendapatan</span>
+                    <span>Tambah Pendapatan</span>
                 </button>
             </div>
 
@@ -166,7 +129,7 @@
             <!-- Bar Ringkasan Total Pendapatan Bulanan -->
             <div class="p-3 bg-white border border-blue-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
                 <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Total Pendapatan / Omset Bulanan:</span>
-                <span id="nomTotalPendapatanDinamis" class="text-sm font-black text-blue-700">Rp 0</span>
+                <span id="nomTotalPendapatanDinamis" class="text-sm font-black text-blue-700">Rp <?= number_format($nomPendapatanBU, 0, ',', '.') ?></span>
             </div>
         </div>
 
@@ -202,7 +165,7 @@
                         </div>
                         <button type="button" onclick="tambahHppOnly('Biaya Bahan / Kulakan', 0);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
                             <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            <span>+ Tambah HPP</span>
+                            <span>Tambah HPP</span>
                         </button>
                     </div>
 
@@ -215,8 +178,8 @@
                     <div class="p-2.5 bg-rose-50/60 border border-rose-200/70 rounded-xl flex justify-between items-center text-xs">
                         <span class="font-bold text-slate-600 text-[11px] uppercase tracking-wider">Subtotal HPP (Bahan/Kulakan):</span>
                         <div class="flex items-center gap-1.5">
-                            <span id="nomTotalHppDinamis" class="font-bold text-rose-700 text-xs sm:text-sm">Rp 0</span>
-                            <span id="badgePersenHpp" class="text-[11px] text-slate-500 font-medium"></span>
+                            <span id="nomTotalHppDinamis" class="font-bold text-rose-700 text-xs sm:text-sm">Rp <?= number_format($nomHppAwalBU, 0, ',', '.') ?></span>
+                            <span id="badgePersenHpp" class="text-[11px] text-slate-500 font-medium">(<?= esc($persenHppBU) ?>% dari Omzet)</span>
                         </div>
                     </div>
                 </div>
@@ -233,7 +196,7 @@
                         </div>
                         <button type="button" onclick="tambahBebanLain('', 0);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
                             <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            <span>+ Tambah Pengeluaran Biasa</span>
+                            <span>Tambah Pengeluaran Biasa</span>
                         </button>
                     </div>
 
@@ -282,7 +245,7 @@
                 </div>
                 <button type="button" onclick="tambahAsetOnly('Pembelian Aset / Peralatan', 0);" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-700 bg-white hover:bg-emerald-50 border border-emerald-300 rounded-xl shadow-2xs transition cursor-pointer self-start sm:self-auto">
                     <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    <span>+ Tambah Aset</span>
+                    <span>Tambah Aset</span>
                 </button>
             </div>
 
@@ -327,10 +290,10 @@
         <input type="hidden" name="detail_hpp_rk" id="detail_hpp_rk" value="<?= esc(!empty($listDetailHppBU) ? json_encode($listDetailHppBU) : '[]') ?>">
         <input type="hidden" name="total_aset_hpp_rk" id="total_aset_hpp_rk" value="0">
         <input type="hidden" name="biaya_hidup_nominal_rk" id="biaya_hidup_nominal_rk" value="<?= esc($nomBebanOperasional) ?>">
-        <input type="hidden" name="biaya_hidup_persen_rk" id="biaya_hidup_persen_rk" value="<?= esc($keuangan['biaya_hidup_persen_rk'] ?? 10) ?>">
+        <input type="hidden" name="biaya_hidup_persen_rk" id="biaya_hidup_persen_rk" value="<?= esc($keuangan['biaya_hidup_persen_rk'] ?? 0) ?>">
         <input type="hidden" name="beban_lainnya_nominal_rk" id="beban_lainnya_nominal_rk" value="<?= esc($keuangan['beban_lainnya_nominal_rk'] ?? 0) ?>">
         <input type="hidden" name="detail_beban_lainnya_rk" id="detail_beban_lainnya_rk" value="<?= esc(!empty($listDetailBeban) ? json_encode($listDetailBeban) : '[]') ?>">
-        <input type="hidden" name="beban_lainnya_persen_rk" id="beban_lainnya_persen_rk" value="<?= esc($keuangan['beban_lainnya_persen_rk'] ?? 10) ?>">
+        <input type="hidden" name="beban_lainnya_persen_rk" id="beban_lainnya_persen_rk" value="<?= esc($keuangan['beban_lainnya_persen_rk'] ?? 0) ?>">
 
         <span id="nomHppRK" class="hidden">Rp 0</span>
         <span id="nomBiayaHidupRK" class="hidden">Rp 0</span>
