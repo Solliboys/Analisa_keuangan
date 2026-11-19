@@ -508,7 +508,7 @@ const getActiveSteps = () => {
     if (window.IS_BADAN_USAHA) {
         return [1, 2, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11];
     }
-    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 'laporan', 10, 12];
+    return [1, 2, 3, 4, 5, 6, 7, 8, 9, 'laporan', 10, 11];
 };
 
 const getDisplayStepNum = (tabNum) => {
@@ -527,11 +527,11 @@ function getStepMeta(tabNum) {
     if (norm === 'laporan') {
         const num = window.IS_BADAN_USAHA ? 9 : 10;
         return {
-            title: window.IS_BADAN_USAHA ? `${num}. Laporan` : `${num}. Laporan & Disbursement`,
+            title: `${num}. Laporan`,
             sub: 'Sedang dikerjakan',
-            defaultSub: window.IS_BADAN_USAHA ? 'Tampilan laporan' : 'Laporan & Pencairan',
-            mainTitle: window.IS_BADAN_USAHA ? `Langkah ${num}: Laporan Pengajuan Pembiayaan` : `Langkah ${num}: Laporan Analisis Keuangan & Disbursement`,
-            desc: window.IS_BADAN_USAHA ? 'Rekapitulasi dan tampilan dokumen laporan pengajuan kredit.' : 'Rekapitulasi analisis pendapatan, biaya, posisi harta & utang, kekayaan bersih, serta simulasi pencairan bersih.'
+            defaultSub: 'Tampilan laporan',
+            mainTitle: `Langkah ${num}: Laporan Pengajuan Pembiayaan`,
+            desc: window.IS_BADAN_USAHA ? 'Rekapitulasi dan tampilan dokumen laporan pengajuan kredit.' : 'Rekapitulasi analisis pendapatan, biaya, posisi harta & utang, kekayaan bersih, serta rasio keuangan.'
         };
     }
     if (norm === 10) {
