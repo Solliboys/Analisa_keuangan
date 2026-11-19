@@ -161,13 +161,28 @@ if (!function_exists('badgeSumberData')) {
         </div>
 
         <div class="space-y-3 text-xs sm:text-sm">
-            <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Pendapatan Usaha (Penjualan / Omzet)</span>
-                <span class="font-bold text-slate-900" id="bu_lr_pendapatan">—</span>
+            <!-- 1. PENDAPATAN / OMSET -->
+            <div>
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-slate-700 font-bold">Pendapatan Usaha (Penjualan / Omzet)</span>
+                    <span class="font-bold text-slate-900" id="bu_lr_pendapatan">—</span>
+                </div>
+                <!-- Container Rincian Pendapatan Dinamis -->
+                <div id="containerPendapatanLaporan" class="space-y-1.5 my-1">
+                    <!-- Rincian dinamis dari Kotak 1 Tab 9 akan dirender di sini via JS -->
+                </div>
             </div>
-            <div class="flex justify-between items-center py-1">
-                <span class="text-slate-600 font-medium">Biaya Modal / Kulakan (HPP)</span>
-                <span class="font-bold text-slate-900" id="bu_lr_hpp">—</span>
+
+            <!-- 2. HPP (BIAYA MODAL / KULAKAN) -->
+            <div>
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-slate-700 font-bold">Biaya Modal / Kulakan (HPP)</span>
+                    <span class="font-bold text-slate-900" id="bu_lr_hpp">—</span>
+                </div>
+                <!-- Container Rincian HPP Dinamis -->
+                <div id="containerHppLaporan" class="space-y-1.5 my-1">
+                    <!-- Rincian dinamis dari Kotak 2B Tab 9 akan dirender di sini via JS -->
+                </div>
             </div>
 
             <!-- Highlight: Laba Kotor -->
@@ -176,18 +191,20 @@ if (!function_exists('badgeSumberData')) {
                 <span id="bu_lr_laba_kotor" class="text-blue-700 font-black">—</span>
             </div>
 
-            <!-- Beban Operasional Pokok Usaha -->
-            <div class="flex justify-between items-start py-1">
-                <div>
-                    <span class="text-slate-700 font-semibold block">Beban Operasional Pokok Usaha (Rp/Bulan)</span>
-                    <span class="text-[11px] text-slate-400 block">Gaji karyawan tetap, sewa kantor/gudang usaha, listrik, air &amp; utilitas operasional</span>
+            <!-- 3. PENGELUARAN / BEBAN OPERASIONAL -->
+            <div>
+                <div class="flex justify-between items-start py-1">
+                    <div>
+                        <span class="text-slate-700 font-bold block">Beban Operasional &amp; Administrasi (Pengeluaran Usaha)</span>
+                        <span class="text-[11px] text-slate-400 block">Gaji karyawan, sewa kantor/gudang, listrik &amp; utilitas, logistik, operasional rutin</span>
+                    </div>
+                    <span class="font-bold text-slate-900 shrink-0 ml-4" id="bu_lr_beban_op">—</span>
                 </div>
-                <span class="font-bold text-slate-900 shrink-0 ml-4" id="bu_lr_beban_op">—</span>
-            </div>
 
-            <!-- Rincian Beban Usaha & Administrasi Dinamis (Ditambah dari Tab 8) -->
-            <div id="containerBebanLainLaporan" class="space-y-1.5 my-1">
-                <!-- Rincian dinamis dari Tab 8 akan dirender di sini via JavaScript -->
+                <!-- Container Rincian Pengeluaran Dinamis -->
+                <div id="containerBebanLainLaporan" class="space-y-1.5 my-1">
+                    <!-- Rincian dinamis dari Kotak 2A Tab 9 akan dirender di sini via JS -->
+                </div>
             </div>
 
             <!-- Highlight: Laba Operasional -->
@@ -246,9 +263,15 @@ if (!function_exists('badgeSumberData')) {
                         <span id="bu_nr_total_aset_lancar" class="text-blue-700 font-black">—</span>
                     </div>
 
-                    <div class="flex justify-between items-center py-1" id="row_bu_nr_aset_tetap" style="display: <?= $showAsetTetap ? 'flex' : 'none' ?>;">
-                        <span class="text-slate-600 font-medium">Nilai Alat, Mesin &amp; Gedung Saat Ini (Neto)</span>
-                        <span class="font-bold text-slate-900" id="bu_nr_aset_tetap_neto">—</span>
+                    <div id="row_bu_nr_aset_tetap" style="display: <?= $showAsetTetap ? 'block' : 'none' ?>;" class="py-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-600 font-medium" id="lbl_bu_nr_aset_tetap">Aset Tetap / Peralatan Usaha (Neto)</span>
+                            <span class="font-bold text-slate-900" id="bu_nr_aset_tetap_neto">—</span>
+                        </div>
+                        <!-- Rincian Aset Tetap Dinamis dari Kotak 3 Tab 9 -->
+                        <div id="containerAsetLaporan" class="space-y-1.5 my-1">
+                            <!-- Diisi oleh JS -->
+                        </div>
                     </div>
 
                     <!-- Highlight: TOTAL ASET (Rumus: Aset = Liabilitas + Ekuitas) -->
@@ -568,19 +591,21 @@ async function unduhLaporanPDF(target) {
                 <div style="font-size: 9px; color: #475569; margin-bottom: 4px; font-style: italic;">Rumus: Pendapatan - Beban = Laba (Rugi) Bersih</div>
                 <table class="report-table">
                     <tr>
-                        <td class="col-desc">Pendapatan Usaha</td>
+                        <td class="col-desc">Pendapatan Usaha (Penjualan / Omzet)</td>
                         <td class="col-val">${v('bu_lr_pendapatan')}</td>
                     </tr>
+                    ${renderPendapatanRowsHtml('pdf')}
                     <tr>
-                        <td class="col-desc">HPP</td>
+                        <td class="col-desc">Biaya Modal / Kulakan (HPP)</td>
                         <td class="col-val">${v('bu_lr_hpp')}</td>
                     </tr>
+                    ${renderHppRowsHtml('pdf')}
                     <tr class="row-highlight">
                         <td class="col-desc font-bold">Laba Kotor</td>
                         <td class="col-val font-bold">${v('bu_lr_laba_kotor')}</td>
                     </tr>
                     <tr>
-                        <td class="col-desc">Beban Operasional Pokok (Gaji Karyawan Tetap, Sewa, Listrik &amp; Utilitas)</td>
+                        <td class="col-desc">Beban Operasional &amp; Administrasi (Pengeluaran Usaha)</td>
                         <td class="col-val">${v('bu_lr_beban_op')}</td>
                     </tr>
                     ${renderBebanLainRowsHtml('pdf')}
@@ -636,12 +661,13 @@ async function unduhLaporanPDF(target) {
                         </table>
 
                         ${(!v('bu_nr_aset_tetap_neto').includes('—') && !v('bu_nr_aset_tetap_neto').includes('Rp 0') && v('bu_nr_aset_tetap_neto').trim() !== '') ? `
-                        <div class="group-title" style="margin-top: 8px;">Aset Tetap</div>
+                        <div class="group-title" style="margin-top: 8px;">Aset Tetap / Peralatan</div>
                         <table class="report-table">
                             <tr>
-                                <td class="col-desc">Aset Tetap Neto</td>
+                                <td class="col-desc">Aset Tetap / Peralatan (Neto)</td>
                                 <td class="col-val">${v('bu_nr_aset_tetap_neto')}</td>
                             </tr>
+                            ${renderAsetRowsHtml('pdf')}
                             <tr class="row-highlight">
                                 <td class="col-desc font-bold">Total Aset Tetap</td>
                                 <td class="col-val font-bold">${v('bu_nr_aset_tetap_neto')}</td>
@@ -1197,10 +1223,12 @@ async function unduhLaporanExcel() {
             <!-- I. LABA RUGI -->
             <table>
                 <tr class="header-section"><td colspan="2">I. LAPORAN LABA RUGI (INCOME STATEMENT)</td></tr>
-                <tr><td>Pendapatan Usaha</td><td class="num-right">${v('bu_lr_pendapatan')}</td></tr>
-                <tr><td>HPP</td><td class="num-right">${v('bu_lr_hpp')}</td></tr>
+                <tr><td>Pendapatan Usaha (Penjualan / Omzet)</td><td class="num-right">${v('bu_lr_pendapatan')}</td></tr>
+                ${renderPendapatanRowsHtml('print')}
+                <tr><td>Biaya Modal / Kulakan (HPP)</td><td class="num-right">${v('bu_lr_hpp')}</td></tr>
+                ${renderHppRowsHtml('print')}
                 <tr class="highlight-row"><td>Laba Kotor</td><td class="num-right">${v('bu_lr_laba_kotor')}</td></tr>
-                <tr><td>Beban Operasional Pokok (Gaji Karyawan Tetap, Sewa, Listrik &amp; Utilitas)</td><td class="num-right">${v('bu_lr_beban_op')}</td></tr>
+                <tr><td>Beban Operasional &amp; Administrasi (Pengeluaran Usaha)</td><td class="num-right">${v('bu_lr_beban_op')}</td></tr>
                 ${renderBebanLainRowsHtml('print')}
                 <tr class="highlight-row"><td>Laba Operasional</td><td class="num-right">${v('bu_lr_laba_op')}</td></tr>
                 ${(!v('bu_lr_beban_bunga').includes('—') && !v('bu_lr_beban_bunga').includes('Rp 0') && v('bu_lr_beban_bunga').trim() !== '') ? `
@@ -1298,9 +1326,77 @@ function isiDataLaporanBU(data) {
     setT('bu_lr_pendapatan', rpFmt(lr.pendapatan));
     setT('bu_lr_hpp', rpFmtParen(lr.hpp));
     setT('bu_lr_laba_kotor', rpFmt(lr.laba_kotor));
-    setT('bu_lr_beban_op', rpFmtParen(lr.beban_operasional));
 
-    // Simpan & render rincian beban usaha dinamis dari Tab 8
+    // 1. Simpan & render rincian pendapatan usaha dinamis dari Kotak 1 Tab 9
+    let listPendapatan = lr.detail_pendapatan || [];
+    if (typeof listPendapatan === 'string') {
+        try { listPendapatan = JSON.parse(listPendapatan); } catch(e) { listPendapatan = []; }
+    }
+    if (!Array.isArray(listPendapatan) || listPendapatan.length === 0) {
+        const rawP = document.getElementById('detail_pendapatan_rk')?.value;
+        if (rawP) {
+            try { listPendapatan = JSON.parse(rawP); } catch(e) { listPendapatan = []; }
+        }
+    }
+    window._currentDetailPendapatan = Array.isArray(listPendapatan) ? listPendapatan : [];
+
+    const contPendapatan = document.getElementById('containerPendapatanLaporan');
+    if (contPendapatan) {
+        contPendapatan.innerHTML = '';
+        if (window._currentDetailPendapatan.length > 0) {
+            window._currentDetailPendapatan.forEach(item => {
+                const nom = parseFloat(item.nominal || 0);
+                if (nom > 0 || (item.nama && item.nama.trim() !== '')) {
+                    const row = document.createElement('div');
+                    row.className = 'flex justify-between items-center py-1 pl-4 border-l-2 border-blue-500 bg-blue-50/50 rounded-r-lg pr-2';
+                    row.innerHTML = `
+                        <span class="text-slate-600 text-xs sm:text-sm font-medium">• ${escapeHtmlText(item.nama || 'Omset Penjualan')}</span>
+                        <span class="font-bold text-slate-800 text-xs sm:text-sm">${rpFmt(nom)}</span>
+                    `;
+                    contPendapatan.appendChild(row);
+                }
+            });
+        }
+    }
+
+    // 2. Simpan & render rincian HPP dinamis dari Kotak 2B Tab 9
+    let listHpp = lr.detail_hpp || [];
+    if (typeof listHpp === 'string') {
+        try { listHpp = JSON.parse(listHpp); } catch(e) { listHpp = []; }
+    }
+    if (!Array.isArray(listHpp) || listHpp.length === 0) {
+        const rawHpp = document.getElementById('detail_hpp_rk')?.value;
+        if (rawHpp) {
+            try {
+                const parsed = JSON.parse(rawHpp);
+                if (Array.isArray(parsed)) {
+                    listHpp = parsed.filter(it => (it.kategori || 'hpp').toLowerCase() !== 'aset');
+                }
+            } catch(e) { listHpp = []; }
+        }
+    }
+    window._currentDetailHpp = Array.isArray(listHpp) ? listHpp : [];
+
+    const contHpp = document.getElementById('containerHppLaporan');
+    if (contHpp) {
+        contHpp.innerHTML = '';
+        if (window._currentDetailHpp.length > 0) {
+            window._currentDetailHpp.forEach(item => {
+                const nom = parseFloat(item.nominal || 0);
+                if (nom > 0 || (item.nama && item.nama.trim() !== '')) {
+                    const row = document.createElement('div');
+                    row.className = 'flex justify-between items-center py-1 pl-4 border-l-2 border-rose-400 bg-rose-50/40 rounded-r-lg pr-2';
+                    row.innerHTML = `
+                        <span class="text-slate-600 text-xs sm:text-sm font-medium">• ${escapeHtmlText(item.nama || 'Biaya Modal / Kulakan')}</span>
+                        <span class="font-bold text-slate-800 text-xs sm:text-sm">${rpFmtParen(nom)}</span>
+                    `;
+                    contHpp.appendChild(row);
+                }
+            });
+        }
+    }
+
+    // 3. Simpan & render rincian pengeluaran/beban operasional dinamis dari Kotak 2A Tab 9
     let listBeban = lr.detail_beban_lainnya || [];
     if (typeof listBeban === 'string') {
         try { listBeban = JSON.parse(listBeban); } catch(e) { listBeban = []; }
@@ -1313,6 +1409,10 @@ function isiDataLaporanBU(data) {
     }
     window._currentDetailBebanLain = Array.isArray(listBeban) ? listBeban : [];
 
+    const totBebanDinamis = window._currentDetailBebanLain.reduce((acc, it) => acc + (parseFloat(it.nominal) || 0), 0);
+    const nominalBebanOpTampil = totBebanDinamis > 0 ? totBebanDinamis : (lr.beban_operasional || lr.beban_lainnya || 0);
+    setT('bu_lr_beban_op', rpFmtParen(nominalBebanOpTampil));
+
     const contBeban = document.getElementById('containerBebanLainLaporan');
     if (contBeban) {
         contBeban.innerHTML = '';
@@ -1321,9 +1421,9 @@ function isiDataLaporanBU(data) {
                 const nom = parseFloat(item.nominal || 0);
                 if (nom > 0 || (item.nama && item.nama.trim() !== '')) {
                     const row = document.createElement('div');
-                    row.className = 'flex justify-between items-center py-1 pl-4 border-l-2 border-blue-400 bg-slate-50/70 rounded-r-lg pr-1';
+                    row.className = 'flex justify-between items-center py-1 pl-4 border-l-2 border-slate-400 bg-slate-50/70 rounded-r-lg pr-2';
                     row.innerHTML = `
-                        <span class="text-slate-600 text-xs sm:text-sm font-medium">• ${escapeHtmlText(item.nama || 'Beban Usaha Lainnya')}</span>
+                        <span class="text-slate-600 text-xs sm:text-sm font-medium">• ${escapeHtmlText(item.nama || 'Pengeluaran Usaha')}</span>
                         <span class="font-bold text-slate-800 text-xs sm:text-sm">${rpFmtParen(nom)}</span>
                     `;
                     contBeban.appendChild(row);
@@ -1406,7 +1506,58 @@ function isiDataLaporanBU(data) {
     setT('bu_nr_aset_tetap_neto', rpFmt(asetTetapNeto));
     const rowAsetTetap = document.getElementById('row_bu_nr_aset_tetap');
     if (rowAsetTetap) {
-        rowAsetTetap.style.display = (asetTetapNeto > 0) ? 'flex' : 'none';
+        rowAsetTetap.style.display = (asetTetapNeto > 0) ? 'block' : 'none';
+    }
+
+    // Render rincian aset tetap dinamis dari Tab 9 (Kotak 3)
+    let listAset = nr.detail_aset || lr.detail_aset || [];
+    if (typeof listAset === 'string') {
+        try { listAset = JSON.parse(listAset); } catch(e) { listAset = []; }
+    }
+    if (!Array.isArray(listAset) || listAset.length === 0) {
+        const rawHpp = document.getElementById('detail_hpp_rk')?.value;
+        if (rawHpp) {
+            try {
+                const parsed = JSON.parse(rawHpp);
+                if (Array.isArray(parsed)) {
+                    listAset = parsed.filter(it => (it.kategori || '').toLowerCase() === 'aset');
+                }
+            } catch(e) { listAset = []; }
+        }
+    }
+    window._currentDetailAset = Array.isArray(listAset) ? listAset : [];
+
+    const lblAset = document.getElementById('lbl_bu_nr_aset_tetap');
+    const contAset = document.getElementById('containerAsetLaporan');
+    if (contAset) contAset.innerHTML = '';
+
+    if (window._currentDetailAset.length === 1 && window._currentDetailAset[0].nama && window._currentDetailAset[0].nama.trim() !== '') {
+        const namaAset = escapeHtmlText(window._currentDetailAset[0].nama);
+        if (lblAset) {
+            lblAset.innerHTML = `Aset Tetap &bull; ${namaAset} (Neto)`;
+        }
+    } else if (window._currentDetailAset.length > 1) {
+        if (lblAset) {
+            lblAset.textContent = 'Aset Tetap / Peralatan Usaha (Neto)';
+        }
+        if (contAset) {
+            window._currentDetailAset.forEach(item => {
+                const nom = parseFloat(item.nominal || 0);
+                if (nom > 0 || (item.nama && item.nama.trim() !== '')) {
+                    const row = document.createElement('div');
+                    row.className = 'flex justify-between items-center py-1 pl-4 border-l-2 border-emerald-500 bg-emerald-50/50 rounded-r-lg pr-2';
+                    row.innerHTML = `
+                        <span class="text-slate-600 text-xs sm:text-sm font-medium">• ${escapeHtmlText(item.nama || 'Aset / Peralatan')}</span>
+                        <span class="font-bold text-slate-800 text-xs sm:text-sm">${rpFmt(nom)}</span>
+                    `;
+                    contAset.appendChild(row);
+                }
+            });
+        }
+    } else {
+        if (lblAset) {
+            lblAset.textContent = 'Aset Tetap / Peralatan Usaha (Neto)';
+        }
     }
 
     setT('bu_nr_total_aset', rpFmt(nr.total_aset));
@@ -1454,6 +1605,60 @@ function escapeHtmlText(str) {
     return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
 }
 
+function renderPendapatanRowsHtml(mode = 'pdf') {
+    const list = window._currentDetailPendapatan || [];
+    if (!Array.isArray(list) || list.length === 0) return '';
+    let html = '';
+    list.forEach(item => {
+        const nom = parseFloat(item.nominal || 0);
+        if (nom > 0 || (item.nama && item.nama.trim() !== '')) {
+            const nama = escapeHtmlText(item.nama || 'Omset Penjualan');
+            if (mode === 'pdf') {
+                html += `<tr><td class="col-desc" style="padding-left: 20px; color: #2563eb;">• ${nama}</td><td class="col-val">${rpFmt(nom)}</td></tr>`;
+            } else {
+                html += `<tr><td style="padding-left: 20px; color: #2563eb;">• ${nama}</td><td class="num-right">${rpFmt(nom)}</td></tr>`;
+            }
+        }
+    });
+    return html;
+}
+
+function renderHppRowsHtml(mode = 'pdf') {
+    const list = window._currentDetailHpp || [];
+    if (!Array.isArray(list) || list.length === 0) return '';
+    let html = '';
+    list.forEach(item => {
+        const nom = parseFloat(item.nominal || 0);
+        if (nom > 0 || (item.nama && item.nama.trim() !== '')) {
+            const nama = escapeHtmlText(item.nama || 'Biaya Modal / Kulakan');
+            if (mode === 'pdf') {
+                html += `<tr><td class="col-desc" style="padding-left: 20px; color: #e11d48;">• ${nama}</td><td class="col-val">${rpFmtParen(nom)}</td></tr>`;
+            } else {
+                html += `<tr><td style="padding-left: 20px; color: #e11d48;">• ${nama}</td><td class="num-right">${rpFmtParen(nom)}</td></tr>`;
+            }
+        }
+    });
+    return html;
+}
+
+function renderAsetRowsHtml(mode = 'pdf') {
+    const list = window._currentDetailAset || [];
+    if (!Array.isArray(list) || list.length === 0) return '';
+    let html = '';
+    list.forEach(item => {
+        const nom = parseFloat(item.nominal || 0);
+        if (nom > 0 || (item.nama && item.nama.trim() !== '')) {
+            const nama = escapeHtmlText(item.nama || 'Aset / Peralatan');
+            if (mode === 'pdf') {
+                html += `<tr><td class="col-desc" style="padding-left: 20px; color: #059669;">• ${nama}</td><td class="col-val">${rpFmt(nom)}</td></tr>`;
+            } else {
+                html += `<tr><td style="padding-left: 20px; color: #059669;">• ${nama}</td><td class="num-right">${rpFmt(nom)}</td></tr>`;
+            }
+        }
+    });
+    return html;
+}
+
 function renderBebanLainRowsHtml(mode = 'pdf') {
     const list = window._currentDetailBebanLain || [];
     if (!Array.isArray(list) || list.length === 0) return '';
@@ -1461,7 +1666,7 @@ function renderBebanLainRowsHtml(mode = 'pdf') {
     list.forEach(item => {
         const nom = parseFloat(item.nominal || 0);
         if (nom > 0 || (item.nama && item.nama.trim() !== '')) {
-            const nama = escapeHtmlText(item.nama || 'Beban Usaha Lainnya');
+            const nama = escapeHtmlText(item.nama || 'Pengeluaran Usaha');
             if (mode === 'pdf') {
                 html += `<tr><td class="col-desc" style="padding-left: 20px; color: #475569;">• ${nama}</td><td class="col-val">${rpFmtParen(nom)}</td></tr>`;
             } else {
@@ -1512,13 +1717,19 @@ function generateLaporanKeuangan(isSilent = false) {
         }
     });
 
-    // Ambil rincian beban usaha dinamis dari Tab 8 (dalam format JSON murni)
+    // Ambil rincian pendapatan dinamis dari Tab 9 (dalam format JSON murni)
+    const elDetailPendapatan = document.querySelector('[name="detail_pendapatan_rk"]') || document.getElementById('detail_pendapatan_rk');
+    if (elDetailPendapatan && elDetailPendapatan.value) {
+        payload.append('detail_pendapatan_rk', elDetailPendapatan.value);
+    }
+
+    // Ambil rincian beban usaha dinamis dari Tab 9 (dalam format JSON murni)
     const elDetailBeban = document.querySelector('[name="detail_beban_lainnya_rk"]') || document.getElementById('detail_beban_lainnya_rk');
     if (elDetailBeban && elDetailBeban.value) {
         payload.append('detail_beban_lainnya_rk', elDetailBeban.value);
     }
 
-    // Ambil rincian HPP & Aset dinamis dari Tab 8 (dalam format JSON murni)
+    // Ambil rincian HPP & Aset dinamis dari Tab 9 (dalam format JSON murni)
     const elDetailHpp = document.querySelector('[name="detail_hpp_rk"]') || document.getElementById('detail_hpp_rk');
     if (elDetailHpp && elDetailHpp.value) {
         payload.append('detail_hpp_rk', elDetailHpp.value);
@@ -1603,6 +1814,7 @@ function hitungDataLaporanDariDOM() {
 
     let hppPersen = pPct(document.querySelector('[name="hpp_persen_rk"]')?.value || document.getElementById('hpp_persen_rk')?.value);
     let hppNomBulan = pF(document.querySelector('[name="hpp_nominal_rk"]')?.value || document.getElementById('nomHppRKInput')?.value);
+    let detailHppDOM = [];
     const rawDetailHppDOM = document.querySelector('[name="detail_hpp_rk"]')?.value || document.getElementById('detail_hpp_rk')?.value;
     if (rawDetailHppDOM && rawDetailHppDOM !== '[]') {
         try {
@@ -1611,7 +1823,10 @@ function hitungDataLaporanDariDOM() {
                 let sumHpp = 0;
                 arrHpp.forEach(it => {
                     const k = (it.kategori || 'hpp').toLowerCase();
-                    if (k !== 'aset') sumHpp += pF(it.nominal);
+                    if (k !== 'aset') {
+                        detailHppDOM.push(it);
+                        sumHpp += pF(it.nominal);
+                    }
                 });
                 if (sumHpp > 0) hppNomBulan = sumHpp;
             }
@@ -1623,12 +1838,36 @@ function hitungDataLaporanDariDOM() {
     const hpp = hppNomBulan * 12;
     const labaKotor = pendapatan - hpp;
 
+    let detailPendapatanDOM = [];
+    const rawDetailPDOM = document.querySelector('[name="detail_pendapatan_rk"]')?.value || document.getElementById('detail_pendapatan_rk')?.value;
+    if (rawDetailPDOM && rawDetailPDOM !== '[]') {
+        try {
+            const arrP = JSON.parse(rawDetailPDOM);
+            if (Array.isArray(arrP) && arrP.length > 0) {
+                detailPendapatanDOM = arrP;
+            }
+        } catch(e) {}
+    }
+
+    let detailBebanDOM = [];
+    const rawDetailBDOM = document.querySelector('[name="detail_beban_lainnya_rk"]')?.value || document.getElementById('detail_beban_lainnya_rk')?.value;
+    if (rawDetailBDOM && rawDetailBDOM !== '[]') {
+        try {
+            const arrB = JSON.parse(rawDetailBDOM);
+            if (Array.isArray(arrB) && arrB.length > 0) {
+                detailBebanDOM = arrB;
+            }
+        } catch(e) {}
+    }
+
     const bebanGajiBulan = pF(document.querySelector('[name="beban_gaji_nominal_rk"]')?.value);
-    const bebanOpBulan = pF(document.querySelector('[name="biaya_hidup_nominal_rk"]')?.value || document.getElementById('biaya_hidup_nominal_rk')?.value);
+    let bebanOpBulan = pF(document.querySelector('[name="biaya_hidup_nominal_rk"]')?.value || document.getElementById('biaya_hidup_nominal_rk')?.value);
+    let bebanLainBulan = pF(document.querySelector('[name="beban_lainnya_nominal_rk"]')?.value || document.getElementById('beban_lainnya_nominal_rk')?.value);
+    if (bebanOpBulan > 0 && bebanOpBulan === bebanLainBulan) {
+        bebanOpBulan = 0; // Hindari dobel hitung
+    }
     const bebanOp = bebanOpBulan * 12;
     const bebanGaji = bebanGajiBulan * 12;
-
-    let bebanLainBulan = pF(document.querySelector('[name="beban_lainnya_nominal_rk"]')?.value || document.getElementById('beban_lainnya_nominal_rk')?.value);
     const bebanLain = bebanLainBulan * 12;
 
     const penyusutan = pF(document.querySelector('[name="beban_depresiasi"]')?.value) || 0;
@@ -1673,11 +1912,14 @@ function hitungDataLaporanDariDOM() {
     return {
         laba_rugi: {
             pendapatan,
+            detail_pendapatan: detailPendapatanDOM,
             hpp,
+            detail_hpp: detailHppDOM,
             laba_kotor: labaKotor,
             beban_gaji: bebanGaji,
             beban_operasional: bebanOp,
             beban_lainnya: bebanLain,
+            detail_beban_lainnya: detailBebanDOM,
             beban_penyusutan: penyusutan,
             laba_operasional: labaOperasional,
             beban_bunga: bebanBunga,

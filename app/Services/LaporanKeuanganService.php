@@ -37,12 +37,39 @@ class LaporanKeuanganService
     private function hitungLaporanBadanUsaha(array $input): array
     {
         // 1. LABA RUGI
-        $pendapatan = $this->cleanNumber($input['pendapatan'] ?? $input['pendapatan_rk'] ?? 0);
-        if ($pendapatan == 0 && !empty($input['detail_pendapatan_rk'])) {
+        // Detail Pendapatan Dinamis (Kotak 1 Tab 9)
+        $detailPendapatanList = [];
+        if (!empty($input['detail_pendapatan_rk'])) {
             $parsedPend = is_array($input['detail_pendapatan_rk']) ? $input['detail_pendapatan_rk'] : json_decode($input['detail_pendapatan_rk'], true);
             if (is_array($parsedPend)) {
-                foreach ($parsedPend as $dp) {
-                    $pendapatan += $this->cleanNumber($dp['nominal'] ?? 0);
+                $detailPendapatanList = $parsedPend;
+            }
+        }
+
+        $pendapatan = $this->cleanNumber($input['pendapatan'] ?? $input['pendapatan_rk'] ?? 0);
+        if (!empty($detailPendapatanList)) {
+            $sumPend = 0;
+            foreach ($detailPendapatanList as $dp) {
+                $sumPend += $this->cleanNumber($dp['nominal'] ?? 0);
+            }
+            if ($sumPend > 0) {
+                $pendapatan = $sumPend;
+            }
+        }
+
+        // Detail HPP & Belanja Aset Dinamis (Kotak 2B & Kotak 3 Tab 9)
+        $detailHppList = [];
+        $detailAsetList = [];
+        if (!empty($input['detail_hpp_rk'])) {
+            $parsedHpp = is_array($input['detail_hpp_rk']) ? $input['detail_hpp_rk'] : json_decode($input['detail_hpp_rk'], true);
+            if (is_array($parsedHpp)) {
+                foreach ($parsedHpp as $itemHpp) {
+                    $kat = strtolower($itemHpp['kategori'] ?? 'hpp');
+                    if ($kat === 'aset') {
+                        $detailAsetList[] = $itemHpp;
+                    } else {
+                        $detailHppList[] = $itemHpp;
+                    }
                 }
             }
         }
@@ -52,17 +79,13 @@ class LaporanKeuanganService
             ? $this->cleanNumber($input['hpp'])
             : $this->cleanNumber($input['hpp_nominal_rk'] ?? 0);
 
-        // Jika ada detail_hpp_rk dan hppNom belum ditentukan
-        if ($hppNom == 0 && !empty($input['detail_hpp_rk'])) {
-            $parsedHpp = is_array($input['detail_hpp_rk']) ? $input['detail_hpp_rk'] : json_decode($input['detail_hpp_rk'], true);
-            if (is_array($parsedHpp)) {
-                foreach ($parsedHpp as $itemHpp) {
-                    $nom = $this->cleanNumber($itemHpp['nominal'] ?? 0);
-                    $kat = strtolower($itemHpp['kategori'] ?? 'hpp');
-                    if ($kat !== 'aset') {
-                        $hppNom += $nom;
-                    }
-                }
+        if (!empty($detailHppList)) {
+            $sumHpp = 0;
+            foreach ($detailHppList as $ih) {
+                $sumHpp += $this->cleanNumber($ih['nominal'] ?? 0);
+            }
+            if ($sumHpp > 0) {
+                $hppNom = $sumHpp;
             }
         }
 
@@ -76,14 +99,14 @@ class LaporanKeuanganService
         }
         $labaKotor = max(0, $pendapatan - $hppNom);
 
-        // Beban Operasional Pokok Usaha (Gaji karyawan tetap, sewa kantor/gudang usaha, listrik, air & utilitas operasional)
+        // Beban Operasional Pokok Usaha
         $bebanOperasional = $this->cleanNumber($input['beban_operasional'] ?? $input['biaya_hidup_nominal_rk'] ?? 0);
         $bebanSewa = $this->cleanNumber($input['beban_sewa'] ?? 0);
         if ($bebanSewa > 0 && $bebanOperasional == 0) {
             $bebanOperasional = $bebanSewa;
         }
 
-        // Rincian Beban Usaha & Administrasi Lainnya (Dinamis dari Tab 8)
+        // Rincian Beban Usaha & Administrasi Lainnya (Dinamis dari Tab 9)
         $detailBebanList = [];
         if (!empty($input['detail_beban_lainnya_rk'])) {
             $rawDetail = is_array($input['detail_beban_lainnya_rk'])
@@ -102,6 +125,10 @@ class LaporanKeuanganService
             }
             if ($sumDetail > 0) {
                 $bebanLainnya = $sumDetail;
+                // Jika bebanOperasional sama persis dengan bebanLainnya (hasil sinkronisasi form hidden), hindari dobel hitung
+                if ($bebanOperasional == $bebanLainnya) {
+                    $bebanOperasional = 0;
+                }
             }
         }
 
@@ -141,23 +168,26 @@ class LaporanKeuanganService
         $labaBersih = $labaSebelumPjk - $pajakNom;
 
         $labaRugi = [
-            'pendapatan'         => $pendapatan,
-            'hpp'                => $hppNom,
-            'hpp_persen'         => $hppPct,
-            'laba_kotor'         => $labaKotor,
-            'beban_gaji'         => $bebanGaji,
-            'beban_sewa'         => $bebanSewa,
+            'pendapatan'           => $pendapatan,
+            'detail_pendapatan'    => $detailPendapatanList,
+            'hpp'                  => $hppNom,
+            'detail_hpp'           => $detailHppList,
+            'detail_aset'          => $detailAsetList,
+            'hpp_persen'           => $hppPct,
+            'laba_kotor'           => $labaKotor,
+            'beban_gaji'           => $bebanGaji,
+            'beban_sewa'           => $bebanSewa,
             'beban_operasional'    => $bebanOperasional,
             'beban_lainnya'        => $bebanLainnya,
             'detail_beban_lainnya' => $detailBebanList,
             'beban_penyusutan'     => $penyusutanTahunan,
-            'total_beban_op'     => $totalBebanOp,
-            'laba_operasional'   => $labaOperasional,
-            'pendapatan_lain'    => 0,
-            'beban_bunga'        => $bebanBunga,
-            'laba_sebelum_pajak' => $labaSebelumPjk,
-            'pajak'              => $pajakNom,
-            'laba_bersih'        => $labaBersih,
+            'total_beban_op'       => $totalBebanOp,
+            'laba_operasional'     => $labaOperasional,
+            'pendapatan_lain'      => 0,
+            'beban_bunga'          => $bebanBunga,
+            'laba_sebelum_pajak'   => $labaSebelumPjk,
+            'pajak'                => $pajakNom,
+            'laba_bersih'          => $labaBersih,
         ];
 
         // 2. ASUMSI & SALDO AWAL
@@ -205,6 +235,18 @@ class LaporanKeuanganService
         $hargaPerolehanAset = $this->cleanNumber($input['neraca_aset_tetap_bruto'] ?? $input['harga_perolehan_aset_tetap'] ?? $input['harga_perolehan'] ?? 0);
         $umurEkonomis       = max(1, (int)($input['input_capex_umur_ekonomis'] ?? $input['umur_ekonomis_tahun'] ?? 5));
         $pembelianAsetTetap = $this->cleanNumber($input['input_capex'] ?? $input['pembelian_aset_tetap'] ?? 0);
+        if ($pembelianAsetTetap <= 0 && !empty($input['total_aset_hpp_rk'])) {
+            $pembelianAsetTetap = $this->cleanNumber($input['total_aset_hpp_rk']);
+        }
+        if ($pembelianAsetTetap <= 0 && !empty($detailAsetList)) {
+            $sumAset = 0;
+            foreach ($detailAsetList as $da) {
+                $sumAset += $this->cleanNumber($da['nominal'] ?? 0);
+            }
+            if ($sumAset > 0) {
+                $pembelianAsetTetap = $sumAset;
+            }
+        }
         if ($pembelianAsetTetap <= 0 && !empty($input['tujuan_pembiayaan']) && stripos($input['tujuan_pembiayaan'], 'investasi') !== false) {
             $pembelianAsetTetap = $this->cleanNumber($input['plafon_pengajuan'] ?? $input['plafon'] ?? 0);
         }
@@ -322,6 +364,7 @@ class LaporanKeuanganService
             'umur_ekonomis_tahun'        => $umurEkonomis,
             'penyusutan_tahunan'         => $penyusutanTahunan,
             'aset_tetap_neto'            => $asetTetapNeto,
+            'detail_aset'                => $detailAsetList,
             'total_aset'                 => $totalAset,
             'utang_usaha'                => $utangUsahaAkhir,
             'utang_usaha_sumber'         => $utangUsahaSumber,

@@ -435,9 +435,16 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
                     </table>
 
                     <?php if (!empty($nr['aset_tetap_neto']) && (float)$nr['aset_tetap_neto'] > 0): ?>
-                    <div class="group-title" style="margin-top: 6px;">Harta Tetap (Alat, Mesin &amp; Bangunan)</div>
+                    <div class="group-title" style="margin-top: 6px;">Harta Tetap / Peralatan Usaha</div>
                     <table class="report-table">
                         <tr><td class="col-desc">Nilai Sisa Aset Tetap Saat Ini (Neto)</td><td class="col-val"><?= rpFmt($nr['aset_tetap_neto'] ?? 0) ?></td></tr>
+                        <?php if (!empty($nr['detail_aset']) && is_array($nr['detail_aset'])): ?>
+                            <?php foreach ($nr['detail_aset'] as $da): ?>
+                                <?php $nomA = (float)($da['nominal'] ?? 0); if ($nomA > 0 || !empty($da['nama'])): ?>
+                                <tr><td class="col-desc" style="padding-left: 20px; color: #059669;">• <?= esc($da['nama'] ?: 'Aset / Peralatan') ?></td><td class="col-val"><?= rpFmt($nomA) ?></td></tr>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                         <tr class="row-highlight"><td class="col-desc font-bold">Total Nilai Aset Tetap</td><td class="col-val font-bold"><?= rpFmt($nr['aset_tetap_neto'] ?? 0) ?></td></tr>
                     </table>
                     <?php endif; ?>
