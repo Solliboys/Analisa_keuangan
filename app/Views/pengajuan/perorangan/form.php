@@ -75,18 +75,18 @@
                 <!-- Vertical Stepper List (12 Tahap Pengusul) -->
                 <?php
                 $sidebarSteps = [
-                    1  => ['target' => 1,         'title' => '1. Aplikasi',       'sub' => 'Parameter dasar'],
-                    2  => ['target' => 2,         'title' => '2. Info Pribadi',   'sub' => 'Data demografi'],
-                    3  => ['target' => 3,         'title' => '3. Pekerjaan',      'sub' => 'Data pekerjaan'],
-                    4  => ['target' => 4,         'title' => '4. Jaminan',        'sub' => 'Agunan kredit'],
-                    5  => ['target' => 5,         'title' => '5. Dokumen',        'sub' => 'Unggah berkas'],
-                    6  => ['target' => 6,         'title' => '6. SLIK / CLIK',    'sub' => 'Cek riwayat kredit'],
-                    7  => ['target' => 7,         'title' => '7. Web Check',      'sub' => 'Verifikasi online'],
-                    8  => ['target' => 8,         'title' => '8. Rekening Koran', 'sub' => 'Analisis mutasi'],
-                    9  => ['target' => 9,         'title' => '9. Data Keuangan',  'sub' => 'Proyeksi keuangan'],
-                    10 => ['target' => 'laporan', 'title' => '10. Laporan',       'sub' => 'Tampilan laporan'],
-                    11 => ['target' => 10,        'title' => '11. Opini Pengusul','sub' => 'Catatan kualitatif'],
-                    12 => ['target' => 11,        'title' => '12. Disbursement',  'sub' => 'Jadwal pencairan'],
+                    1  => ['target' => 1,         'title' => '1. Aplikasi',                 'sub' => 'Parameter dasar'],
+                    2  => ['target' => 2,         'title' => '2. Info Pribadi',             'sub' => 'Data demografi'],
+                    3  => ['target' => 3,         'title' => '3. Pekerjaan',                'sub' => 'Data pekerjaan'],
+                    4  => ['target' => 4,         'title' => '4. Jaminan',                  'sub' => 'Agunan kredit'],
+                    5  => ['target' => 5,         'title' => '5. Dokumen',                  'sub' => 'Unggah berkas'],
+                    6  => ['target' => 6,         'title' => '6. SLIK / CLIK',              'sub' => 'Cek riwayat kredit'],
+                    7  => ['target' => 7,         'title' => '7. Web Check',                'sub' => 'Verifikasi online'],
+                    8  => ['target' => 8,         'title' => '8. Rekening Koran',           'sub' => 'Analisis mutasi'],
+                    9  => ['target' => 9,         'title' => '9. Data Keuangan',            'sub' => 'Pemasukan & beban'],
+                    10 => ['target' => 'laporan', 'title' => '10. Laporan & Disbursement',  'sub' => 'Laporan & Pencairan'],
+                    11 => ['target' => 10,        'title' => '11. Opini Pengusul',          'sub' => 'Catatan kualitatif'],
+                    12 => ['target' => 12,        'title' => '12. Repayment',               'sub' => 'Kemampuan angsur'],
                 ];
                 ?>
                 <!-- Vertical Stepper List (12 Tahap Pengusul) -->
@@ -220,9 +220,9 @@
 
                     <?= $this->include('pengajuan/perorangan/tabs/tab_10') ?>
 
-                    <?= $this->include('pengajuan/tabs/tab_11') ?>
+                    <?= $this->include('pengajuan/tabs/tab_12') ?>
 
-                    <!-- Parameter Angsuran & Status Pengajuan (Tahap Repayment ditiadakan) -->
+                    <!-- Parameter Angsuran & Status Pengajuan -->
                     <input type="hidden" name="angsuran_balloon" id="angsuran_balloon" value="<?= number_format((float)($keuangan['angsuran_balloon'] ?? 0), 0, ',', '.') ?>">
                     <input type="hidden" name="angsuran_installment" id="angsuran_installment" value="<?= number_format((float)($keuangan['angsuran_installment'] ?? 0), 0, ',', '.') ?>">
                     <input type="hidden" name="angsuran_dipilih" id="angsuran_dipilih" value="<?= number_format((float)($keuangan['angsuran_dipilih'] ?? 0), 0, ',', '.') ?>">
