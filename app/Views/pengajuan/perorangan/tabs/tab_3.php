@@ -51,7 +51,7 @@ if (empty($listUsaha)) {
                                 <span class="usaha-num"><?= $idx + 1 ?></span>
                             </span>
                             <h4 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wide uppercase">
-                                <span class="usaha-prefix-title"><?= $isFirst ? 'PEKERJAAN / PROFESI PEMOHON' : 'PEKERJAAN / USAHA #' ?></span><?php if (!$isFirst): ?><span class="usaha-num-title"><?= $idx + 1 ?></span><?php endif; ?>
+                                <span class="usaha-prefix-title">PEKERJAAN / USAHA #</span><span class="usaha-num-title"><?= $idx + 1 ?></span>
                                 <span class="text-[11px] font-semibold text-blue-600 ml-1.5 usaha-status-badge">(<?= $isFirst ? 'Utama' : 'Tambahan / Sampingan' ?>)</span>
                             </h4>
                         </div>

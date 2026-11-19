@@ -879,15 +879,15 @@ class Superadmin extends BaseController
 
         $logs = $builder->orderBy('created_at', 'DESC')->get()->getResultArray();
 
-        // Data statistik audit
-        $totalLogs   = $logModel->countAllResults(false);
-        $todayLogs   = $logModel->where('DATE(created_at)', date('Y-m-d'))->countAllResults(false);
-        $warningLogs = $logModel->whereIn('status', ['WARNING', 'DANGER', 'ERROR'])->countAllResults(false);
-        $successLogs = $logModel->where('status', 'SUCCESS')->countAllResults(false);
+        // Data statistik audit (gunakan reset builder agar WHERE tidak menumpuk)
+        $totalLogs   = $logModel->countAllResults(true);
+        $todayLogs   = $logModel->where('DATE(created_at)', date('Y-m-d'))->countAllResults(true);
+        $warningLogs = $logModel->whereIn('status', ['WARNING', 'DANGER', 'ERROR'])->countAllResults(true);
+        $successLogs = $logModel->where('status', 'SUCCESS')->countAllResults(true);
 
         // Ambil list unik modul untuk filter dropdown
-        $modulList = $logModel->select('modul')->distinct()->findAll();
-        $daftarModul = array_filter(array_column($modulList, 'modul'));
+        $modulList = $logModel->select('modul')->distinct()->orderBy('modul', 'ASC')->findAll();
+        $daftarModul = array_values(array_filter(array_column($modulList, 'modul')));
 
         $db = \Config\Database::connect();
         $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];

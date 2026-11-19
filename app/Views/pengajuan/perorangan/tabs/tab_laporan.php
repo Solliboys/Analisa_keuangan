@@ -68,12 +68,7 @@ if (!empty($slik) && is_array($slik)) {
         ];
     }
 }
-if ($totalCicilanSlik <= 0) {
-    $totalCicilanSlik = (float)($keuangan['angsuran_dipilih'] ?? ($keuangan['angsuran_installment'] ?? 0));
-}
-if ($totalOutstandingSlik <= 0 && $totalCicilanSlik > 0) {
-    $totalOutstandingSlik = $totalCicilanSlik * 18;
-}
+// Jika tidak ada fasilitas SLIK berjalan, kewajiban SLIK = 0 (jangan tarik angsuran kredit baru)
 
 // =============================================================================
 // 3. DETEKSI STATUS CENTANG PENDAPATAN LAIN (TAB 9)

@@ -412,14 +412,17 @@
                         <td class="text-center font-semibold text-blue-700">SEDANG</td>
                     </tr>
                 </tbody>
+                <?php
+                    $totalTertimbang5C = round(($sChar * 0.20) + ($sCap * 0.30) + ($sCpt * 0.15) + 23.75 + ($sCnd * 0.10), 2);
+                ?>
                 <tfoot>
                     <tr class="bg-slate-100 font-bold">
                         <td class="text-center">TOTAL</td>
                         <td class="text-center">100%</td>
-                        <td class="text-center"><?= number_format($skorAI, 2, ',', '.') ?></td>
+                        <td class="text-center"><?= number_format($totalTertimbang5C, 2, ',', '.') ?></td>
                         <td>-</td>
-                        <td class="text-center"><?= number_format($skorAI, 2, ',', '.') ?></td>
-                        <td class="text-center text-blue-800 text-sm"><?= number_format($skorAI, 2, ',', '.') ?></td>
+                        <td class="text-center"><?= number_format($totalTertimbang5C, 2, ',', '.') ?></td>
+                        <td class="text-center text-blue-800 text-sm"><?= number_format($totalTertimbang5C, 2, ',', '.') ?></td>
                         <td colspan="2">Grade Credit Scoring: <?= $grade ?></td>
                     </tr>
                 </tfoot>

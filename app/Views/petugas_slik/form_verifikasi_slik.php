@@ -110,7 +110,7 @@
                             <?php endif; ?>
                         </div>
                         <p class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <span>Jenis Usaha: <strong class="text-slate-700"><?= esc($kredit['nama_usaha'] ?: ($kredit['bidang_usaha'] ?: '-')) ?></strong></span>
+                            <span>Nama / Bidang Usaha: <strong class="text-slate-700"><?= esc($kredit['nama_usaha'] ?: ($kredit['bidang_usaha'] ?: '-')) ?><?= (!empty($kredit['nama_usaha']) && !empty($kredit['bidang_usaha'])) ? ' (' . esc($kredit['bidang_usaha']) . ')' : '' ?></strong></span>
                             <span>&bull;</span>
                             <span>Plafon Pengajuan: <strong class="text-blue-700">Rp <?= number_format((float)($kredit['plafon_pengajuan'] ?? 0), 0, ',', '.') ?></strong></span>
                             <span>&bull;</span>
@@ -795,11 +795,21 @@
 
         // Modal KTP
         function bukaModalKtpDebitur() {
-            document.getElementById('modalKtpDebitur')?.classList.remove('hidden');
+            const modal = document.getElementById('modalKtpDebitur');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+            }
         }
+        window.bukaModalKtpDebitur = bukaModalKtpDebitur;
         function tutupModalKtpDebitur() {
-            document.getElementById('modalKtpDebitur')?.classList.add('hidden');
+            const modal = document.getElementById('modalKtpDebitur');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+            }
         }
+        window.tutupModalKtpDebitur = tutupModalKtpDebitur;
 
         // Jalankan hitung total saat halaman siap
         document.addEventListener('DOMContentLoaded', () => {

@@ -66,7 +66,7 @@
         <!-- Top Header Navigation (Desktop) -->
         <div class="hidden md:flex bg-white border-b border-slate-200 px-8 py-3.5 items-center justify-between sticky top-0 z-20 w-full">
             <div class="flex items-center gap-3">
-                <a href="<?= base_url('superadmin/dashboard') ?>" class="text-xs font-semibold text-slate-400 hover:text-blue-600 transition">
+                <a href="<?= base_url('dashboard') ?>" class="text-xs font-semibold text-slate-400 hover:text-blue-600 transition">
                     Dashboard
                 </a>
                 <span class="text-slate-300">/</span>
@@ -371,7 +371,7 @@
                 <!-- Table Footer & Pagination -->
                 <div class="p-4 sm:p-5 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
                     <div id="paginationInfo">
-                        Menampilkan 1 sampai <span id="infoShowingCount">10</span> dari <span id="infoTotalCount"><?= count($daftar_referensi) ?></span> entri
+                        Menampilkan <span id="infoShowingCount">1 - 10</span> dari <span id="infoTotalCount"><?= count($daftar_referensi) ?></span> entri
                     </div>
                     <div class="inline-flex items-center gap-1" id="paginationControls">
                         <!-- Controls generated via JS -->

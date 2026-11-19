@@ -24,15 +24,55 @@
     if ($currentDecision === 'Bersyarat') $currentDecision = 'Disetujui Bersyarat';
     $currentCatatan  = $keputusan_reviewer['catatan_approval'] ?? '';
 
-    // Hitung parameter 5C & Skor AI
-    $dscVal     = (float)($keuangan['rasio_dsc_dscr'] ?? 1.35);
-    $omzetVal   = (float)($keuangan['pendapatan_rata_rata_bulanan'] ?? ($keuangan['pendapatan_bersih_bulan'] ?? 0));
-    $angsuranVal= (float)($keuangan['angsuran_bulanan_usulan'] ?? 0);
-    $labaVal    = (float)($keuangan['laba_bersih_operasional'] ?? ($omzetVal * 0.25));
+    // Hitung parameter 5C & Skor AI dari kolom database aktual
+    $omzetVal = (float)($keuangan['pendapatan_rk'] ?? ($keuangan['pendapatan_rata_rata_bulanan'] ?? ($keuangan['pendapatan_bersih_bulan'] ?? 0)));
+    if ($omzetVal <= 0 && !empty($keuangan['detail_pendapatan_rk'])) {
+        $decP = json_decode($keuangan['detail_pendapatan_rk'], true);
+        if (is_array($decP)) {
+            foreach ($decP as $dp) $omzetVal += (float)($dp['nominal'] ?? 0);
+        }
+    }
+    if ($omzetVal <= 0 && !empty($rekening) && is_array($rekening)) {
+        foreach ($rekening as $rk) {
+            $blnRk = max(1, (int)($rk['jumlah_bulan'] ?? 6));
+            $omzetVal += round((float)($rk['total_mutasi_kredit'] ?? 0) / $blnRk);
+        }
+    }
+
+    $angsuranVal = (float)($keuangan['angsuran_dipilih'] ?? ($keuangan['angsuran_installment'] ?? ($keuangan['angsuran_bulanan_usulan'] ?? 0)));
+    if ($angsuranVal <= 0) {
+        $plfTmp = (float)($kredit['plafon_pengajuan'] ?? 0);
+        $tnrTmp = max(1, (int)($kredit['tenor_bulan'] ?? 12));
+        $bngTmp = (float)($kredit['bunga_per_bulan'] ?? ((float)($kredit['bunga_per_tahun'] ?? 12) / 12));
+        $rTmp   = $bngTmp / 100;
+        $mtdTmp = strtoupper($kredit['perhitungan_bunga'] ?? 'ANUITAS');
+        if ($plfTmp > 0) {
+            if ($mtdTmp === 'ANUITAS' && $rTmp > 0) {
+                $angsuranVal = round($plfTmp * ($rTmp / (1 - pow(1 + $rTmp, -$tnrTmp))));
+            } else {
+                $angsuranVal = round(($plfTmp / $tnrTmp) + ($plfTmp * $rTmp));
+            }
+        }
+    }
+
+    $labaVal = (float)($keuangan['nett_cashflow_rk'] ?? ($keuangan['total_cashflow_tersedia'] ?? ($keuangan['laba_bersih_operasional'] ?? 0)));
+    if ($labaVal <= 0 && $omzetVal > 0) {
+        $hppNom = (float)($keuangan['hpp_nominal_rk'] ?? 0);
+        $bhNom  = (float)($keuangan['biaya_hidup_nominal_rk'] ?? 0);
+        $blNom  = (float)($keuangan['beban_lainnya_nominal_rk'] ?? 0);
+        $labaVal = max(0, $omzetVal - $hppNom - $bhNom - $blNom);
+    }
+
+    $dscVal = (float)($keuangan['dsc_rasio_rk'] ?? ($keuangan['rasio_dsc_dscr'] ?? 0));
+    if ($dscVal <= 0 && $angsuranVal > 0 && $labaVal > 0) {
+        $dscVal = round($labaVal / $angsuranVal, 2);
+    }
 
     $skorAi     = !empty($analisa['skor_kelayakan_ai']) ? (int)$analisa['skor_kelayakan_ai'] : 82;
     $rekomAi    = !empty($analisa['rekomendasi_keputusan_ai']) ? $analisa['rekomendasi_keputusan_ai'] : 'Disetujui Penuh';
-    $plafonAi   = !empty($analisa['rekomendasi_plafon_ai']) ? (float)$analisa['rekomendasi_plafon_ai'] : (float)($kredit['plafon_pengajuan'] ?? 0);
+    $plafonPengajuan = (float)($kredit['plafon_pengajuan'] ?? 0);
+    $rawPlafonAi = !empty($analisa['rekomendasi_plafon_ai']) ? (float)$analisa['rekomendasi_plafon_ai'] : $plafonPengajuan;
+    $plafonAi   = ($plafonPengajuan > 0 && $rawPlafonAi > $plafonPengajuan) ? $plafonPengajuan : $rawPlafonAi;
     $risikoAi   = !empty($analisa['analisis_risiko_ai']) ? $analisa['analisis_risiko_ai'] : 'Profil usaha menunjukkan perputaran kas positif dengan rasio DSC di atas batas aman. Agunan memiliki nilai pasar dan legalitas kuat yang mampu memitigasi risiko gagal bayar.';
 
     // Penilaian 5C individual
@@ -262,7 +302,7 @@
                             <?php endif; ?>
                         </div>
                         <p class="text-xs text-blue-700/80 mt-1">
-                            <?= !empty($currentDecision) ? 'Pemeriksaan review telah selesai. Keputusan tercatat resmi pada risalah komite.' : 'Pilih salah satu dari 3 opsi keputusan komite kredit beserta catatan resmi.' ?>
+                            <?= !empty($currentDecision) ? 'Pemeriksaan review telah selesai. Keputusan tercatat resmi pada risalah komite.' : 'Pilih salah satu dari 4 opsi keputusan komite kredit beserta catatan resmi.' ?>
                         </p>
                     </div>
 
@@ -776,18 +816,22 @@
             const modal = document.getElementById('modalDetailAI');
             if (modal) {
                 modal.classList.remove('hidden');
+                modal.style.display = 'flex';
                 document.body.classList.add('overflow-hidden');
             }
         }
+        window.bukaModalLihatAI = bukaModalLihatAI;
 
         // Tutup Pop-up Laporan CAM & AI
         function tutupModalLihatAI() {
             const modal = document.getElementById('modalDetailAI');
             if (modal) {
                 modal.classList.add('hidden');
+                modal.style.display = 'none';
                 document.body.classList.remove('overflow-hidden');
             }
         }
+        window.tutupModalLihatAI = tutupModalLihatAI;
 
         // Cetak dokumen dari iframe modal
         function cetakIframeLaporan() {

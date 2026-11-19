@@ -410,13 +410,19 @@
                                                     <span>Laporan AI</span>
                                                 </button>
 
-                                                <!-- Tombol Edit Form -->
-                                                <a href="<?= base_url('pengajuan/edit/' . $row['kredit_id']) ?>" 
-                                                   class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold rounded-lg transition border border-blue-200/50" 
-                                                   title="Buka / Edit Analisa">
-                                                    Edit Form
-                                                    Edit
-                                                </a>
+                                                <?php if (strpos($roleUser, 'review') !== false): ?>
+                                                    <a href="<?= base_url('reviewer/review/' . $row['kredit_id']) ?>" 
+                                                       class="px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold rounded-lg transition border border-indigo-200/70" 
+                                                       title="Buka Halaman Review Komite">
+                                                        Review
+                                                    </a>
+                                                <?php else: ?>
+                                                    <a href="<?= base_url('pengajuan/edit/' . $row['kredit_id']) ?>" 
+                                                       class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold rounded-lg transition border border-blue-200/50" 
+                                                       title="Buka / Edit Analisa">
+                                                        Edit Form
+                                                    </a>
+                                                <?php endif; ?>
                                             <?php endif; ?>
 
                                             <?php if ($canDeleteRow): ?>
