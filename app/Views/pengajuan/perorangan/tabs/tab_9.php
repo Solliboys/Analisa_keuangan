@@ -145,6 +145,27 @@
                 }
             }
         }
+
+        // Prioritas Aset: Ekstrak aset dari Kotak 3 ($listDetailHppPR kategori 'aset')
+        $listAsetKotak3PR = [];
+        if (!empty($listDetailHppPR)) {
+            foreach ($listDetailHppPR as $it) {
+                if (($it['kategori'] ?? '') === 'aset') {
+                    $listAsetKotak3PR[] = [
+                        'nama'    => $it['nama'] ?? 'Aset / Inventaris',
+                        'nominal' => (float)($it['nominal'] ?? 0),
+                        'status'  => 'bebas'
+                    ];
+                }
+            }
+        }
+        if (!empty($listAsetKotak3PR)) {
+            $listDetailHarta = $listAsetKotak3PR;
+        } else {
+            $listDetailHarta = array_values(array_filter($listDetailHarta, function($item) {
+                return (float)($item['nominal'] ?? 0) > 0;
+            }));
+        }
     ?>
 
     <!-- Layout 3 Kotak Data Keuangan Perorangan (1: Pendapatan [Biru], 2: Pengeluaran [Merah], 3: Aset [Hijau]) -->
@@ -371,6 +392,7 @@
     window.ANGSURAN_SLIK_DEFAULT = <?= (float)$totalCicilanSlik ?>;
     window.OUTSTANDING_SLIK_DEFAULT = <?= (float)$totalOutstandingSlik ?>;
     window.ESTIMASI_ANGSURAN_BARU = <?= (float)$estimasiAngsuranBaru ?>;
+    window.daftarHpp = <?= !empty($listDetailHppPR) ? json_encode($listDetailHppPR) : '[]' ?>;
     window.daftarHarta = <?= !empty($listDetailHarta) ? json_encode($listDetailHarta) : '[]' ?>;
     window.daftarUtang = <?= !empty($listDetailUtang) ? json_encode($listDetailUtang) : '[]' ?>;
     </script>

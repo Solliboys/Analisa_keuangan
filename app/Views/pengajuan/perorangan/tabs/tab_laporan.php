@@ -91,10 +91,47 @@ if (!empty($listDetailPendapatan)) {
 $nomPendapatanLainAwal = $adaPendapatanLainChecked ? (float)($keuangan['pendapatan_lain_rk'] ?? 0) : 0;
 $totalPemasukanAwal     = $totalPemasukanPokokAwal + $nomPendapatanLainAwal;
 
-// Beban awal
+// 2. Data Rincian HPP & Belanja Aset Dinamis dari Kotak 2B & Kotak 3 Data Keuangan
+$rawDetailHpp = $keuangan['detail_hpp_rk'] ?? '';
+$listDetailHpp = [];
+$listAsetKotak3 = [];
+$totalHppAwal = 0;
+$totalAsetKotak3Awal = 0;
+if (!empty($rawDetailHpp) && $rawDetailHpp !== '[]') {
+    $decHpp = json_decode($rawDetailHpp, true);
+    if (is_array($decHpp)) {
+        foreach ($decHpp as $item) {
+            $kat = strtolower($item['kategori'] ?? 'hpp');
+            $nom = (float)($item['nominal'] ?? 0);
+            if ($kat === 'aset') {
+                $listAsetKotak3[] = [
+                    'nama'    => $item['nama'] ?? 'Aset / Inventaris',
+                    'nominal' => $nom,
+                    'status'  => 'bebas'
+                ];
+                $totalAsetKotak3Awal += $nom;
+            } else {
+                $listDetailHpp[] = [
+                    'nama'     => $item['nama'] ?? 'Biaya HPP / Modal Kulakan',
+                    'nominal'  => $nom,
+                    'kategori' => 'hpp'
+                ];
+                $totalHppAwal += $nom;
+            }
+        }
+    }
+}
+if ($totalHppAwal <= 0 && !empty($keuangan['hpp_nominal_rk'])) {
+    $totalHppAwal = (float)$keuangan['hpp_nominal_rk'];
+    if ($totalHppAwal > 0) {
+        $listDetailHpp = [['nama' => 'Biaya Modal / Kulakan (HPP)', 'nominal' => $totalHppAwal, 'kategori' => 'hpp']];
+    }
+}
+
+// 3. Beban awal dari Kotak 2A
 $rawDetailBeban = $keuangan['detail_beban_lainnya_rk'] ?? '';
 $listDetailBeban = [];
-if (!empty($rawDetailBeban)) {
+if (!empty($rawDetailBeban) && $rawDetailBeban !== '[]') {
     $decB = json_decode($rawDetailBeban, true);
     if (is_array($decB) && count($decB) > 0) {
         $listDetailBeban = $decB;
@@ -109,14 +146,15 @@ if (!empty($listDetailBeban)) {
     $totalBebanAwal = (float)($keuangan['beban_lainnya_nominal_rk'] ?? ($keuangan['biaya_hidup_nominal_rk'] ?? 0));
     $listDetailBeban = [['nama' => 'Pengeluaran Rutin & Kebutuhan Rumah Tangga', 'nominal' => $totalBebanAwal]];
 }
-$surplusBulananAwal = $totalPemasukanAwal - $totalBebanAwal;
+$totalPengeluaranAwal = $totalBebanAwal + $totalHppAwal;
+$surplusBulananAwal = $totalPemasukanAwal - $totalPengeluaranAwal;
 
 // =============================================================================
 // 4. DAFTAR HARTA / ASET DARI DATA KEUANGAN (TIDAK BOLEH DARI NILAI AGUNAN)
 // =============================================================================
 $rawDetailHarta = $keuangan['detail_harta_json'] ?? '';
 $listDetailHarta = [];
-if (!empty($rawDetailHarta)) {
+if (!empty($rawDetailHarta) && $rawDetailHarta !== '[]') {
     $decH = json_decode($rawDetailHarta, true);
     if (is_array($decH)) {
         if (isset($decH['daftar_harta']) && is_array($decH['daftar_harta'])) {
@@ -126,24 +164,21 @@ if (!empty($rawDetailHarta)) {
         }
     }
 }
-if (empty($listDetailHarta)) {
-    $tabunganDb = (float)($keuangan['harta_tabungan'] ?? 0);
-    $depositoDb = (float)($keuangan['harta_deposito'] ?? 0);
-    $statusDepoDb = $keuangan['status_deposito'] ?? 'bebas';
-    $tanahDb = (float)($keuangan['harta_tanah'] ?? 0);
-    $statusTanahDb = $keuangan['status_tanah'] ?? 'bebas';
-    $bangunanDb = (float)($keuangan['harta_bangunan'] ?? 0);
-    $statusBangunanDb = $keuangan['status_bangunan'] ?? 'bebas';
-    $kendaraanDb = (float)($keuangan['harta_kendaraan'] ?? 0);
-    $statusKendaraanDb = $keuangan['status_kendaraan'] ?? 'bebas';
 
-    $listDetailHarta = [
-        ['nama' => 'Tabungan Bank', 'nominal' => $tabunganDb, 'status' => 'bebas'],
-        ['nama' => 'Deposito Berjangka', 'nominal' => $depositoDb, 'status' => $statusDepoDb],
-        ['nama' => 'Bangunan', 'nominal' => $bangunanDb, 'status' => $statusBangunanDb],
-        ['nama' => 'Tanah', 'nominal' => $tanahDb, 'status' => $statusTanahDb],
-        ['nama' => 'Kendaraan Pribadi', 'nominal' => $kendaraanDb, 'status' => $statusKendaraanDb],
-    ];
+// Prioritas utama: jika ada aset dari Kotak 3 (Belanja / Pembelian Aset)
+if (!empty($listAsetKotak3)) {
+    $listDetailHarta = $listAsetKotak3;
+} else {
+    // Filter listDetailHarta agar hanya mengambil yang nominal > 0
+    $listDetailHarta = array_values(array_filter($listDetailHarta, function($item) {
+        return (float)($item['nominal'] ?? 0) > 0;
+    }));
+}
+
+// Tambahkan saldo tabungan jika > 0 dan belum ada di list
+$tabunganDb = (float)($keuangan['harta_tabungan'] ?? 0);
+if ($tabunganDb > 0 && empty($listDetailHarta)) {
+    $listDetailHarta[] = ['nama' => 'Tabungan Bank / Kas', 'nominal' => $tabunganDb, 'status' => 'bebas'];
 }
 
 $totalHartaBrutoAwal = 0;
@@ -267,12 +302,12 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
         <!-- 2. Total Pengeluaran / Beban Bulanan (Merah) -->
         <div class="p-4 bg-rose-50/70 rounded-2xl border border-rose-200 flex flex-col justify-between shadow-2xs">
             <span class="text-[10px] font-extrabold text-rose-900 uppercase tracking-wider" id="label_kpi_beban">
-                <?= $kategoriDebiturAwal === 'usaha' ? 'TOTAL BEBAN USAHA & RT' : 'TOTAL BIAYA HIDUP & RUTIN' ?>
+                <?= $kategoriDebiturAwal === 'usaha' ? 'TOTAL PENGELUARAN & BEBAN' : 'TOTAL PENGELUARAN & BIAYA HIDUP' ?>
             </span>
             <span id="metric_lap_beban" class="text-xl sm:text-2xl font-black text-rose-700 tracking-tight block mt-1">
-                Rp <?= number_format($totalBebanAwal, 0, ',', '.') ?>
+                Rp <?= number_format($totalPengeluaranAwal, 0, ',', '.') ?>
             </span>
-            <span class="text-[11px] text-rose-800/80 font-medium mt-1 block">Akumulasi seluruh beban dinamis</span>
+            <span class="text-[11px] text-rose-800/80 font-medium mt-1 block">Akumulasi pengeluaran rutin &amp; HPP</span>
         </div>
 
         <!-- 3. Sisa Penghasilan / Surplus Bulanan (Hijau) -->
@@ -363,15 +398,15 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold text-rose-900 uppercase tracking-wider flex items-center gap-1.5" id="label_col_beban">
                         <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
-                        <?= $kategoriDebiturAwal === 'usaha' ? 'Rincian Beban Usaha & Rumah Tangga' : 'Rincian Pengeluaran & Biaya Hidup' ?>
+                        <?= $kategoriDebiturAwal === 'usaha' ? 'Rincian Beban Usaha, HPP & Rumah Tangga' : 'Rincian Pengeluaran, HPP & Biaya Hidup' ?>
                     </span>
-                    <span class="text-[11px] font-bold text-rose-700" id="lap_badge_tot_beban">Rp <?= number_format($totalBebanAwal, 0, ',', '.') ?></span>
+                    <span class="text-[11px] font-bold text-rose-700" id="lap_badge_tot_beban">Rp <?= number_format($totalPengeluaranAwal, 0, ',', '.') ?></span>
                 </div>
                 <div class="border border-rose-200 rounded-xl overflow-hidden bg-white shadow-2xs">
                     <table class="w-full text-left text-xs">
                         <thead>
                             <tr class="bg-rose-50/70 border-b border-rose-100 text-rose-900 font-bold uppercase text-[10px] tracking-wider">
-                                <th class="py-2.5 px-3">Komponen Beban</th>
+                                <th class="py-2.5 px-3">Komponen Beban / Pengeluaran</th>
                                 <th class="py-2.5 px-3 text-right">Nominal (Rp/Bulan)</th>
                             </tr>
                         </thead>
@@ -379,15 +414,26 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                             <!-- Diisi dinamis oleh sinkronkanLaporanKeuangan() -->
                             <?php foreach ($listDetailBeban as $b): ?>
                                 <tr>
-                                    <td class="py-2.5 px-3 font-semibold text-slate-800"><?= esc($b['nama'] ?: 'Beban Hidup') ?></td>
+                                    <td class="py-2.5 px-3 font-semibold text-slate-800"><?= esc($b['nama'] ?: 'Pengeluaran Rutin') ?></td>
                                     <td class="py-2.5 px-3 text-right font-bold text-rose-600">Rp <?= number_format((float)($b['nominal'] ?? 0), 0, ',', '.') ?></td>
                                 </tr>
                             <?php endforeach; ?>
+                            <?php if (!empty($listDetailHpp)): ?>
+                                <tr class="bg-rose-50/60 font-bold text-[10px] uppercase text-rose-900 border-t border-b border-rose-100">
+                                    <td colspan="2" class="py-1 px-3 font-extrabold tracking-wider">📦 Biaya Modal / Kulakan (HPP)</td>
+                                </tr>
+                                <?php foreach ($listDetailHpp as $hpp): ?>
+                                    <tr>
+                                        <td class="py-2 px-3 font-semibold text-slate-800 pl-5">• <?= esc($hpp['nama'] ?: 'HPP / Kulakan') ?></td>
+                                        <td class="py-2 px-3 text-right font-bold text-rose-600">Rp <?= number_format((float)($hpp['nominal'] ?? 0), 0, ',', '.') ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                         <tfoot>
                             <tr class="bg-rose-50/80 font-bold border-t border-rose-200 text-rose-950">
                                 <td class="py-2.5 px-3">TOTAL PENGELUARAN</td>
-                                <td class="py-2.5 px-3 text-right text-rose-700 font-black text-sm" id="lap_tfoot_tot_beban">Rp <?= number_format($totalBebanAwal, 0, ',', '.') ?></td>
+                                <td class="py-2.5 px-3 text-right text-rose-700 font-black text-sm" id="lap_tfoot_tot_beban">Rp <?= number_format($totalPengeluaranAwal, 0, ',', '.') ?></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -441,31 +487,39 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                 </thead>
                 <tbody id="tbody_lap_harta" class="divide-y divide-slate-100">
                     <!-- Diisi dinamis oleh sinkronkanLaporanKeuangan() -->
-                    <?php $noH = 1; foreach ($listDetailHarta as $h): ?>
-                        <?php 
-                            $isTerikat = (($h['status'] ?? 'bebas') === 'terikat');
-                            $nomH = (float)($h['nominal'] ?? 0);
-                        ?>
-                        <tr class="<?= $isTerikat ? 'bg-amber-50/40 text-slate-500' : '' ?>">
-                            <td class="py-2.5 px-4 text-center font-bold text-slate-500"><?= $noH++ ?></td>
-                            <td class="py-2.5 px-4 font-semibold text-slate-800">
-                                <?= esc($h['nama'] ?: 'Aset') ?>
-                                <?php if ($isTerikat): ?>
-                                    <span class="ml-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Dijaminkan / Terikat</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="py-2.5 px-4 text-center font-bold">
-                                <?php if ($isTerikat): ?>
-                                    <span class="text-amber-700">Terikat Jaminan</span>
-                                <?php else: ?>
-                                    <span class="text-emerald-700">Bebas Jaminan (Eligible)</span>
-                                <?php endif; ?>
-                            </td>
-                            <td class="py-2.5 px-4 text-right font-bold <?= $isTerikat ? 'text-amber-800' : 'text-slate-800' ?>">
-                                Rp <?= number_format($nomH, 0, ',', '.') ?>
+                    <?php if (empty($listDetailHarta)): ?>
+                        <tr id="row_lap_harta_empty">
+                            <td colspan="4" class="py-4 px-4 text-center text-slate-400 italic text-xs">
+                                Belum ada rincian aset. Tambahkan pembelian aset pada Kotak 3 (Belanja / Pembelian Aset) di Tab Data Keuangan.
                             </td>
                         </tr>
-                    <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php $noH = 1; foreach ($listDetailHarta as $h): ?>
+                            <?php 
+                                $isTerikat = (($h['status'] ?? 'bebas') === 'terikat');
+                                $nomH = (float)($h['nominal'] ?? 0);
+                            ?>
+                            <tr class="<?= $isTerikat ? 'bg-amber-50/40 text-slate-500' : '' ?>">
+                                <td class="py-2.5 px-4 text-center font-bold text-slate-500"><?= $noH++ ?></td>
+                                <td class="py-2.5 px-4 font-semibold text-slate-800">
+                                    <?= esc($h['nama'] ?: 'Aset') ?>
+                                    <?php if ($isTerikat): ?>
+                                        <span class="ml-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Dijaminkan / Terikat</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="py-2.5 px-4 text-center font-bold">
+                                    <?php if ($isTerikat): ?>
+                                        <span class="text-amber-700">Terikat Jaminan</span>
+                                    <?php else: ?>
+                                        <span class="text-emerald-700">Bebas Jaminan (Eligible)</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="py-2.5 px-4 text-right font-bold <?= $isTerikat ? 'text-amber-800' : 'text-slate-800' ?>">
+                                    Rp <?= number_format($nomH, 0, ',', '.') ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -1058,14 +1112,7 @@ window.gantiKategoriDebitur = gantiKategoriDebitur;
 
 // Sinkronisasi Seluruh Data dari Tab 9 ke Tab Laporan Secara Real-Time
 function sinkronkanLaporanKeuangan() {
-    // 0. Auto-deteksi kategori sesuai checkbox 'ada_bukti_pendapatan_lain_rk' di Tab 9
-    const isCheckedAdaLain = Boolean(document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked);
-    const targetKategori = isCheckedAdaLain ? 'usaha' : 'gaji';
-    if (activeKategoriDebitur !== targetKategori) {
-        gantiKategoriDebitur(targetKategori);
-    }
-
-    // 1. Ambil Pemasukan dari Tab 9
+    // 1. Ambil Pemasukan dari Tab 9 (Kotak 1)
     let totPemasukanPokok = 0;
     let listPendapatan = [];
     if (Array.isArray(window.daftarPendapatan) && window.daftarPendapatan.length > 0) {
@@ -1078,10 +1125,11 @@ function sinkronkanLaporanKeuangan() {
         listPendapatan = [{ nama: (activeKategoriDebitur === 'usaha' ? 'Omzet Penjualan' : 'Gaji Pokok'), nominal: totPemasukanPokok }];
     }
 
+    const isCheckedAdaLain = Boolean(document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked);
     const nomLain = isCheckedAdaLain ? (pNomLap(document.getElementById('pendapatan_lain_rk')?.value) || 0) : 0;
     const totalPemasukan = totPemasukanPokok + nomLain;
 
-    // 2. Ambil Pengeluaran / Beban dari Tab 9
+    // 2. Ambil Pengeluaran Biasa / Beban Rutin dari Tab 9 (Kotak 2A)
     let listBeban = [];
     let totBeban = 0;
     if (Array.isArray(window.daftarBebanLain) && window.daftarBebanLain.length > 0) {
@@ -1090,19 +1138,90 @@ function sinkronkanLaporanKeuangan() {
             totBeban += pNomLap(item.nominal);
         });
     } else {
-        totBeban = pNomLap(document.getElementById('beban_lainnya_nominal_rk')?.value) || 0;
-        listBeban = [{ nama: 'Pengeluaran Rutin & Kebutuhan Rumah Tangga', nominal: totBeban }];
+        totBeban = pNomLap(document.getElementById('beban_lainnya_nominal_rk')?.value) || (pNomLap(document.getElementById('biaya_hidup_nominal_rk')?.value) || 0);
+        if (totBeban > 0) {
+            listBeban = [{ nama: 'Pengeluaran Rutin & Kebutuhan Rumah Tangga', nominal: totBeban }];
+        }
     }
 
-    // 3. Sisa Penghasilan (Surplus Bulanan)
-    const surplus = totalPemasukan - totBeban;
-
-    // 4. Ambil Daftar Harta (Aset) dari Tab 9 (TIDAK BOLEH DARI NILAI AGUNAN)
-    let listHarta = [];
-    if (Array.isArray(window.daftarHarta) && window.daftarHarta.length > 0) {
-        listHarta = window.daftarHarta;
+    // 3. Ambil Rincian HPP (Kotak 2B) & Rincian Aset (Kotak 3) dari daftarHpp Tab 9
+    let sourceHpp = [];
+    if (Array.isArray(window.daftarHpp) && window.daftarHpp.length > 0) {
+        sourceHpp = window.daftarHpp;
+    } else if (typeof daftarHpp !== 'undefined' && Array.isArray(daftarHpp) && daftarHpp.length > 0) {
+        sourceHpp = daftarHpp;
     } else {
-        listHarta = <?= json_encode($listDetailHarta) ?>;
+        const rawHpp = document.getElementById('detail_hpp_rk')?.value;
+        if (rawHpp && rawHpp !== '[]') {
+            try {
+                const parsed = JSON.parse(rawHpp);
+                if (Array.isArray(parsed)) sourceHpp = parsed;
+            } catch(e) {}
+        }
+    }
+
+    let listHpp = [];
+    let listAsetKotak3 = [];
+    let totHpp = 0;
+    let totAsetKotak3 = 0;
+
+    if (Array.isArray(sourceHpp)) {
+        sourceHpp.forEach(item => {
+            const nom = pNomLap(item.nominal);
+            const kat = (item.kategori || 'hpp').toLowerCase();
+            if (kat === 'aset') {
+                if (item.nama || nom > 0) {
+                    listAsetKotak3.push({
+                        nama: item.nama || 'Aset / Inventaris',
+                        nominal: nom,
+                        status: item.status || 'bebas'
+                    });
+                    totAsetKotak3 += nom;
+                }
+            } else {
+                if (item.nama || nom > 0) {
+                    listHpp.push({
+                        nama: item.nama || 'Biaya HPP / Modal Kulakan',
+                        nominal: nom,
+                        kategori: 'hpp'
+                    });
+                    totHpp += nom;
+                }
+            }
+        });
+    }
+
+    // Fallback HPP dari input nominal jika ada nominal tapi belum ada rincian item
+    if (totHpp === 0) {
+        const inputNomHpp = pNomLap(document.getElementById('nomHppRKInput')?.value || 0);
+        if (inputNomHpp > 0) {
+            totHpp = inputNomHpp;
+            listHpp.push({
+                nama: 'Biaya Modal / Kulakan (HPP)',
+                nominal: totHpp,
+                kategori: 'hpp'
+            });
+        }
+    }
+
+    // Total Pengeluaran = Beban Rutin + HPP
+    const totalPengeluaran = totBeban + totHpp;
+
+    // Auto-deteksi kategori sesuai pilihan/ada HPP di Tab 9
+    const targetKategori = (isCheckedAdaLain || totHpp > 0) ? 'usaha' : 'gaji';
+    if (activeKategoriDebitur !== targetKategori) {
+        gantiKategoriDebitur(targetKategori);
+    }
+
+    // 4. Sisa Penghasilan (Surplus Bulanan / Net Cashflow)
+    const surplus = totalPemasukan - totalPengeluaran;
+
+    // 5. Ambil Daftar Harta (Aset) Dinamis dari Kotak 3 Data Keuangan
+    let listHarta = [];
+    if (listAsetKotak3.length > 0) {
+        listHarta = listAsetKotak3;
+    } else if (Array.isArray(window.daftarHarta) && window.daftarHarta.length > 0) {
+        listHarta = window.daftarHarta.filter(item => pNomLap(item.nominal) > 0);
     }
 
     let totHartaBruto = 0;
@@ -1116,7 +1235,7 @@ function sinkronkanLaporanKeuangan() {
     });
     const totHartaEligible = Math.max(0, totHartaBruto - asetTerikat);
 
-    // 5. Ambil Daftar Utang Luar dari Tab 9 + SLIK OJK
+    // 6. Ambil Daftar Utang Luar dari Tab 9 + SLIK OJK
     let listUtang = [];
     if (Array.isArray(window.daftarUtang) && window.daftarUtang.length > 0) {
         listUtang = window.daftarUtang;
@@ -1137,7 +1256,7 @@ function sinkronkanLaporanKeuangan() {
     const totUtangLuar = subUtangDinamis + outSlik;
     const totAngsBerjalan = subAngsDinamis + angsSlik;
 
-    // 6. Fasilitas Kredit Baru yang Diajukan
+    // 7. Fasilitas Kredit Baru yang Diajukan
     const plafonBaru = pNomLap(document.getElementById('plafon_pengajuan')?.value) || <?= $plafonBaru ?>;
     const tenorBaru = parseInt(document.getElementById('tenor_bulan')?.value, 10) || <?= $tenorBulanBaru ?>;
     const bungaBaru = parseFloat(document.getElementById('bunga_per_bulan')?.value) || <?= $bungaBulanPersen ?>;
@@ -1146,25 +1265,25 @@ function sinkronkanLaporanKeuangan() {
     const estimasiAngsBaru = angsPokokBaru + angsBungaBaru;
     const totAngsGabungan = totAngsBerjalan + estimasiAngsBaru;
 
-    // 7. Kekayaan Bersih (Harta Bersih)
+    // 8. Kekayaan Bersih (Harta Bersih)
     const kekayaanBersih = totHartaEligible - totUtangLuar;
 
-    // 8. Rasio-Rasio Keuangan
+    // 9. Rasio-Rasio Keuangan
     const dscr = (totAngsGabungan > 0) ? (surplus / totAngsGabungan).toFixed(2) : '0.00';
     const dsr  = (totalPemasukan > 0) ? ((totAngsGabungan / totalPemasukan) * 100).toFixed(1) : '0.0';
     const dar  = (totHartaEligible > 0) ? ((totUtangLuar / totHartaEligible) * 100).toFixed(1) : '0.0';
     const der  = (kekayaanBersih > 0) ? (totUtangLuar / kekayaanBersih).toFixed(2) : '0.00';
 
-    // 9. Update UI Metrics Tab Laporan (100% Cocok Dengan Tab 9)
+    // 10. Update UI Metrics Tab Laporan (100% Cocok Dengan Tab 9)
     if (document.getElementById('metric_lap_pemasukan')) document.getElementById('metric_lap_pemasukan').innerText = fNomLap(totalPemasukan);
-    if (document.getElementById('metric_lap_beban')) document.getElementById('metric_lap_beban').innerText = fNomLap(totBeban);
+    if (document.getElementById('metric_lap_beban')) document.getElementById('metric_lap_beban').innerText = fNomLap(totalPengeluaran);
     if (document.getElementById('metric_lap_surplus')) document.getElementById('metric_lap_surplus').innerText = fNomLap(surplus);
     if (document.getElementById('metric_lap_net_worth')) document.getElementById('metric_lap_net_worth').innerText = fNomLap(kekayaanBersih);
 
     if (document.getElementById('lap_badge_tot_pemasukan')) document.getElementById('lap_badge_tot_pemasukan').innerText = fNomLap(totalPemasukan);
     if (document.getElementById('lap_tfoot_tot_pemasukan')) document.getElementById('lap_tfoot_tot_pemasukan').innerText = fNomLap(totalPemasukan);
-    if (document.getElementById('lap_badge_tot_beban')) document.getElementById('lap_badge_tot_beban').innerText = fNomLap(totBeban);
-    if (document.getElementById('lap_tfoot_tot_beban')) document.getElementById('lap_tfoot_tot_beban').innerText = fNomLap(totBeban);
+    if (document.getElementById('lap_badge_tot_beban')) document.getElementById('lap_badge_tot_beban').innerText = fNomLap(totalPengeluaran);
+    if (document.getElementById('lap_tfoot_tot_beban')) document.getElementById('lap_tfoot_tot_beban').innerText = fNomLap(totalPengeluaran);
     if (document.getElementById('lap_surplus_nominal')) document.getElementById('lap_surplus_nominal').innerText = fNomLap(surplus);
 
     // Update Tabel Pemasukan Tab Laporan
@@ -1191,12 +1310,12 @@ function sinkronkanLaporanKeuangan() {
             `;
         }
         if (!htmP) {
-            htmP = `<tr><td class="py-2.5 px-3 text-slate-400 italic" colspan="2">Belum ada data pemasukan</td></tr>`;
+            htmP = `<tr><td class="py-2.5 px-3 text-slate-400 italic text-center" colspan="2">Belum ada data pemasukan</td></tr>`;
         }
         tbodyPemasukan.innerHTML = htmP;
     }
 
-    // Update Tabel Beban Tab Laporan
+    // Update Tabel Beban & HPP Tab Laporan
     const tbodyBeban = document.getElementById('tbody_lap_beban');
     if (tbodyBeban) {
         let htmB = '';
@@ -1205,42 +1324,72 @@ function sinkronkanLaporanKeuangan() {
             if (item.nama || nom > 0) {
                 htmB += `
                     <tr>
-                        <td class="py-2.5 px-3 font-semibold text-slate-800">${escapeHtmlLap(item.nama || 'Beban')}</td>
+                        <td class="py-2.5 px-3 font-semibold text-slate-800">${escapeHtmlLap(item.nama || 'Pengeluaran')}</td>
                         <td class="py-2.5 px-3 text-right font-bold text-rose-600">${fNomLap(nom)}</td>
                     </tr>
                 `;
             }
         });
+
+        if (listHpp.length > 0) {
+            htmB += `
+                <tr class="bg-rose-50/60 font-bold text-[10px] uppercase text-rose-900 border-t border-b border-rose-100">
+                    <td colspan="2" class="py-1 px-3 font-extrabold tracking-wider">📦 Biaya Modal / Kulakan (HPP)</td>
+                </tr>
+            `;
+            listHpp.forEach(item => {
+                const nom = pNomLap(item.nominal);
+                if (item.nama || nom > 0) {
+                    htmB += `
+                        <tr>
+                            <td class="py-2 px-3 font-semibold text-slate-800 pl-5">• ${escapeHtmlLap(item.nama || 'Biaya HPP')}</td>
+                            <td class="py-2 px-3 text-right font-bold text-rose-600">${fNomLap(nom)}</td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
         if (!htmB) {
-            htmB = `<tr><td class="py-2.5 px-3 text-slate-400 italic" colspan="2">Belum ada rincian beban</td></tr>`;
+            htmB = `<tr><td class="py-2.5 px-3 text-slate-400 italic text-center" colspan="2">Belum ada rincian pengeluaran</td></tr>`;
         }
         tbodyBeban.innerHTML = htmB;
     }
 
-    // Update Tabel Harta Tab Laporan
+    // Update Tabel Harta Tab Laporan (Dinamis dari Kotak 3 Belanja Aset)
     const tbodyHarta = document.getElementById('tbody_lap_harta');
     if (tbodyHarta) {
         let htmH = '';
         let noH = 1;
-        listHarta.forEach(item => {
-            const nom = pNomLap(item.nominal);
-            const isTerikat = (item.status === 'terikat');
-            htmH += `
-                <tr class="${isTerikat ? 'bg-amber-50/40 text-slate-500' : ''}">
-                    <td class="py-2.5 px-4 text-center font-bold text-slate-500">${noH++}</td>
-                    <td class="py-2.5 px-4 font-semibold text-slate-800">
-                        ${escapeHtmlLap(item.nama || 'Aset')}
-                        ${isTerikat ? '<span class="ml-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Dijaminkan / Terikat</span>' : ''}
-                    </td>
-                    <td class="py-2.5 px-4 text-center font-bold">
-                        ${isTerikat ? '<span class="text-amber-700">Terikat Jaminan</span>' : '<span class="text-emerald-700">Bebas Jaminan (Eligible)</span>'}
-                    </td>
-                    <td class="py-2.5 px-4 text-right font-bold ${isTerikat ? 'text-amber-800' : 'text-slate-800'}">
-                        ${fNomLap(nom)}
+        if (listHarta.length === 0) {
+            htmH = `
+                <tr id="row_lap_harta_empty">
+                    <td colspan="4" class="py-4 px-4 text-center text-slate-400 italic text-xs">
+                        Belum ada rincian aset. Tambahkan pembelian aset pada Kotak 3 (Belanja / Pembelian Aset) di Tab Data Keuangan.
                     </td>
                 </tr>
             `;
-        });
+        } else {
+            listHarta.forEach(item => {
+                const nom = pNomLap(item.nominal);
+                const isTerikat = (item.status === 'terikat');
+                htmH += `
+                    <tr class="${isTerikat ? 'bg-amber-50/40 text-slate-500' : ''}">
+                        <td class="py-2.5 px-4 text-center font-bold text-slate-500">${noH++}</td>
+                        <td class="py-2.5 px-4 font-semibold text-slate-800">
+                            ${escapeHtmlLap(item.nama || 'Aset')}
+                            ${isTerikat ? '<span class="ml-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Dijaminkan / Terikat</span>' : ''}
+                        </td>
+                        <td class="py-2.5 px-4 text-center font-bold">
+                            ${isTerikat ? '<span class="text-amber-700">Terikat Jaminan</span>' : '<span class="text-emerald-700">Bebas Jaminan (Eligible)</span>'}
+                        </td>
+                        <td class="py-2.5 px-4 text-right font-bold ${isTerikat ? 'text-amber-800' : 'text-slate-800'}">
+                            ${fNomLap(nom)}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
         tbodyHarta.innerHTML = htmH;
     }
 
@@ -1326,28 +1475,32 @@ function sinkronkanLaporanKeuangan() {
 
     // 10. Update Print Sheet Modal Preview (Sama Persis)
     if (document.getElementById('doc_pemasukan')) document.getElementById('doc_pemasukan').innerText = fNomLap(totalPemasukan);
-    if (document.getElementById('doc_beban')) document.getElementById('doc_beban').innerText = `(${fNomLap(totBeban)})`;
+    if (document.getElementById('doc_beban')) document.getElementById('doc_beban').innerText = `(${fNomLap(totalPengeluaran)})`;
     if (document.getElementById('doc_surplus')) document.getElementById('doc_surplus').innerText = fNomLap(surplus);
 
     const docTbodyH = document.getElementById('doc_tbody_harta');
     if (docTbodyH) {
         let docHtmH = '';
-        listHarta.forEach(item => {
-            const nom = pNomLap(item.nominal);
-            const isTerikat = (item.status === 'terikat');
-            docHtmH += `
-                <tr class="${isTerikat ? 'bg-amber-50/50 text-slate-400' : ''}">
-                    <td class="py-1.5 px-3 font-semibold text-slate-800">
-                        ${escapeHtmlLap(item.nama || 'Aset')}
-                        ${isTerikat ? '<span class="text-[9px] text-amber-700 ml-1">(Terikat)</span>' : ''}
-                    </td>
-                    <td class="py-1.5 px-3 text-center font-bold ${isTerikat ? 'text-amber-700' : 'text-emerald-700'}">
-                        ${isTerikat ? 'Terikat' : 'Bebas'}
-                    </td>
-                    <td class="py-1.5 px-3 text-right font-medium text-slate-800">${fNomLap(nom)}</td>
-                </tr>
-            `;
-        });
+        if (listHarta.length === 0) {
+            docHtmH = `<tr><td colspan="3" class="py-2 px-3 text-center text-slate-400 italic">Belum ada rincian aset</td></tr>`;
+        } else {
+            listHarta.forEach(item => {
+                const nom = pNomLap(item.nominal);
+                const isTerikat = (item.status === 'terikat');
+                docHtmH += `
+                    <tr class="${isTerikat ? 'bg-amber-50/50 text-slate-400' : ''}">
+                        <td class="py-1.5 px-3 font-semibold text-slate-800">
+                            ${escapeHtmlLap(item.nama || 'Aset')}
+                            ${isTerikat ? '<span class="text-[9px] text-amber-700 ml-1">(Terikat)</span>' : ''}
+                        </td>
+                        <td class="py-1.5 px-3 text-center font-bold ${isTerikat ? 'text-amber-700' : 'text-emerald-700'}">
+                            ${isTerikat ? 'Terikat' : 'Bebas'}
+                        </td>
+                        <td class="py-1.5 px-3 text-right font-medium text-slate-800">${fNomLap(nom)}</td>
+                    </tr>
+                `;
+            });
+        }
         docTbodyH.innerHTML = docHtmH;
     }
     if (document.getElementById('doc_tot_harta_eligible')) document.getElementById('doc_tot_harta_eligible').innerText = fNomLap(totHartaEligible);

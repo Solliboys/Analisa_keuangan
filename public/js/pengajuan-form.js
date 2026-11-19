@@ -2172,11 +2172,13 @@ function initDaftarHpp() {
         }
     }
 
+    window.daftarHpp = daftarHpp;
     renderListHpp();
 }
 window.initDaftarHpp = initDaftarHpp;
 
 function renderListHpp() {
+    window.daftarHpp = daftarHpp;
     const containerAll = document.getElementById('containerHppDinamis');
     const containerHppOnly = document.getElementById('containerHppOnlyDinamis');
     const containerAsetOnly = document.getElementById('containerAsetOnlyDinamis');
@@ -2344,6 +2346,16 @@ function kalkulasiTotalHppDanAset() {
         }
     });
 
+    window.daftarHpp = daftarHpp;
+
+    // Sinkronkan daftar aset ke window.daftarHarta agar tab laporan langsung merender secara dinamis
+    const listAsetKotak3 = daftarHpp.filter(it => (it.kategori || '').toLowerCase() === 'aset').map(it => ({
+        nama: it.nama || 'Aset / Inventaris',
+        nominal: parseNominal(it.nominal || 0),
+        status: it.status || 'bebas'
+    }));
+    window.daftarHarta = listAsetKotak3;
+
     const hiddenDetail = document.getElementById('detail_hpp_rk');
     if (hiddenDetail) {
         hiddenDetail.value = JSON.stringify(daftarHpp);
@@ -2374,6 +2386,9 @@ function kalkulasiTotalHppDanAset() {
     }
 
     hitungLabaRugi();
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
 }
 window.kalkulasiTotalHppDanAset = kalkulasiTotalHppDanAset;
 
@@ -2383,7 +2398,11 @@ function tambahHpp(nama = '', kategori = 'hpp', nominal = 0) {
         kategori: kategori,
         nominal: nominal
     });
+    window.daftarHpp = daftarHpp;
     renderListHpp();
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
 }
 window.tambahHpp = tambahHpp;
 
@@ -2393,7 +2412,11 @@ function tambahHppOnly(nama = '', nominal = 0) {
         kategori: 'hpp',
         nominal: nominal
     });
+    window.daftarHpp = daftarHpp;
     renderListHpp();
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
 }
 window.tambahHppOnly = tambahHppOnly;
 
@@ -2403,14 +2426,22 @@ function tambahAsetOnly(nama = '', nominal = 0) {
         kategori: 'aset',
         nominal: nominal
     });
+    window.daftarHpp = daftarHpp;
     renderListHpp();
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
 }
 window.tambahAsetOnly = tambahAsetOnly;
 
 function hapusHpp(index) {
     if (index >= 0 && index < daftarHpp.length) {
         daftarHpp.splice(index, 1);
+        window.daftarHpp = daftarHpp;
         renderListHpp();
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+            window.sinkronkanLaporanKeuangan();
+        }
     }
 }
 window.hapusHpp = hapusHpp;
@@ -2419,16 +2450,31 @@ function updateItemHpp(index, field, val) {
     if (!daftarHpp[index]) return;
     if (field === 'nominal') {
         daftarHpp[index].nominal = parseNominal(val);
+        window.daftarHpp = daftarHpp;
         kalkulasiTotalHppDanAset();
     } else if (field === 'nama') {
         daftarHpp[index].nama = val;
+        window.daftarHpp = daftarHpp;
         const hiddenDetail = document.getElementById('detail_hpp_rk');
         if (hiddenDetail) {
             hiddenDetail.value = JSON.stringify(daftarHpp);
         }
+        const listAsetKotak3 = daftarHpp.filter(it => (it.kategori || '').toLowerCase() === 'aset').map(it => ({
+            nama: it.nama || 'Aset / Inventaris',
+            nominal: parseNominal(it.nominal || 0),
+            status: it.status || 'bebas'
+        }));
+        window.daftarHarta = listAsetKotak3;
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+            window.sinkronkanLaporanKeuangan();
+        }
     } else if (field === 'kategori') {
         daftarHpp[index].kategori = val;
+        window.daftarHpp = daftarHpp;
         renderListHpp();
+        if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+            window.sinkronkanLaporanKeuangan();
+        }
     }
 }
 window.updateItemHpp = updateItemHpp;
