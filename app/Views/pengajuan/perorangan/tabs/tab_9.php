@@ -340,17 +340,6 @@
             </div>
         </div>
 
-        <!-- Tombol Aksi Bawah & Navigasi -->
-        <div class="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <button type="button" onclick="goToTab(8)" class="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition cursor-pointer">
-                &larr; Kembali ke Langkah 8 (Rekening Koran)
-            </button>
-            <button type="button" onclick="handleStepperClick('laporan')" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
-                <span>Buka Langkah 10 (Laporan Keuangan)</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-            </button>
-        </div>
-
         <!-- Hidden inputs untuk database dan kompatibilitas sistem -->
         <input type="hidden" name="pendapatan_rk" id="pendapatan_rk" value="<?= esc($nomPendapatanPR) ?>">
         <input type="hidden" name="detail_pendapatan_rk" id="detail_pendapatan_rk" value="<?= esc(!empty($listDetailPendapatanPR) ? json_encode($listDetailPendapatanPR) : '[]') ?>">
