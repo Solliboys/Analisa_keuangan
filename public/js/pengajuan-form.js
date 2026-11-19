@@ -1942,9 +1942,9 @@ function hitungLabaRugi() {
 
     const isBU = Boolean(window.IS_BADAN_USAHA);
     const checkAdaHpp = document.getElementById('checkAdaHppPerorangan');
-    const isAdaHpp = isBU ? true : (checkAdaHpp ? checkAdaHpp.checked : false);
+    const isAdaHpp = isBU ? true : (checkAdaHpp ? checkAdaHpp.checked : Boolean(document.getElementById('containerHppOnlyDinamis')));
 
-    // Hitung total HPP & total Aset dari daftarHpp jika ada (Badan Usaha)
+    // Hitung total HPP & total Aset dari daftarHpp jika ada
     let totalHppDinamis = 0;
     let totalAsetDinamis = 0;
     let adaDaftarHpp = false;
@@ -1965,7 +1965,7 @@ function hitungLabaRugi() {
     let nomHppRK = 0;
     let grossRK = pRK;
 
-    if (isBU) {
+    if (isBU || document.getElementById('containerHppOnlyDinamis')) {
         const containerHppOnly = document.getElementById('containerHppOnlyDinamis');
         if (containerHppOnly || adaDaftarHpp) {
             nomHppRK = totalHppDinamis;
@@ -2060,7 +2060,8 @@ function hitungLabaRugi() {
 
     // nettRK & totalCashflow untuk kompatibilitas dengan field-field lain
     const nettRK = isBhManual ? (grossRK - nomBhRK - nomBlRK) : (grossRK - nomBlRK);
-    const totalCashflow = isBU ? nettRK : surplusPR;
+    const is3Kotak = isBU || Boolean(document.getElementById('containerHppOnlyDinamis'));
+    const totalCashflow = is3Kotak ? nettRK : surplusPR;
 
     if (document.getElementById('nomHppRK')) document.getElementById('nomHppRK').innerText = formatRupiahString(nomHppRK);
     const inputNomHpp = document.getElementById('nomHppRKInput');
@@ -2087,13 +2088,13 @@ function hitungLabaRugi() {
         document.getElementById('nomTotalPendapatanUtama').innerText = formatRupiahString(pRK);
     }
     if (document.getElementById('nomTotalPengeluaranPR')) {
-        document.getElementById('nomTotalPengeluaranPR').innerText = formatRupiahString(totalPengeluaranPR);
+        document.getElementById('nomTotalPengeluaranPR').innerText = formatRupiahString(is3Kotak ? (nomHppRK + nomBlRK) : totalPengeluaranPR);
     }
     if (document.getElementById('nomTotalPenghasilanPR')) {
-        document.getElementById('nomTotalPenghasilanPR').innerText = formatRupiahString(totalPenghasilanPR);
+        document.getElementById('nomTotalPenghasilanPR').innerText = formatRupiahString(is3Kotak ? pRK : totalPenghasilanPR);
     }
     if (document.getElementById('nomSurplusPR')) {
-        document.getElementById('nomSurplusPR').innerText = formatRupiahString(surplusPR);
+        document.getElementById('nomSurplusPR').innerText = formatRupiahString(is3Kotak ? nettRK : surplusPR);
     }
 
     // Track 2: IV
@@ -2472,7 +2473,7 @@ function renderListPendapatan() {
     const container = document.getElementById('containerPendapatanDinamis');
     if (!container) return;
 
-    const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA);
+    const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA) || Boolean(document.getElementById('containerHppOnlyDinamis'));
 
     if (daftarPendapatan.length === 0) {
         container.innerHTML = `
@@ -2627,7 +2628,7 @@ function initDaftarBebanLain() {
 
     if (daftarBebanLain.length === 0) {
         const nomLama = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
-        const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA);
+        const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA) || Boolean(document.getElementById('containerHppOnlyDinamis'));
         const defaultName = isBU ? 'Beban Operasional Pokok' : 'Beban Lain-Lain';
         if (nomLama > 0) {
             daftarBebanLain = [{ nama: defaultName, nominal: nomLama }];
@@ -2645,7 +2646,7 @@ function renderListBebanLain() {
     const container = document.getElementById('containerBebanLain');
     if (!container) return;
 
-    const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA);
+    const isBU = Boolean(typeof window.IS_BADAN_USAHA !== 'undefined' && window.IS_BADAN_USAHA) || Boolean(document.getElementById('containerHppOnlyDinamis'));
 
     if (daftarBebanLain.length === 0) {
         container.innerHTML = `
