@@ -3903,23 +3903,26 @@ async function simpanForm(isComplete = false, showNotification = true) {
     // Pastikan nama debitur tersinkronisasi di kedua input sebelum validasi & FormData dibuat
     const nama1 = document.getElementById('nama_debitur')?.value.trim();
     const nama2 = document.getElementById('nama_debitur_tab2')?.value.trim();
-    const resolvedNama = nama1 || nama2 || '';
+    const namaUsaha = window.IS_BADAN_USAHA ? (document.getElementById('nama_usaha_bu')?.value.trim() || document.querySelector('input[name="nama_usaha"]')?.value.trim() || '') : '';
+    const resolvedNama = nama1 || nama2 || namaUsaha || '';
     if (resolvedNama) {
         if (document.getElementById('nama_debitur')) document.getElementById('nama_debitur').value = resolvedNama;
         if (document.getElementById('nama_debitur_tab2')) document.getElementById('nama_debitur_tab2').value = resolvedNama;
     }
 
-    // Pastikan alamat domisili tersinkron jika mode alamat berbeda tidak aktif
-    const chkDomBeda = document.getElementById('domisili_beda_ktp');
-    const txtDom = document.getElementById('alamat_domisili');
-    const txtKtp = document.getElementById('alamat_ktp');
-    if (chkDomBeda && !chkDomBeda.checked && txtDom && txtKtp) {
-        txtDom.value = txtKtp.value;
+    // Pastikan alamat domisili tersinkron jika mode alamat berbeda tidak aktif (hanya perorangan)
+    if (!window.IS_BADAN_USAHA) {
+        const chkDomBeda = document.getElementById('domisili_beda_ktp');
+        const txtDom = document.getElementById('alamat_domisili');
+        const txtKtp = document.getElementById('alamat_ktp');
+        if (chkDomBeda && !chkDomBeda.checked && txtDom && txtKtp) {
+            txtDom.value = txtKtp.value;
+        }
     }
 
     if (isComplete) {
         if (!resolvedNama) {
-            showToast('Nama Debitur wajib diisi!', 'error');
+            showToast(window.IS_BADAN_USAHA ? 'Nama Badan Usaha / Debitur wajib diisi!' : 'Nama Debitur wajib diisi!', 'error');
             goToTab(1);
             return;
         }
@@ -3929,23 +3932,51 @@ async function simpanForm(isComplete = false, showNotification = true) {
             goToTab(1);
             return;
         }
-        const noHp = document.getElementById('nomor_hp')?.value.trim();
-        if (!noHp) {
-            showToast('Nomor HP / WhatsApp Aktif wajib diisi!', 'error');
-            goToTab(2);
-            return;
-        }
-        const nik = document.getElementById('npwp_pribadi')?.value.trim();
-        if (!nik || nik.length < 16) {
-            showToast('NIK KTP / NPWP Pribadi wajib diisi 16 digit angka numerik!', 'error');
-            goToTab(2);
-            return;
-        }
-        const alamatKtp = document.querySelector('textarea[name="alamat_ktp"]')?.value.trim();
-        if (!alamatKtp) {
-            showToast('Alamat KTP Lengkap wajib diisi!', 'error');
-            goToTab(2);
-            return;
+
+        if (window.IS_BADAN_USAHA) {
+            const namaUsahaVal = document.getElementById('nama_usaha_bu')?.value.trim() || document.querySelector('input[name="nama_usaha"]')?.value.trim();
+            if (!namaUsahaVal) {
+                showToast('Nama Badan Usaha / Perusahaan wajib diisi!', 'error');
+                goToTab(2);
+                return;
+            }
+            const alamatUsaha = document.getElementById('alamat_usaha_bu')?.value.trim() || document.querySelector('textarea[name="alamat_usaha"]')?.value.trim();
+            if (!alamatUsaha) {
+                showToast('Alamat Lengkap Kantor / Tempat Usaha wajib diisi!', 'error');
+                goToTab(2);
+                return;
+            }
+            const hpKaryawan = document.querySelector('input[name="karyawan[0][no_hp]"]')?.value.trim() || document.querySelector('.inp-karyawan-hp')?.value.trim() || document.getElementById('nomor_hp')?.value.trim();
+            if (!hpKaryawan) {
+                showToast('Nomor HP / WhatsApp Penanggung Jawab wajib diisi!', 'error');
+                goToTab(2);
+                return;
+            }
+            const nikKaryawan = document.querySelector('input[name="karyawan[0][nik]"]')?.value.trim() || document.querySelector('.inp-karyawan-nik')?.value.trim() || document.getElementById('npwp_pribadi')?.value.trim();
+            if (!nikKaryawan || nikKaryawan.replace(/[^0-9]/g, '').length < 16) {
+                showToast('NIK KTP Penanggung Jawab wajib diisi 16 digit angka numerik!', 'error');
+                goToTab(2);
+                return;
+            }
+        } else {
+            const noHp = document.getElementById('nomor_hp')?.value.trim();
+            if (!noHp) {
+                showToast('Nomor HP / WhatsApp Aktif wajib diisi!', 'error');
+                goToTab(2);
+                return;
+            }
+            const nik = document.getElementById('npwp_pribadi')?.value.trim();
+            if (!nik || nik.length < 16) {
+                showToast('NIK KTP / NPWP Pribadi wajib diisi 16 digit angka numerik!', 'error');
+                goToTab(2);
+                return;
+            }
+            const alamatKtp = document.querySelector('textarea[name="alamat_ktp"]')?.value.trim();
+            if (!alamatKtp) {
+                showToast('Alamat KTP Lengkap wajib diisi!', 'error');
+                goToTab(2);
+                return;
+            }
         }
     }
 
@@ -4508,7 +4539,7 @@ function showToast(text, type = 'info') {
 function bukaModalCekMa() {
     const debtorName = document.getElementById('nama_debitur')?.value || document.getElementById('nama_debitur_tab2')?.value || '';
     const businessName = document.querySelector('input[name="nama_usaha"]')?.value || '';
-    const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('input[name="alamat_usaha"]')?.value || '';
+    const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('textarea[name="alamat_usaha"]')?.value || document.querySelector('input[name="alamat_usaha"]')?.value || '';
     const nik = document.getElementById('npwp_pribadi')?.value || '-';
 
     // Ekstrak kota jika ada di alamat KTP
@@ -4763,7 +4794,7 @@ function ambilDataSubjekWebcheck() {
         // 3. Alamat KTP / Domisili / Tempat Usaha & Kota
         const alamatKtp = document.querySelector('textarea[name="alamat_ktp"]')?.value?.trim() || '';
         const alamatDomisili = document.querySelector('textarea[name="alamat_domisili"]')?.value?.trim() || '';
-        const alamatUsahaPertama = document.querySelector('.inp-alamat-usaha')?.value?.trim() || '';
+        const alamatUsahaPertama = document.querySelector('textarea[name="alamat_usaha"]')?.value?.trim() || document.querySelector('.inp-alamat-usaha')?.value?.trim() || '';
         alamatLengkap = alamatKtp || alamatDomisili || alamatUsahaPertama;
         kota = ekstrakKotaDariAlamat(alamatLengkap, tempatLahir);
 
@@ -5171,7 +5202,7 @@ function renderHasilWebcheckDiHalaman(data, info) {
 function bukaModalAiWebcheck() {
     const debtorName = document.getElementById('nama_debitur')?.value || document.getElementById('nama_debitur_tab2')?.value || '';
     const businessName = document.querySelector('input[name="nama_usaha"]')?.value || '';
-    const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('input[name="alamat_usaha"]')?.value || '';
+    const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('textarea[name="alamat_usaha"]')?.value || document.querySelector('input[name="alamat_usaha"]')?.value || '';
     const bidang = document.querySelector('input[name="bidang_usaha"]')?.value || document.querySelector('input[name="sektor_ekonomi"]')?.value || '';
 
     // Ekstrak kota jika ada di alamat KTP / Usaha

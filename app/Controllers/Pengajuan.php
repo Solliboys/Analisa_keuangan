@@ -477,6 +477,8 @@ class Pengajuan extends BaseController
             }
             if (!empty($firstKaryawan['alamat'])) {
                 $dataKredit['alamat_ktp'] = $firstKaryawan['alamat'];
+            } elseif (!empty($valAlamatUsaha)) {
+                $dataKredit['alamat_ktp'] = $valAlamatUsaha;
             }
             if (!empty($firstKaryawan['jabatan'])) {
                 $dataKredit['jabatan'] = $firstKaryawan['jabatan'];
