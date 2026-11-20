@@ -46,10 +46,10 @@ class GeminiAiService
         // Urutkan model tercepat & paling stabil di awal
         $candidateModels = array_values(array_unique([
             'gemini-flash-lite-latest',
-            'gemini-flash-latest',
             'gemini-3.1-flash-lite',
-            'gemini-3.8-flash',
             'gemini-3.6-flash',
+            'gemini-flash-latest',
+            'gemini-3.8-flash',
             $cleanModel
         ]));
 
@@ -984,7 +984,32 @@ class GeminiAiService
                 $mimeType = @mime_content_type($filePath) ?: 'application/octet-stream';
             }
 
-            $fileData = base64_encode(file_get_contents($filePath));
+            $binaryData = file_get_contents($filePath);
+            // Optimasi otomatis: jika berkas gambar berukuran besar (> 800KB), kompresi & resize agar transmisi super cepat
+            if (strpos($mimeType, 'image/') === 0 && function_exists('imagecreatefromstring') && strlen($binaryData) > 800000) {
+                try {
+                    $img = @imagecreatefromstring($binaryData);
+                    if ($img !== false) {
+                        $width  = imagesx($img);
+                        $height = imagesy($img);
+                        $maxDim = 1800;
+                        if ($width > $maxDim || $height > $maxDim) {
+                            $ratio    = min($maxDim / $width, $maxDim / $height);
+                            $newW     = (int)round($width * $ratio);
+                            $newH     = (int)round($height * $ratio);
+                            $resized  = imagecreatetruecolor($newW, $newH);
+                            imagecopyresampled($resized, $img, 0, 0, 0, 0, $newW, $newH, $width, $height);
+                            ob_start();
+                            imagejpeg($resized, null, 82);
+                            $binaryData = ob_get_clean();
+                            imagedestroy($resized);
+                            $mimeType = 'image/jpeg';
+                        }
+                        imagedestroy($img);
+                    }
+                } catch (\Throwable $e) {}
+            }
+            $fileData = base64_encode($binaryData);
 
             $prompt = "Anda adalah Senior Bank Statement / Rekening Koran Parser dan Financial Analyst.
 Tugas Anda adalah membaca dokumen mutasi bank / rekening koran ini dengan sangat teliti dan mengekstrak seluruh datanya ke format JSON berikut:
@@ -1018,10 +1043,11 @@ PANDUAN EKSTRAKSI PENTING:
 6. Kembalikan HANYA JSON murni tanpa markdown, tanpa ```json, tanpa penjelasan apapun.";
 
             $candidateModels = [
-                'gemini-3.8-flash',
+                'gemini-flash-lite-latest',
+                'gemini-3.1-flash-lite',
                 'gemini-3.6-flash',
-                'gemini-3.5-flash',
-                'gemini-3.1-flash-lite'
+                'gemini-flash-latest',
+                'gemini-3.8-flash'
             ];
 
             $payload = [
@@ -1060,8 +1086,8 @@ PANDUAN EKSTRAKSI PENTING:
                     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                     curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 35);
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 14);
 
                     $response  = curl_exec($ch);
                     $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
