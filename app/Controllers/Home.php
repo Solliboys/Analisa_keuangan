@@ -39,4 +39,21 @@ class Home extends BaseController
 
         return view('welcome_message', $data);
     }
+
+    /**
+     * Halaman Simulasi Pengajuan Kredit (Sandbox / Uji Coba Publik — Tidak Menyimpan ke Database)
+     */
+    public function simulasi(): string
+    {
+        $pengaturanSistem = [];
+        try {
+            $db = Database::connect();
+            $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+        } catch (\Throwable $e) {
+        }
+
+        return view('simulasi_pengajuan', [
+            'pengaturan_sistem' => $pengaturanSistem,
+        ]);
+    }
 }

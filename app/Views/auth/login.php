@@ -4,10 +4,10 @@ if (!isset($pengaturan_sistem)) {
     $pengaturan_sistem = [];
 }
 
-$brandName    = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Kredit';
-$brandSlogan  = !empty($pengaturan_sistem['slogan_aplikasi']) ? $pengaturan_sistem['slogan_aplikasi'] : 'Sistem Analisa Kredit AI & CAM';
+$brandName    = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Approved';
+$brandSlogan  = !empty($pengaturan_sistem['slogan_aplikasi']) ? $pengaturan_sistem['slogan_aplikasi'] : 'Platform Analisa & Persetujuan Pembiayaan';
 $brandLembaga = !empty($pengaturan_sistem['nama_lembaga']) ? $pengaturan_sistem['nama_lembaga'] : 'Lembaga Pembiayaan';
-$brandLogo    = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
+$brandLogo    = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : 'img/logo-oap.png';
 $brandEmail   = !empty($pengaturan_sistem['email_lembaga']) ? $pengaturan_sistem['email_lembaga'] : 'info@otwkredit.id';
 $brandTelepon = !empty($pengaturan_sistem['telepon_lembaga']) ? $pengaturan_sistem['telepon_lembaga'] : '(021) 5088-2900';
 

@@ -58,9 +58,9 @@ if (!isset($pengaturan_sistem)) {
     }
 }
 
-$brandName   = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Kredit';
-$brandSlogan = !empty($pengaturan_sistem['slogan_aplikasi']) ? $pengaturan_sistem['slogan_aplikasi'] : 'Sistem Analisa Kredit';
-$brandLogo   = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
+$brandName   = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Approved';
+$brandSlogan = !empty($pengaturan_sistem['slogan_aplikasi']) ? $pengaturan_sistem['slogan_aplikasi'] : 'Platform Analisa Pembiayaan';
+$brandLogo   = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : 'img/logo-oap.png';
 
 // Hitung inisial nama
 $words = explode(' ', trim($current_name));

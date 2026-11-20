@@ -4,6 +4,8 @@ use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
 $routes->get('/', 'Home::index');
+$routes->get('simulasi', 'Home::simulasi');
+$routes->get('/simulasi', 'Home::simulasi');
 $routes->get('/login', 'Auth::index');
 $routes->get('login', 'Auth::index');
 $routes->get('index.php/login', 'Auth::index');
