@@ -395,8 +395,16 @@
                                                     <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                     </svg>
-                                                    <span>Hasil Review</span>
                                                     <span>Review</span>
+                                                </button>
+
+                                                <!-- Tombol PDF: Ringkasan Pengajuan (Berkas Nasabah) -->
+                                                <button type="button" 
+                                                        onclick="bukaModalRingkasanPdf(<?= $row['kredit_id'] ?>)" 
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 text-xs font-bold rounded-lg transition cursor-pointer" 
+                                                        title="Lihat Ringkasan Berkas Pengajuan Nasabah (PDF)">
+                                                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                    <span>PDF</span>
                                                 </button>
 
                                                 <!-- Tombol Hasil AI (CAM Pop-up) -->
@@ -407,7 +415,7 @@
                                                     <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                                                     </svg>
-                                                    <span>Laporan AI</span>
+                                                    <span>Hasil AI</span>
                                                 </button>
 
                                                 <?php if (strpos($roleUser, 'review') !== false): ?>
@@ -563,6 +571,41 @@
         });
     </script>
 
+    <!-- Modal Pop-up Ringkasan Pengajuan (PDF Berkas Nasabah) -->
+    <div id="modalRingkasanPdf" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-5 transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden border border-slate-200">
+            <!-- Modal Header -->
+            <div class="px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center font-bold shrink-0">
+                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-900" id="pdfModalJudul">Ringkasan Berkas Pengajuan Nasabah (PDF)</h3>
+                        <p class="text-[11px] text-slate-500">Data Pokok Analisis Keuangan, SLIK OJK, Rekening Koran, & Agunan</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="cetakIframeRingkasanPdf()"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span>Cetak / Unduh PDF</span>
+                    </button>
+                    <button type="button" onclick="tutupModalRingkasanPdf()" 
+                            class="p-2 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition cursor-pointer" title="Tutup Modal">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body: Iframe Halaman Ringkasan Berkas Pengajuan -->
+            <div class="flex-1 overflow-hidden bg-slate-100 p-0">
+                <iframe id="iframeRingkasanPdf" src="" class="w-full h-[78vh] border-0"></iframe>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Pop-up Laporan Analisa AI & Rekomendasi Komite Kredit (Sesuai Screenshot) -->
     <div id="modalHasilAI" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-5 transition-all">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden border border-slate-200">
@@ -676,11 +719,18 @@
             </div>
 
             <!-- Footer Modal -->
-            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-                <a href="#" id="revModalBtnPdf" target="_blank" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                    <span>Cetak CAM PDF</span>
-                </a>
+            <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <a href="#" id="revModalBtnRingkasanPdf" target="_blank" class="text-xs font-bold text-slate-700 hover:text-slate-900 transition flex items-center gap-1.5" title="Buka Ringkasan Berkas Pengajuan Nasabah (PDF)">
+                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Ringkasan Berkas PDF</span>
+                    </a>
+                    <span class="text-slate-300">|</span>
+                    <a href="#" id="revModalBtnPdf" target="_blank" class="text-xs font-bold text-indigo-700 hover:text-indigo-900 transition flex items-center gap-1.5" title="Buka Dokumen CAM Hasil Evaluasi AI">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span>Laporan Hasil AI (CAM)</span>
+                    </a>
+                </div>
                 <button type="button" onclick="tutupModalHasilReview()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition cursor-pointer">
                     Tutup
                 </button>
@@ -691,6 +741,44 @@
     <script>
         // Data pengajuan yang dikirim dari controller untuk modal cepat
         const pengajuanDataStore = <?= json_encode($daftar_kredit ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
+
+        // Modal Ringkasan Berkas Pengajuan Nasabah (PDF Murni Berkas)
+        function bukaModalRingkasanPdf(kreditId) {
+            const item = (pengajuanDataStore || []).find(x => x.kredit_id == kreditId);
+            const judul = item ? `Ringkasan Berkas Pengajuan Nasabah (PDF) - ${item.nomor_aplikasi || ''}` : 'Ringkasan Berkas Pengajuan Nasabah (PDF)';
+            const judulElem = document.getElementById('pdfModalJudul');
+            if (judulElem) judulElem.innerText = judul;
+
+            const iframe = document.getElementById('iframeRingkasanPdf');
+            if (iframe) {
+                iframe.src = '<?= base_url('pengajuan/cetakLaporan/') ?>/' + kreditId + '?modal=1';
+            }
+            const modal = document.getElementById('modalRingkasanPdf');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+
+        function tutupModalRingkasanPdf() {
+            const modal = document.getElementById('modalRingkasanPdf');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+            const iframe = document.getElementById('iframeRingkasanPdf');
+            if (iframe) {
+                iframe.src = '';
+            }
+        }
+
+        function cetakIframeRingkasanPdf() {
+            const iframe = document.getElementById('iframeRingkasanPdf');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }
+        }
 
         // Modal Hasil AI (Menampilkan Dokumen Laporan CAM Sesuai Screenshot)
         function bukaModalHasilAI(kreditId) {
@@ -739,6 +827,8 @@
             document.getElementById('revModalNoAplikasiNama').innerText = (item.nomor_aplikasi || '-') + ' \u2022 ' + (item.nama_debitur || '-');
             document.getElementById('revModalUsaha').innerText = item.nama_usaha || item.jenis_debitur || 'Individu';
             document.getElementById('revModalPlafon').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(parseFloat(item.plafon_pengajuan || 0));
+            const btnRingkasan = document.getElementById('revModalBtnRingkasanPdf');
+            if (btnRingkasan) btnRingkasan.href = '<?= base_url('pengajuan/cetakLaporan/') ?>/' + item.kredit_id;
             document.getElementById('revModalBtnPdf').href = '<?= base_url('pengajuan/cetak/') ?>/' + item.kredit_id;
 
             const rawStatus = (item.status_komite || item.status_pengajuan || 'Draft').trim();
@@ -834,6 +924,10 @@
             const mAi = document.getElementById('modalHasilAI');
             if (mAi && e.target === mAi) {
                 tutupModalHasilAI();
+            }
+            const mPdf = document.getElementById('modalRingkasanPdf');
+            if (mPdf && e.target === mPdf) {
+                tutupModalRingkasanPdf();
             }
             const mRev = document.getElementById('modalHasilReview');
             if (mRev && e.target === mRev) {

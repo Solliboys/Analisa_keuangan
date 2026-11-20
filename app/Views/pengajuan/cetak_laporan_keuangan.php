@@ -98,6 +98,11 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
             color: #0f172a;
             -webkit-font-smoothing: antialiased;
         }
+        html.is-modal .toolbar-screen,
+        .is-modal .toolbar-screen { display: none !important; }
+        html.is-modal .sheets-wrapper,
+        .is-modal .sheets-wrapper { padding: 12px 0 20px !important; }
+
         .toolbar-screen {
             position: sticky; top: 0; z-index: 999; background: #0f172a; color: #fff;
             padding: 10px 24px; display: flex; align-items: center; justify-content: space-between;
@@ -202,6 +207,11 @@ $derVal        = ($totEkuitasVal > 0) ? round($totLiabVal / $totEkuitasVal, 2) :
             }
         }
     </style>
+    <script>
+        if (window.self !== window.top || window.location.search.includes('modal=1')) {
+            document.documentElement.classList.add('is-modal');
+        }
+    </script>
 </head>
 <body>
     <div class="toolbar-screen no-print">
