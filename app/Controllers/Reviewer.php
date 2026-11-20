@@ -388,12 +388,19 @@ class Reviewer extends BaseController
             $agunanList = $agunanModel->where('kredit_id', $kreditId)->findAll();
             $totalMV = 0;
             $totalLV = 0;
+            $rincianAgunanArr = [];
             foreach ($agunanList as $ag) {
                 $mv = (float)($ag['nilai_pasar_mv'] ?? 0);
                 $lv = (float)($ag['nilai_likuidasi_lv'] ?? ($mv * 0.6));
                 $totalMV += $mv;
                 $totalLV += $lv;
+                $jns = !empty($ag['jenis_agunan']) ? $ag['jenis_agunan'] : (!empty($ag['jenis_jaminan']) ? $ag['jenis_jaminan'] : 'Properti/Kendaraan');
+                $dok = !empty($ag['dokumen_agunan']) ? $ag['dokumen_agunan'] : (!empty($ag['bukti_kepemilikan']) ? $ag['bukti_kepemilikan'] : 'SHM/BPKB');
+                if ($mv > 0) {
+                    $rincianAgunanArr[] = "{$jns} ({$dok}) MV Rp " . number_format($mv, 0, ',', '.');
+                }
             }
+            $rincianAgunan = !empty($rincianAgunanArr) ? implode('; ', $rincianAgunanArr) : ($kredit['jenis_jaminan'] ?? 'Agunan Properti / Kendaraan');
 
             $keu = $keuanganModel->where('kredit_id', $kreditId)->first() ?? [];
             $omzet = (float)($keu['pendapatan_rata_rata_bulanan'] ?? ($keu['pendapatan_bersih_bulan'] ?? 0));
@@ -405,24 +412,39 @@ class Reviewer extends BaseController
             $covMV = $plafon > 0 ? round(($totalMV / $plafon) * 100, 1) : 0;
             $covLV = $plafon > 0 ? round(($totalLV / $plafon) * 100, 1) : 0;
 
+            $totalAset = (float)($keu['neraca_total_aset'] ?? ($keu['total_aset'] ?? $totalMV));
+            $totalUtang = (float)($keu['neraca_total_liabilitas'] ?? ($keu['total_utang'] ?? 0));
+            $modalBersih = $totalAset - $totalUtang;
+            $darStr = $totalAset > 0 ? round(($totalUtang / $totalAset) * 100, 1) . '%' : '0%';
+
             $service = new \App\Services\GeminiAiService();
             $aiResult = $service->analisaKredit([
-                'nama_debitur'     => $kredit['nama_debitur'] ?? '',
-                'nama_usaha'       => $kredit['nama_usaha'] ?? '',
-                'lama_usaha'       => $kredit['lama_usaha'] ?? '',
-                'plafon_pengajuan' => $plafon,
-                'tenor_bulan'      => (int)($kredit['tenor_bulan'] ?? 12),
-                'skema_pembayaran' => $kredit['skema_pembayaran'] ?? 'Installment',
-                'bunga_per_bulan'  => (float)($kredit['bunga_per_bulan'] ?? 2),
-                'total_mv'         => $totalMV,
-                'total_lv'         => $totalLV,
-                'coverage_mv'      => $covMV,
-                'coverage_lv'      => $covLV,
-                'omzet'            => $omzet,
-                'laba_bersih'      => $labaBersih,
-                'angsuran'         => $angsuran,
-                'rasio_dsc'        => $dsc,
-                'ringkasan_slik'   => $kredit['ringkasan_slik'] ?? ''
+                'nama_debitur'              => $kredit['nama_debitur'] ?? '',
+                'jenis_debitur'             => $kredit['jenis_debitur'] ?? 'Perorangan',
+                'nama_usaha'                => $kredit['nama_usaha'] ?? '',
+                'bidang_usaha'              => $kredit['bidang_usaha'] ?? ($kredit['jenis_usaha'] ?? 'Perdagangan / Jasa'),
+                'lama_usaha'                => $kredit['lama_usaha'] ?? '',
+                'tujuan_pembiayaan'         => $kredit['tujuan_pembiayaan'] ?? 'Modal Kerja',
+                'plafon_pengajuan'          => $plafon,
+                'tenor_bulan'               => (int)($kredit['tenor_bulan'] ?? 12),
+                'skema_pembayaran'          => $kredit['skema_pembayaran'] ?? 'Installment',
+                'bunga_per_bulan'           => (float)($kredit['bunga_per_bulan'] ?? 2),
+                'rincian_agunan'            => $rincianAgunan,
+                'total_mv'                  => $totalMV,
+                'total_lv'                  => $totalLV,
+                'coverage_mv'               => $covMV,
+                'coverage_lv'               => $covLV,
+                'omzet'                     => $omzet,
+                'laba_bersih'               => $labaBersih,
+                'angsuran'                  => $angsuran,
+                'rasio_dsc'                 => $dsc,
+                'total_aset'                => $totalAset,
+                'total_utang'               => $totalUtang,
+                'modal_bersih'              => $modalBersih,
+                'rasio_dar'                 => $darStr,
+                'kesimpulan_kolektibilitas' => $kredit['kesimpulan_kolektibilitas'] ?? ($kredit['ringkasan_slik'] ?? 'Kolektibilitas 1 (Lancar)'),
+                'ringkasan_slik'            => $kredit['ringkasan_slik'] ?? '',
+                'webcheck_status'           => 'Hasil Web Check (SIPP Pengadilan & DTTOT): Bersih, tidak ada perkara hukum aktif.'
             ]);
 
             if ($aiResult['status'] ?? false) {

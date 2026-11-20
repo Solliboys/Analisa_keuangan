@@ -113,7 +113,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6">
+    <main class="flex-1 w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 min-w-0">
         
         <!-- Flash Messages -->
         <?php if (session()->getFlashdata('success')): ?>
@@ -253,8 +253,8 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600" id="tabelPengajuan">
+            <div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                <table class="w-full min-w-[900px] text-left text-sm text-slate-600" id="tabelPengajuan">
                     <thead class="bg-slate-50 text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
                         <tr>
                             <th class="py-3.5 px-4">No. Aplikasi</th>
@@ -395,19 +395,7 @@
                                                     <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                     </svg>
-                                                    <span>Hasil Review</span>
                                                     <span>Review</span>
-                                                </button>
-
-                                                <!-- Tombol Hasil AI (CAM Pop-up) -->
-                                                <button type="button" 
-                                                        onclick="bukaModalHasilAI(<?= $row['kredit_id'] ?>)" 
-                                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border border-indigo-200/70 text-xs font-bold rounded-lg transition shadow-2xs cursor-pointer" 
-                                                        title="Lihat Laporan Evaluasi AI & CAM">
-                                                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                                    </svg>
-                                                    <span>Laporan AI</span>
                                                 </button>
 
                                                 <?php if (strpos($roleUser, 'review') !== false): ?>
@@ -573,8 +561,8 @@
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </div>
                     <div>
-                        <h3 class="text-sm font-extrabold text-slate-900" id="aiModalJudul">Laporan Analisa Kelayakan Kredit & Rekomendasi Komite (AI)</h3>
-                        <p class="text-[11px] text-slate-500">Format Dokumen Hasil Evaluasi Sesuai Standar Komite</p>
+                        <h3 class="text-sm font-extrabold text-slate-900" id="aiModalJudul">Laporan Hasil AI (CAM)</h3>
+                        <p class="text-[11px] text-slate-500">Evaluasi Risiko 5C & Rekomendasi Komite</p>
                     </div>
                 </div>
                 
@@ -676,11 +664,7 @@
             </div>
 
             <!-- Footer Modal -->
-            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-                <a href="#" id="revModalBtnPdf" target="_blank" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                    <span>Cetak CAM PDF</span>
-                </a>
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end">
                 <button type="button" onclick="tutupModalHasilReview()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition cursor-pointer">
                     Tutup
                 </button>
@@ -695,7 +679,7 @@
         // Modal Hasil AI (Menampilkan Dokumen Laporan CAM Sesuai Screenshot)
         function bukaModalHasilAI(kreditId) {
             const item = (pengajuanDataStore || []).find(x => x.kredit_id == kreditId);
-            const judul = item ? `Laporan Analisa Kelayakan Kredit & Rekomendasi Komite (AI) - ${item.nomor_aplikasi || ''}` : 'Laporan Analisa Kelayakan Kredit & Rekomendasi Komite (AI)';
+            const judul = item ? `Laporan Hasil AI (CAM) - ${item.nomor_aplikasi || ''}` : 'Laporan Hasil AI (CAM)';
             const judulElem = document.getElementById('aiModalJudul');
             if (judulElem) judulElem.innerText = judul;
 
@@ -739,7 +723,6 @@
             document.getElementById('revModalNoAplikasiNama').innerText = (item.nomor_aplikasi || '-') + ' \u2022 ' + (item.nama_debitur || '-');
             document.getElementById('revModalUsaha').innerText = item.nama_usaha || item.jenis_debitur || 'Individu';
             document.getElementById('revModalPlafon').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(parseFloat(item.plafon_pengajuan || 0));
-            document.getElementById('revModalBtnPdf').href = '<?= base_url('pengajuan/cetak/') ?>/' + item.kredit_id;
 
             const rawStatus = (item.status_komite || item.status_pengajuan || 'Draft').trim();
             const st = rawStatus.toLowerCase();

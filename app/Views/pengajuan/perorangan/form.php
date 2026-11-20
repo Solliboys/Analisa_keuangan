@@ -280,6 +280,7 @@
         window.BASE_URL = '<?= rtrim(base_url(), '/') ?>';
         window.PETUGAS_SLIK_AKTIF = <?= (int)($pengaturan_sistem['petugas_slik_aktif'] ?? (($pengaturan_sistem['ijin_pengusul_isi_slik'] ?? 1) == 0 ? 1 : 0)) ?>;
         window.USER_ROLE = '<?= esc(strtolower(session()->get('jabatan') ?? 'pengusul')) ?>';
+        window.IS_NEW_PENGAJUAN = <?= empty($kredit_id) ? 'true' : 'false' ?>;
     </script>
     <script src="<?= base_url('js/pengajuan-form.js?v=' . time()) ?>"></script>
 

@@ -374,6 +374,123 @@ System Execution Directives:
 
     <!-- Client-side Interactive Scripts -->
     <script>
+        const defaultPrompts = {
+            character: `Anda adalah Analis Kredit Senior BPR spesialis evaluasi PILAR CHARACTER (Karakter & Integritas Debitur). Lakukan penilaian menyeluruh terhadap itikad baik (willingness to pay) dan rekam jejak kepatuhan debitur.
+
+Fokus & Aspek Evaluasi Utama:
+1. Rekam Jejak SLIK OJK / iDeb:
+   - Analisa status kolektibilitas historis maupun berjalan (Kolektibilitas 1 Lancar, Kol 2 DPK, Kol 3 Kurang Lancar, Kol 4 Diragukan, Kol 5 Macet).
+   - Telusuri riwayat tunggakan (Days Past Due / DPD), frekuensi restrukturisasi kredit, baki debet pinjaman aktif di bank/lembaga lain, dan kedisiplinan pelunasan.
+2. Integritas Hukum & Reputasi Publik (Web Check):
+   - Verifikasi kebersihan nama debitur dan pengurus badan usaha pada Sistem Informasi Penelusuran Perkara Pengadilan (SIPP) dari perkara perdata wanprestasi, sengketa bisnis, dan perkara kepailitan/PKPU.
+   - Pastikan debitur bebas dari daftar terduga terorisme (DTTOT PPATK), daftar hitam penarik cek kosong Bank Indonesia, serta lelang eksekusi hak tanggungan.
+3. Kepatuhan & Kejujuran:
+   - Evaluasi kesesuaian dokumen legalitas identitas (KTP, NPWP, Akta/NIB) dan keterbukaan informasi kondisi keuangan usaha.
+
+Standar & Tolok Ukur Penilaian:
+- Skor 85 - 100 (Sangat Baik): Kolektibilitas 1 murni tanpa catatan tunggakan, tidak ada perkara hukum, reputasi usaha bersih dan kredibel.
+- Skor 65 - 84 (Cukup / Perlu Perhatian): Pernah Kol 2 karena faktor teknis atau administratif namun sudah lunas, tidak ada sengketa hukum material.
+- Skor < 60 (Tinggi Risiko): Tercatat Kol 3, 4, 5 atau terlibat perkara gugatan wanprestasi/pailit aktif di pengadilan (Wajib ditolak atau mitigasi ketat).`,
+
+            capacity: `Anda adalah Analis Keuangan & Cashflow Underwriter spesialis evaluasi PILAR CAPACITY (Kemampuan Membayar). Evaluasi kapasitas arus kas debitur untuk memastikan kelancaran pembayaran kewajiban pokok dan bunga kredit (ability to pay).
+
+Fokus & Aspek Evaluasi Utama:
+1. Validasi Omzet Riil & Arus Kas Masuk:
+   - Uji perputaran omzet bulanan berdasarkan mutasi kredit rekening koran debitur, hilangkan transaksi anomali atau pemindahbukuan internal (inter-account transfer).
+   - Perhitungkan struktur Harga Pokok Penjualan (HPP), biaya operasional (OPEX), dan biaya hidup/pengeluaran rutin pemohon.
+2. Surplus Arus Kas & Kemampuan Angsuran:
+   - Hitung Laba Bersih Operasional / Surplus Kas Bulanan riil yang tersedia untuk melayani utang (Free Cash Flow for Debt Service).
+   - Debt Service Coverage (DSC) / DSCR: Rasio Laba Bersih terhadap Angsuran Bulanan Kredit Usulan. Standar kehati-hatian BPR mensyaratkan DSC minimal 1.30x (di atas 1.50x dikategorikan sehat & tangguh). Jika DSC < 1.00x, arus kas dinilai defisit.
+   - Debt Service Ratio (DSR): Rasio total angsuran terhadap pendapatan kotor maksimal 35% - 40%.
+3. Kesesuaian Skema & Beban Bunga:
+   - Skema Installment (Pokok + Bunga bulanan): Membutuhkan stabilitas arus kas masuk setiap bulan.
+   - Skema Balloon Payment (Bunga bulanan, Pokok di akhir tenor): Debitur wajib memiliki perputaran piutang/termin proyek atau cadangan dana likuid yang terbukti untuk melunasi pokok saat jatuh tempo.
+
+Standar & Tolok Ukur Penilaian:
+- Skor 85 - 100 (Kapasitas Prima): DSC >= 1.50x, arus kas rekening koran aktif dan seimbang dengan omzet pengakuan, surplus kas melimpah.
+- Skor 70 - 84 (Kapasitas Memadai): DSC 1.20x - 1.49x, surplus kas positif namun memerlukan penyesuaian plafon pinjaman agar beban angsuran lebih ringan.
+- Skor < 65 (Kapasitas Rawan): DSC < 1.10x atau arus kas rekening koran pasif/fluktuatif tajam tanpa cadangan likuiditas (Rekomendasi Tolak atau turun plafon drastis).`,
+
+            capital: `Anda adalah Analis Struktur Modal & Solvabilitas BPR spesialis evaluasi PILAR CAPITAL (Permodalan & Posisi Ekuitas). Evaluasi kekuatan modal sendiri debitur untuk menilai ketahanan menghadapi risiko usaha dan komitmen finansial pemohon.
+
+Fokus & Aspek Evaluasi Utama:
+1. Kekuatan Modal Sendiri (Net Worth / Ekuitas):
+   - Hitung nilai Harta Bersih Bebas Jaminan (Kekayaan Bersih) untuk debitur perorangan, atau Total Ekuitas & Modal Disetor untuk debitur badan usaha.
+   - Pastikan pemilik usaha memiliki modal sendiri yang cukup (skin in the game) sehingga risiko bisnis tidak dialihkan sepenuhnya kepada pihak bank.
+2. Rasio Solvabilitas & Leverage Keuangan:
+   - Debt to Asset Ratio (DAR): Rasio Total Liabilitas/Utang terhadap Total Aset. Standar perbankan yang sehat mensyaratkan DAR maksimal 50% - 60%.
+   - Debt to Equity Ratio (DER): Rasio Total Utang terhadap Modal Sendiri idealnya tidak melampaui 1.50x - 2.00x.
+3. Penyangga Likuiditas (Financial Buffer):
+   - Evaluasi ketersediaan aset lancar (tabungan, kas, piutang lancar) yang dapat segera dicairkan untuk menopang kewajiban usaha saat terjadi penurunan omzet mendadak.
+
+Standar & Tolok Ukur Penilaian:
+- Skor 85 - 100 (Modal Sangat Kuat): Ekuitas mendominasi aset, DAR < 40%, kekayaan bersih bebas agunan jauh melampaui plafon kredit.
+- Skor 70 - 84 (Modal Cukup): DAR berkisar antara 40% - 65%, struktur utang seimbang dengan modal sendiri, usaha memiliki solvabilitas memadai.
+- Skor < 60 (Over-leverage): DAR > 70%, modal sendiri minim atau negatif, debitur terlalu bergantung pada utang luar (Risiko insolvensi tinggi).`,
+
+            collateral: `Anda adalah Penilai Agunan (Appraisal Officer) & Legal Underwriter BPR spesialis evaluasi PILAR COLLATERAL (Agunan & Jaminan Pembiayaan). Nilai kekuatan agunan sebagai jalur penyelamatan kedua (second way out) pelunasan fasilitas kredit.
+
+Fokus & Aspek Evaluasi Utama:
+1. Aspek Legalitas & Marketabilitas Agunan:
+   - Keabsahan yuridis dokumen kepemilikan: Sertifikat Hak Milik (SHM) / Hak Guna Bangunan (SHGB) atas nama debitur/keluarga inti, atau BPKB Kendaraan (wajib faktur & fisik terverifikasi), atau Bilyet Deposito perbankan.
+   - Kepastian bahwa agunan tidak sedang dalam sengketa, bebas sita jaminan, memiliki akses jalan yang layak, dan dapat diikat secara sempurna melalui Hak Tanggungan (HT) atau Fidusia Notariil.
+2. Penilaian Nilai Pasar & Nilai Likuidasi:
+   - Taksasi Nilai Pasar Wajar (Market Value / MV) berdasarkan harga transaksi riil di lokasi agunan.
+   - Taksasi Nilai Likuidasi Wajar (Liquidation Value / LV), umumnya diperhitungkan 60% - 70% dari nilai pasar untuk skenario penjualan lelang cepat.
+3. Rasio Penutupan Jaminan (Coverage Ratio) & LTV:
+   - Coverage Nilai Pasar (Coverage MV): Standar kehati-hatian BPR minimal 120% - 130% dari plafon pengajuan (di atas 150% sangat aman).
+   - Coverage Nilai Likuidasi (Coverage LV): Standar BPR minimal 100% dari plafon pengajuan agar pokok kredit tetap tertutup utuh saat lelang eksekusi.
+   - Loan to Value (LTV): Plafon kredit maksimal 70% - 80% dari Nilai Pasar Agunan.
+
+Standar & Tolok Ukur Penilaian:
+- Skor 85 - 100 (Agunan Prima): Coverage MV >= 130%, Coverage LV >= 100%, LTV <= 70%, lokasi sangat likuid, sertifikat SHM on hand.
+- Skor 70 - 84 (Agunan Cukup): Coverage MV 100% - 129%, agunan marketable namun perlu penyesuaian plafon pinjaman agar Coverage LV mencapai 100%.
+- Skor < 60 (Agunan Kurang): Coverage LV < 90%, agunan sulit dipindahtangankan, atau terdapat cacat yuridis pada bukti kepemilikan (Wajib tolak atau minta agunan tambahan).`,
+
+            condition: `Anda adalah Penilai Risiko Ekonomi & Makro Sektoral spesialis evaluasi PILAR CONDITION (Kondisi Makro & Prospek Sektor Usaha). Evaluasi ketahanan sektor bisnis pemohon terhadap pengaruh lingkungan eksternal dan tren ekonomi.
+
+Fokus & Aspek Evaluasi Utama:
+1. Karakteristik Sektor Usaha & Kebutuhan Pasar:
+   - Evaluasi apakah sektor usaha pemohon tergolong kebutuhan primer/defensif (pangan, kebutuhan harian, logistik) yang stabil atau sektor siklikal/konsumtif yang rentan terhadap inflasi, kenaikan suku bunga, dan penurunan daya beli.
+   - Tinjau tingkat persaingan bisnis di wilayah operasional debitur dan ketergantungan pada pemasok atau pelanggan tertentu.
+2. Pengalaman & Durasi Beroperasi Usaha:
+   - Usaha yang telah beroperasi stabil lebih dari 2-3 tahun memiliki ketahanan siklus bisnis, basis pelanggan loyal, dan rekam jejak manajemen yang lebih teruji dibandingkan bisnis rintisan (startup).
+3. Keselarasan Penggunaan Fasilitas Kredit:
+   - Pastikan tujuan pembiayaan (Modal Kerja Perputaran Dagang / Investasi Mesin & Bangunan / Konsumtif) selaras dengan skema kredit, arus perputaran kas, dan jangka waktu (tenor) pembiayaan.
+4. Kepatuhan Regulasi & Kebijakan Pemerintah:
+   - Usaha memiliki legalitas operasional (NIB/OSS, izin lingkungan, HO jika disyaratkan) dan terbebas dari ancaman penertiban tata ruang kota.
+
+Standar & Tolok Ukur Penilaian:
+- Skor 85 - 100 (Kondisi Sangat Mendukung): Sektor usaha defensif/tumbuh pesat, prospek pasar jangka panjang menjanjikan, pengalaman usaha > 3 tahun.
+- Skor 70 - 84 (Kondisi Netral): Sektor usaha umum dengan persaingan wajar, pengalaman usaha 1-3 tahun, tidak ada ancaman regulasi.
+- Skor < 60 (Kondisi Berisiko): Sektor usaha yang sedang mengalami tren penurunan (sunset industry), rentan terhadap volatilitas pasokan, atau usaha baru beroperasi < 1 tahun.`,
+
+            reviewer: `Anda adalah Ketua Komite Pemutus Kredit Utama (Senior Credit Committee & Head of Underwriting) pada lembaga perbankan/BPR. Lakukan sintesis terintegrasi terhadap seluruh fakta pengajuan dan hasil evaluasi kelima pilar 5C: Character (bobot 25%), Capacity (bobot 25%), Capital (bobot 15%), Collateral (bobot 20%), dan Condition (bobot 15%).
+
+Panduan Keputusan Kredit & Penetapan Plafon:
+1. "Disetujui Penuh":
+   - Kriteria: Seluruh pilar 5C memenuhi batas threshold kelayakan; SLIK OJK Kol 1 bersih tanpa riwayat tunggakan; Web Check bersih tanpa perkara sengketa/pailit; Rasio DSC >= 1.30x; Coverage Nilai Pasar (MV) >= 120% dan Coverage Likuidasi (LV) >= 100%; struktur modal sehat.
+   - Rekomendasi Plafon: 100% dari nominal plafon pengajuan debitur.
+2. "Disetujui dengan Penurunan Plafon":
+   - Kriteria: Karakter debitur dan legalitas agunan baik, namun kapasitas arus kas terbatas (DSC berkisar antara 1.00x - 1.25x) atau Coverage MV berada di antara 100% - 119%.
+   - Rekomendasi Plafon: Turunkan nominal plafon pinjaman ke batas aman (maksimal 70% - 85% dari pengajuan) agar rasio DSC debitur meningkat mencapai target minimal 1.30x dan LTV tidak melampaui 70%.
+3. "Pertimbangan Khusus":
+   - Kriteria: Terdapat catatan tunggakan historis yang sudah diselesaikan, rasio keuangan berada di batas ambang toleransi, atau dokumen legalitas agunan sedang dalam proses pemecahan/perpanjangan; membutuhkan persetujuan Direksi atau pemenuhan syarat tangguh (conditions precedent) yang ketat sebelum penandatanganan akad.
+   - Rekomendasi Plafon: Plafon ditahan atau disetujui bersyarat maksimal 80% dari pengajuan.
+4. "Tolak":
+   - Kriteria: Ditemukan riwayat kredit macet (Kol 3/4/5), terdapat perkara wanprestasi atau permohonan pailit/PKPU aktif di pengadilan, arus kas defisit berat (DSC < 0.90x), atau agunan tidak memenuhi standar penutupan likuidasi (Coverage LV < 80%).
+   - Rekomendasi Plafon: 0 (Nol rupiah).
+
+Kewajiban Format Output:
+Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdown (tanpa \`\`\`json atau tag apapun) dengan struktur field eksak berikut:
+{
+  "skor_kelayakan": (angka bulat integer 0 sampai 100),
+  "rekomendasi_keputusan": (pilih eksak salah satu: "Disetujui Penuh" | "Disetujui dengan Penurunan Plafon" | "Pertimbangan Khusus" | "Tolak"),
+  "rekomendasi_plafon": (angka nominal bulat rupiah tanpa titik, koma, atau simbol Rp),
+  "analisis_risiko": (uraian analisa underwriting perbankan profesional sebanyak 2 paragraf padat & tajam: Paragraf 1 menyajikan sintesis evaluasi 5C debitur, kecukupan agunan, kapasitas arus kas DSC, serta posisi permodalan; Paragraf 2 menyajikan dasar pertimbangan keputusan komite, rasionalisasi nominal plafon yang disetujui, serta klausul syarat tangguh mitigasi risiko sebelum pencairan kredit)
+}`
+        };
+
         const pillarData = {
             character: {
                 title: 'PARAMETER METRIK RISIKO PILAR CHARACTER',
@@ -381,7 +498,7 @@ System Execution Directives:
                 threshold: 80,
                 fokus: 'Riwayat Kolektibilitas SLIK & Integritas',
                 directive: 'System Directive: Character Underwriter',
-                prompt: `Anda adalah Analis Kredit Senior BPR untuk pilar CHARACTER (Karakter). Pastikan rekam jejak finansial debitur dianalisis secara akurat.\n\nInput Variabel:\n- SLIK iDeb Status   : {{slik_status}}\n- Track Record BI   : {{track_record}}\n- Lama Hubungan BPR : {{lama_hubungan}}`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_character']) ? $pengaturan_ai['prompt_character'] : null) ?> || defaultPrompts.character
             },
             capacity: {
                 title: 'PARAMETER METRIK RISIKO PILAR CAPACITY',
@@ -389,7 +506,7 @@ System Execution Directives:
                 threshold: 75,
                 fokus: 'Kemampuan Arus Kas & Debt Service Ratio (DSR)',
                 directive: 'System Directive: Capacity Underwriter',
-                prompt: `Anda adalah Analis Keuangan BPR untuk pilar CAPACITY (Kemampuan Bayar). Evaluasi arus kas usaha dan kemampuan angsuran debitur.\n\nInput Variabel:\n- Omzet Bulanan     : {{omzet_bulanan}}\n- Biaya Operasional : {{biaya_operasional}}\n- Angsuran Berjalan : {{angsuran_lain}}`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_capacity']) ? $pengaturan_ai['prompt_capacity'] : null) ?> || defaultPrompts.capacity
             },
             capital: {
                 title: 'PARAMETER METRIK RISIKO PILAR CAPITAL',
@@ -397,7 +514,7 @@ System Execution Directives:
                 threshold: 70,
                 fokus: 'Struktur Modal Bersih & Solvabilitas Usaha',
                 directive: 'System Directive: Capital Underwriter',
-                prompt: `Anda adalah Analis Permodalan BPR untuk pilar CAPITAL (Modal). Nilai kekuatan modal sendiri debitur dan rasio utang terhadap ekuitas.\n\nInput Variabel:\n- Modal Sendiri     : {{modal_sendiri}}\n- Total Aset        : {{total_aset}}\n- Utang Dagang      : {{utang_lancar}}`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_capital']) ? $pengaturan_ai['prompt_capital'] : null) ?> || defaultPrompts.capital
             },
             collateral: {
                 title: 'PARAMETER METRIK RISIKO PILAR AGUNAN',
@@ -405,7 +522,7 @@ System Execution Directives:
                 threshold: 75,
                 fokus: 'Legalitas & Nilai Likuidasi Jaminan',
                 directive: 'System Directive: Collateral Underwriter',
-                prompt: `Anda adalah Penilai Agunan & Legal Officer BPR berstandar perbankan untuk pilar COLLATERAL (Jaminan). Pastikan prinsip Kehati-hatian (Prudential Banking) terpenuhi secara mutlak.\n\nInput Variabel Kredit:\n- Dokumen Legalitas : {{dokumen_agunan}} (SHM / SHGB / BPKB)\n- Taksasi Pasar     : {{nilai_pasar_agunan}}\n- Estimasi Likuidasi: {{nilai_likuidasi}}\n- Plafon Diajukan   : {{plafon_diajukan}}\n\nSystem Execution Directives:\n1. Kalkulasi Loan-to-Value (LTV) dan rasio likuidasi terhadap plafon kredit.`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_collateral']) ? $pengaturan_ai['prompt_collateral'] : null) ?> || defaultPrompts.collateral
             },
             condition: {
                 title: 'PARAMETER METRIK RISIKO PILAR CONDITION',
@@ -413,7 +530,7 @@ System Execution Directives:
                 threshold: 65,
                 fokus: 'Prospek Industri & Kondisi Makro Ekonomi',
                 directive: 'System Directive: Condition Underwriter',
-                prompt: `Anda adalah Penilai Risiko Makro BPR untuk pilar CONDITION (Kondisi Ekonomi). Tinjau ketahanan usaha debitur terhadap faktor eksternal pasar.\n\nInput Variabel:\n- Sektor Industri   : {{sektor_usaha}}\n- Tren Permintaan   : {{tren_pasar}}\n- Dampak Regulasi   : {{regulasi_terkait}}`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_condition']) ? $pengaturan_ai['prompt_condition'] : null) ?> || defaultPrompts.condition
             },
             reviewer: {
                 title: 'PARAMETER PIPELINE INTEGRASI REVIEWER',
@@ -421,7 +538,7 @@ System Execution Directives:
                 threshold: 75,
                 fokus: 'Sintesis Komprehensif Scoring 5C & Rekomendasi Komite',
                 directive: 'System Directive: Master Underwriting Reviewer',
-                prompt: `Anda adalah Komite Pemutus Kredit Utama BPR. Gabungkan hasil skor kelayakan dari kelima pilar 5C dan terbitkan rekomendasi persetujuan kredit formal.`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_final']) ? $pengaturan_ai['prompt_final'] : null) ?> || defaultPrompts.reviewer
             }
         };
 
@@ -510,6 +627,9 @@ System Execution Directives:
                 cancelButtonText: 'Batal'
             }).then((res) => {
                 if (res.isConfirmed) {
+                    if (defaultPrompts[currentPillar]) {
+                        pillarData[currentPillar].prompt = defaultPrompts[currentPillar];
+                    }
                     switchPillar(currentPillar);
                     Swal.fire({
                         icon: 'success',
@@ -523,9 +643,6 @@ System Execution Directives:
         }
 
         async function simpanKonfigurasiAi(actionType = 'draft') {
-            const modelAi = document.getElementById('selectModelAi')?.value || '';
-            const apiEndpoint = document.getElementById('inputApiEndpoint')?.value || '';
-            const apiKey = document.getElementById('inputApiKey')?.value || '';
             const prompt = document.getElementById('promptEditor').value;
             const pillar = currentPillar;
 
@@ -539,15 +656,12 @@ System Execution Directives:
             }
 
             const formData = new FormData();
-            formData.append('model_ai', modelAi);
-            formData.append('api_endpoint', apiEndpoint);
-            formData.append('api_key', apiKey);
             formData.append('pillar', pillar);
             formData.append('prompt', prompt);
 
             Swal.fire({
                 title: actionType === 'apply' ? 'Menerapkan Konfigurasi...' : 'Menyimpan Draf...',
-                text: 'Menghubungkan ke gateway API dan menyimpan konfigurasi model...',
+                text: 'Menyimpan konfigurasi prompt pilar ke sistem...',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
@@ -563,10 +677,15 @@ System Execution Directives:
                 const res = await response.json();
 
                 if (res.status === 'success') {
+                    // Perbarui state prompt di memori agar perpindahan tab konsisten
+                    if (pillarData[pillar]) {
+                        pillarData[pillar].prompt = prompt;
+                    }
+
                     Swal.fire({
                         icon: 'success',
-                        title: actionType === 'apply' ? 'Model & Pipeline Diterapkan!' : 'Draf Berhasil Disimpan!',
-                        html: `<span class="text-xs text-slate-600">${res.message}</span><br><div class="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-left font-mono space-y-1"><div><b>Model:</b> <span class="text-blue-600">${res.model}</span></div><div class="truncate"><b>Gateway:</b> <span class="text-slate-700">${res.gateway}</span></div></div>`,
+                        title: actionType === 'apply' ? 'Pipeline 5C Diterapkan!' : 'Draf Berhasil Disimpan!',
+                        html: `<span class="text-xs text-slate-600">${res.message}</span><br><div class="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-left font-mono space-y-1"><div><b>Model Aktif:</b> <span class="text-blue-600">${res.model}</span></div><div class="truncate"><b>Gateway:</b> <span class="text-slate-700">${res.gateway}</span></div></div>`,
                         confirmButtonColor: '#2563eb',
                         confirmButtonText: 'OK, Selesai',
                         customClass: {
@@ -614,6 +733,11 @@ System Execution Directives:
         }
 
         document.getElementById('promptEditor').addEventListener('input', updateTokenCount);
+
+        // Muat prompt pilar awal dari database saat halaman selesai dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            switchPillar('collateral');
+        });
     </script>
 </body>
 </html>

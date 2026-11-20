@@ -42,7 +42,7 @@
     ]) ?>
 
     <!-- MAIN WRAPPER (Full Width dengan offset sidebar md:pl-64) -->
-    <div class="md:pl-64 flex flex-col min-h-screen w-full">
+    <div class="md:pl-64 flex flex-col min-h-screen w-full min-w-0 overflow-x-hidden">
 
         <!-- Mobile Header Bar -->
         <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20 w-full">
@@ -183,8 +183,8 @@
                         </a>
                     </div>
 
-                    <div class="overflow-x-auto flex-1">
-                        <table class="w-full text-left border-collapse text-xs">
+                    <div class="w-full overflow-x-auto flex-1" style="-webkit-overflow-scrolling: touch;">
+                        <table class="w-full min-w-[680px] text-left border-collapse text-xs">
                             <thead class="bg-slate-50/80 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
                                 <tr>
                                     <th class="py-3 px-4">No. Aplikasi</th>
@@ -256,8 +256,8 @@
                         </a>
                     </div>
 
-                    <div class="overflow-x-auto flex-1">
-                        <table class="w-full text-left border-collapse text-xs">
+                    <div class="w-full overflow-x-auto flex-1" style="-webkit-overflow-scrolling: touch;">
+                        <table class="w-full min-w-[680px] text-left border-collapse text-xs">
                             <thead class="bg-slate-50/80 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
                                 <tr>
                                     <th class="py-3 px-4">Waktu</th>

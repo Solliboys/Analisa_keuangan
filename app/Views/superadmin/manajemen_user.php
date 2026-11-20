@@ -27,7 +27,7 @@
     ]) ?>
 
     <!-- MAIN WRAPPER (Full screen layout with sidebar offset md:pl-64) -->
-    <div class="md:pl-64 flex flex-col min-h-screen w-full">
+    <div class="md:pl-64 flex flex-col min-h-screen w-full min-w-0 overflow-x-hidden">
 
         <!-- Mobile Header Bar -->
         <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20 w-full">
@@ -230,8 +230,8 @@
 
             <!-- Table Card: Manajemen Pengguna Full Width -->
             <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden w-full">
-                <div class="overflow-x-auto w-full">
-                    <table class="w-full text-left border-collapse" id="userTable">
+                <div class="overflow-x-auto w-full" style="-webkit-overflow-scrolling: touch;">
+                    <table class="w-full min-w-[760px] text-left border-collapse" id="userTable">
                         <thead>
                             <tr class="border-b border-slate-100 bg-white text-slate-400 text-[11px] font-bold uppercase tracking-wider">
                                 <th scope="col" class="py-4 px-4 font-semibold text-center w-14">NO</th>

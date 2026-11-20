@@ -63,13 +63,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Buka tab yang sedang dikerjakan saat halaman dimuat / direfresh
     const urlParams = new URLSearchParams(window.location.search);
-    const kidInit = document.getElementById('kredit_id')?.value || 'draft';
-    let tabTarget = urlParams.get('tab');
-    if (!tabTarget && window.location.hash) {
-        tabTarget = window.location.hash.replace('#tab-', '').replace('#', '');
+    const kidEl = document.getElementById('kredit_id');
+    const kidVal = kidEl ? kidEl.value.trim() : '';
+    const isNew = (!kidVal || kidVal === '' || kidVal === '0' || kidVal === 'draft' || window.IS_NEW_PENGAJUAN || window.location.pathname.includes('/pengajuan/baru'));
+
+    // Deteksi apakah pemuatan halaman saat ini adalah hasil REFRESH / RELOAD
+    const isPageReload = (() => {
+        try {
+            const navEntries = performance.getEntriesByType('navigation');
+            if (navEntries && navEntries.length > 0) {
+                return navEntries[0].type === 'reload';
+            }
+            return performance.navigation && performance.navigation.type === 1;
+        } catch (e) {
+            return false;
+        }
+    })();
+
+    let tabTarget = null;
+    if (isPageReload) {
+        // HANYA saat REFRESH: pertahankan tab yang sedang dikerjakan agar pekerjaan tidak hilang
+        if (urlParams.get('tab')) {
+            tabTarget = urlParams.get('tab');
+        } else if (window.location.hash) {
+            tabTarget = window.location.hash.replace('#tab-', '').replace('#', '');
+        } else if (!isNew && kidVal) {
+            tabTarget = sessionStorage.getItem('active_pengajuan_tab_' + kidVal);
+        }
+    } else {
+        // BUKAN REFRESH (buka form baru, klik edit dari daftar tabel, navigasi pertama):
+        // SELALU mulai dari Langkah 1 (Aplikasi)
+        tabTarget = 1;
+
+        // Bersihkan parameter ?tab dari URL & session storage agar fresh di Langkah 1
+        try {
+            if (kidVal) {
+                sessionStorage.removeItem('active_pengajuan_tab_' + kidVal);
+            }
+            if (urlParams.has('tab')) {
+                const cleanUrl = new URL(window.location.href);
+                cleanUrl.searchParams.delete('tab');
+                window.history.replaceState({ tab: 1 }, '', cleanUrl.pathname + (cleanUrl.search ? cleanUrl.search : ''));
+            }
+        } catch (e) {}
     }
-    if (!tabTarget) {
-        tabTarget = sessionStorage.getItem('active_pengajuan_tab_' + kidInit) || localStorage.getItem('last_active_pengajuan_tab');
+
+    if (isNew) {
+        // Pengajuan baru: bersihkan state penyimpanan tab lama agar tidak tertular ke form baru
+        try {
+            sessionStorage.removeItem('active_pengajuan_tab_draft');
+            localStorage.removeItem('last_active_pengajuan_tab');
+            Object.keys(tabValidationStatus).forEach(k => delete tabValidationStatus[k]);
+        } catch (e) {}
+
+        if (!isPageReload) {
+            tabTarget = 1;
+        }
     }
 
     if (tabTarget) {
@@ -85,30 +134,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (targetIdx !== -1) {
-            // Tandai semua langkah sebelum tab target sebagai selesai secara visual
-            for (let k = 0; k < targetIdx; k++) {
-                tabValidationStatus[activeSteps[k]] = true;
-            }
             goToTab(activeSteps[targetIdx]);
         }
     }
 
-    // Inisialisasi status langkah yang sudah terisi jika dalam mode edit atau refresh
+    // Inisialisasi status langkah yang sudah terisi jika dalam mode edit pengajuan tersimpan
     setTimeout(() => {
-        const kid = document.getElementById('kredit_id')?.value;
+        const kid = document.getElementById('kredit_id')?.value?.trim();
         const activeSteps = getActiveSteps();
-        if (kid) {
+        if (kid && !isNew) {
             for (let t of activeSteps) {
                 const val = validateTabSilent(t);
                 if (val.valid) {
                     tabValidationStatus[t] = true;
                 }
-            }
-        }
-        const curIdx = findStepIndex(activeSteps, currentTab);
-        if (curIdx > 0) {
-            for (let k = 0; k < curIdx; k++) {
-                tabValidationStatus[activeSteps[k]] = true;
             }
         }
         updateStepperVisuals();
@@ -419,20 +458,13 @@ function validateTab(tabNum) {
             });
         }
     } else if (tabNum === 8) {
-        // Tab 8: Rekening Koran
-        const namaBank = document.querySelector('input[name="rekening[0][nama_bank]"]');
-        if (!namaBank || !namaBank.value.trim()) {
-            addError(namaBank, 'Nama bank rekening koran wajib diisi');
-        }
-
-        const noRek = document.querySelector('input[name="rekening[0][nomor_rekening]"]');
-        if (!noRek || !noRek.value.trim()) {
-            addError(noRek, 'Nomor rekening koran wajib diisi');
-        }
-
-        const avgKredit = document.querySelector('input[name="rekening[0][rata_rata_kredit]"]');
-        if (!avgKredit || parseNominal(avgKredit.value) <= 0) {
-            addError(avgKredit, 'Rata-rata mutasi kredit (omzet bulanan) wajib diisi lebih dari 0');
+        // Tab 8: Rekening Koran - Seluruh field dibuat opsional kecuali Nama Bank
+        const rekItems = document.querySelectorAll('.rekening-item');
+        if (rekItems.length > 0) {
+            const namaBank = document.querySelector('input[name="rekening[0][nama_bank]"]');
+            if (!namaBank || !namaBank.value.trim()) {
+                addError(namaBank, 'Nama bank rekening koran wajib diisi');
+            }
         }
     } else if (tabNum === 9) {
         // Tab 9: Laba Rugi
@@ -793,18 +825,11 @@ function goToTab(tabIndex) {
         url.searchParams.set('tab', currentTab);
         window.history.replaceState({ tab: currentTab }, '', url.toString());
 
-        const kid = document.getElementById('kredit_id')?.value || 'draft';
-        sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
-        localStorage.setItem('last_active_pengajuan_tab', currentTab);
-    } catch (e) {}
-
-    // Tandai langkah-langkah sebelum tab aktif sebagai selesai secara visual
-    for (let k = 0; k < idx; k++) {
-        const prevStep = steps[k];
-        if (tabValidationStatus[prevStep] === undefined) {
-            tabValidationStatus[prevStep] = true;
+        const kid = document.getElementById('kredit_id')?.value?.trim();
+        if (kid && kid !== 'draft' && kid !== '0') {
+            sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
         }
-    }
+    } catch (e) {}
 
     // Ketika berada di Tab 6, pastikan semua tahap sebelum 6 (1, 2, 3, 4, 5) ditandai HIJAU (Selesai)
     const normTab = normalizeTab(currentTab);
@@ -3890,11 +3915,12 @@ function initAutoSave() {
         triggerAutoSave(200);
     });
 
-    // Tangkap event sebelum refresh browser (beforeunload) agar posisi tab & data tersimpan
+    // Tangkap event sebelum refresh browser (beforeunload) agar posisi tab tersimpan untuk pengajuan aktif
     window.addEventListener('beforeunload', () => {
-        const kid = document.getElementById('kredit_id')?.value || 'draft';
-        sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
-        localStorage.setItem('last_active_pengajuan_tab', currentTab);
+        const kid = document.getElementById('kredit_id')?.value?.trim();
+        if (kid && kid !== 'draft' && kid !== '0') {
+            sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
+        }
 
         if (autoSaveTimer) {
             clearTimeout(autoSaveTimer);
@@ -3924,23 +3950,26 @@ async function simpanForm(isComplete = false, showNotification = true) {
     // Pastikan nama debitur tersinkronisasi di kedua input sebelum validasi & FormData dibuat
     const nama1 = document.getElementById('nama_debitur')?.value.trim();
     const nama2 = document.getElementById('nama_debitur_tab2')?.value.trim();
-    const resolvedNama = nama1 || nama2 || '';
+    const namaUsaha = window.IS_BADAN_USAHA ? (document.getElementById('nama_usaha_bu')?.value.trim() || document.querySelector('input[name="nama_usaha"]')?.value.trim() || '') : '';
+    const resolvedNama = nama1 || nama2 || namaUsaha || '';
     if (resolvedNama) {
         if (document.getElementById('nama_debitur')) document.getElementById('nama_debitur').value = resolvedNama;
         if (document.getElementById('nama_debitur_tab2')) document.getElementById('nama_debitur_tab2').value = resolvedNama;
     }
 
-    // Pastikan alamat domisili tersinkron jika mode alamat berbeda tidak aktif
-    const chkDomBeda = document.getElementById('domisili_beda_ktp');
-    const txtDom = document.getElementById('alamat_domisili');
-    const txtKtp = document.getElementById('alamat_ktp');
-    if (chkDomBeda && !chkDomBeda.checked && txtDom && txtKtp) {
-        txtDom.value = txtKtp.value;
+    // Pastikan alamat domisili tersinkron jika mode alamat berbeda tidak aktif (hanya perorangan)
+    if (!window.IS_BADAN_USAHA) {
+        const chkDomBeda = document.getElementById('domisili_beda_ktp');
+        const txtDom = document.getElementById('alamat_domisili');
+        const txtKtp = document.getElementById('alamat_ktp');
+        if (chkDomBeda && !chkDomBeda.checked && txtDom && txtKtp) {
+            txtDom.value = txtKtp.value;
+        }
     }
 
     if (isComplete) {
         if (!resolvedNama) {
-            showToast('Nama Debitur wajib diisi!', 'error');
+            showToast(window.IS_BADAN_USAHA ? 'Nama Badan Usaha / Debitur wajib diisi!' : 'Nama Debitur wajib diisi!', 'error');
             goToTab(1);
             return;
         }
@@ -3950,23 +3979,51 @@ async function simpanForm(isComplete = false, showNotification = true) {
             goToTab(1);
             return;
         }
-        const noHp = document.getElementById('nomor_hp')?.value.trim();
-        if (!noHp) {
-            showToast('Nomor HP / WhatsApp Aktif wajib diisi!', 'error');
-            goToTab(2);
-            return;
-        }
-        const nik = document.getElementById('npwp_pribadi')?.value.trim();
-        if (!nik || nik.length < 16) {
-            showToast('NIK KTP / NPWP Pribadi wajib diisi 16 digit angka numerik!', 'error');
-            goToTab(2);
-            return;
-        }
-        const alamatKtp = document.querySelector('textarea[name="alamat_ktp"]')?.value.trim();
-        if (!alamatKtp) {
-            showToast('Alamat KTP Lengkap wajib diisi!', 'error');
-            goToTab(2);
-            return;
+
+        if (window.IS_BADAN_USAHA) {
+            const namaUsahaVal = document.getElementById('nama_usaha_bu')?.value.trim() || document.querySelector('input[name="nama_usaha"]')?.value.trim();
+            if (!namaUsahaVal) {
+                showToast('Nama Badan Usaha / Perusahaan wajib diisi!', 'error');
+                goToTab(2);
+                return;
+            }
+            const alamatUsaha = document.getElementById('alamat_usaha_bu')?.value.trim() || document.querySelector('textarea[name="alamat_usaha"]')?.value.trim();
+            if (!alamatUsaha) {
+                showToast('Alamat Lengkap Kantor / Tempat Usaha wajib diisi!', 'error');
+                goToTab(2);
+                return;
+            }
+            const hpKaryawan = document.querySelector('input[name="karyawan[0][no_hp]"]')?.value.trim() || document.querySelector('.inp-karyawan-hp')?.value.trim() || document.getElementById('nomor_hp')?.value.trim();
+            if (!hpKaryawan) {
+                showToast('Nomor HP / WhatsApp Penanggung Jawab wajib diisi!', 'error');
+                goToTab(2);
+                return;
+            }
+            const nikKaryawan = document.querySelector('input[name="karyawan[0][nik]"]')?.value.trim() || document.querySelector('.inp-karyawan-nik')?.value.trim() || document.getElementById('npwp_pribadi')?.value.trim();
+            if (!nikKaryawan || nikKaryawan.replace(/[^0-9]/g, '').length < 16) {
+                showToast('NIK KTP Penanggung Jawab wajib diisi 16 digit angka numerik!', 'error');
+                goToTab(2);
+                return;
+            }
+        } else {
+            const noHp = document.getElementById('nomor_hp')?.value.trim();
+            if (!noHp) {
+                showToast('Nomor HP / WhatsApp Aktif wajib diisi!', 'error');
+                goToTab(2);
+                return;
+            }
+            const nik = document.getElementById('npwp_pribadi')?.value.trim();
+            if (!nik || nik.length < 16) {
+                showToast('NIK KTP / NPWP Pribadi wajib diisi 16 digit angka numerik!', 'error');
+                goToTab(2);
+                return;
+            }
+            const alamatKtp = document.querySelector('textarea[name="alamat_ktp"]')?.value.trim();
+            if (!alamatKtp) {
+                showToast('Alamat KTP Lengkap wajib diisi!', 'error');
+                goToTab(2);
+                return;
+            }
         }
     }
 
@@ -4529,7 +4586,7 @@ function showToast(text, type = 'info') {
 function bukaModalCekMa() {
     const debtorName = document.getElementById('nama_debitur')?.value || document.getElementById('nama_debitur_tab2')?.value || '';
     const businessName = document.querySelector('input[name="nama_usaha"]')?.value || '';
-    const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('input[name="alamat_usaha"]')?.value || '';
+    const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('textarea[name="alamat_usaha"]')?.value || document.querySelector('input[name="alamat_usaha"]')?.value || '';
     const nik = document.getElementById('npwp_pribadi')?.value || '-';
 
     // Ekstrak kota jika ada di alamat KTP
@@ -4784,7 +4841,7 @@ function ambilDataSubjekWebcheck() {
         // 3. Alamat KTP / Domisili / Tempat Usaha & Kota
         const alamatKtp = document.querySelector('textarea[name="alamat_ktp"]')?.value?.trim() || '';
         const alamatDomisili = document.querySelector('textarea[name="alamat_domisili"]')?.value?.trim() || '';
-        const alamatUsahaPertama = document.querySelector('.inp-alamat-usaha')?.value?.trim() || '';
+        const alamatUsahaPertama = document.querySelector('textarea[name="alamat_usaha"]')?.value?.trim() || document.querySelector('.inp-alamat-usaha')?.value?.trim() || '';
         alamatLengkap = alamatKtp || alamatDomisili || alamatUsahaPertama;
         kota = ekstrakKotaDariAlamat(alamatLengkap, tempatLahir);
 
@@ -5192,7 +5249,7 @@ function renderHasilWebcheckDiHalaman(data, info) {
 function bukaModalAiWebcheck() {
     const debtorName = document.getElementById('nama_debitur')?.value || document.getElementById('nama_debitur_tab2')?.value || '';
     const businessName = document.querySelector('input[name="nama_usaha"]')?.value || '';
-    const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('input[name="alamat_usaha"]')?.value || '';
+    const alamat = document.querySelector('textarea[name="alamat_ktp"]')?.value || document.querySelector('textarea[name="alamat_usaha"]')?.value || document.querySelector('input[name="alamat_usaha"]')?.value || '';
     const bidang = document.querySelector('input[name="bidang_usaha"]')?.value || document.querySelector('input[name="sektor_ekonomi"]')?.value || '';
 
     // Ekstrak kota jika ada di alamat KTP / Usaha

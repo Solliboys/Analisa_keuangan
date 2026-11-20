@@ -793,7 +793,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
         <div class="space-y-4 text-xs sm:text-sm">
             <!-- Nama -->
             <div>
-                <label class="block font-semibold text-slate-800 mb-1">Nama</label>
+                <label class="block font-semibold text-slate-800 mb-1">Nama <span class="text-rose-500 font-extrabold">*</span></label>
                 <input type="text" id="inputSlikNama" placeholder="" class="w-full text-xs sm:text-sm border border-slate-300 rounded-lg px-3.5 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition">
                 <div class="mt-2">
                     <label class="inline-flex items-center gap-2 cursor-pointer select-none">
@@ -805,13 +805,13 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
 
             <!-- Nomor Identitas -->
             <div>
-                <label class="block font-semibold text-slate-800 mb-1">Nomor Identitas</label>
+                <label class="block font-semibold text-slate-800 mb-1">Nomor Identitas <span class="text-rose-500 font-extrabold">*</span></label>
                 <input type="text" id="inputSlikNoId" inputmode="numeric" pattern="[0-9]*" maxlength="20" placeholder="16 digit angka (contoh: 3201012345670001)" oninput="this.value = this.value.replace(/\D/g, '')" class="w-full text-xs sm:text-sm border border-slate-300 rounded-lg px-3.5 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition font-mono">
             </div>
 
             <!-- Keterkaitan -->
             <div>
-                <label class="block font-semibold text-slate-800 mb-1">Keterkaitan</label>
+                <label class="block font-semibold text-slate-800 mb-1">Keterkaitan <span class="text-rose-500 font-extrabold">*</span></label>
                 <div class="relative">
                     <select id="inputSlikKeterkaitan" class="w-full text-xs sm:text-sm border border-slate-300 rounded-lg px-3.5 py-2.5 pr-8 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition cursor-pointer appearance-none">
                         <option value="" disabled selected>Pilih Keterkaitan</option>
@@ -830,7 +830,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                 <!-- Upload Identitas -->
                 <div class="min-w-0 overflow-hidden">
-                    <label class="block font-semibold text-slate-800 mb-1">Upload Identitas</label>
+                    <label class="block font-semibold text-slate-800 mb-1">Upload Identitas <span class="text-rose-500 font-extrabold">*</span></label>
                     <div onclick="document.getElementById('inputSlikFileIdentitas').click()"
                          id="dropzoneIdentitas"
                          class="border-2 border-dashed border-slate-200 hover:border-blue-400 bg-white hover:bg-slate-50/50 rounded-xl p-4 text-center cursor-pointer transition flex flex-col items-center justify-center min-h-[140px] w-full max-w-full overflow-hidden">
@@ -847,7 +847,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
 
                 <!-- Upload Permohonan -->
                 <div class="min-w-0 overflow-hidden">
-                    <label class="block font-semibold text-slate-800 mb-1">Upload Permohonan</label>
+                    <label class="block font-semibold text-slate-800 mb-1">Upload Permohonan <span class="text-rose-500 font-extrabold">*</span></label>
                     <div onclick="document.getElementById('inputSlikFilePermohonan').click()"
                          id="dropzonePermohonan"
                          class="border-2 border-dashed border-slate-200 hover:border-blue-400 bg-white hover:bg-slate-50/50 rounded-xl p-4 text-center cursor-pointer transition flex flex-col items-center justify-center min-h-[140px] w-full max-w-full overflow-hidden">

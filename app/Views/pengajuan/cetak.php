@@ -865,59 +865,6 @@
                     </tr>
                 </tbody>
             </table>
-
-            <!-- Lembar Tanda Tangan Komite Kredit (Exactly like result.pdf) -->
-            <div class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-6 text-center">
-                Keputusan dan Persetujuan Komite Kredit
-            </div>
-            
-            <div class="grid grid-cols-4 gap-4 text-center text-xs">
-                <div>
-                    <div class="text-slate-600 mb-14 font-semibold">
-                        ANALIS KREDIT / AO<br><br>
-                        <span class="text-[10px] text-slate-400 font-normal">( Pengusul Berkas )</span>
-                    </div>
-                    <div class="font-bold border-t border-slate-400 pt-1 text-slate-900">
-                        ( <?= esc(session()->get('nama_lengkap') ?? 'Account Officer') ?> )
-                    </div>
-                </div>
-                <div>
-                    <div class="text-slate-600 mb-14 font-semibold">
-                        KEPALA BISNIS / OPERASIONAL<br><br>
-                        <span class="text-[10px] text-slate-400 font-normal">( Reviewer Bisnis )</span>
-                    </div>
-                    <div class="font-bold border-t border-slate-400 pt-1 text-slate-900">
-                        ( ............................................ )
-                    </div>
-                </div>
-                <div>
-                    <div class="text-slate-600 mb-14 font-semibold">
-                        DIREKTUR UTAMA / KOMITE<br><br>
-                        <span class="text-[10px] text-slate-400 font-normal">( Pejabat Pemutus )</span>
-                    </div>
-                    <div class="font-bold border-t border-slate-400 pt-1 text-slate-900">
-                        ( ............................................ )
-                    </div>
-                </div>
-                <div>
-                    <div class="text-slate-600 mb-14 font-semibold">
-                        SENIOR CREDIT REVIEWER<br><br>
-                        <span class="text-[10px] text-slate-400 font-normal">( Sistem AI Independen )</span>
-                    </div>
-                    <div class="font-bold border-t border-slate-400 pt-1 text-slate-900">
-                        ( SISTEM AI INDEPENDEN )
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer Legal Disclaimer -->
-            <div class="mt-8 pt-3 border-t border-slate-200 text-[10px] text-slate-500 text-center leading-relaxed">
-                <em>Demikian draf rekomendasi ini disusun secara objektif berdasarkan evaluasi metode 5C untuk menjadi bahan pertimbangan pengambil keputusan final.<br>
-                Catatan: Laporan ini adalah hasil sintesis sistem AI. Keputusan final (Persetujuan / Penolakan mutlak) tetap berada sepenuhnya di tangan Komite Kredit / Human Reviewer.</em>
-            </div>
-            <div class="text-[9px] text-slate-400 text-center mt-2 font-mono">
-                Sistem Analisa Kredit BPR / Lembaga Keuangan &mdash; Confidential
-            </div>
         </div>
 
     </div>

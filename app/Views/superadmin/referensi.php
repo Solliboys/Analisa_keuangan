@@ -38,7 +38,7 @@
     ]) ?>
 
     <!-- MAIN WRAPPER (Full screen layout with sidebar offset md:pl-64) -->
-    <div class="md:pl-64 flex flex-col min-h-screen w-full">
+    <div class="md:pl-64 flex flex-col min-h-screen w-full min-w-0 overflow-x-hidden">
 
         <!-- Mobile Header Bar -->
         <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20 w-full">
@@ -237,8 +237,8 @@
                 </div>
 
                 <!-- Table Content -->
-                <div class="overflow-x-auto table-scroll">
-                    <table class="w-full text-left text-xs border-collapse">
+                <div class="w-full overflow-x-auto table-scroll" style="-webkit-overflow-scrolling: touch;">
+                    <table class="w-full min-w-[760px] text-left text-xs border-collapse">
                         <thead>
                             <tr class="border-b border-slate-100 bg-slate-50/70 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
                                 <th class="py-3.5 px-4 text-center w-12">NO</th>

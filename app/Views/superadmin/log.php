@@ -19,7 +19,7 @@
     <?= $this->include('navbar') ?>
 
     <!-- MAIN CONTENT CONTAINER -->
-    <main class="ml-0 md:ml-64 min-h-screen flex flex-col transition-all duration-300">
+    <main class="ml-0 md:ml-64 min-h-screen flex flex-col min-w-0 overflow-x-hidden transition-all duration-300">
         
         <!-- TOPBAR DESKTOP DENGAN BREADCRUMB -->
         <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
@@ -192,8 +192,8 @@
                     </span>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                <div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                    <table class="w-full min-w-[820px] text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200/80">
                                 <th class="py-3.5 px-4">Waktu (WIB)</th>

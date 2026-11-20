@@ -19,6 +19,7 @@
 ?>
     <!-- Top Navigation Bar -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+<<<<<<< HEAD
         <div class="w-full px-3 sm:px-6 lg:px-8">
             <div class="flex justify-between min-h-16 py-2.5 items-center gap-2">
                 <div class="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -29,6 +30,16 @@
                         <span class="text-sm sm:text-lg font-bold text-slate-900 tracking-tight block truncate">Pengaturan Profil Akun</span>
                         <span class="text-[11px] sm:text-xs hidden sm:block text-slate-500 font-medium truncate"><?= esc($namaWeb) ?> &bull; Kelola informasi pribadi akun Anda</span>
                     </div>
+=======
+        <div class="w-full px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Tombol Kembali -->
+                <div class="flex items-center gap-3">
+                    <a href="<?= base_url('dashboard') ?>" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 border border-slate-200 rounded-xl transition" title="Kembali ke Dashboard">
+                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        <span>Kembali</span>
+                    </a>
+>>>>>>> bec24c77dc39375857187d1cdc3e2f07d3ce3e3f
                 </div>
 
                 <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">

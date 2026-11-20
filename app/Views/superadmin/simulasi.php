@@ -61,7 +61,7 @@
         </div>
 
         <!-- Main Content Body Full Width -->
-        <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full">
+        <main class="flex-1 p-3 sm:p-6 lg:p-8 w-full min-w-0">
 
             <!-- Persistent Flash Message Alerts -->
             <?php if (session()->getFlashdata('success')): ?>
@@ -167,8 +167,8 @@
 
             <!-- Table Card (Struktur Gambar 1 & Aksi Detail + Hapus) -->
             <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse" id="simulasiTable">
+                <div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                    <table class="w-full min-w-[820px] text-left border-collapse" id="simulasiTable">
                         <thead>
                             <tr class="border-b border-slate-100 bg-white text-slate-400 text-[11px] font-bold uppercase tracking-wider">
                                 <th scope="col" class="py-4 px-4 font-semibold whitespace-nowrap">NO. APLIKASI</th>
@@ -260,13 +260,21 @@
                                             <?= !empty($row['created_at']) ? date('d M Y', strtotime($row['created_at'])) : '-' ?>
                                         </td>
 
-                                        <!-- 8. AKSI (Hanya Detail dan Hapus) -->
+                                        <!-- 8. AKSI (Detail, Hasil AI, dan Hapus) -->
                                         <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                             <div class="inline-flex items-center gap-1.5">
                                                 <button type="button" 
                                                         onclick="viewDetailKredit(<?= htmlspecialchars(json_encode($row), ENT_QUOTES, 'UTF-8') ?>)" 
                                                         class="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors cursor-pointer">
                                                     Detail
+                                                </button>
+                                                <!-- Tombol Hasil AI: Evaluasi 5C & Skor CAM -->
+                                                <button type="button" 
+                                                        onclick="bukaModalHasilAI(<?= (int)$row['kredit_id'] ?>, '<?= esc($row['nomor_aplikasi']) ?>')" 
+                                                        class="px-2.5 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-2xs" 
+                                                        title="Lihat Laporan Evaluasi AI & Scoring 5C">
+                                                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                                    <span>Hasil AI</span>
                                                 </button>
                                                 <button type="button" 
                                                         onclick="hapusSimulasi(<?= (int)$row['kredit_id'] ?>, '<?= esc($row['nomor_aplikasi']) ?>')" 
@@ -524,19 +532,18 @@
 
             <!-- Modal Footer -->
             <div class="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-                <a id="btnCetakPdf" href="#" target="_blank" class="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs inline-flex items-center justify-center gap-2 border border-slate-200 transition shadow-2xs">
-                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-                    <span>Cetak CAM PDF</span>
-                </a>
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    <!-- Tombol Hasil AI: Evaluasi 5C & Skor CAM -->
+                    <button type="button" onclick="bukaModalPdfSimulasi()" id="btnCetakPdf" class="flex-1 sm:flex-none px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-xl text-xs inline-flex items-center justify-center gap-1.5 border border-indigo-200/80 transition shadow-2xs cursor-pointer" title="Buka Dokumen Laporan CAM Hasil Evaluasi AI">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <span>Laporan Hasil AI</span>
+                    </button>
+                </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    <button type="button" onclick="closeDetailModal()" class="flex-1 sm:flex-none px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs border border-slate-200 transition cursor-pointer">
+                    <button type="button" onclick="closeDetailModal()" class="flex-1 sm:flex-none px-5 py-2.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs border border-slate-200 transition cursor-pointer">
                         Tutup
                     </button>
-                    <a id="btnBukaReview" href="#" class="flex-1 sm:flex-none px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition inline-flex items-center justify-center gap-1.5 shadow-sm">
-                        <span>Buka Form Reviewer</span>
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                    </a>
                 </div>
             </div>
 
@@ -693,9 +700,9 @@
             document.getElementById('modalRekomendasiAi').innerText = data.rekomendasi_ai || (skor >= 75 ? 'Disetujui Penuh' : 'Perlu Mitigasi Ketat');
             document.getElementById('modalAnalisisRisikoAi').innerText = data.analisis_risiko || 'Profil arus kas positif dengan nilai jaminan mencukupi. Kapasitas pembayaran debitur dinilai aman untuk plafon yang diajukan.';
 
-            // Link Actions
-            document.getElementById('btnCetakPdf').href = '<?= base_url('pengajuan/cetak') ?>/' + data.kredit_id;
-            document.getElementById('btnBukaReview').href = '<?= base_url('reviewer/review') ?>/' + data.kredit_id;
+            // Set ID data untuk Pop-up PDF
+            activeKreditIdForPdf = data.kredit_id;
+            activeNomorAplikasiForPdf = data.nomor_aplikasi || '';
 
             // Show Modal
             document.getElementById('detailModal').classList.remove('hidden');
@@ -823,6 +830,102 @@
         function tutupModalPilihDebitur() {
             document.getElementById('modalPilihDebitur').classList.add('hidden');
         }
+
+        // ==========================================
+        // Modal Pop-up Laporan CAM AI
+        // ==========================================
+        let activeKreditIdForPdf = null;
+        let activeNomorAplikasiForPdf = '';
+
+        function bukaModalPdfSimulasi() {
+            if (!activeKreditIdForPdf) return;
+            bukaModalHasilAI(activeKreditIdForPdf, activeNomorAplikasiForPdf);
+        }
+
+        function bukaModalHasilAI(kreditId, nomorAplikasi = '') {
+            activeKreditIdForPdf = kreditId;
+            activeNomorAplikasiForPdf = nomorAplikasi;
+            const judul = nomorAplikasi ? `Laporan Hasil AI (CAM) - ${nomorAplikasi}` : 'Laporan Hasil AI (CAM)';
+            const judulElem = document.getElementById('aiModalJudul');
+            if (judulElem) judulElem.innerText = judul;
+
+            const iframe = document.getElementById('iframeLaporanCAM');
+            if (iframe) {
+                iframe.src = '<?= base_url('pengajuan/cetak/') ?>/' + kreditId + '?modal=1';
+            }
+            const modal = document.getElementById('modalHasilAI');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+
+        function tutupModalHasilAI() {
+            const modal = document.getElementById('modalHasilAI');
+            if (modal) {
+                modal.classList.add('hidden');
+                const detailM = document.getElementById('detailModal');
+                if (!detailM || detailM.classList.contains('hidden')) {
+                    document.body.classList.remove('overflow-hidden');
+                }
+            }
+            const iframe = document.getElementById('iframeLaporanCAM');
+            if (iframe) {
+                iframe.src = '';
+            }
+        }
+
+        function cetakIframeLaporanAI() {
+            const iframe = document.getElementById('iframeLaporanCAM');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const mAi = document.getElementById('modalHasilAI');
+            if (mAi && e.target === mAi) {
+                tutupModalHasilAI();
+            }
+        });
     </script>
+
+    <!-- Modal Pop-up Laporan CAM PDF -->
+    <div id="modalHasilAI" class="fixed inset-0 z-[60] hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-5 transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[94vh] flex flex-col overflow-hidden border border-slate-200">
+            <!-- Modal Header -->
+            <div class="px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold shrink-0">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-900" id="aiModalJudul">Laporan Hasil AI (CAM)</h3>
+                        <p class="text-[11px] text-slate-500">Evaluasi Risiko 5C & Rekomendasi Komite</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <!-- Tombol Download / Cetak PDF -->
+                    <button type="button" onclick="cetakIframeLaporanAI()"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span>Cetak / Simpan PDF</span>
+                    </button>
+                    <!-- Tombol Tutup Modal -->
+                    <button type="button" onclick="tutupModalHasilAI()" 
+                            class="p-2 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition cursor-pointer" title="Tutup Modal">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body: Iframe Halaman Laporan CAM Sesuai Screenshot -->
+            <div class="flex-1 overflow-hidden bg-slate-100 p-0">
+                <iframe id="iframeLaporanCAM" src="" class="w-full h-[78vh] border-0"></iframe>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

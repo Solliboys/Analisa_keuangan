@@ -551,7 +551,14 @@ class Dashboard extends BaseController
         }
 
         if (!empty($aiUpdate)) {
-            $aiUpdate['diubah_oleh'] = session()->get('nama_lengkap');
+            $rawUserId   = session()->get('user_id') ?? session()->get('id');
+            $validUserId = (is_numeric($rawUserId) && (int)$rawUserId > 0) ? (int)$rawUserId : null;
+            if ($validUserId) {
+                $userExists = $db->table('users')->where('id', $validUserId)->countAllResults() > 0;
+                $aiUpdate['diubah_oleh'] = $userExists ? $validUserId : null;
+            } else {
+                $aiUpdate['diubah_oleh'] = null;
+            }
             $aiUpdate['updated_at']  = date('Y-m-d H:i:s');
             $db->table('pengaturan_ai')->where('id', 1)->update($aiUpdate);
         }
@@ -676,7 +683,14 @@ class Dashboard extends BaseController
 
         // Simpan ke pengaturan_ai jika ada input AI yang dikirim
         if (!empty($aiUpdate)) {
-            $aiUpdate['diubah_oleh'] = session()->get('nama_lengkap');
+            $rawUserId   = session()->get('user_id') ?? session()->get('id');
+            $validUserId = (is_numeric($rawUserId) && (int)$rawUserId > 0) ? (int)$rawUserId : null;
+            if ($validUserId) {
+                $userExists = $db->table('users')->where('id', $validUserId)->countAllResults() > 0;
+                $aiUpdate['diubah_oleh'] = $userExists ? $validUserId : null;
+            } else {
+                $aiUpdate['diubah_oleh'] = null;
+            }
             $aiUpdate['updated_at']  = date('Y-m-d H:i:s');
             $db->table('pengaturan_ai')->where('id', 1)->update($aiUpdate);
         }

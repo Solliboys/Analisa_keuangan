@@ -114,7 +114,7 @@
         </div>
     </header>
 
-    <main class="w-full px-4 sm:px-6 lg:px-8 py-6 flex-1">
+    <main class="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 min-w-0">
         
         <!-- Welcome Hero Banner -->
         <?php 
@@ -204,8 +204,8 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600" id="tabelPengajuan">
+            <div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                <table class="w-full min-w-[820px] text-left text-sm text-slate-600" id="tabelPengajuan">
                     <thead class="bg-slate-50 text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
                         <tr>
                             <th class="py-3.5 px-4">ID Pengajuan</th>
