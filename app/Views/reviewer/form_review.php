@@ -150,9 +150,9 @@
                                 <span class="text-xs text-slate-500 font-medium"><?= date('d F Y', strtotime($kredit['created_at'])) ?></span>
                             </div>
                             <h2 class="text-lg font-extrabold text-slate-900 mt-0.5">
-                                <?= esc($kredit['nama_debitur'] ?: 'Nama Debitur Belum Terisi') ?>
+                                <?= esc(($kredit['nama_debitur'] ?? '') ?: 'Nama Debitur Belum Terisi') ?>
                             </h2>
-                            <span class="text-xs text-slate-500 font-medium"><?= esc($kredit['nama_usaha'] ?: ($kredit['jenis_debitur'] ?? 'Individu')) ?></span>
+                            <span class="text-xs text-slate-500 font-medium"><?= esc(($kredit['nama_usaha'] ?? '') ?: ($kredit['jenis_debitur'] ?? 'Individu')) ?></span>
                         </div>
                         <div class="sm:text-right">
                             <span class="text-[11px] text-slate-500 uppercase font-bold tracking-wider block">Plafon Pengajuan</span>
@@ -184,16 +184,16 @@
                                 <div class="space-y-1 my-1.5 text-xs">
                                     <div class="truncate">
                                         <span class="text-slate-400 text-[11px] block">Nama & NIK:</span>
-                                        <strong class="text-slate-800 text-xs block truncate"><?= esc($kredit['nama_debitur'] ?: '-') ?></strong>
+                                        <strong class="text-slate-800 text-xs block truncate"><?= esc(($kredit['nama_debitur'] ?? '') ?: '-') ?></strong>
                                     </div>
                                     <div class="truncate">
                                         <span class="text-slate-400 text-[11px] block">Usaha & Lama:</span>
-                                        <span class="text-blue-800 font-bold block truncate"><?= esc($kredit['nama_usaha'] ?: '-') ?> (<?= esc($kredit['lama_usaha'] ?: '-') ?>)</span>
+                                        <span class="text-blue-800 font-bold block truncate"><?= esc(($kredit['nama_usaha'] ?? '') ?: '-') ?> (<?= esc(($kredit['lama_usaha'] ?? '') ?: '-') ?>)</span>
                                     </div>
                                 </div>
                                 <div class="text-[11px] text-slate-500 pt-1 border-t border-slate-200/50 flex justify-between">
-                                    <span>HP: <?= esc($kredit['nomor_hp'] ?: '-') ?></span>
-                                    <span>NIK: <?= esc($kredit['npwp_pribadi'] ?: '-') ?></span>
+                                    <span>HP: <?= esc(($kredit['nomor_hp'] ?? '') ?: '-') ?></span>
+                                    <span>NIK: <?= esc(($kredit['npwp_pribadi'] ?? '') ?: '-') ?></span>
                                 </div>
                             </div>
 
@@ -240,7 +240,7 @@
                                         </span>
                                     </div>
                                     <p class="text-slate-700 text-[11px] line-clamp-2 leading-relaxed mt-1">
-                                        <?= esc($kredit['ringkasan_slik'] ?: 'Riwayat pembayaran lancar, tidak ada catatan tunggakan fasilitas kredit aktif.') ?>
+                                        <?= esc(($kredit['ringkasan_slik'] ?? '') ?: 'Riwayat pembayaran lancar, tidak ada catatan tunggakan fasilitas kredit aktif.') ?>
                                     </p>
                                 </div>
                                 <div class="text-[11px] text-slate-500 pt-1 border-t border-slate-200/50 flex justify-between items-center">
@@ -960,12 +960,12 @@
                 statusClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
                 iconBg: 'bg-blue-600 text-white',
                 metrics: [
-                    { label: 'Nama Calon Debitur', value: '<?= esc($kredit['nama_debitur'] ?: '-') ?>' },
-                    { label: 'Status SLIK OJK', value: '<?= esc($kredit['status_slik'] ?: 'Verifikasi') ?> (<?= esc($kredit['hasil_slik'] ?: 'Kol 1 - Lancar') ?>)' },
-                    { label: 'Riwayat Tunggakan', value: '<?= esc($kredit['ringkasan_slik'] ?: 'Tidak ada catatan tunggakan kredit berjalan.') ?>' },
+                    { label: 'Nama Calon Debitur', value: '<?= esc(($kredit['nama_debitur'] ?? '') ?: '-') ?>' },
+                    { label: 'Status SLIK OJK', value: '<?= esc(($kredit['status_slik'] ?? '') ?: 'Verifikasi') ?> (<?= esc(($kredit['hasil_slik'] ?? '') ?: 'Kol 1 - Lancar') ?>)' },
+                    { label: 'Riwayat Tunggakan', value: '<?= esc(($kredit['ringkasan_slik'] ?? '') ?: 'Tidak ada catatan tunggakan kredit berjalan.') ?>' },
                     { label: 'Verifikasi Web Check SIPP', value: 'Bersih / Tidak ditemukan perkara wanprestasi atau sengketa pailit' },
                     { label: 'Kelengkapan Legalitas', value: 'Terverifikasi (KTP, KK, NIB/SKU, NPWP)' },
-                    { label: 'Observasi Pengusul', value: '<?= esc($kredit['catatan_pengusul'] ?: 'Iktikad baik sangat baik, kooperatif dalam survei') ?>' }
+                    { label: 'Observasi Pengusul', value: '<?= esc(($kredit['opini_pengusul'] ?? ($kredit['business_review'] ?? '')) ?: 'Iktikad baik sangat baik, kooperatif dalam survei') ?>' }
                 ],
                 narasi: "Hasil evaluasi pilar Character menunjukkan debitur memiliki integritas dan komitmen finansial yang solid. Riwayat pembayaran pada fasilitas kredit perbankan tercatat disiplin dengan status kolektibilitas lancar (Kolektibilitas 1). Hasil pelacakan pada Direktori Putusan Mahkamah Agung (SIPP MA) dan daftar cek hitam tidak menemukan riwayat perkara wanprestasi, gugatan perdata perbankan, maupun perkara kepailitan/PKPU aktif. Hal ini mengonfirmasi iktikad baik pemohon dalam memenuhi kewajiban kontraktual.",
                 mitigasi: [
@@ -1006,12 +1006,12 @@
                 metrics: [
                     { label: 'Total Aset / Harta', value: 'Rp <?= number_format((float)($keuangan['total_aset'] ?? ($total_mv > 0 ? $total_mv * 1.2 : 500000000)), 0, ',', '.') ?>' },
                     { label: 'Total Liabilitas / Utang', value: 'Rp <?= number_format((float)($keuangan['total_utang'] ?? 0), 0, ',', '.') ?>' },
-                    { label: 'Lama Operasional Usaha', value: '<?= esc($kredit['lama_usaha'] ?: "1+ Tahun") ?>' },
+                    { label: 'Lama Operasional Usaha', value: '<?= esc(($kredit['lama_usaha'] ?? '') ?: "1+ Tahun") ?>' },
                     { label: 'Rasio Solvabilitas (DAR)', value: 'Terkendali (DAR <= 50%)' },
                     { label: 'Sumber Permodalan', value: 'Didominasi modal sendiri dan akumulasi laba ditahan' },
                     { label: 'Daya Tahan Modal', value: 'Kuat menyerap fluktuasi biaya operasional' }
                 ],
-                narasi: "Struktur permodalan pemohon berada dalam posisi sehat dengan basis ekuitas yang memadai. Usaha yang telah beroperasi selama <?= esc($kredit['lama_usaha'] ?: 'beberapa tahun') ?> menunjukkan ketahanan finansial yang baik dalam mengelola perputaran modal kerja. Tingkat ketergantungan terhadap utang pihak ketiga berada pada batas wajar sehingga tidak membebani struktur solvabilitas debitur.",
+                narasi: "Struktur permodalan pemohon berada dalam posisi sehat dengan basis ekuitas yang memadai. Usaha yang telah beroperasi selama <?= esc(($kredit['lama_usaha'] ?? '') ?: 'beberapa tahun') ?> menunjukkan ketahanan finansial yang baik dalam mengelola perputaran modal kerja. Tingkat ketergantungan terhadap utang pihak ketiga berada pada batas wajar sehingga tidak membebani struktur solvabilitas debitur.",
                 mitigasi: [
                     "Batasi penarikan modal pemilik (prive) yang dapat mengganggu kecukupan modal kerja selama periode pembiayaan berlangsung.",
                     "Wajibkan debitur menyampaikan pembaruan laporan posisi keuangan secara berkala setiap semester."
@@ -1048,14 +1048,14 @@
                 statusClass: 'bg-blue-100 text-blue-800 border-blue-300',
                 iconBg: 'bg-blue-600 text-white',
                 metrics: [
-                    { label: 'Sektor / Bidang Usaha', value: '<?= esc($kredit['bidang_usaha'] ?: ($kredit['jenis_usaha'] ?: "Perdagangan / Jasa")) ?>' },
-                    { label: 'Tujuan Pembiayaan', value: '<?= esc($kredit['tujuan_pembiayaan'] ?: "Modal Kerja Operasional") ?>' },
-                    { label: 'Pengalaman Berusaha', value: '<?= esc($kredit['lama_usaha'] ?: "1+ Tahun") ?>' },
+                    { label: 'Sektor / Bidang Usaha', value: '<?= esc(($kredit['bidang_usaha'] ?? ($kredit['jenis_usaha'] ?? '')) ?: "Perdagangan / Jasa") ?>' },
+                    { label: 'Tujuan Pembiayaan', value: '<?= esc(($kredit['tujuan_pembiayaan'] ?? '') ?: "Modal Kerja Operasional") ?>' },
+                    { label: 'Pengalaman Berusaha', value: '<?= esc(($kredit['lama_usaha'] ?? '') ?: "1+ Tahun") ?>' },
                     { label: 'Kondisi Permintaan Pasar', value: 'Stabil & berkelanjutan pada segmen pasar riil' },
                     { label: 'Sensitivitas Regulasi', value: 'Rendah terhadap perubahan regulasi sektoral' },
                     { label: 'Tingkat Persaingan', value: 'Kompetitif dengan pelanggan tetap yang loyal' }
                 ],
-                narasi: "Analisis kondisi sektor usaha menunjukkan prospek industri yang kondusif dengan tingkat permintaan konsumen yang relatif stabil. Tujuan peruntukan kredit untuk <?= strtolower(esc($kredit['tujuan_pembiayaan'] ?: 'modal kerja operasional')) ?> dinilai sangat selaras dengan kebutuhan perputaran stok barang dagangan dan secara langsung menunjang peningkatan profitabilitas usaha.",
+                narasi: "Analisis kondisi sektor usaha menunjukkan prospek industri yang kondusif dengan tingkat permintaan konsumen yang relatif stabil. Tujuan peruntukan kredit untuk <?= strtolower(esc(($kredit['tujuan_pembiayaan'] ?? '') ?: 'modal kerja operasional')) ?> dinilai sangat selaras dengan kebutuhan perputaran stok barang dagangan dan secara langsung menunjang peningkatan profitabilitas usaha.",
                 mitigasi: [
                     "Lakukan pemantauan berkala terhadap tren stabilitas harga bahan baku/pasokan dagang.",
                     "Verifikasi kesesuaian penyerapan dana pinjaman agar tepat sasaran pada pos modal kerja sesuai permohonan."
