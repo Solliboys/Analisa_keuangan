@@ -63,13 +63,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Buka tab yang sedang dikerjakan saat halaman dimuat / direfresh
     const urlParams = new URLSearchParams(window.location.search);
-    const kidInit = document.getElementById('kredit_id')?.value || 'draft';
-    let tabTarget = urlParams.get('tab');
-    if (!tabTarget && window.location.hash) {
+    const kidEl = document.getElementById('kredit_id');
+    const kidVal = kidEl ? kidEl.value.trim() : '';
+    const isNew = (!kidVal || kidVal === '' || kidVal === '0' || kidVal === 'draft' || window.IS_NEW_PENGAJUAN || window.location.pathname.includes('/pengajuan/baru'));
+
+    let tabTarget = null;
+    if (urlParams.get('tab')) {
+        tabTarget = urlParams.get('tab');
+    } else if (window.location.hash) {
         tabTarget = window.location.hash.replace('#tab-', '').replace('#', '');
+    } else if (!isNew && kidVal) {
+        // Hanya untuk pengajuan tersimpan: pulihkan tab terakhir yang dikerjakan
+        tabTarget = sessionStorage.getItem('active_pengajuan_tab_' + kidVal);
     }
-    if (!tabTarget) {
-        tabTarget = sessionStorage.getItem('active_pengajuan_tab_' + kidInit) || localStorage.getItem('last_active_pengajuan_tab');
+
+    if (isNew) {
+        // Pengajuan baru: WAJIB bersihkan state penyimpanan tab lama agar tidak tertular ke form baru
+        try {
+            sessionStorage.removeItem('active_pengajuan_tab_draft');
+            localStorage.removeItem('last_active_pengajuan_tab');
+            Object.keys(tabValidationStatus).forEach(k => delete tabValidationStatus[k]);
+        } catch (e) {}
+
+        // Pengajuan baru SELALU dimulai dari Langkah 1 (Aplikasi) kecuali secara eksplisit ada param ?tab=
+        if (!urlParams.get('tab') && !window.location.hash) {
+            tabTarget = 1;
+        }
     }
 
     if (tabTarget) {
@@ -85,30 +104,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (targetIdx !== -1) {
-            // Tandai semua langkah sebelum tab target sebagai selesai secara visual
-            for (let k = 0; k < targetIdx; k++) {
-                tabValidationStatus[activeSteps[k]] = true;
-            }
             goToTab(activeSteps[targetIdx]);
         }
     }
 
-    // Inisialisasi status langkah yang sudah terisi jika dalam mode edit atau refresh
+    // Inisialisasi status langkah yang sudah terisi jika dalam mode edit pengajuan tersimpan
     setTimeout(() => {
-        const kid = document.getElementById('kredit_id')?.value;
+        const kid = document.getElementById('kredit_id')?.value?.trim();
         const activeSteps = getActiveSteps();
-        if (kid) {
+        if (kid && !isNew) {
             for (let t of activeSteps) {
                 const val = validateTabSilent(t);
                 if (val.valid) {
                     tabValidationStatus[t] = true;
                 }
-            }
-        }
-        const curIdx = findStepIndex(activeSteps, currentTab);
-        if (curIdx > 0) {
-            for (let k = 0; k < curIdx; k++) {
-                tabValidationStatus[activeSteps[k]] = true;
             }
         }
         updateStepperVisuals();
@@ -769,18 +778,11 @@ function goToTab(tabIndex) {
         url.searchParams.set('tab', currentTab);
         window.history.replaceState({ tab: currentTab }, '', url.toString());
 
-        const kid = document.getElementById('kredit_id')?.value || 'draft';
-        sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
-        localStorage.setItem('last_active_pengajuan_tab', currentTab);
-    } catch (e) {}
-
-    // Tandai langkah-langkah sebelum tab aktif sebagai selesai secara visual
-    for (let k = 0; k < idx; k++) {
-        const prevStep = steps[k];
-        if (tabValidationStatus[prevStep] === undefined) {
-            tabValidationStatus[prevStep] = true;
+        const kid = document.getElementById('kredit_id')?.value?.trim();
+        if (kid && kid !== 'draft' && kid !== '0') {
+            sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
         }
-    }
+    } catch (e) {}
 
     // Ketika berada di Tab 6, pastikan semua tahap sebelum 6 (1, 2, 3, 4, 5) ditandai HIJAU (Selesai)
     const normTab = normalizeTab(currentTab);
@@ -3866,11 +3868,12 @@ function initAutoSave() {
         triggerAutoSave(200);
     });
 
-    // Tangkap event sebelum refresh browser (beforeunload) agar posisi tab & data tersimpan
+    // Tangkap event sebelum refresh browser (beforeunload) agar posisi tab tersimpan untuk pengajuan aktif
     window.addEventListener('beforeunload', () => {
-        const kid = document.getElementById('kredit_id')?.value || 'draft';
-        sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
-        localStorage.setItem('last_active_pengajuan_tab', currentTab);
+        const kid = document.getElementById('kredit_id')?.value?.trim();
+        if (kid && kid !== 'draft' && kid !== '0') {
+            sessionStorage.setItem('active_pengajuan_tab_' + kid, currentTab);
+        }
 
         if (autoSaveTimer) {
             clearTimeout(autoSaveTimer);
