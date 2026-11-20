@@ -21,34 +21,35 @@ class GeminiAiService
 
         return [
             'api_key'           => $sys['api_key'] ?? $ai['api_key'] ?? (getenv('GEMINI_API_KEY') ?: ''),
-            'model_ai'          => !empty($sys['model_ai']) ? $sys['model_ai'] : (!empty($ai['model_ai']) ? $ai['model_ai'] : 'gemini-3.6-flash'),
+            'model_ai'          => !empty($sys['model_ai']) ? $sys['model_ai'] : (!empty($ai['model_ai']) ? $ai['model_ai'] : 'gemini-flash-lite-latest'),
             'api_endpoint'      => $sys['api_endpoint'] ?? 'https://generativelanguage.googleapis.com/v1beta/models',
-            'prompt_sistem'     => $sys['prompt_sistem'] ?? 'Anda adalah Senior Credit Underwriter dan Risk Analyst perbankan profesional. Lakukan evaluasi komprehensif terhadap calon debitur pembiayaan berdasarkan prinsip 5C (Character, Capacity, Capital, Collateral, Condition).',
-            'prompt_character'  => $ai['prompt_character'] ?? 'Analisis karakter debitur berdasarkan riwayat kredit dan integritas.',
-            'prompt_capacity'   => $ai['prompt_capacity'] ?? 'Analisis kapasitas debitur berdasarkan perputaran rekening koran dan omset.',
-            'prompt_capital'    => $ai['prompt_capital'] ?? 'Analisis permodalan debitur berdasarkan rasio keuangan dan aset.',
-            'prompt_collateral' => $ai['prompt_collateral'] ?? 'Analisis jaminan debitur berdasarkan nilai pasar, nilai likuidasi dan LTV.',
-            'prompt_condition'  => $ai['prompt_condition'] ?? 'Analisis prospek ekonomi debitur dan sektor usahanya.',
-            'prompt_final'      => $ai['prompt_final'] ?? 'Berikan ringkasan rekomendasi keputusan akhir kredit beserta skor 1-100.'
+            'prompt_sistem'     => $sys['prompt_sistem'] ?? "Anda adalah Senior Credit Underwriter dan Risk Analyst perbankan profesional berstandar OJK. Lakukan evaluasi kelayakan kredit komprehensif terhadap calon debitur berdasarkan prinsip 5C (Character, Capacity, Capital, Collateral, Condition).",
+            'prompt_character'  => $ai['prompt_character'] ?? "Anda adalah Analis Kredit Senior BPR spesialis evaluasi PILAR CHARACTER (Karakter & Integritas Debitur). Analisa riwayat SLIK OJK/iDeb (Kolektibilitas 1-5, frekuensi DPD, kedisiplinan angsuran) dan verifikasi kebersihan nama pada Web Check SIPP Kepaniteraan Pengadilan dari perkara sengketa/wanprestasi/pailit/PKPU serta DTTOT PPATK.",
+            'prompt_capacity'   => $ai['prompt_capacity'] ?? "Anda adalah Analis Keuangan & Cashflow Underwriter spesialis evaluasi PILAR CAPACITY (Kemampuan Membayar). Validasi omzet riil mutasi rekening koran, surplus kas bersih operasional bulanan, Debt Service Coverage (DSC min 1.30x untuk komersial), DSR (maks 35-40%), dan kesesuaian skema angsuran (Installment vs Balloon Payment).",
+            'prompt_capital'    => $ai['prompt_capital'] ?? "Anda adalah Analis Struktur Modal & Solvabilitas BPR spesialis evaluasi PILAR CAPITAL (Permodalan & Posisi Ekuitas). Evaluasi nilai Harta Bersih/Ekuitas bebas agunan (Net Worth), rasio solvabilitas Debt to Asset Ratio (DAR maks 50-60%), dan ketersediaan financial buffer penyangga likuiditas.",
+            'prompt_collateral' => $ai['prompt_collateral'] ?? "Anda adalah Penilai Agunan & Legal Underwriter BPR spesialis evaluasi PILAR COLLATERAL (Agunan & Jaminan). Uji keabsahan yuridis dokumen kepemilikan (SHM/SHGB/BPKB/Deposito), taksasi Nilai Pasar (MV) dan Nilai Likuidasi (LV), rasio penutupan Coverage MV (min 120-130%), Coverage LV (min 100%), serta LTV (maks 70-80%).",
+            'prompt_condition'  => $ai['prompt_condition'] ?? "Anda adalah Penilai Risiko Ekonomi & Makro Sektoral spesialis evaluasi PILAR CONDITION (Kondisi Makro & Sektor Usaha). Evaluasi ketahanan sektor industri usaha pemohon terhadap inflasi dan persaingan, jam terbang pengalaman usaha (min 2-3 tahun), dan keselarasan tujuan kredit (modal kerja/investasi/konsumtif).",
+            'prompt_final'      => $ai['prompt_final'] ?? "Anda adalah Ketua Komite Pemutus Kredit Utama BPR. Lakukan sintesis terintegrasi pembobotan 5C (Character 25%, Capacity 25%, Capital 15%, Collateral 20%, Condition 15%) dan tetapkan rekomendasi keputusan final (Disetujui Penuh / Disetujui dengan Penurunan Plafon / Pertimbangan Khusus / Tolak), nominal plafon aman, serta syarat tangguh mitigasi pencairan kredit."
         ];
     }
 
     /**
      * Helper pemanggilan Gemini API dengan dukungan IPv4 & Multi-Model Fallback otomatis
      */
-    protected function panggilGeminiApi(string $prompt, string $apiKey, string $preferredModel = 'gemini-3.8-flash', float $temperature = 0.1): array
+    protected function panggilGeminiApi(string $prompt, string $apiKey, string $preferredModel = 'gemini-flash-lite-latest', float $temperature = 0.2): array
     {
-        $cleanModel = trim($preferredModel ?: 'gemini-3.8-flash');
+        $cleanModel = trim($preferredModel ?: 'gemini-flash-lite-latest');
         if (preg_match('/^gemini-(1\.5|2\.0|2\.5)/i', $cleanModel)) {
-            $cleanModel = 'gemini-3.8-flash';
+            $cleanModel = 'gemini-flash-lite-latest';
         }
 
         // Urutkan model tercepat & paling stabil di awal
         $candidateModels = array_values(array_unique([
+            'gemini-flash-lite-latest',
+            'gemini-flash-latest',
+            'gemini-3.1-flash-lite',
             'gemini-3.8-flash',
             'gemini-3.6-flash',
-            'gemini-3.5-flash',
-            'gemini-3.1-flash-lite',
             $cleanModel
         ]));
 
@@ -63,7 +64,7 @@ class GeminiAiService
             'generationConfig' => [
                 'temperature'      => $temperature,
                 'responseMimeType' => 'application/json',
-                'maxOutputTokens'  => 800
+                'maxOutputTokens'  => 1500
             ]
         ];
 
@@ -77,8 +78,8 @@ class GeminiAiService
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 12);
 
             $response  = curl_exec($ch);
             $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -121,45 +122,61 @@ class GeminiAiService
         // Susun prompt dinamis menggunakan instruksi dan pedoman dari pengaturan Superadmin
         $prompt = $settings['prompt_sistem'] . "\n\n";
         $prompt .= "PEDOMAN ANALISIS 5C:\n";
-        $prompt .= "- Karakter (Character): " . $settings['prompt_character'] . "\n";
-        $prompt .= "- Kapasitas (Capacity): " . $settings['prompt_capacity'] . "\n";
-        $prompt .= "- Permodalan (Capital): " . $settings['prompt_capital'] . "\n";
-        $prompt .= "- Agunan (Collateral): " . $settings['prompt_collateral'] . "\n";
-        $prompt .= "- Kondisi (Condition): " . $settings['prompt_condition'] . "\n";
-        $prompt .= "- Keputusan Komite: " . $settings['prompt_final'] . "\n\n";
+        $prompt .= "1. Karakter (Character):\n" . $settings['prompt_character'] . "\n\n";
+        $prompt .= "2. Kapasitas (Capacity):\n" . $settings['prompt_capacity'] . "\n\n";
+        $prompt .= "3. Permodalan (Capital):\n" . $settings['prompt_capital'] . "\n\n";
+        $prompt .= "4. Agunan (Collateral):\n" . $settings['prompt_collateral'] . "\n\n";
+        $prompt .= "5. Kondisi (Condition):\n" . $settings['prompt_condition'] . "\n\n";
+        $prompt .= "6. Keputusan Komite (Reviewer):\n" . $settings['prompt_final'] . "\n\n";
 
-        $prompt .= "DATA LENGKAP CALON DEBITUR & PEMBIAYAAN:\n";
-        $prompt .= "1. IDENTITAS DEBITUR & PINJAMAN:\n";
+        $prompt .= "DATA LENGKAP CALON DEBITUR & PEMBIAYAAN (FAKTA PENGAJUAN):\n";
+        $prompt .= "1. IDENTITAS DEBITUR & FASILITAS PINJAMAN:\n";
         $prompt .= "- Nama Debitur: " . ($dataKredit['nama_debitur'] ?? '-') . "\n";
+        $prompt .= "- Jenis Debitur: " . ($dataKredit['jenis_debitur'] ?? 'Perorangan') . "\n";
         $prompt .= "- Nama Usaha: " . ($dataKredit['nama_usaha'] ?? '-') . " (Lama Berjalan: " . ($dataKredit['lama_usaha'] ?? '-') . ")\n";
+        $prompt .= "- Sektor / Bidang Usaha: " . ($dataKredit['bidang_usaha'] ?? ($dataKredit['sektor_usaha'] ?? 'Perdagangan / Jasa')) . "\n";
+        $prompt .= "- Tujuan Pembiayaan: " . ($dataKredit['tujuan_pembiayaan'] ?? 'Modal Kerja Operasional') . "\n";
         $prompt .= "- Plafon Pengajuan: Rp " . number_format((float)($dataKredit['plafon_pengajuan'] ?? 0), 0, ',', '.') . "\n";
         $prompt .= "- Tenor: " . ($dataKredit['tenor_bulan'] ?? 12) . " Bulan\n";
         $prompt .= "- Skema Pembayaran: " . ($dataKredit['skema_pembayaran'] ?? 'Balloon Payment') . "\n";
-        $prompt .= "- Bunga: " . ($dataKredit['bunga_per_bulan'] ?? 3) . "%/bulan\n\n";
+        $prompt .= "- Suku Bunga: " . ($dataKredit['bunga_per_bulan'] ?? 3) . "%/bulan\n\n";
 
-        $prompt .= "2. KUALITAS AGUNAN / JAMINAN:\n";
+        $prompt .= "2. KUALITAS AGUNAN / JAMINAN (COLLATERAL):\n";
+        $prompt .= "- Rincian Dokumen & Jenis Jaminan: " . ($dataKredit['rincian_agunan'] ?? 'Agunan Properti / Kendaraan') . "\n";
         $prompt .= "- Total Nilai Pasar (MV): Rp " . number_format((float)($dataKredit['total_mv'] ?? 0), 0, ',', '.') . "\n";
         $prompt .= "- Total Nilai Likuidasi (LV): Rp " . number_format((float)($dataKredit['total_lv'] ?? 0), 0, ',', '.') . "\n";
-        $prompt .= "- Rasio Penutupan Coverage MV: " . ($dataKredit['coverage_mv'] ?? 0) . "%\n";
-        $prompt .= "- Rasio Penutupan Coverage LV: " . ($dataKredit['coverage_lv'] ?? 0) . "%\n\n";
+        $prompt .= "- Rasio Penutupan Coverage MV: " . ($dataKredit['coverage_mv'] ?? 0) . "% (Standar min BPR: 120%)\n";
+        $prompt .= "- Rasio Penutupan Coverage LV: " . ($dataKredit['coverage_lv'] ?? 0) . "% (Standar min BPR: 100%)\n\n";
 
-        $prompt .= "3. KEMAMPUAN BAYAR & CASHFLOW (DSC):\n";
-        $prompt .= "- Omzet Rata-rata: Rp " . number_format((float)($dataKredit['omzet'] ?? 0), 0, ',', '.') . "/bulan\n";
-        $prompt .= "- Laba Bersih Operasional: Rp " . number_format((float)($dataKredit['laba_bersih'] ?? 0), 0, ',', '.') . "/bulan\n";
+        $prompt .= "3. KEMAMPUAN BAYAR & ARUS KAS (CAPACITY):\n";
+        $prompt .= "- Omzet Rata-rata Bulanan: Rp " . number_format((float)($dataKredit['omzet'] ?? 0), 0, ',', '.') . "/bulan\n";
+        $prompt .= "- Laba Bersih Operasional / Surplus Bulanan: Rp " . number_format((float)($dataKredit['laba_bersih'] ?? 0), 0, ',', '.') . "/bulan\n";
         $prompt .= "- Angsuran Kredit Acuan: Rp " . number_format((float)($dataKredit['angsuran'] ?? 0), 0, ',', '.') . "/bulan\n";
-        $prompt .= "- Rasio Debt Service Coverage (DSC): " . ($dataKredit['rasio_dsc'] ?? 0) . "x\n\n";
+        $prompt .= "- Rasio Debt Service Coverage (DSC): " . ($dataKredit['rasio_dsc'] ?? 0) . "x (Standar minimum sehat: 1.30x)\n\n";
 
-        $prompt .= "4. REPUTASI & LEGAL CHECK:\n";
-        $prompt .= "- Catatan SLIK OJK: " . ($dataKredit['ringkasan_slik'] ?? 'Lancar / tidak ada tunggakan') . "\n";
-        $prompt .= "- Hasil Web Check (SIPP, DTTOT, Lelang): Bersih / tidak ada perkara hukum aktif.\n\n";
+        $prompt .= "4. STRUKTUR PERMODALAN & POSISI ASET (CAPITAL):\n";
+        $prompt .= "- Total Harta / Aset: Rp " . number_format((float)($dataKredit['total_aset'] ?? 0), 0, ',', '.') . "\n";
+        $prompt .= "- Total Liabilitas / Utang Luar: Rp " . number_format((float)($dataKredit['total_utang'] ?? 0), 0, ',', '.') . "\n";
+        $prompt .= "- Modal Bersih / Kekayaan Bersih (Ekuitas): Rp " . number_format((float)($dataKredit['modal_bersih'] ?? 0), 0, ',', '.') . "\n";
+        $prompt .= "- Debt to Asset Ratio (DAR): " . ($dataKredit['rasio_dar'] ?? '0%') . "\n\n";
 
-        $prompt .= "TUGAS ANALISA:\n";
-        $prompt .= "Berikan output analisa dalam format JSON murni TANPA markdown formatting tambahan dengan struktur:\n";
+        $prompt .= "5. REPUTASI & LEGALITAS (CHARACTER):\n";
+        $prompt .= "- Status & Catatan SLIK OJK: " . ($dataKredit['kesimpulan_kolektibilitas'] ?? ($dataKredit['ringkasan_slik'] ?? 'Lancar / Kolektibilitas 1')) . "\n";
+        $prompt .= "- Riwayat Tunggakan: " . ($dataKredit['ringkasan_slik'] ?? 'Tidak ditemukan catatan tunggakan material.') . "\n";
+        $prompt .= "- Hasil Web Check (SIPP, Kepailitan, DTTOT): " . ($dataKredit['webcheck_status'] ?? 'Bersih / tidak ada perkara hukum aktif.') . "\n\n";
+
+        $prompt .= "6. KONDISI MAKRO & SEKTOR USAHA (CONDITION):\n";
+        $prompt .= "- Sektor Usaha: " . ($dataKredit['bidang_usaha'] ?? 'Sektor Riil') . "\n";
+        $prompt .= "- Lama Beroperasi: " . ($dataKredit['lama_usaha'] ?? '-') . "\n";
+        $prompt .= "- Tujuan Penggunaan Kredit: " . ($dataKredit['tujuan_pembiayaan'] ?? 'Modal Kerja') . "\n\n";
+
+        $prompt .= "TUGAS ANALISA & FORMAT OUTPUT:\n";
+        $prompt .= "Keluarkan hasil analisa komprehensif dalam format JSON murni TANPA markdown formatting (tanpa ```json) dengan struktur eksak berikut:\n";
         $prompt .= "{\n";
-        $prompt .= '  "skor_kelayakan": (angka bulat 0 sampai 100),' . "\n";
-        $prompt .= '  "rekomendasi_keputusan": (pilih salah satu: "Disetujui Penuh", "Disetujui dengan Penurunan Plafon", "Pertimbangan Khusus", "Tolak"),' . "\n";
-        $prompt .= '  "rekomendasi_plafon": (angka nominal rupiah tanpa titik/koma),' . "\n";
-        $prompt .= '  "analisis_risiko": (uraian komprehensif 2 paragraf padat & tajam mencakup: evaluasi 5C debitur, kecukupan agunan, kapasitas arus kas, dan klausul rekomendasi komite)' . "\n";
+        $prompt .= '  "skor_kelayakan": (angka bulat integer 0 sampai 100),' . "\n";
+        $prompt .= '  "rekomendasi_keputusan": (pilih salah satu eksak: "Disetujui Penuh", "Disetujui dengan Penurunan Plafon", "Pertimbangan Khusus", "Tolak"),' . "\n";
+        $prompt .= '  "rekomendasi_plafon": (angka nominal bulat rupiah tanpa titik, koma, atau simbol Rp),' . "\n";
+        $prompt .= '  "analisis_risiko": (uraian analisa underwriting profesional 2 paragraf padat & tajam: paragraf 1 merangkum evaluasi 5C debitur, rasio DSC, coverage agunan, dan posisi modal; paragraf 2 menguraikan justifikasi keputusan, penetapan batas plafon aman, serta klausul mitigasi syarat tangguh sebelum pencairan kredit)' . "\n";
         $prompt .= "}";
 
         $apiRes = $this->panggilGeminiApi($prompt, $apiKey, $model, 0.2);
@@ -181,13 +198,21 @@ class GeminiAiService
             return $this->fallbackAnalisa($dataKredit, 'Gagal parsing JSON');
         }
 
+        $rawPlafon = $parsed['rekomendasi_plafon'] ?? ($dataKredit['plafon_pengajuan'] ?? 0);
+        if (is_string($rawPlafon)) {
+            $rawPlafon = (float)preg_replace('/[^0-9]/', '', $rawPlafon);
+        }
+
+        $keputusan = $parsed['rekomendasi_keputusan'] ?? $parsed['rekomendasi_keputusan_ai'] ?? 'Disetujui Penuh';
+        $modelName = !empty($apiRes['model']) ? ucwords(str_replace('-', ' ', $apiRes['model'])) : 'Gemini AI';
+
         return [
             'status'                   => true,
             'skor_kelayakan_ai'        => (int)($parsed['skor_kelayakan'] ?? 80),
-            'rekomendasi_keputusan_ai' => $parsed['rekomendasi_keputusan_ai'] ?? 'Disetujui Penuh',
-            'rekomendasi_plafon_ai'    => (float)($parsed['rekomendasi_plafon'] ?? ($dataKredit['plafon_pengajuan'] ?? 0)),
+            'rekomendasi_keputusan_ai' => $keputusan,
+            'rekomendasi_plafon_ai'    => (float)$rawPlafon,
             'analisis_risiko_ai'       => $parsed['analisis_risiko'] ?? '',
-            'sumber'                   => 'Gemini 2.5 Flash (Official API)'
+            'sumber'                   => $modelName . ' (Official Engine)'
         ];
     }
 
