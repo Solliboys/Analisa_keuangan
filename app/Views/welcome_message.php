@@ -1,896 +1,256 @@
 <?php
-    $namaWeb     = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'Credit Engine AI';
-    $namaLembaga = !empty($pengaturan_sistem['nama_lembaga']) ? $pengaturan_sistem['nama_lembaga'] : 'Lembaga Pembiayaan';
-    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
-    $sloganWeb   = !empty($pengaturan_sistem['slogan_aplikasi']) ? $pengaturan_sistem['slogan_aplikasi'] : 'Autonomous Credit Underwriting AI';
-    $emailWeb    = !empty($pengaturan_sistem['email_lembaga']) ? $pengaturan_sistem['email_lembaga'] : 'info@otwkredit.id';
-    $teleponWeb  = !empty($pengaturan_sistem['telepon_lembaga']) ? $pengaturan_sistem['telepon_lembaga'] : '(021) 5088-2900';
-    $alamatWeb   = !empty($pengaturan_sistem['alamat_lembaga']) ? $pengaturan_sistem['alamat_lembaga'] : 'Financial Center, Jakarta Selatan';
-    $modelAi     = !empty($pengaturan_ai['model_ai']) ? $pengaturan_ai['model_ai'] : 'Gemini AI';
+    $rawNamaWeb  = !empty($pengaturan_sistem['nama_aplikasi']) ? trim($pengaturan_sistem['nama_aplikasi']) : '';
+    $namaLembaga = !empty($pengaturan_sistem['nama_lembaga']) ? trim($pengaturan_sistem['nama_lembaga']) : 'Lembaga Pembiayaan';
+    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : '';
+    $emailWeb    = !empty($pengaturan_sistem['email_lembaga']) ? trim($pengaturan_sistem['email_lembaga']) : 'info@otwapproved.id';
+    $teleponWeb  = !empty($pengaturan_sistem['telepon_lembaga']) ? trim($pengaturan_sistem['telepon_lembaga']) : '(021) 5088-2900';
+    $alamatWeb   = !empty($pengaturan_sistem['alamat_lembaga']) ? trim($pengaturan_sistem['alamat_lembaga']) : 'Jakarta Selatan, Indonesia';
 
-    // Filter sanitasi bebas kata CAM dan BPR secara mutlak
-    $namaWebBersih     = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $namaWeb));
-    if (empty($namaWebBersih)) { $namaWebBersih = 'Credit Engine AI'; }
+    // Gunakan branding resmi OTW Approved jika pengaturan masih berisi nama lama (Credit Engine / CAM)
+    $namaWebBersih = $rawNamaWeb;
+    if (empty($namaWebBersih) || preg_match('/(credit\s*engine|cam|bpr)/i', $namaWebBersih)) {
+        $namaWebBersih = 'OTW Approved';
+    }
 
     $namaLembagaBersih = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $namaLembaga));
-    if (empty($namaLembagaBersih)) { $namaLembagaBersih = 'Lembaga Pembiayaan'; }
+    $namaLembagaBersih = trim(preg_replace('/\s+/', ' ', $namaLembagaBersih));
+    if (empty($namaLembagaBersih) || $namaLembagaBersih === '/' || $namaLembagaBersih === 'PT /') {
+        $namaLembagaBersih = 'Lembaga Pembiayaan';
+    }
 
-    $sloganWebBersih   = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $sloganWeb));
-    if (empty($sloganWebBersih)) { $sloganWebBersih = 'Autonomous Underwriting System'; }
+    $alamatBersih = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $alamatWeb));
+    $alamatBersih = trim(preg_replace('/\s+/', ' ', $alamatBersih));
+    if (empty($alamatBersih)) {
+        $alamatBersih = 'Jakarta Selatan, Indonesia';
+    }
 
-    $alamatBersih      = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $alamatWeb));
-    $alamatBersih      = trim(preg_replace('/\s+/', ' ', $alamatBersih));
-    if (empty($alamatBersih)) { $alamatBersih = 'Financial Center, Jakarta Selatan'; }
-
-    $statKreditCount   = !empty($total_kredit) && $total_kredit > 0 ? number_format($total_kredit, 0, ',', '.') . '+' : '61.000+';
-    $statPlafonTotal   = !empty($total_plafon) && $total_plafon > 0 ? 'Rp ' . number_format($total_plafon / 1000000000, 1, ',', '.') . ' Miliar' : 'Rp 48.5 Miliar';
+    $isLoggedIn = (bool) session()->get('logged_in');
+    $portalUrl  = $isLoggedIn ? base_url('dashboard') : base_url('auth');
+    $portalCta  = $isLoggedIn ? 'Buka Dashboard' : 'Masuk Portal';
 ?>
 <!DOCTYPE html>
-<html class="scroll-smooth" lang="id">
+<html lang="id" class="scroll-smooth">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <meta content="web_standard" name="shell-type"/>
-    <title><?= esc($namaWebBersih) ?> - Autonomous Underwriting AI &amp; Evaluasi 5C</title>
-    <meta name="description" content="Platform Credit Engine dan Analisis Kelayakan Kredit modern berbasis AI 5C terintegrasi SLIK OJK untuk <?= esc($namaLembagaBersih) ?> dan Lembaga Keuangan.">
-
-    <!-- Fonts & Icons -->
-    <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= esc($namaWebBersih) ?> — Platform Analisa &amp; Persetujuan Pembiayaan</title>
+    <meta name="description" content="<?= esc($namaWebBersih) ?> adalah platform analisa kelayakan pembiayaan, verifikasi SLIK, pembacaan mutasi rekening koran, dan persetujuan komite secara terpadu.">
     <link rel="shortcut icon" type="image/png" href="<?= !empty($logoWeb) ? base_url($logoWeb) : base_url('favicon.ico') ?>">
 
-    <!-- TAILWIND CONFIG & PLAY CDN -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script>
-        if (typeof tailwind === 'undefined') {
-            document.write('<script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"><\/script>');
-        }
-    </script>
-    <script id="tailwind-config">
-        tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: {
-              colors: {
-                brand: {
-                  50: '#eff6ff',
-                  100: '#dbeafe',
-                  200: '#bfdbfe',
-                  300: '#93c5fd',
-                  400: '#60a5fa',
-                  500: '#3b82f6',
-                  600: '#2563eb',
-                  700: '#1d4ed8',
-                  800: '#1e40af',
-                  900: '#1e3a8a',
-                },
-                slate: {
-                  50: '#f8fafc',
-                  100: '#f1f5f9',
-                  200: '#e2e8f0',
-                  300: '#cbd5e1',
-                  400: '#94a3b8',
-                  500: '#64748b',
-                  600: '#475569',
-                  700: '#334155',
-                  800: '#1e293b',
-                  900: '#0f172a',
-                }
-              },
-              borderRadius: {
-                '2xl': '1rem',
-                '3xl': '1.5rem',
-                '4xl': '2rem',
-              },
-              boxShadow: {
-                'subtle': '0 2px 10px rgba(0, 0, 0, 0.03), 0 10px 30px rgba(0, 0, 0, 0.04)',
-                'card': '0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02)',
-                'float': '0 20px 40px -15px rgba(37, 99, 235, 0.12)',
-                'blue-glow': '0 10px 25px -5px rgba(37, 99, 235, 0.25)',
-              }
-            }
-          }
-        };
-    </script>
-
+    <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
+    <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <style>
-        @layer base {
-          html, body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #fafcff;
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #ffffff;
             color: #0f172a;
-            margin: 0;
-            padding: 0;
             -webkit-font-smoothing: antialiased;
-          }
         }
-        ::-webkit-scrollbar { display: none; }
-
-        .material-symbols-outlined {
-            font-family: 'Material Symbols Outlined', sans-serif;
-            font-weight: normal;
-            font-style: normal;
-            font-size: 20px;
-            line-height: 1;
-            letter-spacing: normal;
-            text-transform: none;
-            display: inline-block;
-            white-space: nowrap;
-            word-wrap: normal;
-            direction: ltr;
-            -webkit-font-feature-settings: 'liga';
-            -webkit-font-smoothing: antialiased;
-            vertical-align: middle;
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
         }
-
-        @keyframes floatSlow {
-          0%, 100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          50% {
-            transform: translateY(-8px) rotate(0.4deg);
-          }
+        .bg-grid-subtle {
+            background-image:
+                linear-gradient(to right, rgba(226, 232, 240, 0.55) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(226, 232, 240, 0.55) 1px, transparent 1px);
+            background-size: 48px 48px;
         }
-
-        @keyframes floatMedium {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-11px);
-          }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #e2e8f0;
+            height: 6px;
+            border-radius: 999px;
+            outline: none;
         }
-
-        @keyframes floatSlight {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-6px);
-          }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1d4ed8;
+            border: 3px solid #ffffff;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+            cursor: pointer;
         }
-
-        @keyframes pulseGlow {
-          0%, 100% {
-            opacity: 0.6;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.85;
-            transform: scale(1.04);
-          }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1d4ed8;
+            border: 3px solid #ffffff;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+            cursor: pointer;
         }
-
-        .animate-float-slow {
-          animation: floatSlow 6s ease-in-out infinite;
-        }
-        .animate-float-medium {
-          animation: floatMedium 5s ease-in-out infinite 0.7s;
-        }
-        .animate-float-slight {
-          animation: floatSlight 7s ease-in-out infinite 1.4s;
-        }
-        .animate-pulse-glow {
-          animation: pulseGlow 8s ease-in-out infinite alternate;
-        }
-
-        .glass-card {
-          background: rgba(255, 255, 255, 0.92);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(226, 232, 240, 0.9);
-          box-shadow: 0 10px 30px -5px rgba(27, 43, 85, 0.07), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
-        }
-
-        .glass-card:hover {
-          box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.14), 0 8px 16px -4px rgba(0, 0, 0, 0.04);
-          border-color: rgba(147, 197, 253, 0.8);
-        }
-
-        /* Fallback utility styles jika script eksternal lambat */
-        .bg-brand-600 { background-color: #2563eb; }
-        .bg-brand-700 { background-color: #1d4ed8; }
-        .text-brand-600 { color: #2563eb; }
-        .border-brand-300 { border-color: #93c5fd; }
-        .border-brand-500 { border-color: #3b82f6; }
-
-        summary::-webkit-details-marker { display: none; }
-        summary { list-style: none; }
     </style>
 </head>
-<body class="bg-[#fafcff] text-slate-900 antialiased overflow-x-hidden selection:bg-brand-500/10 selection:text-brand-600">
+<body class="bg-white text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
 
-<!-- Ambient Light Mesh Background -->
-<div class="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-    <!-- Soft top center illumination -->
-    <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[1200px] h-[550px] bg-gradient-to-b from-blue-100/50 via-sky-50/30 to-transparent rounded-[100%] blur-3xl animate-pulse-glow"></div>
-    <!-- Bottom-left intense cyan/vibrant blue atmospheric glow -->
-    <div class="absolute top-[480px] -left-36 w-[580px] h-[580px] bg-gradient-to-tr from-cyan-400/35 via-blue-500/25 to-transparent rounded-full blur-[130px]"></div>
-    <!-- Bottom-right soft purple / violet atmospheric glow -->
-    <div class="absolute top-[520px] -right-36 w-[600px] h-[600px] bg-gradient-to-tl from-indigo-400/25 via-purple-300/25 to-transparent rounded-full blur-[140px]"></div>
-    <!-- Mid-canvas ambient fill -->
-    <div class="absolute top-[1600px] -left-48 w-[500px] h-[500px] bg-blue-50/60 rounded-full blur-[140px]"></div>
-</div>
-
-<!-- STICKY HEADER -->
-<header class="fixed top-0 inset-x-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-100 transition-all">
-    <div class="max-w-7xl mx-auto h-20 px-4 sm:px-8 flex items-center justify-between">
-        <!-- Logo & Dynamic Brand Identity -->
-        <a class="flex items-center gap-3 group" href="<?= base_url() ?>">
-            <?php if (!empty($logoWeb)): ?>
-                <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWebBersih) ?>" class="h-9 sm:h-10 w-auto max-w-[150px] object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform">
-            <?php else: ?>
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-                    <span class="material-symbols-outlined text-[22px]">auto_awesome</span>
+    <!-- =======================================================
+         NAVIGATION BAR (Clean Corporate Fintech)
+    ======================================================== -->
+    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <!-- Brand -->
+            <a href="<?= base_url('/') ?>" class="flex items-center gap-2.5 shrink-0 group">
+                <?php if (!empty($logoWeb)): ?>
+                    <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWebBersih) ?>" class="h-8 w-auto object-contain">
+                <?php else: ?>
+                    <div class="w-8 h-8 rounded-lg bg-slate-950 text-white flex items-center justify-center font-extrabold text-xs tracking-tight">
+                        OA
+                    </div>
+                <?php endif; ?>
+                <div class="leading-tight">
+                    <span class="text-sm sm:text-base font-extrabold text-slate-950 tracking-tight block"><?= esc($namaWebBersih) ?></span>
+                    <span class="text-[10px] font-medium text-slate-500 hidden sm:block">Platform Analisa Pembiayaan</span>
                 </div>
-            <?php endif; ?>
-            <div class="flex flex-col text-left">
-                <span class="text-[17px] font-extrabold tracking-tight text-slate-900 leading-tight"><?= esc($namaWebBersih) ?><span class="text-blue-600">.</span></span>
-                <span class="text-[10px] sm:text-[11px] font-semibold tracking-wider text-slate-400 uppercase truncate max-w-[180px] sm:max-w-none"><?= esc($sloganWebBersih) ?></span>
-            </div>
-        </a>
-
-        <!-- Center Navigation Desktop -->
-        <nav class="hidden md:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-full border border-slate-200/70 shadow-inner">
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#fitur">Fitur</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#alur-kerja">Alur Kerja</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#simulasi">Kalkulator</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#komparasi">Keunggulan</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#faq">FAQ</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#kontak">Kontak</a>
-        </nav>
-
-        <!-- Right Header Actions (Masuk Portal dengan Tulisan Biru) -->
-        <div class="flex items-center gap-2 sm:gap-3">
-            <a class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 border border-blue-200/90 font-bold text-xs sm:text-sm transition-all duration-200 shadow-xs hover:shadow-sm" href="<?= base_url('auth') ?>">
-                <span>Masuk Portal</span>
-                <span class="material-symbols-outlined text-[15px] sm:text-[16px]">arrow_forward</span>
             </a>
-        </div>
-    </div>
-</header>
 
-<main class="relative z-10 pt-28 sm:pt-32">
-    <!-- HERO SECTION WITH INSPIRATION GRAPHICS & FLOATING METRIC CARDS -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 pt-6 pb-20 text-center flex flex-col items-center relative">
-        <!-- Top Pill Tag (Teks model AI dihapus sesuai instruksi) -->
-        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 backdrop-blur border border-blue-200/80 shadow-sm hover:border-blue-300 transition-colors mb-6 cursor-default">
-            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Engine AI 5C • Autonomous Underwriting</span>
-        </div>
+            <!-- Center Links (Desktop) -->
+            <nav class="hidden md:flex items-center gap-7 text-xs font-semibold text-slate-600">
+                <a href="#alur-kerja" class="hover:text-slate-950 transition">Alur Kerja</a>
+                <a href="#kapabilitas" class="hover:text-slate-950 transition">Kapabilitas</a>
+                <a href="#simulasi" class="hover:text-slate-950 transition">Simulasi Kredit</a>
+            </nav>
 
-        <!-- Main Headline -->
-        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 max-w-4xl leading-[1.12] mb-6">
-            Ubah Analisis Kredit Manual Menjadi <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 bg-clip-text text-transparent">Presisi &amp; Otomatis</span>
-        </h1>
-
-        <!-- Subheadline -->
-        <p class="text-base sm:text-xl text-slate-500 max-w-2xl leading-relaxed mb-8 px-2">
-            Otomasi penyusunan <span class="text-slate-800 font-semibold">Laporan Analisis Kelayakan Kredit</span> dan scoring 5C dalam hitungan detik. Terintegrasi SLIK OJK real-time untuk <?= esc($namaLembagaBersih) ?> dan Lembaga Keuangan.
-        </p>
-
-        <!-- CTA Buttons -->
-        <div class="relative z-20 flex flex-col sm:flex-row items-center gap-4 mb-10 w-full sm:w-auto px-4">
-            <a class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-base transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 flex items-center justify-center gap-2 group cursor-pointer" href="<?= base_url('auth') ?>">
-                <span>Uji Coba Sandbox Sekarang</span>
-                <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">bolt</span>
-            </a>
-            <a class="w-full sm:w-auto px-7 py-3.5 rounded-full bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 hover:border-slate-300 font-semibold text-base transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer" href="#alur-kerja">
-                <span class="material-symbols-outlined text-[20px] text-slate-400">play_circle</span>
-                <span>Lihat Cara Kerja</span>
-            </a>
-        </div>
-
-        <!-- HERO VISUAL COMPOSITION: RESPONSIVE & NON-OVERLAPPING -->
-        <div class="relative w-full max-w-6xl mt-2 min-h-[520px] lg:min-h-[580px] flex items-center justify-center px-2">
-            <!-- SVG CURVED CONNECTING LINES (Desktop Only) -->
-            <svg class="absolute inset-0 w-full h-full pointer-events-none hidden xl:block z-10" fill="none" viewbox="0 0 1152 580" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <lineargradient gradientunits="userSpaceOnUse" id="curveGradLeftTop" x1="576" x2="160" y1="20" y2="70">
-                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.5"></stop>
-                        <stop offset="100%" stop-color="#93c5fd" stop-opacity="0.15"></stop>
-                    </lineargradient>
-                    <lineargradient gradientunits="userSpaceOnUse" id="curveGradLeftBottom" x1="576" x2="180" y1="20" y2="380">
-                        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.6"></stop>
-                        <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.2"></stop>
-                    </lineargradient>
-                    <lineargradient gradientunits="userSpaceOnUse" id="curveGradRightTop" x1="576" x2="990" y1="20" y2="75">
-                        <stop offset="0%" stop-color="#6366f1" stop-opacity="0.6"></stop>
-                        <stop offset="100%" stop-color="#c084fc" stop-opacity="0.15"></stop>
-                    </lineargradient>
-                    <lineargradient gradientunits="userSpaceOnUse" id="curveGradRightBottom" x1="576" x2="970" y1="20" y2="380">
-                        <stop offset="0%" stop-color="#6366f1" stop-opacity="0.5"></stop>
-                        <stop offset="100%" stop-color="#818cf8" stop-opacity="0.2"></stop>
-                    </lineargradient>
-                </defs>
-                <path d="M 576 25 C 480 25, 290 40, 190 75" stroke="url(#curveGradLeftTop)" stroke-dasharray="3 3" stroke-width="1.8"></path>
-                <path d="M 576 25 C 440 50, 240 180, 180 380" stroke="url(#curveGradLeftBottom)" stroke-linecap="round" stroke-width="2"></path>
-                <path d="M 576 25 C 670 25, 860 40, 960 75" stroke="url(#curveGradRightTop)" stroke-dasharray="3 3" stroke-width="1.8"></path>
-                <path d="M 576 25 C 710 50, 910 180, 970 380" stroke="url(#curveGradRightBottom)" stroke-linecap="round" stroke-width="2"></path>
-                <circle cx="190" cy="75" fill="#3b82f6" r="3.5"></circle>
-                <circle cx="180" cy="380" fill="#38bdf8" r="3.5"></circle>
-                <circle cx="960" cy="75" fill="#a855f7" r="3.5"></circle>
-                <circle cx="970" cy="380" fill="#6366f1" r="3.5"></circle>
-            </svg>
-
-            <!-- AMBIENT BACKDROPS -->
-            <div class="absolute -left-12 bottom-4 w-72 h-72 bg-gradient-to-tr from-cyan-400/40 via-sky-400/30 to-transparent rounded-full blur-3xl -z-10 pointer-events-none"></div>
-            <div class="absolute -right-12 bottom-4 w-72 h-72 bg-gradient-to-tl from-purple-400/35 via-indigo-400/25 to-transparent rounded-full blur-3xl -z-10 pointer-events-none"></div>
-
-            <!-- FLOATING CARD 1: TOP LEFT -->
-            <div class="absolute -top-6 left-0 xl:-left-8 z-30 animate-float-slow hidden lg:flex">
-                <div class="glass-card rounded-2xl px-4 py-3 flex items-center gap-3.5 shadow-lg border border-slate-200/90 transition-all hover:scale-105">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 via-rose-500 to-indigo-600 flex items-center justify-center text-white shadow-sm shrink-0">
-                        <span class="material-symbols-outlined text-[20px]">hub</span>
-                    </div>
-                    <div class="text-left">
-                        <div class="text-[11px] font-semibold text-slate-500 leading-tight">Total Fasilitas Teranalisis</div>
-                        <div class="text-base font-extrabold text-slate-900 tracking-tight"><?= esc($statKreditCount) ?> <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">100% SLIK</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FLOATING CARD 2: TOP RIGHT -->
-            <div class="absolute -top-6 right-0 xl:-right-8 z-30 animate-float-medium hidden lg:flex">
-                <div class="glass-card rounded-2xl px-4 py-3 flex items-center gap-3.5 shadow-lg border border-slate-200/90 transition-all hover:scale-105">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-sm shrink-0">
-                        <span class="material-symbols-outlined text-[20px]">verified</span>
-                    </div>
-                    <div class="text-left">
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-xs font-extrabold text-slate-900">Komite Approval</span>
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        </div>
-                        <div class="text-[11px] text-slate-500">Four-Eyes Principle</div>
-                        <div class="flex items-center gap-1 mt-1">
-                            <span class="h-1.5 w-8 bg-blue-500 rounded-full"></span>
-                            <span class="h-1.5 w-4 bg-indigo-300 rounded-full"></span>
-                            <span class="text-[9px] font-bold text-slate-400">Reviewer &amp; CEO</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FLOATING CARD 3: BOTTOM LEFT -->
-            <div class="absolute bottom-4 left-0 xl:-left-12 z-30 animate-float-medium hidden xl:block">
-                <div class="glass-card rounded-2xl p-4 w-56 text-left transition-all hover:scale-105">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold text-slate-800">Total Plafon Terkalkulasi</span>
-                        <span class="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Agregat</span>
-                    </div>
-                    <div class="h-16 flex items-end justify-between gap-2 px-1">
-                        <div class="w-3.5 bg-purple-200 rounded-t-md h-[45%]"></div>
-                        <div class="w-3.5 bg-purple-300 rounded-t-md h-[70%]"></div>
-                        <div class="w-3.5 bg-purple-200 rounded-t-md h-[55%]"></div>
-                        <div class="w-3.5 bg-gradient-to-t from-blue-600 to-sky-400 rounded-t-md h-[90%] shadow-sm"></div>
-                        <div class="w-3.5 bg-purple-200 rounded-t-md h-[60%]"></div>
-                        <div class="w-3.5 bg-purple-300 rounded-t-md h-[80%]"></div>
-                    </div>
-                    <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] font-bold mt-2">
-                        <span class="text-slate-400">Volume Plafon</span>
-                        <span class="text-emerald-600 flex items-center gap-0.5"><?= esc($statPlafonTotal) ?></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- FLOATING CARD 4: BOTTOM RIGHT -->
-            <div class="absolute bottom-4 right-0 xl:-right-12 z-30 animate-float-slow hidden xl:block">
-                <div class="glass-card rounded-2xl p-4 w-56 text-left relative transition-all hover:scale-105">
-                    <div class="absolute -top-3.5 -right-2 bg-white border border-slate-200/80 rounded-xl px-2.5 py-1 shadow-md flex items-center gap-1.5">
-                        <div class="text-[9px] text-slate-400 font-bold uppercase">Akurasi Scoring</div>
-                        <div class="text-xs font-black text-blue-600">99.4%</div>
-                    </div>
-                    <div class="text-xs font-bold text-slate-800 mb-2">Profil Risiko Portofolio</div>
-                    <div class="flex items-center gap-2.5">
-                        <div class="relative w-12 h-12 shrink-0">
-                            <svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
-                                <circle cx="18" cy="18" fill="none" r="14" stroke="#e2e8f0" stroke-width="4"></circle>
-                                <circle cx="18" cy="18" fill="none" r="14" stroke="#2563eb" stroke-dasharray="88 100" stroke-dashoffset="0" stroke-width="4"></circle>
-                                <circle cx="18" cy="18" fill="none" r="14" stroke="#c084fc" stroke-dasharray="12 100" stroke-dashoffset="-88" stroke-width="4"></circle>
-                            </svg>
-                            <div class="absolute inset-0 flex items-center justify-center">
-                                <span class="text-[9px] font-extrabold text-slate-800">Kol 1</span>
-                            </div>
-                        </div>
-                        <div class="space-y-0.5">
-                            <div class="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600">
-                                <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 94% Lancar
-                            </div>
-                            <div class="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600">
-                                <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span> NPL &lt; 0.8%
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MAIN CENTER CARD: DATA ANALYTICS & SCORING TREND -->
-            <div class="w-full max-w-2xl bg-white/95 backdrop-blur-xl rounded-3xl border border-slate-200/90 p-5 sm:p-8 shadow-2xl relative z-20 text-left">
-                <!-- Header of Mockup Card -->
-                <div class="flex flex-wrap items-center justify-between pb-4 border-b border-slate-100 gap-2">
-                    <div>
-                        <div class="text-[11px] font-bold text-blue-600 uppercase tracking-wider">AI Credit Engine Dashboard</div>
-                        <h3 class="text-base sm:text-xl font-extrabold text-slate-900">Data Analytics &amp; Scoring 5C Trend</h3>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Live Scoring
-                        </span>
-                        <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 hidden sm:inline-block">
-                            Simulasi Debitur 5C
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Multi-line Smooth Wave Chart SVG with Tooltip -->
-                <div class="relative mt-5 pt-2">
-                    <!-- Axis Labels -->
-                    <div class="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[10px] font-semibold text-slate-400 pr-2">
-                        <span>100</span>
-                        <span>75</span>
-                        <span>50</span>
-                        <span>25</span>
-                        <span>0</span>
-                    </div>
-                    <!-- Wave Lines Area -->
-                    <div class="ml-7 relative h-40 sm:h-52">
-                        <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                            <div class="border-b border-slate-100 w-full"></div>
-                            <div class="border-b border-slate-100 w-full"></div>
-                            <div class="border-b border-slate-100 w-full"></div>
-                            <div class="border-b border-slate-100 w-full"></div>
-                            <div class="border-b border-slate-100 w-full"></div>
-                        </div>
-                        <svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 500 200">
-                            <defs>
-                                <lineargradient id="areaGradientPrimary" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"></stop>
-                                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"></stop>
-                                </lineargradient>
-                                <lineargradient id="waveStroke1" x1="0" x2="1" y1="0" y2="0">
-                                    <stop offset="0%" stop-color="#38bdf8"></stop>
-                                    <stop offset="50%" stop-color="#2563eb"></stop>
-                                    <stop offset="100%" stop-color="#6366f1"></stop>
-                                </lineargradient>
-                            </defs>
-                            <path d="M 0 170 C 40 160, 70 140, 110 130 C 150 120, 180 80, 220 90 C 260 100, 280 40, 320 35 C 360 30, 400 90, 440 70 C 470 55, 490 50, 500 45 L 500 200 L 0 200 Z" fill="url(#areaGradientPrimary)"></path>
-                            <path d="M 0 170 C 40 160, 70 140, 110 130 C 150 120, 180 80, 220 90 C 260 100, 280 40, 320 35 C 360 30, 400 90, 440 70 C 470 55, 490 50, 500 45" fill="none" stroke="url(#waveStroke1)" stroke-linecap="round" stroke-width="3.5"></path>
-                            <path d="M 0 185 C 50 180, 90 165, 130 155 C 170 145, 200 130, 240 140 C 280 150, 310 115, 350 110 C 390 105, 420 145, 460 125 C 480 115, 495 105, 500 100" fill="none" stroke="#38bdf8" stroke-linecap="round" stroke-opacity="0.8" stroke-width="2.5"></path>
-                            <circle cx="320" cy="35" fill="#ffffff" r="5.5" stroke="#2563eb" stroke-width="3"></circle>
-                        </svg>
-
-                        <!-- Floating Tooltip Pill -->
-                        <div class="absolute left-[60%] sm:left-[62%] top-1 -translate-x-1/2 -translate-y-full mb-1">
-                            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-xl shadow-lg flex items-center gap-1.5 text-xs font-bold">
-                                <span>Score: 88.0 (Grade A)</span>
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                            </div>
-                            <div class="w-2.5 h-2.5 bg-indigo-600 transform rotate-45 mx-auto -mt-1 rounded-xs"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Micro Stats Grid inside card -->
-                <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
-                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Plafon Diajukan</span>
-                        <span class="text-xs sm:text-sm font-extrabold text-slate-900">Rp 250 Juta</span>
-                    </div>
-                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold block">SLIK OJK</span>
-                        <span class="text-xs sm:text-sm font-extrabold text-emerald-600">Kol 1 (Lancar)</span>
-                    </div>
-                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Rasio DSCR</span>
-                        <span class="text-xs sm:text-sm font-extrabold text-blue-600">1.62x Sehat</span>
-                    </div>
-                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Rekomendasi</span>
-                        <span class="text-xs sm:text-sm font-extrabold text-emerald-600">Disetujui Penuh</span>
-                    </div>
-                </div>
+            <!-- Right CTA & Mobile Menu Toggle -->
+            <div class="flex items-center gap-2.5">
+                <a href="<?= $portalUrl ?>" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold transition shadow-2xs">
+                    <span><?= $portalCta ?></span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+                <button type="button" onclick="toggleMobileNav()" class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition cursor-pointer" aria-label="Buka Menu">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
             </div>
         </div>
 
-        <!-- Mobile Floating Highlights Carousel -->
-        <div class="w-full max-w-2xl mt-4 grid grid-cols-2 gap-3 xl:hidden">
-            <div class="glass-card rounded-2xl p-3 text-left">
-                <div class="text-[10px] text-slate-400 font-bold uppercase">Total Fasilitas</div>
-                <div class="text-sm font-extrabold text-slate-900 mt-0.5"><?= esc($statKreditCount) ?></div>
-            </div>
-            <div class="glass-card rounded-2xl p-3 text-left">
-                <div class="text-[10px] text-slate-400 font-bold uppercase">Portofolio Sehat</div>
-                <div class="text-sm font-extrabold text-emerald-600 mt-0.5">94% Lancar</div>
-            </div>
+        <!-- Mobile Dropdown Nav -->
+        <div id="mobileNavMenu" class="hidden md:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1">
+            <a href="#alur-kerja" onclick="toggleMobileNav(false)" class="block px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">Alur Kerja</a>
+            <a href="#kapabilitas" onclick="toggleMobileNav(false)" class="block px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">Kapabilitas</a>
+            <a href="#simulasi" onclick="toggleMobileNav(false)" class="block px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">Simulasi Kredit</a>
         </div>
+    </header>
 
-        <!-- Bottom Micro Metrics Strip -->
-        <div class="w-full max-w-4xl mt-12 pt-6 border-t border-slate-200/70 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-            <div>
-                <div class="text-xs text-slate-400 font-semibold uppercase">Waktu Analisis</div>
-                <div class="text-lg font-extrabold text-slate-900 mt-0.5">&lt; 10 Detik</div>
-            </div>
-            <div>
-                <div class="text-xs text-slate-400 font-semibold uppercase">DSCR Otomatis</div>
-                <div class="text-lg font-extrabold text-blue-600 mt-0.5">1.62x Sehat</div>
-            </div>
-            <div>
-                <div class="text-xs text-slate-400 font-semibold uppercase">Coverage Agunan</div>
-                <div class="text-lg font-extrabold text-slate-900 mt-0.5">150% Tercover</div>
-            </div>
-            <div>
-                <div class="text-xs text-slate-400 font-semibold uppercase">Kepatuhan</div>
-                <div class="text-lg font-extrabold text-emerald-600 mt-0.5">Standar OJK</div>
-            </div>
-        </div>
-    </section>
+    <!-- =======================================================
+         SECTION 1: EDITORIAL ASYMMETRIC HERO
+    ======================================================== -->
+    <section class="relative border-b border-slate-200/80 bg-white overflow-hidden">
+        <div class="absolute inset-0 bg-grid-subtle opacity-45 pointer-events-none"></div>
+        <div class="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
 
-    <!-- SECTION: BENTO GRID OF CORE FEATURES -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-20 relative" id="fitur">
-        <div class="text-center max-w-3xl mx-auto mb-16">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">
-                <span>Fitur Unggulan Sistem</span>
-            </div>
-            <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                Solusi Lengkap Evaluasi 5C &amp; <br class="hidden sm:block"/>Otomasi Analisis Kredit Perorangan &amp; Usaha
-            </h2>
-            <p class="text-slate-500 text-base sm:text-lg mt-4">
-                Sistem terpadu untuk percepatan proses kredit tanpa mengorbankan ketelitian tata kelola risiko kehati-hatian perbankan.
-            </p>
-        </div>
-        <!-- Bento Cards Grid (3 Kolom Utama Sesuai Sistem Aktual) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Card 1: SLIK OJK & Verifikasi Yuridis -->
-            <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
-                <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Pilar 01 • Character &amp; Legal</div>
-                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Verifikasi SLIK OJK &amp; Cek Hukum MA</h3>
-                    <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Pemeriksaan riwayat debitur otomatis, penguraian baki debet antar bank, deteksi tunggakan Kol 1–5, serta integrasi direktori putusan hukum MA / SIPP peradilan.
+        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 sm:pt-16 sm:pb-24">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+                <!-- Left Copy (7 cols) -->
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">
+                        <span class="w-1.5 h-1.5 rounded-full bg-blue-700"></span>
+                        <span>Sistem Analisa &amp; Persetujuan Kredit</span>
+                    </div>
+
+                    <h1 class="text-3xl sm:text-5xl font-extrabold text-slate-950 tracking-[-0.03em] leading-[1.08]">
+                        Keputusan kredit lebih cepat, terukur, dan berbasis data.
+                    </h1>
+
+                    <p class="text-sm sm:text-base text-slate-600 leading-relaxed max-w-xl">
+                        <?= esc($namaWebBersih) ?> menyatukan pengajuan debitur, verifikasi SLIK, pembacaan mutasi rekening koran otomatis, hingga persetujuan komite dalam satu alur kerja yang transparan bagi <?= esc($namaLembagaBersih) ?>.
                     </p>
-                </div>
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-700">Status Kolektibilitas</span>
-                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold">Kol 1 (Lancar)</span>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between text-xs py-1 border-b border-slate-200">
-                            <span class="text-slate-500">Baki Debet Aktif</span>
-                            <span class="font-semibold text-slate-800">Rp 120.000.000</span>
-                        </div>
-                        <div class="flex items-center justify-between text-xs py-1">
-                            <span class="text-slate-500">Cek Sengketa MA/SIPP</span>
-                            <span class="font-bold text-emerald-600">Bersih (0 Perkara)</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Card 2: Financial Ratio & Rekening Koran -->
-            <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
-                <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Pilar 02 • Capacity &amp; Cashflow</div>
-                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Analisis Rekening Koran &amp; DSCR</h3>
-                    <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Kalkulasi instan kemampuan angsuran, mutasi kas 3-6 bulan terakhir, debt service coverage ratio (DSCR), DSR, dan daya tahan modal kerja.
-                    </p>
-                </div>
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col gap-3">
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="text-slate-500 font-medium">DSCR Target Threshold</span>
-                        <span class="font-extrabold text-blue-600">1.62x (Sehat &gt; 1.3x)</span>
-                    </div>
-                    <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                        <div class="bg-blue-500 h-full rounded-full w-[82%]"></div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 pt-1 text-center">
-                        <div class="bg-white p-2 rounded-lg border border-slate-100">
-                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Saldo Rata-rata</span>
-                            <span class="text-sm font-extrabold text-slate-800">Rp 48.5 Jt/bln</span>
-                        </div>
-                        <div class="bg-white p-2 rounded-lg border border-slate-100">
-                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Arus Kas Riil</span>
-                            <span class="text-sm font-extrabold text-emerald-600">Surplus Aktif</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 3: Agunan & Ekspor Laporan Komite -->
-            <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
-                <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Pilar 03 • Collateral &amp; Output</div>
-                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Taksasi Agunan &amp; Laporan PDF</h3>
-                    <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Penilaian rasio penutupan agunan (SHM, SHGB, BPKB), nilai likuidasi, batas aman LTV, serta ekspor dokumen laporan analisa kredit resmi untuk sidang komite.
-                    </p>
-                </div>
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-700">Rasio Coverage Agunan</span>
-                        <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[11px] font-bold">150.0% (LTV 66.7%)</span>
-                    </div>
-                    <div class="flex items-center gap-3 pt-1 border-t border-slate-200">
-                        <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-                            <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
-                        </div>
-                        <div class="text-left">
-                            <span class="text-xs font-bold text-slate-800 block">Laporan Analisis Kredit</span>
-                            <span class="text-[11px] text-slate-400">Siap Cetak &amp; Disahkan Komite</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- SECTION: INTERACTIVE CALCULATOR -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-20 bg-slate-50/70 rounded-3xl border border-slate-200/80 my-10" id="simulasi">
-        <div class="text-center max-w-3xl mx-auto mb-14">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider mb-4 shadow-sm">
-                <span class="material-symbols-outlined text-[16px] text-blue-600">tune</span>
-                <span>Simulasi Interaktif</span>
-            </div>
-            <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
-                Kalkulator Sensitivitas Plafon &amp; Kelayakan
-            </h2>
-            <p class="text-slate-500 text-base sm:text-lg mt-3">
-                Geser nilai pengajuan untuk melihat simulasi rekomendasi komite kredit dan perkiraan angsuran secara real-time.
-            </p>
-        </div>
-        <!-- Calculator Box -->
-        <div class="max-w-5xl mx-auto bg-white rounded-3xl border border-slate-200/90 shadow-card p-6 sm:p-10">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <!-- Left Column: Inputs -->
-                <div class="lg:col-span-6 space-y-6">
-                    <!-- Plafon Range -->
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="text-sm font-bold text-slate-800" for="plafon-slider">Plafon Pinjaman</label>
-                            <span class="text-lg font-black text-blue-600" id="plafon-display">Rp 250.000.000</span>
-                        </div>
-                        <input class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600" id="plafon-slider" max="1000000000" min="50000000" step="25000000" type="range" value="250000000"/>
-                        <div class="flex justify-between text-[11px] text-slate-400 font-semibold mt-1">
-                            <span>Rp 50 Jt</span>
-                            <span>Rp 500 Jt</span>
-                            <span>Rp 1 Miliar</span>
-                        </div>
-                    </div>
-                    <!-- Tenor Selection Buttons -->
-                    <div>
-                        <label class="text-sm font-bold text-slate-800 block mb-2">Jangka Waktu (Tenor)</label>
-                        <div class="grid grid-cols-4 gap-2">
-                            <button class="tenor-btn py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:border-slate-300 transition-all cursor-pointer" data-tenor="12" type="button">12 Bln</button>
-                            <button class="tenor-btn py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-sm transition-all cursor-pointer" data-tenor="24" type="button">24 Bln</button>
-                            <button class="tenor-btn py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:border-slate-300 transition-all cursor-pointer" data-tenor="36" type="button">36 Bln</button>
-                            <button class="tenor-btn py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:border-slate-300 transition-all cursor-pointer" data-tenor="48" type="button">48 Bln</button>
-                        </div>
-                    </div>
-                    <!-- Nilai Agunan Range -->
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <label class="text-sm font-bold text-slate-800" for="agunan-slider">Nilai Likuidasi Agunan</label>
-                            <span class="text-lg font-black text-slate-900" id="agunan-display">Rp 375.000.000</span>
-                        </div>
-                        <input class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600" id="agunan-slider" max="1500000000" min="100000000" step="25000000" type="range" value="375000000"/>
-                        <div class="flex justify-between text-[11px] text-slate-400 font-semibold mt-1">
-                            <span>Rp 100 Jt</span>
-                            <span>Rp 750 Jt</span>
-                            <span>Rp 1.5 Miliar</span>
-                        </div>
-                    </div>
-                </div>
-                <!-- Right Column: Projection Card -->
-                <div class="lg:col-span-6 bg-slate-50/90 rounded-2xl border border-slate-200/90 p-6 flex flex-col justify-between space-y-5">
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Hasil Proyeksi Real-time</span>
-                        <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs" id="sim-status-chip">● DISARANKAN APPROVAL</span>
-                    </div>
-                    <!-- Metric Highlights -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
-                            <span class="text-xs font-semibold text-slate-400 uppercase block">Est. Angsuran / Bln</span>
-                            <span class="text-lg font-black text-slate-900 mt-1 block" id="angsuran-display">Rp 16.666.667</span>
-                            <span class="text-[11px] text-slate-500">Bunga 2.5% Flat/bln</span>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
-                            <span class="text-xs font-semibold text-slate-400 uppercase block">Coverage Agunan</span>
-                            <span class="text-lg font-black text-blue-600 mt-1 block" id="ltv-display">150.0%</span>
-                            <span class="text-[11px] text-blue-600 font-semibold" id="ltv-subtext">LTV: 66.7% (Aman)</span>
-                        </div>
-                    </div>
-                    <!-- Summary text box -->
-                    <div class="bg-white p-4 rounded-xl border border-slate-200/80">
-                        <div class="flex items-start gap-2.5">
-                            <span class="material-symbols-outlined text-blue-600 text-[20px] shrink-0 mt-0.5">insights</span>
-                            <p class="text-xs text-slate-600 leading-relaxed" id="sim-summary">
-                                Kapasitas agunan memadai dengan coverage ratio 150.0% (LTV 66.7%). Struktur angsuran berada dalam ambang batas toleransi arus kas debitur. Disarankan untuk masuk ke tahapan komite kredit.
-                            </p>
-                        </div>
-                    </div>
-                    <!-- CTA link -->
-                    <div class="flex items-center justify-between pt-2">
-                        <span class="text-xs text-slate-500">Ingin verifikasi SLIK OJK komprehensif?</span>
-                        <a class="px-4 py-2 rounded-full bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-colors shadow-sm cursor-pointer" href="<?= base_url('auth') ?>">
-                            Buka Portal →
+                    <div class="flex flex-wrap items-center gap-3 pt-1">
+                        <a href="<?= $portalUrl ?>" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition shadow-xs">
+                            <span><?= $portalCta ?></span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </a>
+                        <a href="#simulasi" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs sm:text-sm font-bold transition">
+                            <span>Coba Simulasi Kredit</span>
                         </a>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- SECTION: 4-STEP PROCESS (SESUAI ALUR KERJA SISTEM AKTUAL) -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-20" id="alur-kerja">
-        <div class="text-center max-w-3xl mx-auto mb-16">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">
-                <span>Alur Kerja Praktis</span>
-            </div>
-            <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                4 Tahap Analisis Kredit Berjenjang
-            </h2>
-            <p class="text-slate-500 text-base sm:text-lg mt-3">
-                Proses terstruktur dari inisiasi pengusul, verifikasi SLIK OJK, inferensi AI 5C, hingga keputusan final komite.
-            </p>
-        </div>
-        <!-- Step Cards Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Step 01 -->
-            <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-card hover:shadow-xl transition-all flex flex-col justify-between">
-                <div>
-                    <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-lg text-slate-900 mb-6">
-                        01
+                    <!-- Trust Strip -->
+                    <div class="pt-6 border-t border-slate-200/90 grid grid-cols-3 gap-4 max-w-lg">
+                        <div>
+                            <div class="text-lg sm:text-xl font-extrabold text-slate-950 tabular-nums">4 Peran</div>
+                            <div class="text-[11px] text-slate-500 font-medium mt-0.5">Pengusul hingga Komite</div>
+                        </div>
+                        <div class="border-l border-slate-200 pl-4">
+                            <div class="text-lg sm:text-xl font-extrabold text-slate-950 tabular-nums">5C &amp; DSCR</div>
+                            <div class="text-[11px] text-slate-500 font-medium mt-0.5">Skoring &amp; rasio otomatis</div>
+                        </div>
+                        <div class="border-l border-slate-200 pl-4">
+                            <div class="text-lg sm:text-xl font-extrabold text-slate-950 tabular-nums">A4 PDF</div>
+                            <div class="text-[11px] text-slate-500 font-medium mt-0.5">Laporan siap komite</div>
+                        </div>
                     </div>
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Perorangan &amp; Usaha</div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Input Berkas &amp; Agunan</h3>
-                    <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Staff Pengusul mengunggah identitas calon debitur, profil usaha, mutasi rekening bank, dan data fisik agunan.
-                    </p>
                 </div>
-                <div class="pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
-                    <span class="material-symbols-outlined text-[16px]">check_circle</span>
-                    <span>Pengusul Kredit</span>
-                </div>
-            </div>
-            <!-- Step 02 -->
-            <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-card hover:shadow-xl transition-all flex flex-col justify-between">
-                <div>
-                    <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-lg text-slate-900 mb-6">
-                        02
-                    </div>
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pemeriksaan iDeb</div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Verifikasi SLIK OJK</h3>
-                    <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Petugas SLIK memeriksa riwayat fasilitas pinjaman aktif, baki debet antar bank, serta catatan kolektibilitas historis.
-                    </p>
-                </div>
-                <div class="pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
-                    <span class="material-symbols-outlined text-[16px]">check_circle</span>
-                    <span>iDeb SLIK OJK</span>
-                </div>
-            </div>
-            <!-- Step 03 -->
-            <div class="bg-gradient-to-b from-blue-50/50 to-white border-2 border-blue-500/80 rounded-3xl p-6 shadow-card hover:shadow-lg transition-all flex flex-col justify-between relative overflow-hidden">
-                <div class="absolute -top-6 -right-6 w-20 h-20 bg-blue-200/40 rounded-full blur-xl"></div>
-                <div>
-                    <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-lg shadow-md shadow-blue-500/30 mb-6">
-                        03
-                    </div>
-                    <div class="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider mb-1">AI 5C Core Engine</div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Scoring &amp; Review Independen</h3>
-                    <p class="text-sm text-slate-600 leading-relaxed mb-6">
-                        Senior Reviewer memvalidasi rekomendasi AI: Character, Capacity, Capital, Collateral, Condition, serta penetapan Grade A–D.
-                    </p>
-                </div>
-                <div class="pt-4 border-t border-blue-100 flex items-center gap-2 text-xs font-bold text-blue-700">
-                    <span class="material-symbols-outlined text-[16px]">verified</span>
-                    <span>Senior Reviewer AI</span>
-                </div>
-            </div>
-            <!-- Step 04 -->
-            <div class="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-card hover:shadow-xl transition-all flex flex-col justify-between">
-                <div>
-                    <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-lg text-slate-900 mb-6">
-                        04
-                    </div>
-                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sidang Komite Kredit</div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Keputusan CEO &amp; Laporan</h3>
-                    <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Komite Kredit/CEO menerbitkan keputusan persetujuan akhir dan mencetak lembar laporan analisa fasilitas resmi.
-                    </p>
-                </div>
-                <div class="pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
-                    <span class="material-symbols-outlined text-[16px]">check_circle</span>
-                    <span>Laporan Resmi &amp; PDF</span>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- SECTION: COMPARISON BENCHMARK -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-20" id="komparasi">
-        <div class="bg-gradient-to-b from-slate-50 to-white border border-slate-200/90 rounded-3xl p-6 sm:p-12 shadow-card">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                <!-- Left Copy -->
-                <div class="lg:col-span-5 space-y-4">
-                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100/70 text-blue-700 text-xs font-bold uppercase tracking-wider">
-                        <span>Keunggulan Kompetitif</span>
-                    </div>
-                    <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                        Mengapa Lembaga Pembiayaan Beralih ke <br/><span class="text-blue-600"><?= esc($namaWebBersih) ?></span>
-                    </h2>
-                    <p class="text-slate-500 text-sm sm:text-base leading-relaxed">
-                        Tinggalkan proses analisis manual berhari-hari yang rentan salah rumus. Dapatkan efisiensi 95% dengan audit trail kepatuhan lengkap.
-                    </p>
-                    <div class="pt-4">
-                        <a class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-950 text-white font-bold text-sm hover:bg-blue-600 transition-colors shadow-sm cursor-pointer" href="<?= base_url('auth') ?>">
-                            <span>Daftar Akses Institusi</span>
-                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                        </a>
-                    </div>
-                </div>
-                <!-- Right Table Comparison -->
-                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
-                    <div class="grid grid-cols-12 bg-slate-50/80 p-4 border-b border-slate-200 font-bold text-xs text-slate-600">
-                        <div class="col-span-6 uppercase">Parameter Evaluasi</div>
-                        <div class="col-span-3 text-center text-slate-400 uppercase">Manual</div>
-                        <div class="col-span-3 text-center text-blue-600 uppercase font-extrabold">Engine AI</div>
-                    </div>
-                    <div class="divide-y divide-slate-100 text-sm">
-                        <!-- Row 1 -->
-                        <div class="grid grid-cols-12 p-4 items-center">
-                            <div class="col-span-6 font-semibold text-slate-800">Durasi Analisis Kredit</div>
-                            <div class="col-span-3 text-center text-xs text-slate-400">3 - 5 Hari</div>
-                            <div class="col-span-3 text-center font-extrabold text-blue-600 text-xs bg-blue-50/80 py-1 rounded-full">&lt; 10 Menit</div>
-                        </div>
-                        <!-- Row 2 -->
-                        <div class="grid grid-cols-12 p-4 items-center">
-                            <div class="col-span-6 font-semibold text-slate-800">Scoring 5C Otomatis</div>
-                            <div class="col-span-3 flex justify-center text-slate-300">
-                                <span class="material-symbols-outlined text-[18px]">close</span>
+                <!-- Right Authentic Product Preview Card (5 cols) -->
+                <div class="lg:col-span-5">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-2 sm:p-3 shadow-sm">
+                        <div class="rounded-xl bg-white border border-slate-200/90 p-5 sm:p-6 space-y-5">
+                            <!-- Card Top -->
+                            <div class="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
+                                <div class="min-w-0">
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ringkasan Evaluasi Kredit</div>
+                                    <div class="text-sm font-extrabold text-slate-950 mt-0.5 truncate">UD Sumber Rejeki</div>
+                                    <div class="text-[11px] text-slate-500">Modal Kerja &bull; 24 Bulan (Anuitas)</div>
+                                </div>
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                    Layak
+                                </span>
                             </div>
-                            <div class="col-span-3 flex justify-center text-blue-600">
-                                <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-[14px]">check</span>
+
+                            <!-- Key Financial Figures -->
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/70">
+                                    <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Plafon Diajukan</div>
+                                    <div class="text-sm font-extrabold text-slate-950 tabular-nums mt-1">Rp 250.000.000</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/70">
+                                    <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Angsuran / Bulan</div>
+                                    <div class="text-sm font-extrabold text-blue-700 tabular-nums mt-1">Rp 11.768.368</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/70">
+                                    <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Rasio DSCR</div>
+                                    <div class="text-sm font-extrabold text-emerald-700 tabular-nums mt-1">2,97x <span class="text-[10px] font-semibold text-slate-400">(Aman)</span></div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/70">
+                                    <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Coverage Agunan</div>
+                                    <div class="text-sm font-extrabold text-slate-950 tabular-nums mt-1">182,0% <span class="text-[10px] font-semibold text-slate-400">LV</span></div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- Row 3 -->
-                        <div class="grid grid-cols-12 p-4 items-center">
-                            <div class="col-span-6 font-semibold text-slate-800">Integrasi SLIK OJK Real-time</div>
-                            <div class="col-span-3 flex justify-center text-slate-300">
-                                <span class="material-symbols-outlined text-[18px]">close</span>
-                            </div>
-                            <div class="col-span-3 flex justify-center text-blue-600">
-                                <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-[14px]">check</span>
+
+                            <!-- 5C Compact Score Breakdown -->
+                            <div class="space-y-2.5 pt-1">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="font-bold text-slate-700 uppercase tracking-wider">Skor Kelayakan 5C</span>
+                                    <span class="font-extrabold text-slate-950 tabular-nums">85,6 / 100</span>
+                                </div>
+                                <div class="space-y-2 text-[11px]">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-20 text-slate-500 font-medium">Character</span>
+                                        <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-slate-900 rounded-full" style="width: 86%"></div></div>
+                                        <span class="w-7 text-right font-bold text-slate-700 tabular-nums">86</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-20 text-slate-500 font-medium">Capacity</span>
+                                        <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-blue-700 rounded-full" style="width: 83%"></div></div>
+                                        <span class="w-7 text-right font-bold text-slate-700 tabular-nums">83</span>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-20 text-slate-500 font-medium">Collateral</span>
+                                        <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-emerald-600 rounded-full" style="width: 95%"></div></div>
+                                        <span class="w-7 text-right font-bold text-slate-700 tabular-nums">95</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <!-- Row 4 -->
-                        <div class="grid grid-cols-12 p-4 items-center">
-                            <div class="col-span-6 font-semibold text-slate-800">Penerbitan Laporan PDF 1-Klik</div>
-                            <div class="col-span-3 flex justify-center text-slate-300">
-                                <span class="material-symbols-outlined text-[18px]">close</span>
-                            </div>
-                            <div class="col-span-3 flex justify-center text-blue-600">
-                                <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-[14px]">check</span>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Row 5 -->
-                        <div class="grid grid-cols-12 p-4 items-center">
-                            <div class="col-span-6 font-semibold text-slate-800">Four-Eyes Approval Hierarchy</div>
-                            <div class="col-span-3 flex justify-center text-slate-400 text-xs">Manual Email</div>
-                            <div class="col-span-3 flex justify-center text-blue-600">
-                                <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-[14px]">check</span>
-                                </div>
+
+                            <!-- Verification Footer -->
+                            <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                                <span>SLIK Kol 1 (Lancar)</span>
+                                <span class="font-semibold text-slate-700">Mutasi Bank Terverifikasi</span>
                             </div>
                         </div>
                     </div>
@@ -899,269 +259,367 @@
         </div>
     </section>
 
-    <!-- SECTION: CURATED QUESTIONS (FAQ) -->
-    <section class="max-w-4xl mx-auto px-4 sm:px-8 py-20" id="faq">
-        <div class="text-center mb-12">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-3">
-                <span>FAQ</span>
-            </div>
-            <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Pertanyaan yang Sering Diajukan</h2>
-        </div>
-        <div class="space-y-3">
-            <details class="group bg-white rounded-2xl border border-slate-200/90 p-5 cursor-pointer">
-                <summary class="flex items-center justify-between font-bold text-slate-800 text-base">
-                    <span>Bagaimana verifikasi data SLIK OJK berjalan di <?= esc($namaWebBersih) ?>?</span>
-                    <span class="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform">expand_more</span>
-                </summary>
-                <p class="text-sm text-slate-500 leading-relaxed mt-3 pt-3 border-t border-slate-100">
-                    Engine memverifikasi data iDeb SLIK OJK yang diinputkan oleh Pengusul atau Petugas SLIK, lalu menguraikan baki debet aktif, beban angsuran perbankan lain, dan status kolektibilitas historis untuk mitigasi risiko.
-                </p>
-            </details>
-            <details class="group bg-white rounded-2xl border border-slate-200/90 p-5 cursor-pointer">
-                <summary class="flex items-center justify-between font-bold text-slate-800 text-base">
-                    <span>Apakah format dokumen laporan analisis kredit sesuai dengan standar audit regulator?</span>
-                    <span class="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform">expand_more</span>
-                </summary>
-                <p class="text-sm text-slate-500 leading-relaxed mt-3 pt-3 border-t border-slate-100">
-                    Ya, format laporan evaluasi dan memorandum fasilitas kredit disusun sesuai standar kehati-hatian industri keuangan, mencakup analisis 5C, mitigasi risiko, kalkulasi DSCR, LTV, dan kolom notulensi persetujuan komite berjenjang (four-eyes principle).
-                </p>
-            </details>
-            <details class="group bg-white rounded-2xl border border-slate-200/90 p-5 cursor-pointer">
-                <summary class="flex items-center justify-between font-bold text-slate-800 text-base">
-                    <span>Apakah data calon debitur dijamin kerahasiaannya?</span>
-                    <span class="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform">expand_more</span>
-                </summary>
-                <p class="text-sm text-slate-500 leading-relaxed mt-3 pt-3 border-t border-slate-100">
-                    Seluruh data dienkripsi dengan standar perbankan AES-256 dan TLS 1.3. <?= esc($namaWebBersih) ?> beroperasi dengan kontrol kepatuhan standar keamanan data serta regulasi perlindungan data pribadi.
-                </p>
-            </details>
-        </div>
-    </section>
-
-    <!-- SECTION: HIGH-CONVERSION CTA BANNER -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-16">
-        <div class="relative bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-600 rounded-3xl p-8 sm:p-16 text-center text-white overflow-hidden shadow-float">
-            <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-white/15 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="relative z-10 max-w-3xl mx-auto space-y-6">
-                <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold uppercase tracking-wider text-blue-100 border border-white/20">
-                    <span class="material-symbols-outlined text-[16px]">bolt</span>
-                    <span>Mulai Transformasi Kredit Hari Ini</span>
-                </div>
-                <h2 class="text-2xl sm:text-5xl font-extrabold tracking-tight leading-tight">
-                    Tingkatkan Kecepatan Underwriting Kredit Institusi Anda Sekarang
+    <!-- =======================================================
+         SECTION 2: ALUR KERJA 4 PERAN
+    ======================================================== -->
+    <section id="alur-kerja" class="py-16 sm:py-24 bg-slate-50 border-b border-slate-200/80">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-2xl mb-12">
+                <div class="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700 mb-2">Alur Kerja Terstruktur</div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-[-0.025em]">
+                    Dari pengajuan awal hingga keputusan komite dalam satu alur.
                 </h2>
-                <p class="text-blue-100 text-sm sm:text-lg max-w-xl mx-auto leading-relaxed">
-                    Bergabung bersama <?= esc($namaLembagaBersih) ?> yang telah memodernisasi evaluasi 5C dan penerbitan laporan analisis kelayakan pembiayaan secara terstandar.
+                <p class="text-sm text-slate-600 mt-3 leading-relaxed">
+                    Setiap peran memiliki ruang kerja dan tanggung jawab yang jelas sehingga proses pemeriksaan tidak tumpang tindih.
                 </p>
-                <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a class="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-base transition-all shadow-md hover:scale-105 cursor-pointer" href="<?= base_url('auth') ?>">
-                        Buka Portal Sistem
-                    </a>
-                    <a class="w-full sm:w-auto px-7 py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-base transition-colors border border-white/20 cursor-pointer" href="mailto:<?= esc($emailWeb) ?>">
-                        Jadwalkan Demo Institusi
-                    </a>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border border-slate-200 rounded-2xl bg-white divide-y sm:divide-y-0 sm:divide-x divide-slate-200 overflow-hidden">
+                <div class="p-6 space-y-3">
+                    <span class="text-xs font-extrabold text-blue-700 tabular-nums">01</span>
+                    <h3 class="text-sm font-extrabold text-slate-950">Pengusul (AO)</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Input profil debitur perorangan maupun badan usaha, unggah dokumen agunan, dan impor mutasi rekening koran otomatis.
+                    </p>
                 </div>
-                <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-4 text-xs font-semibold text-blue-100/90">
-                    <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">verified_user</span> OJK Compliant Standard</span>
-                    <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">lock</span> Bank-Grade AES-256</span>
-                    <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[16px]">speed</span> 95% Waktu Lebih Hemat</span>
+                <div class="p-6 space-y-3">
+                    <span class="text-xs font-extrabold text-blue-700 tabular-nums">02</span>
+                    <h3 class="text-sm font-extrabold text-slate-950">Verifikator SLIK</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Pencocokan KTP &amp; NIK debitur, ekspor format permohonan, unggah hasil iDeb, serta validasi baki debet berjalan.
+                    </p>
+                </div>
+                <div class="p-6 space-y-3">
+                    <span class="text-xs font-extrabold text-blue-700 tabular-nums">03</span>
+                    <h3 class="text-sm font-extrabold text-slate-950">Reviewer Kredit</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Tinjauan menyeluruh atas laporan keuangan, rasio DSCR/DSR, coverage agunan, web check, dan rekomendasi skor 5C.
+                    </p>
+                </div>
+                <div class="p-6 space-y-3">
+                    <span class="text-xs font-extrabold text-blue-700 tabular-nums">04</span>
+                    <h3 class="text-sm font-extrabold text-slate-950">Komite &amp; CEO</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Penetapan keputusan resmi (Setuju, Bersyarat, Revisi, atau Tolak) lengkap dengan catatan risalah dan jejak audit.
+                    </p>
                 </div>
             </div>
         </div>
     </section>
-</main>
 
-<!-- FOOTER (DINAMIS DARI PENGATURAN SISTEM) -->
-<footer class="relative z-10 bg-slate-50 border-t border-slate-200/80 mt-12" id="kontak">
-    <div class="max-w-7xl mx-auto px-4 sm:px-8 py-16">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10">
-            <!-- Brand Info Dinamis -->
-            <div class="lg:col-span-5 space-y-4">
-                <div class="flex items-center gap-3">
-                    <?php if (!empty($logoWeb)): ?>
-                        <img src="<?= base_url($logoWeb) ?>" alt="Logo" class="h-9 sm:h-10 w-auto max-w-[150px] object-contain rounded-xl">
-                    <?php else: ?>
-                        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white">
-                            <span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+    <!-- =======================================================
+         SECTION 3: KAPABILITAS UTAMA (Editorial Bento Grid)
+    ======================================================== -->
+    <section id="kapabilitas" class="py-16 sm:py-24 bg-white border-b border-slate-200/80">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-2xl mb-12">
+                <div class="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700 mb-2">Kapabilitas Inti</div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-[-0.025em]">
+                    Dirancang khusus untuk ketelitian analisa pembiayaan.
+                </h2>
+            </div>
+
+            <!-- Row 1: Asymmetric 7 / 5 Bento -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
+                <div class="lg:col-span-7 rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 flex flex-col justify-between gap-6">
+                    <div class="space-y-2">
+                        <h3 class="text-base sm:text-lg font-extrabold text-slate-950 tracking-tight">Pembacaan Mutasi Rekening Koran Otomatis</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xl">
+                            Unggah e-Statement PDF atau foto mutasi bank. Sistem mengekstrak nama bank, periode, saldo awal, total mutasi kredit dan debit, lalu menyajikannya dalam tabel siap verifikasi beserta pratinjau dokumen asli.
+                        </p>
+                    </div>
+                    <!-- Mini Clean Table Preview -->
+                    <div class="rounded-xl border border-slate-200 overflow-x-auto bg-slate-50/50">
+                        <table class="w-full text-left text-[11px] border-collapse min-w-[440px]">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider bg-slate-50">
+                                    <th class="py-2.5 px-3">Bank</th>
+                                    <th class="py-2.5 px-3">Periode</th>
+                                    <th class="py-2.5 px-3 text-right">Mutasi Kredit</th>
+                                    <th class="py-2.5 px-3 text-right">Rata² / Bln</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200/70 bg-white tabular-nums">
+                                <tr>
+                                    <td class="py-2.5 px-3 font-bold text-slate-900">BCA</td>
+                                    <td class="py-2.5 px-3 text-slate-600">Mei – Okt 2026</td>
+                                    <td class="py-2.5 px-3 text-right font-semibold text-slate-800">Rp 720.000.000</td>
+                                    <td class="py-2.5 px-3 text-right font-extrabold text-blue-700">Rp 120.000.000</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-3 font-bold text-slate-900">Mandiri</td>
+                                    <td class="py-2.5 px-3 text-slate-600">Jan 2026</td>
+                                    <td class="py-2.5 px-3 text-right font-semibold text-slate-800">Rp 62.000.000</td>
+                                    <td class="py-2.5 px-3 text-right font-extrabold text-blue-700">Rp 62.000.000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-5 rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:p-8 flex flex-col justify-between gap-6">
+                    <div class="space-y-2">
+                        <h3 class="text-base sm:text-lg font-extrabold text-slate-950 tracking-tight">Laporan Keuangan &amp; Cetak A4</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                            Perhitungan Laba Rugi, HPP, arus kas bersih, DSCR, DSR, hingga jadwal disbursement tersinkronisasi otomatis dan siap diunduh dalam format PDF A4 untuk rapat komite.
+                        </p>
+                    </div>
+                    <div class="rounded-xl bg-white border border-slate-200 p-4 space-y-2.5 text-xs tabular-nums">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500">Pendapatan Bulanan</span>
+                            <span class="font-bold text-slate-900">Rp 120.000.000</span>
                         </div>
-                    <?php endif; ?>
-                    <span class="text-xl font-extrabold text-slate-900 tracking-tight"><?= esc($namaWebBersih) ?><span class="text-blue-600">.</span></span>
-                </div>
-                <p class="text-sm text-slate-500 leading-relaxed max-w-sm">
-                    Platform AI 5C Credit Engine &amp; Autonomous Underwriting resmi milik <span class="font-bold text-slate-700"><?= esc($namaLembagaBersih) ?></span> untuk percepatan evaluasi kelayakan fasilitas pembiayaan.
-                </p>
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 pt-2">
-                    <span class="material-symbols-outlined text-[18px] text-blue-600">verified</span>
-                    <span>Standar Kepatuhan OJK &amp; Bersertifikasi Keamanan Data</span>
-                </div>
-            </div>
-
-            <!-- Links Modul -->
-            <div class="lg:col-span-2 space-y-3">
-                <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Modul Engine</h4>
-                <ul class="space-y-2 text-sm text-slate-500">
-                    <li><a class="hover:text-blue-600 transition-colors" href="#fitur">SLIK OJK Intelligence</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Scoring 5C Matrix</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#simulasi">Kalkulator DSCR &amp; LTV</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#alur-kerja">Laporan Analisis PDF</a></li>
-                </ul>
-            </div>
-
-            <!-- Links Navigasi -->
-            <div class="lg:col-span-2 space-y-3">
-                <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Navigasi</h4>
-                <ul class="space-y-2 text-sm text-slate-500">
-                    <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Fitur Utama</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#alur-kerja">Alur Analisis</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#simulasi">Sandbox Kalkulasi</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#komparasi">Perbandingan</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#faq">FAQ</a></li>
-                </ul>
-            </div>
-
-            <!-- Kantor & Kontak Resmi -->
-            <div class="lg:col-span-3 space-y-3">
-                <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Kantor &amp; Kontak Resmi</h4>
-                <div class="text-xs font-bold text-slate-800">
-                    <?= esc($namaLembagaBersih) ?>
-                </div>
-                <p class="text-xs text-slate-500 leading-relaxed">
-                    <?= esc($alamatBersih) ?>
-                </p>
-                <div class="space-y-2 pt-1 text-xs">
-                    <div class="flex items-center gap-2 text-slate-600">
-                        <span class="material-symbols-outlined text-[16px] text-blue-600 shrink-0">mail</span>
-                        <a href="mailto:<?= esc($emailWeb) ?>" class="hover:text-blue-600 transition-colors font-medium"><?= esc($emailWeb) ?></a>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500">HPP &amp; Beban Operasional</span>
+                            <span class="font-semibold text-rose-600">- Rp 85.000.000</span>
+                        </div>
+                        <div class="pt-2.5 border-t border-slate-100 flex justify-between items-center">
+                            <span class="font-bold text-slate-900">Surplus / Net Cashflow</span>
+                            <span class="font-extrabold text-emerald-700">Rp 35.000.000</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 text-slate-600">
-                        <span class="material-symbols-outlined text-[16px] text-blue-600 shrink-0">call</span>
-                        <span class="font-medium"><?= esc($teleponWeb) ?></span>
+                </div>
+            </div>
+
+            <!-- Row 2: 3 Clean Hairline Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 space-y-2.5">
+                    <div class="w-9 h-9 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    </div>
+                    <h3 class="text-sm font-extrabold text-slate-950">Verifikasi SLIK &amp; Web Check</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Pencatatan fasilitas pinjaman berjalan, pengecekan kolektibilitas, serta penelusuran rekam jejak debitur secara terpusat.
+                    </p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 space-y-2.5">
+                    <div class="w-9 h-9 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    </div>
+                    <h3 class="text-sm font-extrabold text-slate-950">Evaluasi Agunan &amp; LTV</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Perhitungan nilai pasar (MV), nilai likuidasi (LV), serta rasio coverage agunan untuk memastikan mitigasi risiko yang sehat.
+                    </p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white p-6 space-y-2.5">
+                    <div class="w-9 h-9 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    </div>
+                    <h3 class="text-sm font-extrabold text-slate-950">Audit Trail &amp; Kontrol Akses</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Setiap perubahan data, pengajuan, dan keputusan komite tercatat otomatis dalam log aktivitas sistem yang mudah diaudit.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =======================================================
+         SECTION 4: SIMULASI KREDIT & RASIO LTV INTERAKTIF
+    ======================================================== -->
+    <section id="simulasi" class="py-16 sm:py-24 bg-slate-50 border-b border-slate-200/80">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-2xl mb-10">
+                <div class="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700 mb-2">Simulasi Interaktif</div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-[-0.025em]">
+                    Hitung estimasi angsuran &amp; rasio LTV secara instan.
+                </h2>
+                <p class="text-sm text-slate-600 mt-2">
+                    Sesuaikan plafon, nilai agunan, tenor, dan metode bunga untuk melihat gambaran pembiayaan sebelum masuk ke portal.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                <!-- Controls Panel (7 cols) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-6">
+                    <!-- Plafon -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <label for="simPlafon" class="font-bold text-slate-700">Plafon Pinjaman</label>
+                            <span id="lblSimPlafon" class="font-extrabold text-slate-950 tabular-nums">Rp 250.000.000</span>
+                        </div>
+                        <input type="range" id="simPlafon" min="10000000" max="2000000000" step="10000000" value="250000000" class="w-full" oninput="hitungSimulasiLanding()">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-medium tabular-nums">
+                            <span>Rp 10 Juta</span>
+                            <span>Rp 2 Miliar</span>
+                        </div>
+                    </div>
+
+                    <!-- Nilai Agunan -->
+                    <div class="space-y-2.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <label for="simAgunan" class="font-bold text-slate-700">Nilai Pasar Agunan (MV)</label>
+                            <span id="lblSimAgunan" class="font-extrabold text-slate-950 tabular-nums">Rp 500.000.000</span>
+                        </div>
+                        <input type="range" id="simAgunan" min="20000000" max="4000000000" step="10000000" value="500000000" class="w-full" oninput="hitungSimulasiLanding()">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-medium tabular-nums">
+                            <span>Rp 20 Juta</span>
+                            <span>Rp 4 Miliar</span>
+                        </div>
+                    </div>
+
+                    <!-- Grid: Tenor, Bunga, Metode -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                        <div>
+                            <label for="simTenor" class="block text-xs font-bold text-slate-700 mb-1.5">Tenor (Bulan)</label>
+                            <select id="simTenor" onchange="hitungSimulasiLanding()" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 focus:border-blue-600 focus:outline-none cursor-pointer">
+                                <option value="6">6 Bulan</option>
+                                <option value="12">12 Bulan</option>
+                                <option value="18">18 Bulan</option>
+                                <option value="24" selected>24 Bulan</option>
+                                <option value="36">36 Bulan</option>
+                                <option value="48">48 Bulan</option>
+                                <option value="60">60 Bulan</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="simBunga" class="block text-xs font-bold text-slate-700 mb-1.5">Bunga / Tahun (%)</label>
+                            <input type="number" id="simBunga" value="12" min="1" max="36" step="0.5" oninput="hitungSimulasiLanding()" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 tabular-nums focus:border-blue-600 focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="simMetode" class="block text-xs font-bold text-slate-700 mb-1.5">Metode Bunga</label>
+                            <select id="simMetode" onchange="hitungSimulasiLanding()" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 focus:border-blue-600 focus:outline-none cursor-pointer">
+                                <option value="ANUITAS" selected>Anuitas</option>
+                                <option value="FLAT">Flat</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Output Executive Card (5 cols) -->
+                <div class="lg:col-span-5 bg-slate-950 text-white rounded-2xl p-6 sm:p-8 flex flex-col justify-between gap-6">
+                    <div class="space-y-6">
+                        <div>
+                            <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Estimasi Angsuran per Bulan</div>
+                            <div id="outSimAngsuran" class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight tabular-nums mt-1.5">
+                                Rp 11.768.368
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 pt-4 border-t border-slate-800 text-xs tabular-nums">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Rasio LTV (Plafon / Agunan)</span>
+                                <span class="flex items-center gap-2">
+                                    <strong id="outSimLtv" class="text-white font-bold">50,0%</strong>
+                                    <span id="outSimLtvBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Aman</span>
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Coverage Agunan (MV)</span>
+                                <strong id="outSimCov" class="text-white font-bold">200,0%</strong>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-400">Estimasi Total Pengembalian</span>
+                                <strong id="outSimTotal" class="text-slate-200 font-semibold">Rp 282.440.832</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-800 space-y-3">
+                        <a href="<?= $portalUrl ?>" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold transition">
+                            <span>Ajukan &amp; Analisa di Portal</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </a>
+                        <p class="text-[10px] text-slate-500 text-center">
+                            Hasil simulasi bersifat estimasi indikatif dan dapat disesuaikan pada tahap analisa komite.
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Footer Bottom -->
-        <div class="mt-12 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-            <div>© <?= date('Y') ?> <?= esc($namaWebBersih) ?> • <?= esc($namaLembagaBersih) ?>. Seluruh hak cipta dilindungi.</div>
-            <div class="flex items-center gap-6">
-                <a class="hover:text-slate-700 transition-colors" href="#">Syarat &amp; Ketentuan</a>
-                <a class="hover:text-slate-700 transition-colors" href="#">Kebijakan Privasi</a>
-                <a class="hover:text-slate-700 transition-colors" href="#">Keamanan Sistem</a>
+    </section>
+
+    <!-- =======================================================
+         FOOTER (Minimalist Corporate)
+    ======================================================== -->
+    <footer class="bg-white py-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-slate-200/80">
+                <div class="space-y-1.5">
+                    <div class="flex items-center gap-2.5">
+                        <?php if (!empty($logoWeb)): ?>
+                            <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWebBersih) ?>" class="h-7 w-auto object-contain">
+                        <?php else: ?>
+                            <div class="w-7 h-7 rounded-md bg-slate-950 text-white flex items-center justify-center font-extrabold text-[11px]">OA</div>
+                        <?php endif; ?>
+                        <span class="text-sm font-extrabold text-slate-950 tracking-tight"><?= esc($namaWebBersih) ?></span>
+                    </div>
+                    <p class="text-xs text-slate-500 max-w-md">
+                        <?= esc($namaLembagaBersih) ?> &bull; <?= esc($alamatBersih) ?>
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-600 font-medium">
+                    <span><?= esc($emailWeb) ?></span>
+                    <span class="text-slate-300 hidden sm:inline">&bull;</span>
+                    <span><?= esc($teleponWeb) ?></span>
+                </div>
+            </div>
+
+            <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-400">
+                <span>&copy; <?= date('Y') ?> <?= esc($namaWebBersih) ?>. Seluruh hak cipta dilindungi.</span>
+                <a href="<?= $portalUrl ?>" class="font-semibold text-slate-600 hover:text-blue-700 transition">Portal Internal &rarr;</a>
             </div>
         </div>
-    </div>
-</footer>
+    </footer>
 
-<!-- CLIENT-SIDE SIMULATOR SCRIPT -->
-<script>
-    (function initCreditSimulator() {
-      const plafonSlider = document.getElementById('plafon-slider');
-      const agunanSlider = document.getElementById('agunan-slider');
-      const plafonDisplay = document.getElementById('plafon-display');
-      const agunanDisplay = document.getElementById('agunan-display');
-      const angsuranDisplay = document.getElementById('angsuran-display');
-      const ltvDisplay = document.getElementById('ltv-display');
-      const ltvSubtext = document.getElementById('ltv-subtext');
-      const simStatusChip = document.getElementById('sim-status-chip');
-      const simSummary = document.getElementById('sim-summary');
-      const tenorButtons = document.querySelectorAll('.tenor-btn');
-
-      let currentTenor = 24;
-
-      function formatRupiah(num) {
-        return 'Rp ' + Number(num).toLocaleString('id-ID');
-      }
-
-      function calculateMetrics() {
-        if (!plafonSlider || !agunanSlider) return;
-
-        const plafon = parseFloat(plafonSlider.value) || 250000000;
-        const agunan = parseFloat(agunanSlider.value) || 375000000;
-        const tenor = currentTenor || 24;
-        const monthlyRate = 0.025; // 2.5% per month
-
-        // Format Displays
-        if (plafonDisplay) plafonDisplay.textContent = formatRupiah(plafon);
-        if (agunanDisplay) agunanDisplay.textContent = formatRupiah(agunan);
-
-        // Angsuran: Pokok bulanan + Bunga flat
-        const pokokBulanan = plafon / tenor;
-        const bungaBulanan = plafon * monthlyRate;
-        const totalAngsuran = Math.round(pokokBulanan + bungaBulanan);
-        if (angsuranDisplay) angsuranDisplay.textContent = formatRupiah(totalAngsuran);
-
-        // Coverage Agunan: (Agunan / Plafon) * 100
-        const covPercent = (agunan / plafon) * 100;
-        // LTV: (Plafon / Agunan) * 100
-        const ltvPercent = agunan > 0 ? (plafon / agunan) * 100 : 100;
-
-        if (ltvDisplay) ltvDisplay.textContent = covPercent.toFixed(1) + '%';
-
-        let simulatedScore = 80;
-        if (covPercent >= 150) simulatedScore += 10;
-        else if (covPercent >= 120) simulatedScore += 5;
-        else if (covPercent < 100) simulatedScore -= 15;
-
-        if (tenor <= 24) simulatedScore += 3;
-        else if (tenor > 36) simulatedScore -= 4;
-
-        if (simulatedScore >= 85) {
-          if (simStatusChip) {
-            simStatusChip.textContent = '● DISARANKAN APPROVAL';
-            simStatusChip.className = 'px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs';
-          }
-          if (ltvSubtext) {
-            ltvSubtext.textContent = 'LTV: ' + ltvPercent.toFixed(1) + '% (Sangat Aman)';
-            ltvSubtext.className = 'text-[11px] text-emerald-600 font-semibold';
-          }
-          if (simSummary) {
-            simSummary.textContent = 'Kapasitas agunan memadai dengan coverage ' + covPercent.toFixed(1) + '% (LTV ' + ltvPercent.toFixed(1) + '%). Struktur angsuran berada dalam ambang batas toleransi arus kas debitur. Disarankan untuk masuk ke tahapan komite kredit.';
-          }
-        } else if (simulatedScore >= 70) {
-          if (simStatusChip) {
-            simStatusChip.textContent = '● BUTUH VERIFIKASI TAMBAHAN';
-            simStatusChip.className = 'px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-xs';
-          }
-          if (ltvSubtext) {
-            ltvSubtext.textContent = 'LTV: ' + ltvPercent.toFixed(1) + '% (Standar)';
-            ltvSubtext.className = 'text-[11px] text-amber-700 font-semibold';
-          }
-          if (simSummary) {
-            simSummary.textContent = 'Rasio pembiayaan memenuhi ambang batas dasar dengan coverage ' + covPercent.toFixed(1) + '%. Disarankan pengecekan mutasi rekening 6 bulan terakhir serta konfirmasi legalitas sertifikat agunan.';
-          }
-        } else {
-          if (simStatusChip) {
-            simStatusChip.textContent = '● PERTIMBANGKAN ULANG';
-            simStatusChip.className = 'px-3 py-1 rounded-full bg-red-100 text-red-800 font-bold text-xs';
-          }
-          if (ltvSubtext) {
-            ltvSubtext.textContent = 'LTV: ' + ltvPercent.toFixed(1) + '% (Risiko Tinggi)';
-            ltvSubtext.className = 'text-[11px] text-red-600 font-semibold';
-          }
-          if (simSummary) {
-            simSummary.textContent = 'Plafon pinjaman melebihi ambang batas toleransi nilai likuidasi agunan (Coverage hanya ' + covPercent.toFixed(1) + '%). Diperlukan agunan tambahan atau pengurangan plafon pengajuan.';
-          }
+    <script>
+        function toggleMobileNav(forceState) {
+            const menu = document.getElementById('mobileNavMenu');
+            if (!menu) return;
+            if (typeof forceState === 'boolean') {
+                menu.classList.toggle('hidden', !forceState);
+            } else {
+                menu.classList.toggle('hidden');
+            }
         }
-      }
 
-      if (plafonSlider && agunanSlider) {
-        plafonSlider.addEventListener('input', calculateMetrics);
-        agunanSlider.addEventListener('input', calculateMetrics);
-      }
+        function formatIdr(num) {
+            return 'Rp ' + Math.round(num || 0).toLocaleString('id-ID');
+        }
 
-      tenorButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-          tenorButtons.forEach(b => {
-            b.className = 'tenor-btn py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:border-slate-300 transition-all cursor-pointer';
-          });
-          this.className = 'tenor-btn py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-sm transition-all cursor-pointer';
-          currentTenor = parseInt(this.getAttribute('data-tenor'), 10) || 24;
-          calculateMetrics();
-        });
-      });
+        function hitungSimulasiLanding() {
+            const plafon = parseFloat(document.getElementById('simPlafon')?.value || 250000000);
+            const agunan = parseFloat(document.getElementById('simAgunan')?.value || 500000000);
+            const tenor  = Math.max(1, parseInt(document.getElementById('simTenor')?.value || 24, 10));
+            const bungaThn = Math.max(0, parseFloat(document.getElementById('simBunga')?.value || 12));
+            const metode = (document.getElementById('simMetode')?.value || 'ANUITAS').toUpperCase();
 
-      calculateMetrics();
-    })();
-</script>
+            document.getElementById('lblSimPlafon').innerText = formatIdr(plafon);
+            document.getElementById('lblSimAgunan').innerText = formatIdr(agunan);
+
+            const r = (bungaThn / 100) / 12;
+            let angsuran = 0;
+            if (metode === 'ANUITAS' && r > 0) {
+                angsuran = Math.round(plafon * (r / (1 - Math.pow(1 + r, -tenor))));
+            } else {
+                angsuran = Math.round((plafon / tenor) + (plafon * r));
+            }
+            const totalBayar = angsuran * tenor;
+            const ltv = agunan > 0 ? (plafon / agunan) * 100 : 0;
+            const cov = plafon > 0 ? (agunan / plafon) * 100 : 0;
+
+            document.getElementById('outSimAngsuran').innerText = formatIdr(angsuran);
+            document.getElementById('outSimTotal').innerText = formatIdr(totalBayar);
+            document.getElementById('outSimLtv').innerText = ltv.toFixed(1).replace('.', ',') + '%';
+            document.getElementById('outSimCov').innerText = cov.toFixed(1).replace('.', ',') + '%';
+
+            const badge = document.getElementById('outSimLtvBadge');
+            if (badge) {
+                if (ltv <= 70) {
+                    badge.innerText = 'Aman';
+                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+                } else if (ltv <= 85) {
+                    badge.innerText = 'Moderat';
+                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                } else {
+                    badge.innerText = 'Tinggi';
+                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', hitungSimulasiLanding);
+    </script>
 </body>
 </html>
