@@ -581,8 +581,8 @@
                         <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </div>
                     <div>
-                        <h3 class="text-sm font-extrabold text-slate-900" id="pdfModalJudul">Ringkasan Berkas Pengajuan Nasabah (PDF)</h3>
-                        <p class="text-[11px] text-slate-500">Data Pokok Analisis Keuangan, SLIK OJK, Rekening Koran, & Agunan</p>
+                        <h3 class="text-sm font-extrabold text-slate-900" id="pdfModalJudul">Ringkasan Pengajuan (PDF)</h3>
+                        <p class="text-[11px] text-slate-500">Data Pokok Keuangan, SLIK, Rekening Koran & Agunan</p>
                     </div>
                 </div>
                 
@@ -616,8 +616,8 @@
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </div>
                     <div>
-                        <h3 class="text-sm font-extrabold text-slate-900" id="aiModalJudul">Laporan Analisa Kelayakan Kredit & Rekomendasi Komite (AI)</h3>
-                        <p class="text-[11px] text-slate-500">Format Dokumen Hasil Evaluasi Sesuai Standar Komite</p>
+                        <h3 class="text-sm font-extrabold text-slate-900" id="aiModalJudul">Laporan Hasil AI (CAM)</h3>
+                        <p class="text-[11px] text-slate-500">Evaluasi Risiko 5C & Rekomendasi Komite</p>
                     </div>
                 </div>
                 
@@ -719,18 +719,7 @@
             </div>
 
             <!-- Footer Modal -->
-            <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <a href="#" id="revModalBtnRingkasanPdf" target="_blank" class="text-xs font-bold text-slate-700 hover:text-slate-900 transition flex items-center gap-1.5" title="Buka Ringkasan Berkas Pengajuan Nasabah (PDF)">
-                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        <span>Ringkasan Berkas PDF</span>
-                    </a>
-                    <span class="text-slate-300">|</span>
-                    <a href="#" id="revModalBtnPdf" target="_blank" class="text-xs font-bold text-indigo-700 hover:text-indigo-900 transition flex items-center gap-1.5" title="Buka Dokumen CAM Hasil Evaluasi AI">
-                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        <span>Laporan Hasil AI (CAM)</span>
-                    </a>
-                </div>
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end">
                 <button type="button" onclick="tutupModalHasilReview()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition cursor-pointer">
                     Tutup
                 </button>
@@ -745,7 +734,7 @@
         // Modal Ringkasan Berkas Pengajuan Nasabah (PDF Murni Berkas)
         function bukaModalRingkasanPdf(kreditId) {
             const item = (pengajuanDataStore || []).find(x => x.kredit_id == kreditId);
-            const judul = item ? `Ringkasan Berkas Pengajuan Nasabah (PDF) - ${item.nomor_aplikasi || ''}` : 'Ringkasan Berkas Pengajuan Nasabah (PDF)';
+            const judul = item ? `Ringkasan Pengajuan (PDF) - ${item.nomor_aplikasi || ''}` : 'Ringkasan Pengajuan (PDF)';
             const judulElem = document.getElementById('pdfModalJudul');
             if (judulElem) judulElem.innerText = judul;
 
@@ -783,7 +772,7 @@
         // Modal Hasil AI (Menampilkan Dokumen Laporan CAM Sesuai Screenshot)
         function bukaModalHasilAI(kreditId) {
             const item = (pengajuanDataStore || []).find(x => x.kredit_id == kreditId);
-            const judul = item ? `Laporan Analisa Kelayakan Kredit & Rekomendasi Komite (AI) - ${item.nomor_aplikasi || ''}` : 'Laporan Analisa Kelayakan Kredit & Rekomendasi Komite (AI)';
+            const judul = item ? `Laporan Hasil AI (CAM) - ${item.nomor_aplikasi || ''}` : 'Laporan Hasil AI (CAM)';
             const judulElem = document.getElementById('aiModalJudul');
             if (judulElem) judulElem.innerText = judul;
 
@@ -827,9 +816,6 @@
             document.getElementById('revModalNoAplikasiNama').innerText = (item.nomor_aplikasi || '-') + ' \u2022 ' + (item.nama_debitur || '-');
             document.getElementById('revModalUsaha').innerText = item.nama_usaha || item.jenis_debitur || 'Individu';
             document.getElementById('revModalPlafon').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(parseFloat(item.plafon_pengajuan || 0));
-            const btnRingkasan = document.getElementById('revModalBtnRingkasanPdf');
-            if (btnRingkasan) btnRingkasan.href = '<?= base_url('pengajuan/cetakLaporan/') ?>/' + item.kredit_id;
-            document.getElementById('revModalBtnPdf').href = '<?= base_url('pengajuan/cetak/') ?>/' + item.kredit_id;
 
             const rawStatus = (item.status_komite || item.status_pengajuan || 'Draft').trim();
             const st = rawStatus.toLowerCase();
