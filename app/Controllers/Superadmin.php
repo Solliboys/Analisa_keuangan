@@ -221,26 +221,32 @@ class Superadmin extends BaseController
             return $redirect;
         }
 
-        $modelAi     = trim($this->request->getPost('model_ai') ?: 'gemini-2.5-flash');
-        $apiEndpoint = trim($this->request->getPost('api_endpoint') ?: 'https://generativelanguage.googleapis.com/v1beta/models');
+        $modelAi     = trim($this->request->getPost('model_ai') ?? '');
+        $apiEndpoint = trim($this->request->getPost('api_endpoint') ?? '');
         $apiKey      = trim($this->request->getPost('api_key') ?? '');
         $pillar      = trim($this->request->getPost('pillar') ?? '');
         $prompt      = trim($this->request->getPost('prompt') ?? '');
 
         $db = \Config\Database::connect();
 
-        $updateSistem = [
-            'model_ai'     => $modelAi,
-            'api_endpoint' => $apiEndpoint,
-        ];
+        $updateSistem = [];
+        if (!empty($modelAi)) {
+            $updateSistem['model_ai'] = $modelAi;
+        }
+        if (!empty($apiEndpoint)) {
+            $updateSistem['api_endpoint'] = $apiEndpoint;
+        }
         if (!empty($apiKey)) {
             $updateSistem['api_key'] = $apiKey;
         }
-        $db->table('pengaturan_sistem')->where('id', 1)->update($updateSistem);
+        if (!empty($updateSistem)) {
+            $db->table('pengaturan_sistem')->where('id', 1)->update($updateSistem);
+        }
 
-        $updateAi = [
-            'model_ai' => $modelAi,
-        ];
+        $updateAi = [];
+        if (!empty($modelAi)) {
+            $updateAi['model_ai'] = $modelAi;
+        }
         if (!empty($apiKey)) {
             $updateAi['api_key'] = $apiKey;
         }
@@ -253,21 +259,29 @@ class Superadmin extends BaseController
                 }
                 return redirect()->to('/superadmin/ai_5c')->with('error', $msg);
             }
-            $promptCol = 'prompt_' . strtolower($pillar);
+            $pKey = strtolower($pillar);
+            $promptCol = ($pKey === 'reviewer') ? 'prompt_final' : 'prompt_' . $pKey;
             if (in_array($promptCol, ['prompt_character', 'prompt_capacity', 'prompt_capital', 'prompt_collateral', 'prompt_condition', 'prompt_final'])) {
                 $updateAi[$promptCol] = trim($prompt);
             }
         }
-        $db->table('pengaturan_ai')->where('id', 1)->update($updateAi);
+        if (!empty($updateAi)) {
+            $db->table('pengaturan_ai')->where('id', 1)->update($updateAi);
+        }
+
+        // Ambil data sistem terkini untuk respons & log
+        $currentSys = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+        $activeModel = $currentSys['model_ai'] ?? 'gemini-3.6-flash';
+        $activeGateway = $currentSys['api_endpoint'] ?? 'https://generativelanguage.googleapis.com/v1beta/models';
 
         // Catat Audit Trail Log
         LogAktivitasModel::catat(
-            'Memperbarui konfigurasi AI Engine (' . $modelAi . ')',
+            'Memperbarui konfigurasi AI 5C (' . ($pillar ? strtoupper($pillar) : 'Pipeline') . ')',
             'AI_ENGINE',
             'SUCCESS',
             [
-                'model_ai'     => $modelAi,
-                'api_endpoint' => $apiEndpoint,
+                'model_ai'     => $activeModel,
+                'api_endpoint' => $activeGateway,
                 'pillar'       => $pillar ?: 'Global Directives'
             ]
         );
@@ -275,9 +289,9 @@ class Superadmin extends BaseController
         if ($this->request->isAJAX() || $this->request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest') {
             return $this->response->setJSON([
                 'status'  => 'success',
-                'message' => 'Konfigurasi Model AI (' . esc($modelAi) . ') dan Link Gateway berhasil disimpan.',
-                'model'   => $modelAi,
-                'gateway' => $apiEndpoint
+                'message' => 'Konfigurasi prompt pilar ' . strtoupper($pillar ?: '5C') . ' berhasil disimpan ke sistem.',
+                'model'   => $activeModel,
+                'gateway' => $activeGateway
             ]);
         }
 

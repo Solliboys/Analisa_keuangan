@@ -374,6 +374,15 @@ System Execution Directives:
 
     <!-- Client-side Interactive Scripts -->
     <script>
+        const defaultPrompts = {
+            character: `Anda adalah Analis Kredit Senior BPR untuk pilar CHARACTER (Karakter). Pastikan rekam jejak finansial debitur dianalisis secara akurat.\n\nInput Variabel:\n- SLIK iDeb Status   : {{slik_status}}\n- Track Record BI   : {{track_record}}\n- Lama Hubungan BPR : {{lama_hubungan}}`,
+            capacity: `Anda adalah Analis Keuangan BPR untuk pilar CAPACITY (Kemampuan Bayar). Evaluasi arus kas usaha dan kemampuan angsuran debitur.\n\nInput Variabel:\n- Omzet Bulanan     : {{omzet_bulanan}}\n- Biaya Operasional : {{biaya_operasional}}\n- Angsuran Berjalan : {{angsuran_lain}}`,
+            capital: `Anda adalah Analis Permodalan BPR untuk pilar CAPITAL (Modal). Nilai kekuatan modal sendiri debitur dan rasio utang terhadap ekuitas.\n\nInput Variabel:\n- Modal Sendiri     : {{modal_sendiri}}\n- Total Aset        : {{total_aset}}\n- Utang Dagang      : {{utang_lancar}}`,
+            collateral: `Anda adalah Penilai Agunan & Legal Officer BPR berstandar perbankan untuk pilar COLLATERAL (Jaminan). Pastikan prinsip Kehati-hatian (Prudential Banking) terpenuhi secara mutlak.\n\nInput Variabel Kredit:\n- Dokumen Legalitas : {{dokumen_agunan}} (SHM / SHGB / BPKB)\n- Taksasi Pasar     : {{nilai_pasar_agunan}}\n- Estimasi Likuidasi: {{nilai_likuidasi}}\n- Plafon Diajukan   : {{plafon_diajukan}}\n\nSystem Execution Directives:\n1. Kalkulasi Loan-to-Value (LTV) dan rasio likuidasi terhadap plafon kredit.`,
+            condition: `Anda adalah Penilai Risiko Makro BPR untuk pilar CONDITION (Kondisi Ekonomi). Tinjau ketahanan usaha debitur terhadap faktor eksternal pasar.\n\nInput Variabel:\n- Sektor Industri   : {{sektor_usaha}}\n- Tren Permintaan   : {{tren_pasar}}\n- Dampak Regulasi   : {{regulasi_terkait}}`,
+            reviewer: `Anda adalah Komite Pemutus Kredit Utama BPR. Gabungkan hasil skor kelayakan dari kelima pilar 5C dan terbitkan rekomendasi persetujuan kredit formal.`
+        };
+
         const pillarData = {
             character: {
                 title: 'PARAMETER METRIK RISIKO PILAR CHARACTER',
@@ -381,7 +390,7 @@ System Execution Directives:
                 threshold: 80,
                 fokus: 'Riwayat Kolektibilitas SLIK & Integritas',
                 directive: 'System Directive: Character Underwriter',
-                prompt: `Anda adalah Analis Kredit Senior BPR untuk pilar CHARACTER (Karakter). Pastikan rekam jejak finansial debitur dianalisis secara akurat.\n\nInput Variabel:\n- SLIK iDeb Status   : {{slik_status}}\n- Track Record BI   : {{track_record}}\n- Lama Hubungan BPR : {{lama_hubungan}}`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_character']) ? $pengaturan_ai['prompt_character'] : null) ?> || defaultPrompts.character
             },
             capacity: {
                 title: 'PARAMETER METRIK RISIKO PILAR CAPACITY',
@@ -389,7 +398,7 @@ System Execution Directives:
                 threshold: 75,
                 fokus: 'Kemampuan Arus Kas & Debt Service Ratio (DSR)',
                 directive: 'System Directive: Capacity Underwriter',
-                prompt: `Anda adalah Analis Keuangan BPR untuk pilar CAPACITY (Kemampuan Bayar). Evaluasi arus kas usaha dan kemampuan angsuran debitur.\n\nInput Variabel:\n- Omzet Bulanan     : {{omzet_bulanan}}\n- Biaya Operasional : {{biaya_operasional}}\n- Angsuran Berjalan : {{angsuran_lain}}`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_capacity']) ? $pengaturan_ai['prompt_capacity'] : null) ?> || defaultPrompts.capacity
             },
             capital: {
                 title: 'PARAMETER METRIK RISIKO PILAR CAPITAL',
@@ -397,7 +406,7 @@ System Execution Directives:
                 threshold: 70,
                 fokus: 'Struktur Modal Bersih & Solvabilitas Usaha',
                 directive: 'System Directive: Capital Underwriter',
-                prompt: `Anda adalah Analis Permodalan BPR untuk pilar CAPITAL (Modal). Nilai kekuatan modal sendiri debitur dan rasio utang terhadap ekuitas.\n\nInput Variabel:\n- Modal Sendiri     : {{modal_sendiri}}\n- Total Aset        : {{total_aset}}\n- Utang Dagang      : {{utang_lancar}}`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_capital']) ? $pengaturan_ai['prompt_capital'] : null) ?> || defaultPrompts.capital
             },
             collateral: {
                 title: 'PARAMETER METRIK RISIKO PILAR AGUNAN',
@@ -405,7 +414,7 @@ System Execution Directives:
                 threshold: 75,
                 fokus: 'Legalitas & Nilai Likuidasi Jaminan',
                 directive: 'System Directive: Collateral Underwriter',
-                prompt: `Anda adalah Penilai Agunan & Legal Officer BPR berstandar perbankan untuk pilar COLLATERAL (Jaminan). Pastikan prinsip Kehati-hatian (Prudential Banking) terpenuhi secara mutlak.\n\nInput Variabel Kredit:\n- Dokumen Legalitas : {{dokumen_agunan}} (SHM / SHGB / BPKB)\n- Taksasi Pasar     : {{nilai_pasar_agunan}}\n- Estimasi Likuidasi: {{nilai_likuidasi}}\n- Plafon Diajukan   : {{plafon_diajukan}}\n\nSystem Execution Directives:\n1. Kalkulasi Loan-to-Value (LTV) dan rasio likuidasi terhadap plafon kredit.`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_collateral']) ? $pengaturan_ai['prompt_collateral'] : null) ?> || defaultPrompts.collateral
             },
             condition: {
                 title: 'PARAMETER METRIK RISIKO PILAR CONDITION',
@@ -413,7 +422,7 @@ System Execution Directives:
                 threshold: 65,
                 fokus: 'Prospek Industri & Kondisi Makro Ekonomi',
                 directive: 'System Directive: Condition Underwriter',
-                prompt: `Anda adalah Penilai Risiko Makro BPR untuk pilar CONDITION (Kondisi Ekonomi). Tinjau ketahanan usaha debitur terhadap faktor eksternal pasar.\n\nInput Variabel:\n- Sektor Industri   : {{sektor_usaha}}\n- Tren Permintaan   : {{tren_pasar}}\n- Dampak Regulasi   : {{regulasi_terkait}}`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_condition']) ? $pengaturan_ai['prompt_condition'] : null) ?> || defaultPrompts.condition
             },
             reviewer: {
                 title: 'PARAMETER PIPELINE INTEGRASI REVIEWER',
@@ -421,7 +430,7 @@ System Execution Directives:
                 threshold: 75,
                 fokus: 'Sintesis Komprehensif Scoring 5C & Rekomendasi Komite',
                 directive: 'System Directive: Master Underwriting Reviewer',
-                prompt: `Anda adalah Komite Pemutus Kredit Utama BPR. Gabungkan hasil skor kelayakan dari kelima pilar 5C dan terbitkan rekomendasi persetujuan kredit formal.`
+                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_final']) ? $pengaturan_ai['prompt_final'] : null) ?> || defaultPrompts.reviewer
             }
         };
 
@@ -510,6 +519,9 @@ System Execution Directives:
                 cancelButtonText: 'Batal'
             }).then((res) => {
                 if (res.isConfirmed) {
+                    if (defaultPrompts[currentPillar]) {
+                        pillarData[currentPillar].prompt = defaultPrompts[currentPillar];
+                    }
                     switchPillar(currentPillar);
                     Swal.fire({
                         icon: 'success',
@@ -523,9 +535,6 @@ System Execution Directives:
         }
 
         async function simpanKonfigurasiAi(actionType = 'draft') {
-            const modelAi = document.getElementById('selectModelAi')?.value || '';
-            const apiEndpoint = document.getElementById('inputApiEndpoint')?.value || '';
-            const apiKey = document.getElementById('inputApiKey')?.value || '';
             const prompt = document.getElementById('promptEditor').value;
             const pillar = currentPillar;
 
@@ -539,15 +548,12 @@ System Execution Directives:
             }
 
             const formData = new FormData();
-            formData.append('model_ai', modelAi);
-            formData.append('api_endpoint', apiEndpoint);
-            formData.append('api_key', apiKey);
             formData.append('pillar', pillar);
             formData.append('prompt', prompt);
 
             Swal.fire({
                 title: actionType === 'apply' ? 'Menerapkan Konfigurasi...' : 'Menyimpan Draf...',
-                text: 'Menghubungkan ke gateway API dan menyimpan konfigurasi model...',
+                text: 'Menyimpan konfigurasi prompt pilar ke sistem...',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
@@ -563,10 +569,15 @@ System Execution Directives:
                 const res = await response.json();
 
                 if (res.status === 'success') {
+                    // Perbarui state prompt di memori agar perpindahan tab konsisten
+                    if (pillarData[pillar]) {
+                        pillarData[pillar].prompt = prompt;
+                    }
+
                     Swal.fire({
                         icon: 'success',
-                        title: actionType === 'apply' ? 'Model & Pipeline Diterapkan!' : 'Draf Berhasil Disimpan!',
-                        html: `<span class="text-xs text-slate-600">${res.message}</span><br><div class="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-left font-mono space-y-1"><div><b>Model:</b> <span class="text-blue-600">${res.model}</span></div><div class="truncate"><b>Gateway:</b> <span class="text-slate-700">${res.gateway}</span></div></div>`,
+                        title: actionType === 'apply' ? 'Pipeline 5C Diterapkan!' : 'Draf Berhasil Disimpan!',
+                        html: `<span class="text-xs text-slate-600">${res.message}</span><br><div class="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-left font-mono space-y-1"><div><b>Model Aktif:</b> <span class="text-blue-600">${res.model}</span></div><div class="truncate"><b>Gateway:</b> <span class="text-slate-700">${res.gateway}</span></div></div>`,
                         confirmButtonColor: '#2563eb',
                         confirmButtonText: 'OK, Selesai',
                         customClass: {
@@ -614,6 +625,11 @@ System Execution Directives:
         }
 
         document.getElementById('promptEditor').addEventListener('input', updateTokenCount);
+
+        // Muat prompt pilar awal dari database saat halaman selesai dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            switchPillar('collateral');
+        });
     </script>
 </body>
 </html>
