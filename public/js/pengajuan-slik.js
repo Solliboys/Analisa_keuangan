@@ -326,6 +326,11 @@ function handleModalFileSlik(input, type) {
         const file = input.files[0];
         const sizeKb = (file.size / 1024).toFixed(1) + ' KB';
         if (type === 'identitas') {
+            const dropzone = document.getElementById('dropzoneIdentitas');
+            if (dropzone) {
+                dropzone.classList.remove('border-rose-500', 'bg-rose-50/50');
+                dropzone.classList.add('border-emerald-400', 'bg-emerald-50/30');
+            }
             const label = document.getElementById('labelFileIdentitas');
             const sub = document.getElementById('subFileIdentitas');
             if (label) {
@@ -338,6 +343,11 @@ function handleModalFileSlik(input, type) {
             }
             if (sub) sub.innerText = sizeKb + ' • Siap diunggah';
         } else if (type === 'permohonan') {
+            const dropzone = document.getElementById('dropzonePermohonan');
+            if (dropzone) {
+                dropzone.classList.remove('border-rose-500', 'bg-rose-50/50');
+                dropzone.classList.add('border-emerald-400', 'bg-emerald-50/30');
+            }
             const label = document.getElementById('labelFilePermohonan');
             const sub = document.getElementById('subFilePermohonan');
             if (label) {
@@ -355,9 +365,24 @@ function handleModalFileSlik(input, type) {
 window.handleModalFileSlik = handleModalFileSlik;
 
 // Modal Tambah Permohonan SLIK
-function bukaModalTambahPermohonanSlik() {
+function bukaModalTambahPermohonanSlik(isEdit = false) {
     const modal = document.getElementById('modalTambahPermohonanSlik');
     if (modal) {
+        if (!isEdit) {
+            window.slikEditingIdx = null;
+        }
+
+        const dropId = document.getElementById('dropzoneIdentitas');
+        const dropPerm = document.getElementById('dropzonePermohonan');
+        if (dropId) {
+            dropId.classList.remove('border-rose-500', 'bg-rose-50/50', 'border-emerald-400', 'bg-emerald-50/30');
+            dropId.classList.add('border-slate-200');
+        }
+        if (dropPerm) {
+            dropPerm.classList.remove('border-rose-500', 'bg-rose-50/50', 'border-emerald-400', 'bg-emerald-50/30');
+            dropPerm.classList.add('border-slate-200');
+        }
+
         const elNama = document.getElementById('inputSlikNama');
         const elNoId = document.getElementById('inputSlikNoId');
         const elCheck = document.getElementById('checkNamaSamaPemohon');
@@ -387,6 +412,7 @@ function bukaModalTambahPermohonanSlik() {
 window.bukaModalTambahPermohonanSlik = bukaModalTambahPermohonanSlik;
 
 function tutupModalTambahPermohonanSlik() {
+    window.slikEditingIdx = null;
     const modal = document.getElementById('modalTambahPermohonanSlik');
     if (modal) modal.classList.add('hidden');
 }
@@ -398,25 +424,72 @@ window.tutupModalTambahPermohonanSlik = tutupModalTambahPermohonanSlik;
 async function simpanTambahPermohonanSlik() {
     const nama = (document.getElementById('inputSlikNama')?.value || '').trim().toUpperCase();
     let noId = (document.getElementById('inputSlikNoId')?.value || '').trim().replace(/\D/g, '');
-    const keterkaitan = document.getElementById('inputSlikKeterkaitan')?.value || 'Pasangan';
+    const keterkaitan = document.getElementById('inputSlikKeterkaitan')?.value || '';
     const entitas = (keterkaitan.toLowerCase().includes('badan') || keterkaitan.toLowerCase().includes('perusahaan') || keterkaitan.toLowerCase().includes('pt')) ? 'B' : 'I';
 
     if (!nama) {
-        alert('Harap isi Nama subjek permohonan SLIK.');
+        if (typeof showToast === 'function') showToast('Harap isi Nama subjek permohonan SLIK.', 'error');
+        else alert('Harap isi Nama subjek permohonan SLIK.');
         return;
     }
     if (!noId) {
-        alert('Harap isi Nomor Identitas (NIK/NPWP).');
+        if (typeof showToast === 'function') showToast('Harap isi Nomor Identitas (NIK/NPWP).', 'error');
+        else alert('Harap isi Nomor Identitas (NIK/NPWP).');
         return;
     }
     if (!keterkaitan) {
-        alert('Harap pilih Keterkaitan subjek.');
+        if (typeof showToast === 'function') showToast('Harap pilih Keterkaitan subjek.', 'error');
+        else alert('Harap pilih Keterkaitan subjek.');
+        return;
+    }
+
+    // Validasi Wajib Upload Berkas: Identitas & Permohonan
+    const inpFileId = document.getElementById('inputSlikFileIdentitas');
+    const inpFilePerm = document.getElementById('inputSlikFilePermohonan');
+    const fileId = inpFileId?.files?.[0] || null;
+    const filePerm = inpFilePerm?.files?.[0] || null;
+
+    const dropId = document.getElementById('dropzoneIdentitas');
+    const dropPerm = document.getElementById('dropzonePermohonan');
+
+    const isEdit = (window.slikEditingIdx !== undefined && window.slikEditingIdx !== null);
+    let editIdx = null;
+    let existing = null;
+    let dokData = null;
+
+    if (isEdit) {
+        editIdx = parseInt(window.slikEditingIdx);
+        existing = (window.daftarPermohonanSlikArray || []).find(r => parseInt(r.index) === editIdx);
+        dokData = (window.slikDokumenUploaded && window.slikDokumenUploaded[editIdx]) ? window.slikDokumenUploaded[editIdx] : null;
+    }
+
+    const hasId = Boolean(fileId || (dokData && dokData.identitas) || (existing && existing.file_identitas));
+    const hasPerm = Boolean(filePerm || (dokData && dokData.permohonan) || (existing && existing.file_permohonan));
+
+    if (!hasId || !hasPerm) {
+        if (!hasId && dropId) {
+            dropId.classList.remove('border-slate-200');
+            dropId.classList.add('border-rose-500', 'bg-rose-50/50');
+        }
+        if (!hasPerm && dropPerm) {
+            dropPerm.classList.remove('border-slate-200');
+            dropPerm.classList.add('border-rose-500', 'bg-rose-50/50');
+        }
+
+        let pesan = 'Upload Identitas dan Upload Permohonan wajib diisi!';
+        if (!hasId && hasPerm) {
+            pesan = 'Upload Identitas (KTP/NPWP) wajib diisi!';
+        } else if (hasId && !hasPerm) {
+            pesan = 'Upload Permohonan (Surat Permohonan SLIK) wajib diisi!';
+        }
+
+        if (typeof showToast === 'function') showToast(pesan, 'error');
+        else alert(pesan);
         return;
     }
 
     // ---- EDIT MODE: update existing entry ----
-    if (window.slikEditingIdx !== undefined && window.slikEditingIdx !== null) {
-        const editIdx = parseInt(window.slikEditingIdx);
+    if (isEdit) {
         window.slikEditingIdx = null;
 
         // Upload new files if any
@@ -448,7 +521,6 @@ async function simpanTambahPermohonanSlik() {
         }
 
         // Update in array
-        const existing = window.daftarPermohonanSlikArray.find(r => parseInt(r.index) === editIdx);
         if (existing) {
             existing.nama = nama;
             existing.no_id = noId;
@@ -491,12 +563,7 @@ async function simpanTambahPermohonanSlik() {
         btnSimpan.innerHTML = '<span class="inline-block animate-spin mr-1">&#9696;</span> Menyimpan...';
     }
 
-    const inpFileId = document.getElementById('inputSlikFileIdentitas');
-    const inpFilePerm = document.getElementById('inputSlikFilePermohonan');
-    const fileId = inpFileId?.files?.[0] || null;
-    const filePerm = inpFilePerm?.files?.[0] || null;
-
-        // Tutup modal langsung seketika agar tidak menunggu proses upload
+    // Tutup modal langsung seketika agar tidak menunggu proses upload
     tutupModalTambahPermohonanSlik();
 
     let uploadedDocs = { identitas: null, permohonan: null };
@@ -828,7 +895,7 @@ function bukaModalEditPermohonanSlik(idx) {
     }
 
     window.slikEditingIdx = idx;
-    bukaModalTambahPermohonanSlik();
+    bukaModalTambahPermohonanSlik(true);
 
     var elNama = document.getElementById('inputSlikNama');
     var elNoId = document.getElementById('inputSlikNoId');
@@ -841,7 +908,14 @@ function bukaModalEditPermohonanSlik(idx) {
     var fileId = (dokData && dokData.identitas) ? dokData.identitas : (existing.file_identitas || null);
     var filePerm = (dokData && dokData.permohonan) ? dokData.permohonan : (existing.file_permohonan || null);
 
+    var dropId = document.getElementById('dropzoneIdentitas');
+    var dropPerm = document.getElementById('dropzonePermohonan');
+
     if (fileId) {
+        if (dropId) {
+            dropId.classList.remove('border-slate-200', 'border-rose-500', 'bg-rose-50/50');
+            dropId.classList.add('border-emerald-400', 'bg-emerald-50/30');
+        }
         var lblId = document.getElementById('labelFileIdentitas');
         var subId = document.getElementById('subFileIdentitas');
         if (lblId) {
@@ -855,6 +929,10 @@ function bukaModalEditPermohonanSlik(idx) {
         if (subId) subId.innerText = (fileId.size || '') + ' • File ada di server';
     }
     if (filePerm) {
+        if (dropPerm) {
+            dropPerm.classList.remove('border-slate-200', 'border-rose-500', 'bg-rose-50/50');
+            dropPerm.classList.add('border-emerald-400', 'bg-emerald-50/30');
+        }
         var lblPerm = document.getElementById('labelFilePermohonan');
         var subPerm = document.getElementById('subFilePermohonan');
         if (lblPerm) {
@@ -1866,4 +1944,40 @@ function tutupModalPdfSlik() {
     }
 }
 window.tutupModalPdfSlik = tutupModalPdfSlik;
+
+// Inisialisasi Drag & Drop pada modal tambah SLIK
+document.addEventListener('DOMContentLoaded', function() {
+    function setupModalDropzone(dropzoneId, inputId, type) {
+        const dropzone = document.getElementById(dropzoneId);
+        const input = document.getElementById(inputId);
+        if (!dropzone || !input) return;
+
+        ['dragenter', 'dragover'].forEach(function(ev) {
+            dropzone.addEventListener(ev, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('border-blue-500', 'bg-blue-50/40');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(function(ev) {
+            dropzone.addEventListener(ev, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('border-blue-500', 'bg-blue-50/40');
+            }, false);
+        });
+
+        dropzone.addEventListener('drop', function(e) {
+            var dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length) {
+                input.files = dt.files;
+                handleModalFileSlik(input, type);
+            }
+        }, false);
+    }
+
+    setupModalDropzone('dropzoneIdentitas', 'inputSlikFileIdentitas', 'identitas');
+    setupModalDropzone('dropzonePermohonan', 'inputSlikFilePermohonan', 'permohonan');
+});
 
