@@ -398,17 +398,6 @@
                                                     <span>Review</span>
                                                 </button>
 
-                                                <!-- Tombol Hasil AI (CAM Pop-up) -->
-                                                <button type="button" 
-                                                        onclick="bukaModalHasilAI(<?= $row['kredit_id'] ?>)" 
-                                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border border-indigo-200/70 text-xs font-bold rounded-lg transition shadow-2xs cursor-pointer" 
-                                                        title="Lihat Laporan Evaluasi AI & CAM">
-                                                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                                    </svg>
-                                                    <span>Hasil AI</span>
-                                                </button>
-
                                                 <?php if (strpos($roleUser, 'review') !== false): ?>
                                                     <a href="<?= base_url('reviewer/review/' . $row['kredit_id']) ?>" 
                                                        class="px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold rounded-lg transition border border-indigo-200/70" 
