@@ -94,27 +94,27 @@
 
     <!-- Top Bar Navigation -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-        <div class="w-full px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
+        <div class="w-full px-3 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap justify-between min-h-16 py-2.5 items-center gap-2">
                 <!-- Brand & Breadcrumb -->
-                <div class="flex items-center gap-3">
-                    <a href="<?= base_url('dashboard') ?>" class="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition text-slate-600 hover:text-slate-900" title="Kembali ke Dashboard">
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                    <a href="<?= base_url('dashboard') ?>" class="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 transition text-slate-600 hover:text-slate-900 shrink-0" title="Kembali ke Dashboard">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                     </a>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Reviewer / Komite Kredit</span>
-                            <span class="text-slate-300">&bull;</span>
-                            <span class="text-xs font-semibold text-slate-500"><?= esc($kredit['nomor_aplikasi']) ?></span>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                            <span class="text-[10px] sm:text-xs font-bold text-blue-600 uppercase tracking-wider">Reviewer / Komite</span>
+                            <span class="text-slate-300 hidden sm:inline">&bull;</span>
+                            <span class="text-[10px] sm:text-xs font-semibold text-slate-500 truncate"><?= esc($kredit['nomor_aplikasi']) ?></span>
                         </div>
-                        <h1 class="text-base font-extrabold text-slate-900 leading-tight">
+                        <h1 class="text-sm sm:text-base font-extrabold text-slate-900 leading-tight truncate">
                             Evaluasi & Lembar Keputusan Reviewer
                         </h1>
                     </div>
                 </div>
 
                 <!-- Right Action: Status Badge -->
-                <div class="flex items-center gap-2 sm:gap-3">
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                     <?php
                         $badgeHeader = 'bg-blue-50 text-blue-700 border-blue-200';
                         if ($statusAplikasi === 'Disetujui') $badgeHeader = 'bg-emerald-50 text-emerald-700 border-emerald-200';
@@ -122,7 +122,7 @@
                         elseif (strpos(strtolower($statusAplikasi), 'revisi') !== false) $badgeHeader = 'bg-purple-50 text-purple-700 border-purple-300 ring-1 ring-purple-200/50';
                         elseif ($statusAplikasi === 'Ditolak') $badgeHeader = 'bg-rose-50 text-rose-700 border-rose-200';
                     ?>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border <?= $badgeHeader ?>">
+                    <span class="inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold border whitespace-nowrap <?= $badgeHeader ?>">
                         Status: <?= esc($statusAplikasi) ?>
                     </span>
                 </div>

@@ -160,13 +160,19 @@
         </div>
 
         <?php
-            // Hitung kalkulasi scoring 5C terpadu
+            // Hitung kalkulasi scoring 5C terpadu (konsisten antara Hero Banner & BAB 2)
             $skorAI = (int)($analisa['skor_kelayakan_ai'] ?? 80);
+            $sCharTop = max(60, min(95, $skorAI - 2));
+            $sCapTop  = max(50, min(90, $skorAI - 5));
+            $sCptTop  = max(50, min(85, $skorAI - 8));
+            $sCndTop  = max(45, min(80, $skorAI - 10));
+            $skorTertimbangHeader = round(($sCharTop * 0.20) + ($sCapTop * 0.30) + ($sCptTop * 0.15) + 23.75 + ($sCndTop * 0.10), 2);
+
             $grade = 'B';
-            if ($skorAI >= 85) $grade = 'A';
-            elseif ($skorAI >= 80) $grade = 'A-';
-            elseif ($skorAI >= 70) $grade = 'B';
-            elseif ($skorAI >= 55) $grade = 'C';
+            if ($skorTertimbangHeader >= 85) $grade = 'A';
+            elseif ($skorTertimbangHeader >= 80) $grade = 'A-';
+            elseif ($skorTertimbangHeader >= 70) $grade = 'B';
+            elseif ($skorTertimbangHeader >= 55) $grade = 'C';
             else $grade = 'D';
 
             $rekKeputusan = $analisa['rekomendasi_keputusan_ai'] ?? 'Disetujui Penuh';
@@ -177,16 +183,16 @@
             <!-- Left Hero Card: Score -->
             <div class="border-l-4 border-l-[#0284c7] border border-slate-200 bg-white p-4 rounded-r-xl">
                 <div class="text-3xl sm:text-4xl font-extrabold text-[#0284c7] tracking-tight">
-                    <?= number_format($skorAI, 2, ',', '.') ?>
+                    <?= number_format($skorTertimbangHeader, 2, ',', '.') ?>
                 </div>
                 <div class="text-xs font-bold text-slate-900 uppercase mt-1">
                     TOTAL CREDIT SCORE REVIEWER (GRADE: <?= $grade ?>)
                 </div>
                 <div class="text-[11px] text-slate-500 mt-1">
-                    Skor analis tertimbang (skor analis x bobot 5C): <strong><?= number_format($skorAI, 2, ',', '.') ?></strong>
+                    Skor analis tertimbang (skor analis x bobot 5C): <strong><?= number_format($skorTertimbangHeader, 2, ',', '.') ?></strong>
                 </div>
                 <div class="text-[10px] text-slate-600 mt-2 leading-relaxed">
-                    Character (<?= max(60, min(95, $skorAI - 2)) ?> - Diterima) | Capacity (<?= max(50, min(90, $skorAI - 5)) ?> - Sesuai) | Capital (<?= max(50, min(85, $skorAI - 8)) ?> - Cukup) | Collateral (95 - Sangat Aman) | Condition (<?= max(45, min(80, $skorAI - 10)) ?> - Moderat)
+                    Character (<?= $sCharTop ?> - Diterima) | Capacity (<?= $sCapTop ?> - Sesuai) | Capital (<?= $sCptTop ?> - Cukup) | Collateral (95 - Sangat Aman) | Condition (<?= $sCndTop ?> - Moderat)
                 </div>
             </div>
 

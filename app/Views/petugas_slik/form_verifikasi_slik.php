@@ -554,7 +554,7 @@
     </main>
 
     <!-- MODAL PREVIEW BERKAS KTP DEBITUR -->
-    <div id="modalKtpDebitur" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div id="modalKtpDebitur" onclick="if(event.target === this) tutupModalKtpDebitur()" style="display: none;" class="fixed inset-0 z-[999] bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
         <div class="bg-white rounded-3xl border border-slate-200 max-w-2xl w-full p-6 shadow-2xl relative animate-in fade-in duration-200 flex flex-col max-h-[90vh]">
             <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div class="flex items-center gap-2.5">
@@ -769,8 +769,8 @@
 
         // Export File TXT Permohonan OJK
         function exportTxtPermohonanSlik() {
-            const lineReff = "<?= esc($no_reff_slik ?? '') ?>";
-            const filename = `Permohonan_SLIK_<?= esc($kredit['nomor_aplikasi'] ?? 'CAM') ?>.txt`;
+            const lineReff = <?= json_encode($no_reff_slik ?? '') ?>;
+            const filename = <?= json_encode('Permohonan_SLIK_' . ($kredit['nomor_aplikasi'] ?? 'CAM') . '.txt') ?>;
             const content = lineReff + "\r\n";
 
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });

@@ -28,21 +28,25 @@
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col pb-24">
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col pb-24 overflow-x-hidden">
 
     <!-- Sticky Header -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-        <div class="w-full px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-3">
-                    <a href="<?= base_url('dashboard') ?>" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 border border-slate-200 rounded-xl transition" title="Kembali ke Dashboard">
+        <div class="w-full px-3 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center gap-2">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <!-- Tombol Garis 3 (Hamburger Menu) untuk Mobile/Tablet -->
+                    <button type="button" onclick="toggleFormStepperDrawer()" class="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 border border-slate-200 transition cursor-pointer shrink-0" title="Buka Menu Tahapan Pengajuan" aria-label="Buka Menu Tahapan">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <a href="<?= base_url('dashboard') ?>" class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 border border-slate-200 rounded-xl transition shrink-0" title="Kembali ke Dashboard">
                         <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         <span>Kembali</span>
                     </a>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <span id="saveStatusIndicator" class="text-xs text-slate-500 flex items-center gap-1.5">
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                    <span id="saveStatusIndicator" class="text-[11px] sm:text-xs text-slate-500 flex items-center gap-1.5 whitespace-nowrap">
                         <span class="w-2 h-2 rounded-full bg-slate-300"></span> Siap disimpan
                     </span>
                 </div>
@@ -50,21 +54,29 @@
         </div>
     </header>
 
-    <!-- Main Layout: 2 Columns (Sidebar Stepper 1-13 + Form Content) -->
-    <main class="w-full px-4 sm:px-6 lg:px-8 py-6 flex-1">
-        <div class="flex flex-col lg:flex-row items-start gap-8">
+    <!-- Backdrop Mobile Drawer Stepper -->
+    <div id="formStepperBackdrop" onclick="toggleFormStepperDrawer(false)" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity"></div>
+
+    <!-- Main Layout: 2 Columns (Sidebar Stepper 1-11 + Form Content) -->
+    <main class="w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 min-w-0">
+        <div class="flex flex-col lg:flex-row items-start gap-6 lg:gap-8 min-w-0">
             
-            <!-- SIDEBAR STEPPER KIRI (1 - 11) -->
-            <aside class="w-full lg:w-80 shrink-0 sticky top-20 bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs max-h-[calc(100vh-140px)] flex flex-col">
+            <!-- SIDEBAR STEPPER KIRI (1 - 11) — Slide-Over Drawer di HP, Sticky di Desktop -->
+            <aside id="formStepperDrawer" class="fixed inset-y-0 left-0 z-50 w-80 max-w-[85vw] -translate-x-full transition-transform duration-300 ease-in-out bg-white border-r border-slate-200/90 p-5 shadow-2xl flex flex-col lg:static lg:sticky lg:top-20 lg:z-10 lg:translate-x-0 lg:w-80 lg:max-w-none lg:shrink-0 lg:rounded-3xl lg:border lg:shadow-xs lg:max-h-[calc(100vh-140px)]">
                 <!-- Stepper Progress Header -->
-                <div class="flex items-center justify-between pb-3 shrink-0">
+                <div class="flex items-center justify-between pb-3 shrink-0 gap-2">
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
                         Tahap <span id="sidebarTahapNum">1</span> dari 11
                     </span>
-                    <span id="sidebarTahapBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60">
-                        1/11
-                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <span id="sidebarTahapBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/60">
+                            1/11
+                        </span>
+                        <button type="button" onclick="toggleFormStepperDrawer(false)" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer" aria-label="Tutup Menu">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Horizontal Progress Bar -->

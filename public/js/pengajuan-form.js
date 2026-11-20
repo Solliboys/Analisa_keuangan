@@ -655,7 +655,31 @@ function updateStepperVisuals() {
 }
 
 // Handler saat user mengklik item langkah di sidebar stepper
+function toggleFormStepperDrawer(forceOpen) {
+    const drawer = document.getElementById('formStepperDrawer');
+    const backdrop = document.getElementById('formStepperBackdrop');
+    if (!drawer) return;
+
+    const isCurrentlyClosed = drawer.classList.contains('-translate-x-full');
+    const shouldOpen = (typeof forceOpen === 'boolean') ? forceOpen : isCurrentlyClosed;
+
+    if (shouldOpen) {
+        drawer.classList.remove('-translate-x-full');
+        if (backdrop) backdrop.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden', 'lg:overflow-auto');
+    } else {
+        drawer.classList.add('-translate-x-full');
+        if (backdrop) backdrop.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
+    }
+}
+window.toggleFormStepperDrawer = toggleFormStepperDrawer;
+
 function handleStepperClick(targetTab) {
+    // Tutup drawer stepper otomatis jika di layar mobile/tablet
+    if (window.innerWidth < 1024) {
+        toggleFormStepperDrawer(false);
+    }
     const steps = getActiveSteps();
     const curIdx = findStepIndex(steps, currentTab);
     const targetIdx = findStepIndex(steps, targetTab);
