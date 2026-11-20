@@ -13,8 +13,9 @@
     }
 
     $namaLembagaBersih = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $namaLembaga));
-    $namaLembagaBersih = trim(preg_replace('/\s+/', ' ', $namaLembagaBersih));
-    if (empty($namaLembagaBersih) || $namaLembagaBersih === '/' || $namaLembagaBersih === 'PT /') {
+    $namaLembagaBersih = trim(preg_replace('/\bPT\.?\s*\/\s*/i', '', $namaLembagaBersih));
+    $namaLembagaBersih = trim(preg_replace('/\s+/', ' ', $namaLembagaBersih), " \t\n\r\0\x0B/");
+    if (empty($namaLembagaBersih)) {
         $namaLembagaBersih = 'Lembaga Pembiayaan';
     }
 
@@ -159,12 +160,12 @@
                     </p>
 
                     <div class="flex flex-wrap items-center gap-3 pt-1">
-                        <a href="<?= $portalUrl ?>" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition shadow-xs">
-                            <span><?= $portalCta ?></span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </a>
-                        <a href="#simulasi" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs sm:text-sm font-bold transition">
+                        <a href="#simulasi" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition shadow-xs">
                             <span>Coba Simulasi Kredit</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                        </a>
+                        <a href="#alur-kerja" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs sm:text-sm font-bold transition">
+                            <span>Pelajari Alur Kerja</span>
                         </a>
                     </div>
 
