@@ -67,26 +67,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const kidVal = kidEl ? kidEl.value.trim() : '';
     const isNew = (!kidVal || kidVal === '' || kidVal === '0' || kidVal === 'draft' || window.IS_NEW_PENGAJUAN || window.location.pathname.includes('/pengajuan/baru'));
 
+    // Deteksi apakah pemuatan halaman saat ini adalah hasil REFRESH / RELOAD
+    const isPageReload = (() => {
+        try {
+            const navEntries = performance.getEntriesByType('navigation');
+            if (navEntries && navEntries.length > 0) {
+                return navEntries[0].type === 'reload';
+            }
+            return performance.navigation && performance.navigation.type === 1;
+        } catch (e) {
+            return false;
+        }
+    })();
+
     let tabTarget = null;
-    if (urlParams.get('tab')) {
-        tabTarget = urlParams.get('tab');
-    } else if (window.location.hash) {
-        tabTarget = window.location.hash.replace('#tab-', '').replace('#', '');
-    } else if (!isNew && kidVal) {
-        // Hanya untuk pengajuan tersimpan: pulihkan tab terakhir yang dikerjakan
-        tabTarget = sessionStorage.getItem('active_pengajuan_tab_' + kidVal);
+    if (isPageReload) {
+        // HANYA saat REFRESH: pertahankan tab yang sedang dikerjakan agar pekerjaan tidak hilang
+        if (urlParams.get('tab')) {
+            tabTarget = urlParams.get('tab');
+        } else if (window.location.hash) {
+            tabTarget = window.location.hash.replace('#tab-', '').replace('#', '');
+        } else if (!isNew && kidVal) {
+            tabTarget = sessionStorage.getItem('active_pengajuan_tab_' + kidVal);
+        }
+    } else {
+        // BUKAN REFRESH (buka form baru, klik edit dari daftar tabel, navigasi pertama):
+        // SELALU mulai dari Langkah 1 (Aplikasi)
+        tabTarget = 1;
+
+        // Bersihkan parameter ?tab dari URL & session storage agar fresh di Langkah 1
+        try {
+            if (kidVal) {
+                sessionStorage.removeItem('active_pengajuan_tab_' + kidVal);
+            }
+            if (urlParams.has('tab')) {
+                const cleanUrl = new URL(window.location.href);
+                cleanUrl.searchParams.delete('tab');
+                window.history.replaceState({ tab: 1 }, '', cleanUrl.pathname + (cleanUrl.search ? cleanUrl.search : ''));
+            }
+        } catch (e) {}
     }
 
     if (isNew) {
-        // Pengajuan baru: WAJIB bersihkan state penyimpanan tab lama agar tidak tertular ke form baru
+        // Pengajuan baru: bersihkan state penyimpanan tab lama agar tidak tertular ke form baru
         try {
             sessionStorage.removeItem('active_pengajuan_tab_draft');
             localStorage.removeItem('last_active_pengajuan_tab');
             Object.keys(tabValidationStatus).forEach(k => delete tabValidationStatus[k]);
         } catch (e) {}
 
-        // Pengajuan baru SELALU dimulai dari Langkah 1 (Aplikasi) kecuali secara eksplisit ada param ?tab=
-        if (!urlParams.get('tab') && !window.location.hash) {
+        if (!isPageReload) {
             tabTarget = 1;
         }
     }
