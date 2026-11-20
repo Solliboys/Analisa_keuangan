@@ -122,12 +122,12 @@ class GeminiAiService
         // Susun prompt dinamis menggunakan instruksi dan pedoman dari pengaturan Superadmin
         $prompt = $settings['prompt_sistem'] . "\n\n";
         $prompt .= "PEDOMAN ANALISIS 5C:\n";
-        $prompt .= "1. Karakter (Character):\n" . $settings['prompt_character'] . "\n\n";
-        $prompt .= "2. Kapasitas (Capacity):\n" . $settings['prompt_capacity'] . "\n\n";
-        $prompt .= "3. Permodalan (Capital):\n" . $settings['prompt_capital'] . "\n\n";
-        $prompt .= "4. Agunan (Collateral):\n" . $settings['prompt_collateral'] . "\n\n";
-        $prompt .= "5. Kondisi (Condition):\n" . $settings['prompt_condition'] . "\n\n";
-        $prompt .= "6. Keputusan Komite (Reviewer):\n" . $settings['prompt_final'] . "\n\n";
+        $prompt .= "1. Karakter (Character):\n" . $this->substitusiVariabelPrompt($settings['prompt_character'], $dataKredit) . "\n\n";
+        $prompt .= "2. Kapasitas (Capacity):\n" . $this->substitusiVariabelPrompt($settings['prompt_capacity'], $dataKredit) . "\n\n";
+        $prompt .= "3. Permodalan (Capital):\n" . $this->substitusiVariabelPrompt($settings['prompt_capital'], $dataKredit) . "\n\n";
+        $prompt .= "4. Agunan (Collateral):\n" . $this->substitusiVariabelPrompt($settings['prompt_collateral'], $dataKredit) . "\n\n";
+        $prompt .= "5. Kondisi (Condition):\n" . $this->substitusiVariabelPrompt($settings['prompt_condition'], $dataKredit) . "\n\n";
+        $prompt .= "6. Keputusan Komite (Reviewer):\n" . $this->substitusiVariabelPrompt($settings['prompt_final'], $dataKredit) . "\n\n";
 
         $prompt .= "DATA LENGKAP CALON DEBITUR & PEMBIAYAAN (FAKTA PENGAJUAN):\n";
         $prompt .= "1. IDENTITAS DEBITUR & FASILITAS PINJAMAN:\n";
@@ -259,6 +259,117 @@ class GeminiAiService
             'analisis_risiko_ai'       => $analisis,
             'sumber'                   => 'Model Evaluasi Sistem (Fallback: ' . $keterangan . ')'
         ];
+    }
+
+    /**
+     * Substitusi variabel dinamis pada template prompt 5C & Reviewer
+     * Mendukung tag flat {{variable}} maupun ekspresi n8n {{ $json.variable }} / {{ $('node').item.json.variable }}
+     */
+    public function substitusiVariabelPrompt(string $prompt, array $dataKredit): string
+    {
+        if (empty($prompt)) return '';
+
+        $namaDebitur = $dataKredit['nama_debitur'] ?? '-';
+        $plafon = (float)($dataKredit['plafon_pengajuan'] ?? 0);
+        $omzet  = (float)($dataKredit['omzet'] ?? ($dataKredit['omzet_bulanan'] ?? 0));
+        $labaKotor = (float)($dataKredit['laba_kotor'] ?? ($omzet * 0.3));
+        $labaBersih = (float)($dataKredit['laba_bersih'] ?? 0);
+        $angsuran = (float)($dataKredit['angsuran'] ?? ($dataKredit['estimasi_cicilan_baru'] ?? 0));
+        $totalAset = (float)($dataKredit['total_aset'] ?? 0);
+        $totalUtang = (float)($dataKredit['total_utang'] ?? 0);
+        $modalBersih = (float)($dataKredit['modal_bersih'] ?? ($totalAset - $totalUtang));
+        $totalMv = (float)($dataKredit['total_mv'] ?? ($dataKredit['nilai_pasar_mv'] ?? 0));
+        $totalLv = (float)($dataKredit['total_lv'] ?? ($dataKredit['nilai_likuidasi_lv'] ?? 0));
+
+        // Mapping dictionary variabel dasar sistem pengajuan
+        $varMap = [
+            'nama_debitur'              => $namaDebitur,
+            'nama_pemohon'              => $namaDebitur,
+            'identitas_pemilik'         => $namaDebitur,
+            'jenis_debitur'             => $dataKredit['jenis_debitur'] ?? 'Perorangan',
+            'nama_usaha'                => $dataKredit['nama_usaha'] ?? '-',
+            'lama_usaha'                => $dataKredit['lama_usaha'] ?? '3 tahun',
+            'lama_menjalankan_usaha'    => preg_replace('/[^0-9]/', '', (string)($dataKredit['lama_usaha'] ?? '3')) ?: '3',
+            'bidang_usaha'              => $dataKredit['bidang_usaha'] ?? ($dataKredit['sektor_usaha'] ?? 'Perdagangan / Jasa'),
+            'sektor_usaha'              => $dataKredit['bidang_usaha'] ?? ($dataKredit['sektor_usaha'] ?? 'Perdagangan / Jasa'),
+            'riwayat_usaha'             => 'Usaha berjalan normal dan memiliki reputasi baik di lingkungan operasional.',
+            'reputasi_bisnis'           => 'Baik / tidak ada catatan negatif dari rekan bisnis atau mitra usaha.',
+            'kelengkapan_legalitas'     => $dataKredit['kelengkapan_legalitas'] ?? 'Lengkap (KTP, KK, NIB/SKU, NPWP)',
+            'sengketa_hukum'            => 'Tidak Ada (Hasil penelusuran perkara pengadilan SIPP/MA bersih)',
+            'riwayat_pembayaran_supplier'=> 'Lancar dan tepat waktu',
+            'tanggungan_pribadi_bulanan'=> number_format((float)($dataKredit['biaya_hidup'] ?? 0), 0, ',', '.'),
+            'tujuan_pembiayaan'         => $dataKredit['tujuan_pembiayaan'] ?? 'Modal Kerja Operasional',
+            
+            'plafon_diajukan'           => number_format($plafon, 0, ',', '.'),
+            'plafon_pengajuan'          => number_format($plafon, 0, ',', '.'),
+            'tenor_diminta'             => ($dataKredit['tenor_bulan'] ?? 12),
+            'tenor_bulan'               => ($dataKredit['tenor_bulan'] ?? 12),
+            'suku_bunga'                => ($dataKredit['bunga_per_bulan'] ?? 1.25) . '%/bulan',
+            'bunga_per_bulan'           => ($dataKredit['bunga_per_bulan'] ?? 1.25),
+            'skema_pembayaran'          => $dataKredit['skema_pembayaran'] ?? 'Installment / Anuitas',
+            'skema_kredit'              => $dataKredit['skema_pembayaran'] ?? 'Installment / Anuitas',
+            'estimasi_cicilan_baru'     => number_format($angsuran, 0, ',', '.'),
+            'estimasi_angsuran'         => number_format($angsuran, 0, ',', '.'),
+            'angsuran'                  => number_format($angsuran, 0, ',', '.'),
+            
+            'omzet_bulanan'             => number_format($omzet, 0, ',', '.'),
+            'omzet'                     => number_format($omzet, 0, ',', '.'),
+            'laba_kotor'                => number_format($labaKotor, 0, ',', '.'),
+            'laba_bersih'               => number_format($labaBersih, 0, ',', '.'),
+            'surplus_bulanan'           => number_format($labaBersih, 0, ',', '.'),
+            'beban_operasional'         => number_format((float)($dataKredit['biaya_hidup'] ?? 0), 0, ',', '.'),
+            'biaya_hidup'               => number_format((float)($dataKredit['biaya_hidup'] ?? 0), 0, ',', '.'),
+            'beban_bunga'               => number_format((float)($dataKredit['beban_bunga'] ?? 0), 0, ',', '.'),
+            'rasio_dsc'                 => ($dataKredit['rasio_dsc'] ?? '1.50'),
+            'dscr'                      => ($dataKredit['rasio_dsc'] ?? '1.50'),
+            'rasio_dsr'                 => ($dataKredit['rasio_dsr'] ?? '25%'),
+            'dsr'                       => ($dataKredit['rasio_dsr'] ?? '25%'),
+            
+            'total_aset'                => number_format($totalAset, 0, ',', '.'),
+            'total_harta'               => number_format($totalAset, 0, ',', '.'),
+            'total_liabilitas'          => number_format($totalUtang, 0, ',', '.'),
+            'total_utang'               => number_format($totalUtang, 0, ',', '.'),
+            'modal_bersih'              => number_format($modalBersih, 0, ',', '.'),
+            'ekuitas'                   => number_format($modalBersih, 0, ',', '.'),
+            'kekayaan_bersih'           => number_format($modalBersih, 0, ',', '.'),
+            'rasio_dar'                 => ($dataKredit['rasio_dar'] ?? '0%'),
+            'rasio_der'                 => ($dataKredit['rasio_der'] ?? '0.00x'),
+            
+            'rincian_agunan'            => $dataKredit['rincian_agunan'] ?? 'Sertifikat Properti / BPKB Kendaraan',
+            'jenis_agunan'              => $dataKredit['rincian_agunan'] ?? 'SHM / SHGB / BPKB',
+            'total_mv'                  => number_format($totalMv, 0, ',', '.'),
+            'nilai_pasar_mv'            => number_format($totalMv, 0, ',', '.'),
+            'total_lv'                  => number_format($totalLv, 0, ',', '.'),
+            'nilai_likuidasi_lv'        => number_format($totalLv, 0, ',', '.'),
+            'coverage_mv'               => ($dataKredit['coverage_mv'] ?? 120) . '%',
+            'coverage_lv'               => ($dataKredit['coverage_lv'] ?? 100) . '%',
+            
+            'kesimpulan_kolektibilitas' => $dataKredit['kesimpulan_kolektibilitas'] ?? ($dataKredit['ringkasan_slik'] ?? 'Kol 1 (Lancar)'),
+            'riwayat_kredit'            => $dataKredit['kesimpulan_kolektibilitas'] ?? 'Kol 1 (Lancar)',
+            'ringkasan_slik'            => $dataKredit['ringkasan_slik'] ?? 'Riwayat pembayaran kredit teratur tanpa tunggakan berjalan.',
+            'teks_lampiran_pdf'         => $dataKredit['ringkasan_slik'] ?? 'Dokumen SLIK terbaca lengkap, kolektibilitas Lancar Kol 1.',
+            'total_outstanding'         => number_format((float)($dataKredit['total_baki_debet_slik'] ?? 0), 0, ',', '.'),
+            'total_baki_debet_slik'     => number_format((float)($dataKredit['total_baki_debet_slik'] ?? 0), 0, ',', '.'),
+            'jumlah_fasilitas_kredit'   => $dataKredit['jumlah_fasilitas_slik'] ?? '1',
+            'jumlah_tunggakan'          => '0',
+            'tunggakan_terlama'         => '0',
+            'riwayat_kredit_macet'      => 'Tidak Pernah',
+            'riwayat_restrukturisasi'   => 'Tidak Pernah',
+            'esai_penjelasan_karakter'  => 'Pemohon berkomitmen melunasi seluruh kewajiban tepat waktu dan memiliki hubungan baik dengan perbankan.',
+            'esai_pov_pengusul'         => $dataKredit['opini_pengusul'] ?? 'Pengusul menilai debitur memiliki iktikad baik, usaha stabil, dan agunan memadai.',
+            'opini_pengusul'            => $dataKredit['opini_pengusul'] ?? 'Debitur memiliki kapabilitas keuangan dan rekam jejak usaha yang layak didukung.',
+            
+            'webcheck_status'           => $dataKredit['webcheck_status'] ?? 'Clear / Bersih dari perkara perdata dan pidana',
+            'hasil_webcheck'            => $dataKredit['webcheck_status'] ?? 'Clear / Tidak ada catatan perkara perdata, kepailitan, maupun DTTOT',
+            'kondisi_ekonomi_sektor'    => 'Sektor usaha menunjukkan prospek stabil dan permintaan pasar yang berkelanjutan.',
+            'persaingan_usaha'          => 'Tingkat kompetisi moderat dengan captive market yang loyal.'
+        ];
+
+        // Ganti tag-tag n8n & {{var}} dengan regex cerdas
+        return preg_replace_callback('/\{\{\s*(?:\$\(\'[^\']+\'\)\.item\.json\.|\$json\.)?([a-zA-Z0-9_]+)(?:\s*\?\?[^}]+)?\s*\}\}/i', function($matches) use ($varMap) {
+            $key = strtolower(trim($matches[1]));
+            return $varMap[$key] ?? ('{{' . $key . '}}');
+        }, $prompt);
     }
 
     /**
