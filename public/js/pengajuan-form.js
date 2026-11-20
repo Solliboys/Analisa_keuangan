@@ -458,20 +458,13 @@ function validateTab(tabNum) {
             });
         }
     } else if (tabNum === 8) {
-        // Tab 8: Rekening Koran
-        const namaBank = document.querySelector('input[name="rekening[0][nama_bank]"]');
-        if (!namaBank || !namaBank.value.trim()) {
-            addError(namaBank, 'Nama bank rekening koran wajib diisi');
-        }
-
-        const noRek = document.querySelector('input[name="rekening[0][nomor_rekening]"]');
-        if (!noRek || !noRek.value.trim()) {
-            addError(noRek, 'Nomor rekening koran wajib diisi');
-        }
-
-        const avgKredit = document.querySelector('input[name="rekening[0][rata_rata_kredit]"]');
-        if (!avgKredit || parseNominal(avgKredit.value) <= 0) {
-            addError(avgKredit, 'Rata-rata mutasi kredit (omzet bulanan) wajib diisi lebih dari 0');
+        // Tab 8: Rekening Koran - Seluruh field dibuat opsional kecuali Nama Bank
+        const rekItems = document.querySelectorAll('.rekening-item');
+        if (rekItems.length > 0) {
+            const namaBank = document.querySelector('input[name="rekening[0][nama_bank]"]');
+            if (!namaBank || !namaBank.value.trim()) {
+                addError(namaBank, 'Nama bank rekening koran wajib diisi');
+            }
         }
     } else if (tabNum === 9) {
         // Tab 9: Laba Rugi
