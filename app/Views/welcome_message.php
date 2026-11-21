@@ -22,22 +22,8 @@
     $alamatBersih      = trim(preg_replace('/\s+/', ' ', $alamatBersih));
     if (empty($alamatBersih)) { $alamatBersih = 'Financial Center, Jakarta Selatan'; }
 
-    // Format Nomor WhatsApp & Telepon Terintegrasi
-    $rawTelp = preg_replace('/[^0-9]/', '', $teleponWeb);
-    if (str_starts_with($rawTelp, '08')) {
-        $waNumberClean = '62' . substr($rawTelp, 1);
-        $waFormatted   = '+62 ' . substr($rawTelp, 1, 3) . '-' . substr($rawTelp, 4, 4) . '-' . substr($rawTelp, 8);
-    } elseif (str_starts_with($rawTelp, '628')) {
-        $waNumberClean = $rawTelp;
-        $waFormatted   = '+' . substr($rawTelp, 0, 2) . ' ' . substr($rawTelp, 2, 3) . '-' . substr($rawTelp, 5, 4) . '-' . substr($rawTelp, 9);
-    } else {
-        // Nomor WhatsApp layanan resmi yang sinkron
-        $waNumberClean = '6281250882900';
-        $waFormatted   = '+62 812-5088-2900';
-    }
-
-    $statKreditCount = !empty($total_kredit) && $total_kredit > 0 ? number_format($total_kredit, 0, ',', '.') . '+' : '61.000+';
-    $statPlafonTotal = !empty($total_plafon) && $total_plafon > 0 ? 'Rp ' . number_format($total_plafon / 1000000000, 1, ',', '.') . ' Miliar' : 'Rp 48.5 Miliar';
+    $statKreditCount   = !empty($total_kredit) && $total_kredit > 0 ? number_format($total_kredit, 0, ',', '.') . '+' : '61.000+';
+    $statPlafonTotal   = !empty($total_plafon) && $total_plafon > 0 ? 'Rp ' . number_format($total_plafon / 1000000000, 1, ',', '.') . ' Miliar' : 'Rp 48.5 Miliar';
 ?>
 <!DOCTYPE html>
 <html class="scroll-smooth" lang="id">
@@ -257,15 +243,9 @@
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#kontak">Kontak</a>
         </nav>
 
-        <!-- Right Header Actions (WhatsApp & Masuk Portal) -->
+        <!-- Right Header Actions (Masuk Portal dengan Tulisan Biru) -->
         <div class="flex items-center gap-2 sm:gap-3">
-            <a class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 font-bold text-xs sm:text-sm transition-all" 
-               href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
-               target="_blank" rel="noopener noreferrer">
-                <svg class="w-4 h-4 fill-current text-emerald-600 shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                <span>WhatsApp</span>
-            </a>
-            <a class="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-slate-900 text-white hover:bg-blue-600 font-semibold text-xs sm:text-sm transition-all duration-200 shadow-sm hover:shadow-md" href="<?= base_url('auth') ?>">
+            <a class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 border border-blue-200/90 font-bold text-xs sm:text-sm transition-all duration-200 shadow-xs hover:shadow-sm" href="<?= base_url('auth') ?>">
                 <span>Masuk Portal</span>
                 <span class="material-symbols-outlined text-[15px] sm:text-[16px]">arrow_forward</span>
             </a>
@@ -292,19 +272,13 @@
             Otomasi penyusunan <span class="text-slate-800 font-semibold">Laporan Analisis Kelayakan Kredit</span> dan scoring 5C dalam hitungan detik. Terintegrasi SLIK OJK real-time untuk <?= esc($namaLembagaBersih) ?> dan Lembaga Keuangan.
         </p>
 
-        <!-- CTA Buttons (Termasuk Tombol WhatsApp Resmi) -->
-        <div class="relative z-20 flex flex-col sm:flex-row items-center gap-3.5 mb-10 w-full sm:w-auto px-4">
+        <!-- CTA Buttons -->
+        <div class="relative z-20 flex flex-col sm:flex-row items-center gap-4 mb-10 w-full sm:w-auto px-4">
             <a class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-base transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 flex items-center justify-center gap-2 group cursor-pointer" href="<?= base_url('auth') ?>">
                 <span>Uji Coba Sandbox Sekarang</span>
                 <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">bolt</span>
             </a>
-            <a class="w-full sm:w-auto px-6 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base transition-all duration-200 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 flex items-center justify-center gap-2 group cursor-pointer" 
-               href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
-               target="_blank" rel="noopener noreferrer">
-                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                <span>Tanya WhatsApp</span>
-            </a>
-            <a class="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 hover:border-slate-300 font-semibold text-base transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer" href="#alur-kerja">
+            <a class="w-full sm:w-auto px-7 py-3.5 rounded-full bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 hover:border-slate-300 font-semibold text-base transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer" href="#alur-kerja">
                 <span class="material-symbols-outlined text-[20px] text-slate-400">play_circle</span>
                 <span>Lihat Cara Kerja</span>
             </a>
@@ -852,16 +826,10 @@
                     <p class="text-slate-500 text-sm sm:text-base leading-relaxed">
                         Tinggalkan proses analisis manual berhari-hari yang rentan salah rumus. Dapatkan efisiensi 95% dengan audit trail kepatuhan lengkap.
                     </p>
-                    <div class="pt-4 flex flex-wrap items-center gap-3">
+                    <div class="pt-4">
                         <a class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-950 text-white font-bold text-sm hover:bg-blue-600 transition-colors shadow-sm cursor-pointer" href="<?= base_url('auth') ?>">
                             <span>Daftar Akses Institusi</span>
                             <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                        </a>
-                        <a class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-bold text-sm transition-colors cursor-pointer" 
-                           href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
-                           target="_blank" rel="noopener noreferrer">
-                            <svg class="w-4 h-4 fill-current text-emerald-600" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                            <span>Hubungi Kami</span>
                         </a>
                     </div>
                 </div>
@@ -989,11 +957,8 @@
                     <a class="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-base transition-all shadow-md hover:scale-105 cursor-pointer" href="<?= base_url('auth') ?>">
                         Buka Portal Sistem
                     </a>
-                    <a class="w-full sm:w-auto px-7 py-4 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-all shadow-md hover:scale-105 flex items-center justify-center gap-2 cursor-pointer" 
-                       href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
-                       target="_blank" rel="noopener noreferrer">
-                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                        <span>Konsultasi WhatsApp</span>
+                    <a class="w-full sm:w-auto px-7 py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-base transition-colors border border-white/20 cursor-pointer" href="mailto:<?= esc($emailWeb) ?>">
+                        Jadwalkan Demo Institusi
                     </a>
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-4 text-xs font-semibold text-blue-100/90">
@@ -1006,7 +971,7 @@
     </section>
 </main>
 
-<!-- FOOTER (DINAMIS DARI PENGATURAN SISTEM & NOMOR WHATSAPP) -->
+<!-- FOOTER (DINAMIS DARI PENGATURAN SISTEM) -->
 <footer class="relative z-10 bg-slate-50 border-t border-slate-200/80 mt-12" id="kontak">
     <div class="max-w-7xl mx-auto px-4 sm:px-8 py-16">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10">
@@ -1054,7 +1019,7 @@
                 </ul>
             </div>
 
-            <!-- Kantor Operasional & Kontak WhatsApp Dinamis -->
+            <!-- Kantor & Kontak Resmi -->
             <div class="lg:col-span-3 space-y-3">
                 <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Kantor &amp; Kontak Resmi</h4>
                 <div class="text-xs font-bold text-slate-800">
@@ -1072,14 +1037,6 @@
                         <span class="material-symbols-outlined text-[16px] text-blue-600 shrink-0">call</span>
                         <span class="font-medium"><?= esc($teleponWeb) ?></span>
                     </div>
-                    <div class="pt-1">
-                        <a href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
-                           target="_blank" rel="noopener noreferrer" 
-                           class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition-all shadow-2xs">
-                            <svg class="w-3.5 h-3.5 fill-current text-emerald-600 shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                            <span>WhatsApp: <?= esc($waFormatted) ?></span>
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1094,16 +1051,6 @@
         </div>
     </div>
 </footer>
-
-<!-- FLOATING WHATSAPP BUTTON (RESPONSIVE) -->
-<a href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
-   target="_blank" 
-   rel="noopener noreferrer" 
-   class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all group cursor-pointer"
-   title="Hubungi Kami via WhatsApp">
-    <svg class="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-    <span class="hidden sm:inline">WhatsApp</span>
-</a>
 
 <!-- CLIENT-SIDE SIMULATOR SCRIPT -->
 <script>
