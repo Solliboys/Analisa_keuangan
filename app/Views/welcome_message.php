@@ -217,19 +217,19 @@
 
 <!-- STICKY HEADER -->
 <header class="fixed top-0 inset-x-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-100 transition-all">
-    <div class="max-w-7xl mx-auto h-14 sm:h-20 px-3.5 sm:px-8 flex items-center justify-between">
+    <div class="max-w-7xl mx-auto h-16 sm:h-20 px-3.5 sm:px-8 flex items-center justify-between">
         <!-- Logo & Dynamic Brand Identity -->
         <a class="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0 pr-1 sm:pr-0" href="<?= base_url() ?>">
             <?php if (!empty($logoWeb)): ?>
-                <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWebBersih) ?>" class="h-7 sm:h-10 w-auto max-w-[100px] sm:max-w-[150px] object-contain rounded-lg sm:rounded-xl shadow-2xs group-hover:scale-105 transition-transform shrink-0">
+                <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWebBersih) ?>" class="h-8 sm:h-10 w-auto max-w-[120px] sm:max-w-[150px] object-contain rounded-lg sm:rounded-xl shadow-2xs group-hover:scale-105 transition-transform shrink-0">
             <?php else: ?>
-                <div class="w-7 h-7 sm:w-10 sm:h-10 rounded-lg sm:rounded-2xl bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform shrink-0">
-                    <span class="material-symbols-outlined text-[16px] sm:text-[22px]">auto_awesome</span>
+                <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-2xl bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform shrink-0">
+                    <span class="material-symbols-outlined text-[18px] sm:text-[22px]">auto_awesome</span>
                 </div>
             <?php endif; ?>
             <div class="flex flex-col text-left min-w-0">
-                <span class="text-xs sm:text-[17px] font-extrabold tracking-tight text-slate-900 leading-tight truncate max-w-[140px] sm:max-w-none"><?= esc($namaWebBersih) ?><span class="text-blue-600">.</span></span>
-                <span class="hidden sm:block text-[9px] sm:text-[11px] font-semibold tracking-wider text-slate-400 uppercase truncate max-w-[130px] sm:max-w-none"><?= esc($sloganWebBersih) ?></span>
+                <span class="text-xs sm:text-[17px] font-extrabold tracking-tight text-slate-900 leading-tight whitespace-nowrap"><?= esc($namaWebBersih) ?><span class="text-blue-600">.</span></span>
+                <span class="text-[9px] sm:text-[11px] font-semibold tracking-wider text-slate-400 uppercase truncate max-w-[160px] sm:max-w-none"><?= esc($sloganWebBersih) ?></span>
             </div>
         </a>
 
@@ -245,13 +245,13 @@
 
         <!-- Right Header Actions (Login & Mobile Hamburger) -->
         <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
-            <a class="inline-flex items-center gap-1 px-2.5 py-1.5 sm:px-5 sm:py-2.5 rounded-full bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 border border-blue-200/90 font-bold text-xs sm:text-sm transition-all duration-200 shadow-xs hover:shadow-sm shrink-0" href="<?= base_url('auth') ?>">
+            <a class="inline-flex items-center gap-1 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-full bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 border border-blue-200/90 font-bold text-xs sm:text-sm transition-all duration-200 shadow-xs hover:shadow-sm shrink-0" href="<?= base_url('auth') ?>">
                 <span>Login</span>
                 <span class="material-symbols-outlined text-[13px] sm:text-[16px]">arrow_forward</span>
             </a>
             <!-- Mobile Navigation Toggle Button -->
             <button type="button" onclick="toggleMobileMenu()" class="md:hidden p-1.5 sm:p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer shrink-0" aria-label="Toggle Mobile Menu">
-                <span class="material-symbols-outlined text-[22px] sm:text-[24px]" id="mobileMenuIcon">menu</span>
+                <span class="material-symbols-outlined text-[24px]" id="mobileMenuIcon">menu</span>
             </button>
         </div>
     </div>
@@ -275,33 +275,33 @@
     </div>
 </header>
 
-<main class="relative z-10 pt-16 sm:pt-32">
+<main class="relative z-10 pt-18 sm:pt-32">
     <!-- HERO SECTION WITH INSPIRATION GRAPHICS & FLOATING METRIC CARDS -->
-    <section class="max-w-7xl mx-auto px-3.5 sm:px-8 pt-2 sm:pt-6 pb-10 sm:pb-20 text-center flex flex-col items-center relative">
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 pt-3 sm:pt-6 pb-12 sm:pb-20 text-center flex flex-col items-center relative">
         <!-- Top Pill Tag (Teks model AI dihapus sesuai instruksi) -->
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-white/90 backdrop-blur border border-blue-200/80 shadow-2xs hover:border-blue-300 transition-colors mb-3 sm:mb-6 cursor-default">
+        <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 rounded-full bg-white/90 backdrop-blur border border-blue-200/80 shadow-2xs hover:border-blue-300 transition-colors mb-3.5 sm:mb-6 cursor-default">
             <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-500 animate-pulse"></span>
-            <span class="text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Engine AI 5C • Autonomous Underwriting</span>
+            <span class="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Engine AI 5C • Autonomous Underwriting</span>
         </div>
 
         <!-- Main Headline -->
-        <h1 class="text-2xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 max-w-4xl leading-[1.22] sm:leading-[1.12] mb-2.5 sm:mb-6">
-            Ubah Analisis Kredit Manual Menjadi <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 bg-clip-text text-transparent">Presisi &amp; Otomatis</span>
+        <h1 class="text-2xl xs:text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 max-w-4xl leading-[1.2] sm:leading-[1.12] mb-3 sm:mb-6">
+            Ubah Analisis Kredit Manual <br class="hidden xs:inline sm:hidden"/>Menjadi <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 bg-clip-text text-transparent">Presisi &amp; Otomatis</span>
         </h1>
 
         <!-- Subheadline -->
-        <p class="text-xs sm:text-lg lg:text-xl text-slate-500 max-w-2xl leading-relaxed mb-4 sm:mb-8 px-1 sm:px-2">
+        <p class="text-xs sm:text-lg lg:text-xl text-slate-500 max-w-2xl leading-relaxed mb-5 sm:mb-8 px-2 sm:px-0">
             Otomasi penyusunan <span class="text-slate-800 font-semibold">Laporan Analisis Kelayakan Kredit</span> dan scoring 5C dalam hitungan detik. Terintegrasi SLIK OJK real-time untuk <?= esc($namaLembagaBersih) ?> dan Lembaga Keuangan.
         </p>
 
-        <!-- CTA Buttons -->
-        <div class="relative z-20 flex flex-row items-center justify-center gap-2 sm:gap-4 mb-5 sm:mb-10 w-full sm:w-auto px-1 sm:px-4">
-            <a class="flex-1 sm:flex-initial px-3.5 sm:px-8 py-2.5 sm:py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-base transition-all duration-200 shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 flex items-center justify-center gap-1.5 sm:gap-2 group cursor-pointer text-center whitespace-nowrap" href="<?= base_url('simulasi') ?>">
-                <span>Uji Coba Sandbox</span>
-                <span class="material-symbols-outlined text-[15px] sm:text-[18px] group-hover:translate-x-1 transition-transform">bolt</span>
+        <!-- CTA Buttons (Stacked Full-Width on Mobile, Row on Desktop) -->
+        <div class="relative z-20 flex flex-col sm:flex-row items-center gap-2.5 sm:gap-4 mb-6 sm:mb-10 w-full sm:w-auto px-2 sm:px-0 max-w-sm sm:max-w-none">
+            <a class="w-full sm:w-auto px-6 sm:px-8 py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base transition-all duration-200 shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 flex items-center justify-center gap-2 group cursor-pointer text-center" href="<?= base_url('simulasi') ?>">
+                <span>Uji Coba Sandbox Sekarang</span>
+                <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">bolt</span>
             </a>
-            <a class="flex-1 sm:flex-initial px-3 sm:px-7 py-2.5 sm:py-3.5 rounded-full bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 hover:border-slate-300 font-semibold text-xs sm:text-base transition-all shadow-2xs flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-center whitespace-nowrap" href="#alur-kerja">
-                <span class="material-symbols-outlined text-[17px] sm:text-[20px] text-slate-400">play_circle</span>
+            <a class="w-full sm:w-auto px-6 sm:px-7 py-3 rounded-full bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 hover:border-slate-300 font-semibold text-sm sm:text-base transition-all shadow-2xs flex items-center justify-center gap-2 cursor-pointer text-center" href="#alur-kerja">
+                <span class="material-symbols-outlined text-[20px] text-slate-400">play_circle</span>
                 <span>Lihat Cara Kerja</span>
             </a>
         </div>
@@ -430,15 +430,15 @@
             </div>
 
             <!-- MAIN CENTER CARD: DATA ANALYTICS & SCORING TREND -->
-            <div class="w-full max-w-2xl bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200/90 p-3.5 sm:p-8 shadow-2xl relative z-20 text-left">
+            <div class="w-full max-w-2xl bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200/90 p-4 sm:p-8 shadow-2xl relative z-20 text-left">
                 <!-- Header of Mockup Card -->
-                <div class="flex items-center justify-between pb-2.5 sm:pb-4 border-b border-slate-100 gap-2">
+                <div class="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 gap-2">
                     <div>
-                        <div class="text-[9px] sm:text-[11px] font-bold text-blue-600 uppercase tracking-wider">AI Credit Engine Dashboard</div>
-                        <h3 class="text-xs sm:text-xl font-extrabold text-slate-900 leading-tight">Data Analytics &amp; Scoring 5C Trend</h3>
+                        <div class="text-[10px] sm:text-[11px] font-bold text-blue-600 uppercase tracking-wider">AI Credit Engine Dashboard</div>
+                        <h3 class="text-sm sm:text-xl font-extrabold text-slate-900 leading-tight">Data Analytics &amp; Scoring 5C Trend</h3>
                     </div>
-                    <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-                        <span class="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-emerald-50 text-emerald-700 text-[9px] sm:text-xs font-bold">
+                    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] sm:text-xs font-bold">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Live
                         </span>
                         <span class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-slate-100 text-slate-700 text-[10px] sm:text-xs font-bold border border-slate-200 hidden sm:inline-block">
@@ -448,9 +448,9 @@
                 </div>
 
                 <!-- Multi-line Smooth Wave Chart SVG with Tooltip -->
-                <div class="relative mt-3 sm:mt-5 pt-1 sm:pt-2">
+                <div class="relative mt-4 sm:mt-5 pt-2">
                     <!-- Axis Labels -->
-                    <div class="absolute left-0 top-0 bottom-5 sm:bottom-6 flex flex-col justify-between text-[8px] sm:text-[10px] font-semibold text-slate-400 pr-1 sm:pr-2">
+                    <div class="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[9px] sm:text-[10px] font-semibold text-slate-400 pr-1.5 sm:pr-2">
                         <span>100</span>
                         <span>75</span>
                         <span>50</span>
@@ -458,7 +458,7 @@
                         <span>0</span>
                     </div>
                     <!-- Wave Lines Area -->
-                    <div class="ml-4 sm:ml-7 relative h-28 sm:h-52">
+                    <div class="ml-5 sm:ml-7 relative h-36 sm:h-52">
                         <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
                             <div class="border-b border-slate-100 w-full"></div>
                             <div class="border-b border-slate-100 w-full"></div>
@@ -486,32 +486,32 @@
 
                         <!-- Floating Tooltip Pill -->
                         <div class="absolute left-[54%] sm:left-[62%] top-1 -translate-x-1/2 -translate-y-full mb-1">
-                            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-md sm:rounded-xl shadow-lg flex items-center gap-1 sm:gap-1.5 text-[9px] sm:text-xs font-bold whitespace-nowrap">
+                            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2.5 sm:px-3 py-1 rounded-lg sm:rounded-xl shadow-lg flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold whitespace-nowrap">
                                 <span>Score: 88.0 (Grade A)</span>
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                             </div>
-                            <div class="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-indigo-600 transform rotate-45 mx-auto -mt-1 rounded-xs"></div>
+                            <div class="w-2.5 h-2.5 bg-indigo-600 transform rotate-45 mx-auto -mt-1 rounded-xs"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Quick Micro Stats Grid inside card -->
-                <div class="mt-2.5 sm:mt-4 pt-2.5 sm:pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-3 text-left">
-                    <div class="bg-slate-50 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl border border-slate-100">
-                        <span class="text-[8px] sm:text-[10px] text-slate-400 uppercase font-bold block truncate">Plafon Diajukan</span>
-                        <span class="text-[11px] sm:text-sm font-extrabold text-slate-900 block truncate">Rp 250 Juta</span>
+                <div class="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-left">
+                    <div class="bg-slate-50 p-2 sm:p-2.5 rounded-xl border border-slate-100">
+                        <span class="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold block truncate">Plafon Diajukan</span>
+                        <span class="text-xs sm:text-sm font-extrabold text-slate-900 block truncate">Rp 250 Juta</span>
                     </div>
-                    <div class="bg-slate-50 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl border border-slate-100">
-                        <span class="text-[8px] sm:text-[10px] text-slate-400 uppercase font-bold block truncate">SLIK OJK</span>
-                        <span class="text-[11px] sm:text-sm font-extrabold text-emerald-600 block truncate">Kol 1 (Lancar)</span>
+                    <div class="bg-slate-50 p-2 sm:p-2.5 rounded-xl border border-slate-100">
+                        <span class="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold block truncate">SLIK OJK</span>
+                        <span class="text-xs sm:text-sm font-extrabold text-emerald-600 block truncate">Kol 1 (Lancar)</span>
                     </div>
-                    <div class="bg-slate-50 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl border border-slate-100">
-                        <span class="text-[8px] sm:text-[10px] text-slate-400 uppercase font-bold block truncate">Rasio DSCR</span>
-                        <span class="text-[11px] sm:text-sm font-extrabold text-blue-600 block truncate">1.62x Sehat</span>
+                    <div class="bg-slate-50 p-2 sm:p-2.5 rounded-xl border border-slate-100">
+                        <span class="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold block truncate">Rasio DSCR</span>
+                        <span class="text-xs sm:text-sm font-extrabold text-blue-600 block truncate">1.62x Sehat</span>
                     </div>
-                    <div class="bg-slate-50 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl border border-slate-100">
-                        <span class="text-[8px] sm:text-[10px] text-slate-400 uppercase font-bold block truncate">Rekomendasi</span>
-                        <span class="text-[11px] sm:text-sm font-extrabold text-emerald-600 block truncate">Disetujui Penuh</span>
+                    <div class="bg-slate-50 p-2 sm:p-2.5 rounded-xl border border-slate-100">
+                        <span class="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold block truncate">Rekomendasi</span>
+                        <span class="text-xs sm:text-sm font-extrabold text-emerald-600 block truncate">Disetujui Penuh</span>
                     </div>
                 </div>
             </div>
