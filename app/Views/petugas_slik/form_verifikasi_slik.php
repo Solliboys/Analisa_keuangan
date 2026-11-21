@@ -322,16 +322,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Tombol Kembali Dashboard di Bawah -->
-        <div class="flex items-center justify-between gap-4 py-4 mb-4">
-            <a href="<?= base_url('dashboard') ?>" 
-               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition shadow-xs">
-                <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                <span>Kembali ke Dashboard</span>
-            </a>
-        </div>
-
     </main>
 
     <!-- =======================================================
