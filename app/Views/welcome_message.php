@@ -290,7 +290,7 @@
 
         <!-- CTA Buttons -->
         <div class="relative z-20 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mb-8 sm:mb-10 w-full sm:w-auto px-2 sm:px-4">
-            <a class="w-full sm:w-auto px-6 sm:px-8 py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 flex items-center justify-center gap-2 group cursor-pointer" href="<?= base_url('auth') ?>">
+            <a class="w-full sm:w-auto px-6 sm:px-8 py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 flex items-center justify-center gap-2 group cursor-pointer" href="<?= base_url('simulasi') ?>">
                 <span>Uji Coba Sandbox Sekarang</span>
                 <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">bolt</span>
             </a>
@@ -731,7 +731,7 @@
                     <!-- CTA link -->
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2">
                         <span class="text-xs text-slate-500 text-center sm:text-left">Ingin verifikasi SLIK OJK komprehensif?</span>
-                        <a class="px-4 py-2 rounded-full bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-colors shadow-sm text-center cursor-pointer" href="<?= base_url('auth') ?>">
+                        <a class="px-4 py-2 rounded-full bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-colors shadow-sm text-center cursor-pointer" href="<?= base_url('simulasi') ?>">
                             Buka Portal →
                         </a>
                     </div>
@@ -970,7 +970,7 @@
                     Bergabung bersama <?= esc($namaLembagaBersih) ?> yang telah memodernisasi evaluasi 5C dan penerbitan laporan analisis kelayakan pembiayaan secara terstandar.
                 </p>
                 <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-                    <a class="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-sm sm:text-base transition-all shadow-md hover:scale-105 cursor-pointer text-center" href="<?= base_url('auth') ?>">
+                    <a class="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-sm sm:text-base transition-all shadow-md hover:scale-105 cursor-pointer text-center" href="<?= base_url('simulasi') ?>">
                         Buka Portal Sistem
                     </a>
                     <a class="w-full sm:w-auto px-6 sm:px-7 py-3.5 sm:py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm sm:text-base transition-colors border border-white/20 cursor-pointer text-center" href="mailto:<?= esc($emailWeb) ?>">
@@ -1029,7 +1029,7 @@
                 <ul class="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-slate-500">
                     <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Fitur Utama</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#alur-kerja">Alur Analisis</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#simulasi">Sandbox Kalkulasi</a></li>
+                    <li><a class="hover:text-blue-600 transition-colors" href="<?= base_url('simulasi') ?>">Sandbox Kalkulasi</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#komparasi">Perbandingan</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#faq">FAQ</a></li>
                 </ul>
