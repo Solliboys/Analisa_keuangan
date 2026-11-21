@@ -43,6 +43,37 @@
     $noHpVal = !empty($kredit['nomor_hp']) ? $kredit['nomor_hp'] : '-';
     $berkasPdfVal = $kredit['berkas_slik_pdf'] ?? '';
     $berkasTxtVal = $kredit['berkas_slik_txt'] ?? '';
+
+    // Daftar Permohonan Subjek SLIK (Badan Usaha, Direktur, Pasangan, Penjamin, dll.)
+    $daftarPermohonanSlik = [];
+    if (!empty($kredit['daftar_permohonan_slik'])) {
+        $decodedPermohonan = json_decode($kredit['daftar_permohonan_slik'], true);
+        if (is_array($decodedPermohonan) && !empty($decodedPermohonan)) {
+            $daftarPermohonanSlik = $decodedPermohonan;
+        }
+    }
+    if (empty($daftarPermohonanSlik)) {
+        $isBadanUsaha = (isset($kredit['jenis_debitur']) && (stripos($kredit['jenis_debitur'], 'badan') !== false || stripos($kredit['jenis_debitur'], 'pt') !== false || stripos($kredit['jenis_debitur'], 'cv') !== false));
+        $daftarPermohonanSlik[] = [
+            'index'        => 0,
+            'nama'         => $namaDebiturVal,
+            'no_id'        => $nikVal,
+            'keterkaitan'  => $isBadanUsaha ? 'Badan Usaha' : 'Pemohon',
+            'no_reff'      => $no_reff_slik ?? '-',
+            'tanggal'      => !empty($kredit['created_at']) ? date('d M Y', strtotime($kredit['created_at'])) : date('d M Y'),
+            'status'       => ($kredit['status_slik'] ?? '') === 'Terbit' ? 'Telah Terbit' : 'Menunggu Pengecekan',
+            'hasil'        => $kredit['hasil_slik'] ?? 'Menunggu',
+            'tempat_lahir' => $tempatLahirVal,
+            'tgl_lahir'    => $tglLahirVal,
+            'ibu_kandung'  => $ibuKandungVal,
+            'pengusul'     => $kredit['slik_verified_by'] ?? 'Staff Pengusul Kredit',
+            'file_identitas' => !empty($ktp_dokumen) ? [
+                'name' => $ktp_dokumen['nama_dokumen'] ?? 'KTP Debitur',
+                'url'  => base_url($ktp_dokumen['file_path'])
+            ] : null,
+            'file_permohonan' => null
+        ];
+    }
 ?>
 
     <!-- Topbar Navigation -->
@@ -127,49 +158,172 @@
                 </div>
             </div>
 
-            <!-- Parameter Kunci Identitas Pemohon SLIK (Grid 4 Kolom) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                <!-- NIK KTP -->
-                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start justify-between">
+            <!-- Tabel Permohonan Subjek SLIK / IDEB OJK (Bentuk Tabel Sesuai Pengajuan SLIK) -->
+            <div class="mt-6 pt-5 border-t border-slate-100">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                     <div>
-                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">NIK KTP (16 Digit)</span>
-                        <span class="text-sm font-extrabold text-slate-900 tracking-wide block mt-0.5" id="valNikKtp"><?= esc($nikVal) ?></span>
+                        <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wide uppercase flex items-center gap-2">
+                            <span>Daftar Subjek Permohonan SLIK / iDeb OJK</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                                <?= count($daftarPermohonanSlik) ?> Subjek
+                            </span>
+                        </h3>
+                        <p class="text-[11px] text-slate-500">Pilih subjek untuk diekspor ke berkas TXT atau salin parameter identitas untuk penarikan iDeb di portal OJK.</p>
                     </div>
-                    <button type="button" onclick="salinTeks('<?= esc($nikVal) ?>', 'NIK KTP')" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-white rounded-lg transition" title="Salin NIK">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    </button>
                 </div>
 
-                <!-- Tempat & Tanggal Lahir -->
-                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Tempat & Tanggal Lahir</span>
-                    <span class="text-xs font-extrabold text-slate-900 block mt-0.5">
-                        <?= esc($tempatLahirVal ? $tempatLahirVal . ', ' : '') ?><?= esc($tglLahirVal) ?>
-                    </span>
-                </div>
+                <div class="w-full overflow-x-auto border border-slate-200 rounded-2xl bg-white shadow-2xs">
+                    <table class="w-full text-left border-collapse text-[11px] table-auto">
+                        <thead>
+                            <tr class="text-[10px] font-bold text-slate-500 tracking-wider uppercase border-b border-slate-200 bg-slate-50">
+                                <th class="py-3 px-3 text-center whitespace-nowrap w-10">
+                                    <div class="flex items-center justify-center">
+                                        <input type="checkbox" id="checkAllSubjekSlik" onchange="toggleSelectAllSubjekSlik(this)" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer" checked title="Pilih Semua">
+                                    </div>
+                                </th>
+                                <th class="py-3 px-3 whitespace-nowrap">STATUS</th>
+                                <th class="py-3 px-3 whitespace-nowrap">NO REFF SLIK</th>
+                                <th class="py-3 px-3 whitespace-nowrap">TANGGAL</th>
+                                <th class="py-3 px-3 whitespace-nowrap">NO ID (NIK / NPWP)</th>
+                                <th class="py-3 px-3 whitespace-nowrap">NAMA SUBJEK &amp; KETERKAITAN</th>
+                                <th class="py-3 px-3 whitespace-nowrap">TEMPAT &amp; TGL LAHIR</th>
+                                <th class="py-3 px-3 whitespace-nowrap">IBU KANDUNG / PASANGAN</th>
+                                <th class="py-3 px-3 whitespace-nowrap text-center">BERKAS</th>
+                                <th class="py-3 px-3 whitespace-nowrap text-center">AKSI SALIN</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-[11px]">
+                            <?php foreach ($daftarPermohonanSlik as $idx => $row): 
+                                $rNama = $row['nama'] ?? $namaDebiturVal;
+                                $rNoId = $row['no_id'] ?? $nikVal;
+                                $rKeterkaitan = $row['keterkaitan'] ?? 'Pemohon';
+                                $rNoReff = $row['no_reff'] ?? ($no_reff_slik ?? '-');
+                                $rTgl = $row['tanggal'] ?? (!empty($kredit['created_at']) ? date('d M Y', strtotime($kredit['created_at'])) : '-');
+                                $rStatus = $row['status'] ?? (($kredit['status_slik'] ?? '') === 'Terbit' ? 'Telah Terbit' : 'Menunggu Pengecekan');
+                                $rTempatLahir = $row['tempat_lahir'] ?? $tempatLahirVal;
+                                $rTglLahir = $row['tgl_lahir'] ?? $tglLahirVal;
+                                $rIbu = $row['ibu_kandung'] ?? $ibuKandungVal;
+                                
+                                // Deteksi file identitas (KTP)
+                                $fileIdUrl = '';
+                                $fileIdName = '';
+                                if (!empty($row['file_identitas'])) {
+                                    if (is_array($row['file_identitas'])) {
+                                        $fileIdUrl = $row['file_identitas']['url'] ?? (!empty($row['file_identitas']['path']) ? base_url($row['file_identitas']['path']) : '');
+                                        $fileIdName = $row['file_identitas']['name'] ?? 'Berkas Identitas';
+                                    } else {
+                                        $fileIdUrl = base_url($row['file_identitas']);
+                                        $fileIdName = basename($row['file_identitas']);
+                                    }
+                                } elseif (!empty($ktp_dokumen) && !empty($ktp_dokumen['file_path'])) {
+                                    $fileIdUrl = base_url($ktp_dokumen['file_path']);
+                                    $fileIdName = $ktp_dokumen['nama_dokumen'] ?? 'Berkas KTP';
+                                }
 
-                <!-- Nama Ibu Kandung -->
-                <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start justify-between">
-                    <div>
-                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Nama Ibu Kandung / Pasangan</span>
-                        <span class="text-xs font-extrabold text-slate-900 block mt-0.5"><?= esc($ibuKandungVal) ?></span>
-                    </div>
-                    <button type="button" onclick="salinTeks('<?= esc($ibuKandungVal) ?>', 'Nama Ibu Kandung')" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-white rounded-lg transition" title="Salin Nama Ibu">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    </button>
-                </div>
-
-                <!-- No Reff Permohonan OJK -->
-                <div class="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex items-start justify-between">
-                    <div>
-                        <span class="text-[11px] font-bold text-blue-800 uppercase tracking-wider block">No. Reff IDEB OJK</span>
-                        <span class="text-xs font-mono font-bold text-blue-900 truncate block mt-0.5 max-w-[190px]" title="<?= esc($no_reff_slik ?? '') ?>">
-                            <?= esc($no_reff_slik ?? '-') ?>
-                        </span>
-                    </div>
-                    <button type="button" onclick="salinTeks('<?= esc($no_reff_slik ?? '') ?>', 'No Reff SLIK')" class="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-white rounded-lg transition" title="Salin No Reff">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                    </button>
+                                // Deteksi file permohonan
+                                $filePermUrl = '';
+                                $filePermName = '';
+                                if (!empty($row['file_permohonan'])) {
+                                    if (is_array($row['file_permohonan'])) {
+                                        $filePermUrl = $row['file_permohonan']['url'] ?? (!empty($row['file_permohonan']['path']) ? base_url($row['file_permohonan']['path']) : '');
+                                        $filePermName = $row['file_permohonan']['name'] ?? 'Berkas Permohonan';
+                                    } else {
+                                        $filePermUrl = base_url($row['file_permohonan']);
+                                        $filePermName = basename($row['file_permohonan']);
+                                    }
+                                }
+                            ?>
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="py-3 px-3 text-center whitespace-nowrap">
+                                    <div class="flex items-center justify-center">
+                                        <input type="checkbox" class="slik-subjek-item w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer" value="<?= esc($rNoReff) ?>" checked>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3 whitespace-nowrap">
+                                    <?php if (strtolower($rStatus) === 'telah terbit' || strtolower($rStatus) === 'terbit'): ?>
+                                        <span class="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Telah Terbit
+                                        </span>
+                                    <?php elseif (stripos(strtolower($rStatus), 'menunggu') !== false): ?>
+                                        <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-blue-300">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span> <?= esc($rStatus) ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-300">
+                                            <?= esc($rStatus) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="py-3 px-3 whitespace-nowrap">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-mono font-bold text-blue-900 text-[11px] max-w-[220px] truncate" title="<?= esc($rNoReff) ?>">
+                                            <?= esc($rNoReff) ?>
+                                        </span>
+                                        <button type="button" onclick="salinTeks('<?= esc($rNoReff) ?>', 'No. Reff SLIK')" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer" title="Salin No Reff">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3 whitespace-nowrap text-slate-600 text-[11px]">
+                                    <?= esc($rTgl) ?>
+                                </td>
+                                <td class="py-3 px-3 whitespace-nowrap">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-mono font-bold text-slate-900 text-[11px]">
+                                            <?= esc($rNoId) ?>
+                                        </span>
+                                        <button type="button" onclick="salinTeks('<?= esc($rNoId) ?>', 'No. ID')" class="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition cursor-pointer" title="Salin No. ID">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3 whitespace-nowrap">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-bold text-slate-900"><?= esc($rNama) ?></span>
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase">
+                                            <?= esc($rKeterkaitan) ?>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3 whitespace-nowrap text-slate-700 text-[11px]">
+                                    <?= esc($rTempatLahir ? $rTempatLahir . ', ' : '') ?><?= esc($rTglLahir ?: '-') ?>
+                                </td>
+                                <td class="py-3 px-3 whitespace-nowrap text-slate-700 text-[11px]">
+                                    <?= esc($rIbu ?: '-') ?>
+                                </td>
+                                <td class="py-3 px-3 whitespace-nowrap text-center">
+                                    <div class="inline-flex items-center gap-1 justify-center">
+                                        <?php if (!empty($fileIdUrl)): ?>
+                                            <button type="button" onclick="bukaModalPdfPreview('<?= esc($fileIdUrl) ?>', '<?= esc($fileIdName) ?>')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-[10px] font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer" title="Lihat Identitas: <?= esc($fileIdName) ?>">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
+                                                <span>Identitas</span>
+                                            </button>
+                                        <?php endif; ?>
+                                        <?php if (!empty($filePermUrl)): ?>
+                                            <button type="button" onclick="bukaModalPdfPreview('<?= esc($filePermUrl) ?>', '<?= esc($filePermName) ?>')" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer" title="Lihat Permohonan: <?= esc($filePermName) ?>">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                <span>Permohonan</span>
+                                            </button>
+                                        <?php endif; ?>
+                                        <?php if (empty($fileIdUrl) && empty($filePermUrl)): ?>
+                                            <span class="text-slate-400 text-[10px] italic">-</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-3 whitespace-nowrap text-center">
+                                    <div class="inline-flex items-center gap-1 justify-center">
+                                        <button type="button" onclick="salinTeks('<?= esc($rNoId) ?>', 'No. ID')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold transition border border-slate-200 cursor-pointer" title="Salin NIK / NPWP">
+                                            Salin ID
+                                        </button>
+                                        <button type="button" onclick="salinTeks('<?= esc($rNoReff) ?>', 'No. Reff SLIK')" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[10px] font-bold transition border border-blue-200 cursor-pointer" title="Salin No Reff SLIK">
+                                            Salin Reff
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -757,11 +911,40 @@
             });
         }
 
-        // Export File TXT Permohonan OJK
+        // Toggle Pilih Semua Subjek SLIK
+        function toggleSelectAllSubjekSlik(master) {
+            document.querySelectorAll('.slik-subjek-item').forEach(cb => {
+                cb.checked = master.checked;
+            });
+        }
+
+        // Export File TXT Permohonan OJK (Batch Terpilih dari Tabel Subjek)
         function exportTxtPermohonanSlik() {
-            const lineReff = <?= json_encode($no_reff_slik ?? '') ?>;
-            const filename = <?= json_encode('Permohonan_SLIK_' . ($kredit['nomor_aplikasi'] ?? 'CAM') . '.txt') ?>;
-            const content = lineReff + "\r\n";
+            let checkedItems = Array.from(document.querySelectorAll('.slik-subjek-item:checked'));
+            if (checkedItems.length === 0) {
+                checkedItems = Array.from(document.querySelectorAll('.slik-subjek-item'));
+            }
+
+            let lines = [];
+            checkedItems.forEach(cb => {
+                let val = cb.value ? cb.value.trim() : '';
+                if (val && val !== '-') {
+                    lines.push(val);
+                }
+            });
+
+            if (lines.length === 0) {
+                const defaultReff = <?= json_encode($no_reff_slik ?? '') ?>;
+                if (defaultReff && defaultReff !== '-') lines.push(defaultReff);
+            }
+
+            if (lines.length === 0) {
+                Swal.fire('Data Kosong', 'Tidak ada No. Reff SLIK yang dapat diekspor.', 'warning');
+                return;
+            }
+
+            const content = lines.join("\r\n") + "\r\n";
+            const filename = <?= json_encode('Permohonan_SLIK_' . ($kredit['nomor_aplikasi'] ?? 'IDEB') . '.txt') ?>;
 
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -778,7 +961,7 @@
             Swal.fire({
                 icon: 'success',
                 title: 'Berkas TXT Berhasil Diunduh!',
-                text: `File ${filename} siap diunggah ke portal resmi SLIK OJK.`,
+                text: `${lines.length} No. Reff SLIK berhasil diekspor ke file ${filename}. Siap diunggah ke portal SLIK OJK.`,
                 confirmButtonColor: '#2563eb'
             });
         }
@@ -916,9 +1099,32 @@
         function bukaModalPdfPreview(url, fileName) {
             const modal = document.getElementById('modalPdfPopUp');
             const frame = document.getElementById('modalPdfFrame');
+            const img = document.getElementById('modalPdfImg');
             const subTitle = document.getElementById('modalPdfSubTitle');
-            if (modal && frame) {
-                frame.src = url;
+            if (modal) {
+                const ext = (url.split('.').pop() || '').toLowerCase().split('?')[0];
+                const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
+
+                if (isImage) {
+                    if (img) {
+                        img.src = url;
+                        img.classList.remove('hidden');
+                    }
+                    if (frame) {
+                        frame.classList.add('hidden');
+                        frame.src = 'about:blank';
+                    }
+                } else {
+                    if (frame) {
+                        frame.src = url;
+                        frame.classList.remove('hidden');
+                    }
+                    if (img) {
+                        img.classList.add('hidden');
+                        img.src = '';
+                    }
+                }
+
                 if (subTitle && fileName) subTitle.innerText = fileName;
                 modal.classList.remove('hidden');
                 document.body.classList.add('overflow-hidden');
@@ -928,9 +1134,14 @@
         function tutupModalPdfPreview() {
             const modal = document.getElementById('modalPdfPopUp');
             const frame = document.getElementById('modalPdfFrame');
+            const img = document.getElementById('modalPdfImg');
             if (modal) {
                 modal.classList.add('hidden');
                 if (frame) frame.src = 'about:blank';
+                if (img) {
+                    img.src = '';
+                    img.classList.add('hidden');
+                }
                 document.body.classList.remove('overflow-hidden');
             }
         }
@@ -943,17 +1154,17 @@
         });
     </script>
 
-    <!-- Modal Pop-up Preview PDF SLIK -->
+    <!-- Modal Pop-up Preview Dokumen SLIK (PDF / Gambar) -->
     <div id="modalPdfPopUp" onclick="if(event.target === this) tutupModalPdfPreview()" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 hidden">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden animate-in fade-in duration-200">
             <div class="px-5 py-3.5 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/></svg>
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-xs sm:text-sm font-bold text-slate-900 truncate" id="modalPdfTitle">Dokumen Laporan SLIK (PDF)</h3>
-                        <p class="text-[11px] text-slate-400 truncate" id="modalPdfSubTitle">Pratinjau dokumen iDeb resmi</p>
+                        <h3 class="text-xs sm:text-sm font-bold text-slate-900 truncate" id="modalPdfTitle">Pratinjau Dokumen SLIK</h3>
+                        <p class="text-[11px] text-slate-400 truncate" id="modalPdfSubTitle">Pratinjau berkas identitas / laporan resmi</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -962,11 +1173,12 @@
                     </button>
                 </div>
             </div>
-            <div class="flex-1 bg-slate-100 relative p-1 overflow-hidden">
+            <div class="flex-1 bg-slate-100 relative p-2 overflow-hidden flex items-center justify-center">
                 <iframe id="modalPdfFrame" src="about:blank" class="w-full h-full rounded-xl border border-slate-200 bg-white" frameborder="0"></iframe>
+                <img id="modalPdfImg" src="" alt="Pratinjau Berkas" class="max-h-full max-w-full object-contain mx-auto hidden rounded-xl shadow-xs bg-white p-2 border border-slate-200">
             </div>
             <div class="px-5 py-3 border-t border-slate-200 bg-slate-50/80 flex items-center justify-between gap-3 text-xs">
-                <span class="text-slate-400 text-[11px] hidden sm:inline">Gunakan kontrol zoom &amp; print dari viewer PDF di atas</span>
+                <span class="text-slate-400 text-[11px] hidden sm:inline">Gunakan kontrol di dalam viewer atau klik tombol Tutup untuk kembali</span>
                 <button type="button" onclick="tutupModalPdfPreview()" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl transition cursor-pointer">
                     Tutup
                 </button>
