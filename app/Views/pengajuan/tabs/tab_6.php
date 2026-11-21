@@ -109,16 +109,6 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <?php if (!$canEditSlik): ?>
-                <button type="button" 
-                        id="btnKirimKePetugasSlikHeader" 
-                        onclick="konfirmasiKirimPengajuanKePetugasSlik()" 
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 <?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'bg-indigo-700 hover:bg-indigo-800' : 'bg-blue-600 hover:bg-blue-700' ?> text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer" 
-                        title="Kirim Berkas Permohonan SLIK ke Petugas SLIK Terpusat">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                    <span id="textBtnKirimSlikHeader"><?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'Antrean Petugas SLIK' : 'Kirim Pengajuan ke Petugas SLIK' ?></span>
-                </button>
-            <?php endif; ?>
             <button type="button" onclick="bukaModalTambahPermohonanSlik()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer" title="Tambah permohonan SLIK untuk pasangan, penjamin, atau pengurus">
                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
                 <span>Tambah Pengajuan SLIK</span>
