@@ -796,8 +796,8 @@
                         <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                         </div>
-                        <h4 class="text-sm font-bold text-slate-900 group-hover:text-blue-700 mb-1">Perorangan / Individu</h4>
-                        <p class="text-[11px] text-slate-500 leading-relaxed">Untuk nasabah individu, karyawan, pemilik usaha mikro/perorangan.</p>
+                        <h4 class="text-sm font-bold text-slate-900 group-hover:text-blue-700 mb-1">Perorangan</h4>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">Individu, karyawan, atau usaha mikro.</p>
                     </div>
                     <span class="mt-4 inline-flex items-center text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform">
                         Buka Form Perorangan &rarr;
@@ -811,7 +811,7 @@
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                         </div>
                         <h4 class="text-sm font-bold text-slate-900 group-hover:text-indigo-700 mb-1">Badan Usaha</h4>
-                        <p class="text-[11px] text-slate-500 leading-relaxed">Untuk perseroan terbatas (PT), CV, Koperasi, Yayasan, atau Firma.</p>
+                        <p class="text-[11px] text-slate-500 leading-relaxed">PT, CV, Koperasi, atau Yayasan.</p>
                     </div>
                     <span class="mt-4 inline-flex items-center text-xs font-bold text-indigo-600 group-hover:translate-x-1 transition-transform">
                         Buka Form Badan Usaha &rarr;
