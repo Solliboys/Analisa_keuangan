@@ -20,6 +20,10 @@
         .is-modal .no-print-toolbar { display: none !important; }
         html.is-modal body,
         .is-modal body { padding: 1rem !important; }
+        @media (max-width: 640px) {
+            html.is-modal body,
+            .is-modal body { padding: 0.25rem !important; }
+        }
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #cbd5e1; padding: 5px 8px; vertical-align: top; }
         th { background-color: #f8fafc; font-weight: 700; text-transform: uppercase; font-size: 10px; color: #334155; }
@@ -30,7 +34,7 @@
         }
     </script>
 </head>
-<body class="bg-slate-100 p-4 sm:p-8 antialiased">
+<body class="bg-slate-100 p-2 sm:p-6 md:p-8 antialiased">
 
     <?php 
     $isModalView = !empty($_GET['modal']) || isset($_GET['preview']) || isset($_GET['popup']);
@@ -57,37 +61,44 @@
     </script>
     <?php endif; ?>
 
-    <!-- Paper Container (Matches result.pdf layout exactly) -->
-    <div class="page-sheet max-w-4xl mx-auto bg-white border border-slate-200 rounded-xl p-8 sm:p-12 shadow-sm">
+    <!-- Paper Container -->
+    <div class="page-sheet max-w-4xl mx-auto bg-white border border-slate-200 rounded-xl p-3.5 sm:p-8 md:p-12 shadow-sm">
 
         <!-- ============================================================== -->
-        <!-- KOP SURAT RESMI PERBANKAN / LEMBAGA KEUANGAN                   -->
+        <!-- KOP SURAT RESMI LEMBAGA KEUANGAN                               -->
         <!-- ============================================================== -->
-        <div class="mb-5 pb-2">
-            <div class="flex items-center justify-between gap-5 pb-3">
+        <?php
+        $rawLogo = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : '';
+        $logoUrl = base_url('img/logo-oap.png?v=2');
+        if (!empty($rawLogo)) {
+            if (str_starts_with($rawLogo, 'http://') || str_starts_with($rawLogo, 'https://')) {
+                $logoUrl = $rawLogo;
+            } elseif (file_exists(FCPATH . $rawLogo)) {
+                $logoUrl = base_url($rawLogo);
+            } elseif (file_exists(FCPATH . 'uploads/logo/' . $rawLogo)) {
+                $logoUrl = base_url('uploads/logo/' . $rawLogo);
+            }
+        }
+        ?>
+        <div class="mb-4 sm:mb-5 pb-2">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-5 pb-3">
                 <!-- Logo Lembaga di Kiri -->
                 <div class="shrink-0 flex items-center justify-center">
-                    <?php if (!empty($pengaturan_sistem['logo_aplikasi'])): ?>
-                        <img src="<?= base_url('uploads/logo/' . $pengaturan_sistem['logo_aplikasi']) ?>" alt="Logo" class="h-16 w-auto max-w-[120px] object-contain">
-                    <?php else: ?>
-                        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-900 to-blue-900 text-white flex flex-col items-center justify-center shadow-sm border border-slate-700">
-                            <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                            </svg>
-                            <span class="text-[8px] font-extrabold uppercase tracking-widest text-slate-200 mt-0.5">CREDIT</span>
-                        </div>
-                    <?php endif; ?>
+                    <img src="<?= $logoUrl ?>" 
+                         onerror="this.onerror=null; this.src='<?= base_url('img/logo-oap.png?v=2') ?>';" 
+                         alt="Logo" 
+                         class="h-12 sm:h-16 w-auto max-w-[110px] sm:max-w-[130px] object-contain">
                 </div>
 
                 <!-- Teks Kop Surat di Tengah -->
-                <div class="flex-1 text-center px-2">
-                    <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-wider uppercase leading-snug">
-                        <?= esc($pengaturan_sistem['nama_lembaga'] ?: 'PT BANK PEREKONOMIAN RAKYAT / LEMBAGA PEMBIAYAAN OTW') ?>
+                <div class="flex-1 text-center px-1 sm:px-2">
+                    <h2 class="text-sm sm:text-lg font-black text-slate-900 tracking-wider uppercase leading-snug">
+                        <?= esc($pengaturan_sistem['nama_lembaga'] ?: 'PT GUSAHA TEKNOLOGI INDONESIA') ?>
                     </h2>
-                    <h3 class="text-xs font-bold text-blue-800 uppercase tracking-widest mt-0.5">
+                    <h3 class="text-[11px] sm:text-xs font-bold text-blue-800 uppercase tracking-widest mt-0.5">
                         KOMITE KREDIT & DIVISI MANAJEMEN RISIKO PEMBIAYAAN
                     </h3>
-                    <p class="text-[10px] text-slate-600 mt-1 leading-relaxed">
+                    <p class="text-[9px] sm:text-[10px] text-slate-600 mt-1 leading-relaxed">
                         Gedung Graha Finansial Lt. 5, Jl. Jenderal Sudirman Kav. 45-46 &bull; Telp: (021) 5290-8800 (Hunting) &bull; Fax: (021) 5290-8801<br>
                         Email: <span class="text-blue-700 underline">komite.kredit@bank-otw.co.id</span> &bull; Website: www.credit-engine.co.id
                     </p>
@@ -110,51 +121,51 @@
             <div class="w-full border-t border-slate-900 mt-[2px]"></div>
         </div>
 
-        <!-- Judul Resmi Dokumen CAM -->
-        <div class="text-center my-4">
-            <h1 class="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wide underline underline-offset-4 decoration-2">
-                CREDIT APPLICATION & MEMORANDUM (CAM)
+        <!-- Judul Resmi Dokumen Evaluasi Kredit -->
+        <div class="text-center my-3 sm:my-4">
+            <h1 class="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wide underline underline-offset-4 decoration-2 break-words">
+                LAPORAN ANALISA KELAYAKAN FASILITAS KREDIT
             </h1>
-            <p class="text-[11px] font-bold text-slate-700 mt-1 uppercase tracking-wider">
-                LAPORAN ANALISA KELAYAKAN FASILITAS KREDIT & RISALAH KEPUTUSAN KOMITE
+            <p class="text-[10px] sm:text-[11px] font-bold text-slate-700 mt-1 uppercase tracking-wider">
+                RISALAH KEPUTUSAN KOMITE KREDIT & PENILAIAN 5C
             </p>
-            <p class="text-[10px] text-slate-500 mt-0.5">
-                Nomor: CAM/<?= date('Y/m', strtotime($kredit['created_at'])) ?>/<?= esc($kredit['nomor_aplikasi']) ?> &bull; Sifat: RAHASIA / CONFIDENTIAL
+            <p class="text-[9px] sm:text-[10px] text-slate-500 mt-0.5 break-all">
+                Nomor: <?= date('Y/m', strtotime($kredit['created_at'])) ?>/<?= esc($kredit['nomor_aplikasi']) ?> &bull; Sifat: RAHASIA / CONFIDENTIAL
             </p>
         </div>
 
         <!-- Metadata Box Grid -->
-        <div class="border border-slate-300 rounded-xl p-4 mb-6 bg-white text-xs grid grid-cols-2 gap-x-8 gap-y-2">
+        <div class="border border-slate-300 rounded-xl p-3 sm:p-4 mb-6 bg-white text-xs grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 sm:gap-y-2.5">
             <div>
-                <span class="text-slate-500">Nomor Dokumen Review:</span>
-                <span class="font-bold text-slate-900 block"><?= esc($kredit['nomor_aplikasi']) ?></span>
+                <span class="text-slate-500 block text-[11px]">Nomor Dokumen Review:</span>
+                <span class="font-bold text-slate-900 block break-words"><?= esc($kredit['nomor_aplikasi']) ?></span>
             </div>
             <div>
-                <span class="text-slate-500">Tanggal Review:</span>
+                <span class="text-slate-500 block text-[11px]">Tanggal Review:</span>
                 <span class="font-bold text-slate-900 block"><?= date('d F Y', strtotime($kredit['created_at'])) ?></span>
             </div>
             <div>
-                <span class="text-slate-500">Periode Analisa:</span>
+                <span class="text-slate-500 block text-[11px]">Periode Analisa:</span>
                 <span class="font-bold text-slate-900 block"><?= date('F Y') ?></span>
             </div>
             <div>
-                <span class="text-slate-500">Nama Calon Debitur:</span>
-                <span class="font-bold text-slate-900 block"><?= esc($kredit['nama_debitur'] ?: ($kredit['nama_usaha'] ?: '-')) ?></span>
+                <span class="text-slate-500 block text-[11px]">Nama Calon Debitur:</span>
+                <span class="font-bold text-slate-900 block break-words"><?= esc($kredit['nama_debitur'] ?: ($kredit['nama_usaha'] ?: '-')) ?></span>
             </div>
             <div>
-                <span class="text-slate-500">Plafon Diajukan:</span>
+                <span class="text-slate-500 block text-[11px]">Plafon Diajukan:</span>
                 <span class="font-bold text-slate-900 block">Rp <?= number_format((float)($kredit['plafon_pengajuan'] ?? 0), 0, ',', '.') ?></span>
             </div>
             <div>
-                <span class="text-slate-500">Rekomendasi Plafon Analis / AI:</span>
+                <span class="text-slate-500 block text-[11px]">Rekomendasi Plafon Analis / AI:</span>
                 <span class="font-bold text-blue-700 block">Rp <?= number_format((float)($analisa['rekomendasi_plafon_ai'] ?? $kredit['plafon_pengajuan']), 0, ',', '.') ?></span>
             </div>
             <div>
-                <span class="text-slate-500">Kepada:</span>
+                <span class="text-slate-500 block text-[11px]">Kepada:</span>
                 <span class="font-bold text-slate-900 block uppercase">Ketua Komite Kredit</span>
             </div>
             <div>
-                <span class="text-slate-500">Dari:</span>
+                <span class="text-slate-500 block text-[11px]">Dari:</span>
                 <span class="font-bold text-slate-900 block">Senior Credit Reviewer (Sistem AI)</span>
             </div>
         </div>
@@ -227,7 +238,8 @@
             </div>
 
             <!-- Tabel Parameter Nilai -->
-            <table>
+            <div class="w-full overflow-x-auto my-2">
+            <table class="min-w-[420px]">
                 <thead>
                     <tr>
                         <th style="width: 45%;">PARAMETER</th>
@@ -273,6 +285,7 @@
                     </tr>
                 </tbody>
             </table>
+            </div>
 
             <!-- Daftar Temuan Evaluasi Kritis -->
             <div class="border-l-4 border-l-rose-500 bg-rose-50/20 p-4 rounded-r-xl mt-4">
@@ -353,7 +366,8 @@
             </div>
 
             <!-- Tabel Rincian Bobot 5C -->
-            <table>
+            <div class="w-full overflow-x-auto my-2">
+            <table class="min-w-[640px]">
                 <thead>
                     <tr>
                         <th>PARAMETER 5C</th>
@@ -433,6 +447,7 @@
                     </tr>
                 </tfoot>
             </table>
+            </div>
         </div>
 
         <!-- ========================================================
@@ -470,7 +485,8 @@
                 <div class="font-bold text-xs text-blue-900 mb-1">
                     A. Analisis Character (Karakter & Integritas) - Bobot: 20% | Skor: <?= $sChar ?>/100
                 </div>
-                <table class="mb-2">
+                <div class="w-full overflow-x-auto my-2">
+                <table class="mb-2 min-w-[500px]">
                     <thead>
                         <tr>
                             <th>INDIKATOR / RASIO</th>
@@ -506,13 +522,15 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
 
                 <?php if (!empty($slik) && is_array($slik)): ?>
                     <!-- Tabel Rincian Fasilitas Kredit SLIK OJK -->
                     <div class="font-bold text-[11px] text-slate-800 mt-2 mb-1">
                         Rincian Fasilitas Kredit Bank Lain (SLIK OJK / iDeb):
                     </div>
-                    <table class="mb-2 text-[10px]">
+                    <div class="w-full overflow-x-auto my-2">
+                    <table class="mb-2 text-[10px] min-w-[560px]">
                         <thead>
                             <tr class="bg-slate-100">
                                 <th style="width: 20%;">Debitur / Pemilik</th>
@@ -538,6 +556,7 @@
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                 <?php endif; ?>
 
                 <?php if (!empty($kredit['slik_verified_by']) || !empty($kredit['ringkasan_slik'])): ?>
@@ -557,7 +576,8 @@
                 <div class="font-bold text-xs text-blue-900 mb-1">
                     B. Analisis Capacity (Kapasitas Keuangan & Arus Kas) - Bobot: 30% | Skor: <?= $sCap ?>/100
                 </div>
-                <table class="mb-2">
+                <div class="w-full overflow-x-auto my-2">
+                <table class="mb-2 min-w-[520px]">
                     <thead>
                         <tr>
                             <th>INDIKATOR / RASIO</th>
@@ -622,6 +642,7 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
 
             <!-- C. Capital -->
@@ -654,7 +675,8 @@
                 <?php if (empty($agunan)): ?>
                     <p class="text-xs text-slate-400 italic">Data agunan tidak tercatat.</p>
                 <?php else: ?>
-                    <table class="mb-2">
+                    <div class="w-full overflow-x-auto my-2">
+                    <table class="mb-2 min-w-[560px]">
                         <thead>
                             <tr>
                                 <th>OBJEK AGUNAN</th>
@@ -685,6 +707,7 @@
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                 <?php endif; ?>
                 <p class="text-[11px] text-slate-600">
                     Nilai likuidasi jaminan mencukupi seluruh pokok pembiayaan dan siap dipasang Hak Tanggungan Peringkat Pertama (APHT) notariil.
@@ -710,7 +733,8 @@
                 BAB 5. STRUKTUR BIAYA & PENCAIRAN BERSIH (DISBURSEMENT)
             </h2>
 
-            <table class="mb-4">
+            <div class="w-full overflow-x-auto my-2">
+            <table class="mb-4 min-w-[480px]">
                 <thead>
                     <tr>
                         <th style="width: 50%;">KOMPONEN BIAYA</th>
@@ -779,6 +803,7 @@
                     </tr>
                 </tbody>
             </table>
+            </div>
         </div>
 
         <!-- ========================================================
@@ -789,7 +814,8 @@
                 BAB 6. SYARAT DAN KETENTUAN KREDIT (COVENANTS)
             </h2>
 
-            <table>
+            <div class="w-full overflow-x-auto my-2">
+            <table class="min-w-[520px]">
                 <thead>
                     <tr>
                         <th>JENIS KETENTUAN</th>
@@ -825,6 +851,7 @@
                     </tr>
                 </tbody>
             </table>
+            </div>
         </div>
 
         <!-- ========================================================
@@ -849,7 +876,8 @@
             </div>
 
             <!-- Tabel Kekuatan & Risiko -->
-            <table class="mb-6">
+            <div class="w-full overflow-x-auto my-2">
+            <table class="mb-6 min-w-[480px]">
                 <thead>
                     <tr>
                         <th style="width: 33%;">KEKUATAN UTAMA</th>
@@ -865,6 +893,7 @@
                     </tr>
                 </tbody>
             </table>
+            </div>
         </div>
 
     </div>
