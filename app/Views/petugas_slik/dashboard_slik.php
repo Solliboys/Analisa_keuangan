@@ -322,8 +322,16 @@
                         <?php if (empty($daftar_pengajuan)): ?>
                             <tr id="emptyTableRow">
                                 <td colspan="9" class="text-center py-12 text-slate-400">
-                                    <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit yang masuk.</p>
-                                    <p class="text-[11px] text-slate-400 mt-1">Daftar berkas nasabah yang diinput staf pengusul akan otomatis muncul di sini untuk verifikasi riwayat SLIK OJK.</p>
+                                    <?php if (($petugas_slik_aktif ?? 1) !== 1): ?>
+                                        <div class="w-10 h-10 mx-auto mb-2 text-slate-300">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                        </div>
+                                        <p class="font-semibold text-slate-700 text-xs">Petugas SLIK Sedang Dinonaktifkan</p>
+                                        <p class="text-[11px] text-slate-400 mt-1 max-w-md mx-auto">Sistem berjalan dalam Mode Fleksibel, sehingga berkas pengajuan kredit dan verifikasi SLIK ditangani langsung secara mandiri oleh Pengusul.</p>
+                                    <?php else: ?>
+                                        <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit yang masuk.</p>
+                                        <p class="text-[11px] text-slate-400 mt-1">Daftar berkas nasabah yang diinput staf pengusul akan otomatis muncul di sini untuk verifikasi riwayat SLIK OJK.</p>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php else: ?>
@@ -416,8 +424,13 @@
             <div class="block md:hidden divide-y divide-slate-100" id="mobileCardsContainer">
                 <?php if (empty($daftar_pengajuan)): ?>
                     <div class="p-6 text-center text-slate-400" id="mobileEmptyState">
-                        <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit yang masuk.</p>
-                        <p class="text-[11px] text-slate-400 mt-1">Daftar berkas nasabah yang diinput staf pengusul akan otomatis muncul di sini.</p>
+                        <?php if (($petugas_slik_aktif ?? 1) !== 1): ?>
+                            <p class="font-semibold text-slate-700 text-xs">Petugas SLIK Sedang Dinonaktifkan</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Sistem dalam Mode Fleksibel, verifikasi SLIK ditangani langsung oleh Pengusul.</p>
+                        <?php else: ?>
+                            <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit yang masuk.</p>
+                            <p class="text-[11px] text-slate-400 mt-1">Daftar berkas nasabah yang diinput staf pengusul akan otomatis muncul di sini.</p>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <?php foreach ($daftar_pengajuan as $row): ?>

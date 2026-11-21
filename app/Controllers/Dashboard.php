@@ -181,12 +181,10 @@ class Dashboard extends BaseController
         } elseif ($role === 'petugas_slik' || $role === 'petugas slik' || $role === 'slik') {
             // Data untuk Petugas SLIK
             $ijinSlikPengusul = (int)($pengaturanSistem['ijin_pengusul_isi_slik'] ?? 1);
+            $petugasSlikAktif = (int)($pengaturanSistem['petugas_slik_aktif'] ?? ($ijinSlikPengusul == 0 ? 1 : 0));
             $slikModel   = new \App\Models\SlikModel();
 
-            // Tampilkan seluruh berkas pengajuan kredit yang masuk untuk antrean verifikasi SLIK
-            $semuaKredit = $kreditModel->orderBy('created_at', 'DESC')->findAll();
-            
-            $totalPengajuan     = count($semuaKredit);
+            $totalPengajuan     = 0;
             $totalPlafon        = 0;
             $totalDraft         = 0;
             $totalDiajukan      = 0;
@@ -195,72 +193,81 @@ class Dashboard extends BaseController
             $totalSlikLancar    = 0;
             $totalSlikTunggakan = 0;
             $totalMenungguSlik  = 0;
+            $semuaKredit        = [];
 
-            // Preload SLIK sekali (hilangkan N+1 query di dalam loop)
-            $slikByKredit = [];
-            $allIdsSlik = !empty($semuaKredit) ? array_column($semuaKredit, 'kredit_id') : [];
-            if (!empty($allIdsSlik)) {
-                foreach ($slikModel->whereIn('kredit_id', $allIdsSlik)->findAll() as $sr) {
-                    $slikByKredit[$sr['kredit_id']][] = $sr;
+            // Hanya tampilkan data pengajuan slik jika Petugas SLIK dalam status AKTIF
+            if ($petugasSlikAktif === 1) {
+                // Tampilkan seluruh berkas pengajuan kredit yang masuk untuk antrean verifikasi SLIK
+                $semuaKredit = $kreditModel->orderBy('created_at', 'DESC')->findAll();
+                $totalPengajuan = count($semuaKredit);
+
+                // Preload SLIK sekali (hilangkan N+1 query di dalam loop)
+                $slikByKredit = [];
+                $allIdsSlik = !empty($semuaKredit) ? array_column($semuaKredit, 'kredit_id') : [];
+                if (!empty($allIdsSlik)) {
+                    foreach ($slikModel->whereIn('kredit_id', $allIdsSlik)->findAll() as $sr) {
+                        $slikByKredit[$sr['kredit_id']][] = $sr;
+                    }
                 }
+
+                foreach ($semuaKredit as &$k) {
+                    $totalPlafon += (float)($k['plafon_pengajuan'] ?? 0);
+                    $st = strtolower($k['status_pengajuan'] ?? '');
+                    if ($st === 'draft') $totalDraft++;
+                    elseif ($st === 'diajukan') $totalDiajukan++;
+                    elseif (strpos($st, 'setuju') !== false) $totalDisetujui++;
+
+                    // Periksa data fasilitas SLIK dari map preloaded
+                    $slikRows = $slikByKredit[$k['kredit_id']] ?? [];
+                    $totalBakiDebet = 0;
+                    $adaTunggakan = false;
+                    foreach ($slikRows as $sr) {
+                        $totalBakiDebet += (float)($sr['outstanding'] ?? 0);
+                        $kol = strtolower($sr['kelancaran'] ?? '');
+                        if ($kol !== 'lancar' && !empty($kol)) {
+                            $adaTunggakan = true;
+                        }
+                    }
+                    $k['total_slik_records']    = count($slikRows);
+                    $k['total_baki_debet_slik'] = $totalBakiDebet;
+                    $k['ada_tunggakan_slik']    = $adaTunggakan;
+                    
+                    // Status Terbit SLIK (Belum Terbit / Menunggu Pengecekan / Terbit) & Hasil SLIK
+                    $isTerbit = (($k['status_slik'] ?? '') === 'Terbit' || !empty($k['slik_verified_at']));
+                    if ($isTerbit) {
+                        $totalSlikChecked++;
+                        $k['status_slik'] = 'Terbit';
+                        if (!empty($k['hasil_slik'])) {
+                            // Pertahankan hasil resmi dari petugas slik
+                        } elseif ($adaTunggakan) {
+                            $k['hasil_slik'] = 'Kolektibilitas 2-5 (Ada Tunggakan)';
+                        } else {
+                            $k['hasil_slik'] = 'Kol 1 (Lancar / Bersih)';
+                        }
+                        if ($adaTunggakan) {
+                            $totalSlikTunggakan++;
+                        } else {
+                            $totalSlikLancar++;
+                        }
+                    } else {
+                        $totalMenungguSlik++;
+                        if (($k['status_slik'] ?? '') === 'Menunggu Pengecekan' || strtolower($k['status_pengajuan'] ?? '') !== 'draft') {
+                            $k['status_slik'] = 'Menunggu Pengecekan';
+                            $k['hasil_slik']  = 'Menunggu Pengecekan Petugas SLIK';
+                        } else {
+                            $k['status_slik'] = 'Belum Terbit';
+                            $k['hasil_slik']  = 'Menunggu Pengecekan';
+                        }
+                    }
+                }
+                unset($k);
             }
-
-            foreach ($semuaKredit as &$k) {
-                $totalPlafon += (float)($k['plafon_pengajuan'] ?? 0);
-                $st = strtolower($k['status_pengajuan'] ?? '');
-                if ($st === 'draft') $totalDraft++;
-                elseif ($st === 'diajukan') $totalDiajukan++;
-                elseif (strpos($st, 'setuju') !== false) $totalDisetujui++;
-
-                // Periksa data fasilitas SLIK dari map preloaded
-                $slikRows = $slikByKredit[$k['kredit_id']] ?? [];
-                $totalBakiDebet = 0;
-                $adaTunggakan = false;
-                foreach ($slikRows as $sr) {
-                    $totalBakiDebet += (float)($sr['outstanding'] ?? 0);
-                    $kol = strtolower($sr['kelancaran'] ?? '');
-                    if ($kol !== 'lancar' && !empty($kol)) {
-                        $adaTunggakan = true;
-                    }
-                }
-                $k['total_slik_records']    = count($slikRows);
-                $k['total_baki_debet_slik'] = $totalBakiDebet;
-                $k['ada_tunggakan_slik']    = $adaTunggakan;
-                
-                // Status Terbit SLIK (Belum Terbit / Menunggu Pengecekan / Terbit) & Hasil SLIK
-                $isTerbit = (($k['status_slik'] ?? '') === 'Terbit' || !empty($k['slik_verified_at']));
-                if ($isTerbit) {
-                    $totalSlikChecked++;
-                    $k['status_slik'] = 'Terbit';
-                    if (!empty($k['hasil_slik'])) {
-                        // Pertahankan hasil resmi dari petugas slik
-                    } elseif ($adaTunggakan) {
-                        $k['hasil_slik'] = 'Kolektibilitas 2-5 (Ada Tunggakan)';
-                    } else {
-                        $k['hasil_slik'] = 'Kol 1 (Lancar / Bersih)';
-                    }
-                    if ($adaTunggakan) {
-                        $totalSlikTunggakan++;
-                    } else {
-                        $totalSlikLancar++;
-                    }
-                } else {
-                    $totalMenungguSlik++;
-                    if (($k['status_slik'] ?? '') === 'Menunggu Pengecekan' || strtolower($k['status_pengajuan'] ?? '') !== 'draft') {
-                        $k['status_slik'] = 'Menunggu Pengecekan';
-                        $k['hasil_slik']  = 'Menunggu Pengecekan Petugas SLIK';
-                    } else {
-                        $k['status_slik'] = 'Belum Terbit';
-                        $k['hasil_slik']  = 'Menunggu Pengecekan';
-                    }
-                }
-            }
-            unset($k);
 
             $data = [
                 'title'               => 'Workspace Petugas SLIK | ' . ($pengaturanSistem['nama_aplikasi'] ?? 'Credit Engine'),
                 'nama_lengkap'        => session()->get('nama_lengkap'),
                 'jabatan'             => $jabatan,
+                'petugas_slik_aktif'  => $petugasSlikAktif,
                 'total_pengajuan'     => $totalPengajuan,
                 'total_plafon'        => $totalPlafon,
                 'total_draft'         => $totalDraft,
