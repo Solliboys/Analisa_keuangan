@@ -41,7 +41,7 @@
     if (empty($namaLembaga)) {
         $namaLembaga = 'Lembaga Pembiayaan';
     }
-    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png';
+    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png?v=2';
 ?>
     <!-- Top Navigation -->
     <header class="bg-white border-t-2 border-t-blue-700 border-b border-slate-200 sticky top-0 z-30">

@@ -1,5 +1,5 @@
 <?php
-    $logoWeb    = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png';
+    $logoWeb    = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png?v=2';
     $namaWeb    = 'OTW Approved';
     $isLoggedIn = (bool) session()->get('logged_in');
     $portalUrl  = $isLoggedIn ? base_url('dashboard') : base_url('auth');

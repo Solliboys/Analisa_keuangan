@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title) ?> — OTW Approved</title>
-    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png?v=2') ?>">
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
@@ -28,7 +28,7 @@
                     </a>
                     <span class="hidden sm:inline text-slate-300">|</span>
                     <div class="hidden sm:flex items-center gap-2 min-w-0">
-                        <img src="<?= base_url('img/logo-oap.png') ?>" alt="OTW Approved" class="w-6 h-6 object-contain shrink-0">
+                        <img src="<?= base_url('img/logo-oap.png?v=2') ?>" alt="OTW Approved" class="w-6 h-6 object-contain shrink-0">
                         <span class="text-xs font-bold text-slate-900 truncate">Form Pengajuan Kredit</span>
                         <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/80 shrink-0">Badan Usaha</span>
                     </div>

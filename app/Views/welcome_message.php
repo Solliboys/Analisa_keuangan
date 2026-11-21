@@ -1,7 +1,7 @@
 <?php
     $rawNamaWeb  = !empty($pengaturan_sistem['nama_aplikasi']) ? trim($pengaturan_sistem['nama_aplikasi']) : '';
     $namaLembaga = !empty($pengaturan_sistem['nama_lembaga']) ? trim($pengaturan_sistem['nama_lembaga']) : 'Lembaga Pembiayaan';
-    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png';
+    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png?v=2';
     $emailWeb    = !empty($pengaturan_sistem['email_lembaga']) ? trim($pengaturan_sistem['email_lembaga']) : 'info@otwapproved.id';
     $teleponWeb  = !empty($pengaturan_sistem['telepon_lembaga']) ? trim($pengaturan_sistem['telepon_lembaga']) : '(021) 5088-2900';
     $alamatWeb   = !empty($pengaturan_sistem['alamat_lembaga']) ? trim($pengaturan_sistem['alamat_lembaga']) : 'Jakarta Selatan, Indonesia';

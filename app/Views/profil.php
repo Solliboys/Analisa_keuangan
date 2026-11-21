@@ -7,7 +7,7 @@
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
-    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png?v=2') ?>">
     <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
@@ -17,7 +17,7 @@
         $pengaturan_sistem = \Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
     }
     $namaWeb = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Approved';
-    $logoWeb = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : 'img/logo-oap.png';
+    $logoWeb = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : 'img/logo-oap.png?v=2';
 ?>
     <!-- Top Navigation Bar -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">

@@ -15,7 +15,7 @@ if (empty($brandLembaga)) {
     $brandLembaga = 'Lembaga Pembiayaan';
 }
 
-$brandLogo    = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png';
+$brandLogo    = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png?v=2';
 $brandEmail   = !empty($pengaturan_sistem['email_lembaga']) ? trim($pengaturan_sistem['email_lembaga']) : 'info@otwapproved.id';
 $brandTelepon = !empty($pengaturan_sistem['telepon_lembaga']) ? trim($pengaturan_sistem['telepon_lembaga']) : '(021) 5088-2900';
 

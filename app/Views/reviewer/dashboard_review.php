@@ -18,7 +18,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'Workspace Reviewer & Komite Kredit') ?></title>
-    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png?v=2') ?>">
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
@@ -37,7 +37,7 @@
     $namaLembaga = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $rawLembaga));
     $namaLembaga = trim(preg_replace('/\bPT\.?\s*\/\s*/i', '', $namaLembaga));
     $namaLembaga = trim(preg_replace('/\s+/', ' ', $namaLembaga), " \t\n\r\0\x0B/") ?: 'Lembaga Pembiayaan';
-    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png';
+    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png?v=2';
 ?>
     <!-- Top Navigation -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30">

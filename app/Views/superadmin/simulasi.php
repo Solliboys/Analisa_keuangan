@@ -16,7 +16,7 @@
             font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; 
         }
     </style>
-    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png?v=2') ?>">
     <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen">

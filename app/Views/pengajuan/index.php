@@ -11,7 +11,7 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
-    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png?v=2') ?>">
     <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
@@ -22,7 +22,7 @@
     }
     $namaWeb       = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Approved';
     $namaLembaga   = !empty($pengaturan_sistem['nama_lembaga']) ? $pengaturan_sistem['nama_lembaga'] : 'Portal Account Officer';
-    $logoWeb       = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : 'img/logo-oap.png';
+    $logoWeb       = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : 'img/logo-oap.png?v=2';
     $isPengusul    = strtolower(trim($jabatan ?? '')) === 'pengusul';
     $roleBadgeText = $isPengusul ? 'Petugas Pengusul' : esc($jabatan);
 
