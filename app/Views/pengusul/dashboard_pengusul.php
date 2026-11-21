@@ -253,7 +253,35 @@
                 </div>
             </div>
 
-            <div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+            <?php
+                // Helper badge status
+                $getStatusInfo = function($row) {
+                    $rawStatus = trim($row['status_pengajuan'] ?? '');
+                    if (empty($rawStatus) && !empty($row['status_komite'])) {
+                        $rawStatus = trim($row['status_komite']);
+                    }
+                    if (empty($rawStatus)) {
+                        $rawStatus = 'Draft';
+                    }
+                    $st = strtolower($rawStatus);
+
+                    if (strpos($st, 'bersyarat') !== false) {
+                        return ['badge' => 'bg-amber-50 text-amber-800 border-amber-200', 'dot' => 'bg-amber-500', 'label' => 'Bersyarat'];
+                    } elseif ($st === 'disetujui' || strpos($st, 'setuju') !== false) {
+                        return ['badge' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'dot' => 'bg-emerald-600', 'label' => 'Disetujui'];
+                    } elseif ($st === 'ditolak' || strpos($st, 'tolak') !== false) {
+                        return ['badge' => 'bg-rose-50 text-rose-700 border-rose-200', 'dot' => 'bg-rose-600', 'label' => 'Ditolak'];
+                    } elseif ($st === 'revisi' || strpos($st, 'revisi') !== false) {
+                        return ['badge' => 'bg-amber-50 text-amber-800 border-amber-200', 'dot' => 'bg-amber-600', 'label' => 'Perlu Revisi'];
+                    } elseif ($st === 'diajukan') {
+                        return ['badge' => 'bg-blue-50 text-blue-700 border-blue-200', 'dot' => 'bg-blue-700', 'label' => 'Diajukan'];
+                    }
+                    return ['badge' => 'bg-slate-100 text-slate-600 border-slate-200', 'dot' => 'bg-slate-400', 'label' => 'Draft'];
+                };
+            ?>
+
+            <!-- Desktop Table View (>= 768px) -->
+            <div class="hidden md:block w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
                 <table class="w-full min-w-[820px] text-left text-xs text-slate-600 tabular-nums" id="tabelPengajuan">
                     <thead class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                         <tr>
@@ -270,7 +298,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-200/80">
                         <?php if (empty($daftar_pengajuan)): ?>
-                            <tr>
+                            <tr id="emptyTableRow">
                                 <td colspan="9" class="text-center py-12 text-slate-400">
                                     <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit.</p>
                                     <p class="text-[11px] text-slate-400 mt-1">Klik tombol "Tambah Pengajuan" di atas untuk mulai menginput berkas.</p>
@@ -282,6 +310,7 @@
                                     $jdRaw = $row['jenis_debitur'] ?? '';
                                     $isBadan = (!empty($jdRaw) && (stripos($jdRaw, 'badan') !== false || stripos($jdRaw, 'pt') !== false || stripos($jdRaw, 'cv') !== false));
                                     $tipeKey = $isBadan ? 'badan_usaha' : 'perorangan';
+                                    $stInfo = $getStatusInfo($row);
                                 ?>
                                 <tr class="hover:bg-blue-50/30 transition-colors" id="row-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>">
                                     <td class="py-3 px-4 font-semibold text-slate-950 whitespace-nowrap">
@@ -305,53 +334,15 @@
                                     <td class="py-3 px-4 whitespace-nowrap text-slate-600">
                                         <?= esc($row['jenis_jaminan'] ?? 'On Hand') ?>
                                     </td>
-                                    <!-- Status Pengajuan -->
                                     <td class="py-3 px-4 text-center whitespace-nowrap">
-                                        <?php
-                                            $rawStatus = trim($row['status_pengajuan'] ?? '');
-                                            if (empty($rawStatus) && !empty($row['status_komite'])) {
-                                                $rawStatus = trim($row['status_komite']);
-                                            }
-                                            if (empty($rawStatus)) {
-                                                $rawStatus = 'Draft';
-                                            }
-                                            $st = strtolower($rawStatus);
-
-                                            if (strpos($st, 'bersyarat') !== false) {
-                                                $badgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
-                                                $dotClass   = 'bg-amber-500';
-                                                $statusLabel= 'Bersyarat';
-                                            } elseif ($st === 'disetujui' || strpos($st, 'setuju') !== false) {
-                                                $badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                                                $dotClass   = 'bg-emerald-600';
-                                                $statusLabel= 'Disetujui';
-                                            } elseif ($st === 'ditolak' || strpos($st, 'tolak') !== false) {
-                                                $badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
-                                                $dotClass   = 'bg-rose-600';
-                                                $statusLabel= 'Ditolak';
-                                            } elseif ($st === 'revisi' || strpos($st, 'revisi') !== false) {
-                                                $badgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
-                                                $dotClass   = 'bg-amber-600';
-                                                $statusLabel= 'Perlu Revisi';
-                                            } elseif ($st === 'diajukan') {
-                                                $badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
-                                                $dotClass   = 'bg-blue-700';
-                                                $statusLabel= 'Diajukan';
-                                            } else {
-                                                $badgeClass = 'bg-slate-100 text-slate-600 border-slate-200';
-                                                $dotClass   = 'bg-slate-400';
-                                                $statusLabel= 'Draft';
-                                            }
-                                        ?>
-                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border <?= $badgeClass ?>">
-                                            <span class="w-1.5 h-1.5 rounded-full <?= $dotClass ?>"></span>
-                                            <span><?= esc($statusLabel) ?></span>
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border <?= $stInfo['badge'] ?>">
+                                            <span class="w-1.5 h-1.5 rounded-full <?= $stInfo['dot'] ?>"></span>
+                                            <span><?= esc($stInfo['label']) ?></span>
                                         </span>
                                     </td>
                                     <td class="py-3 px-4 text-[11px] text-slate-500 whitespace-nowrap">
                                         <?= date('d M Y', strtotime($row['created_at'])) ?>
                                     </td>
-                                    <!-- Aksi -->
                                     <td class="py-3 px-4 text-right whitespace-nowrap">
                                         <div class="inline-flex items-center justify-end gap-1.5">
                                             <button type="button"
@@ -360,13 +351,11 @@
                                                     title="Lihat Keputusan & Catatan Reviewer">
                                                 Keputusan
                                             </button>
-
                                             <a href="<?= base_url('pengajuan/edit/' . $row['kredit_id']) ?>"
                                                class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/80 text-[11px] font-semibold rounded-md transition"
                                                title="Buka / Edit Analisa">
                                                 Edit
                                             </a>
-
                                             <button type="button"
                                                     onclick="hapusPengajuan(<?= $row['kredit_id'] ?>, '<?= esc($row['nomor_aplikasi']) ?>')"
                                                     class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer"
@@ -380,6 +369,88 @@
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Card View (< 768px) -->
+            <div class="block md:hidden divide-y divide-slate-100" id="mobileCardsContainer">
+                <?php if (empty($daftar_pengajuan)): ?>
+                    <div class="p-6 text-center text-slate-400" id="mobileEmptyState">
+                        <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit.</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Klik tombol "Tambah Pengajuan" di atas untuk mulai menginput berkas.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($daftar_pengajuan as $row): ?>
+                        <?php
+                            $jdRaw = $row['jenis_debitur'] ?? '';
+                            $isBadan = (!empty($jdRaw) && (stripos($jdRaw, 'badan') !== false || stripos($jdRaw, 'pt') !== false || stripos($jdRaw, 'cv') !== false));
+                            $tipeKey = $isBadan ? 'badan_usaha' : 'perorangan';
+                            $stInfo = $getStatusInfo($row);
+                        ?>
+                        <div class="p-4 space-y-3 hover:bg-blue-50/20 transition-colors" id="card-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-900"><?= esc($row['nomor_aplikasi']) ?></div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?> &middot; <?= date('d M Y', strtotime($row['created_at'])) ?></div>
+                                </div>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border <?= $stInfo['badge'] ?> shrink-0">
+                                    <span class="w-1.5 h-1.5 rounded-full <?= $stInfo['dot'] ?>"></span>
+                                    <span><?= esc($stInfo['label']) ?></span>
+                                </span>
+                            </div>
+
+                            <div class="bg-slate-50/80 rounded-lg p-2.5 space-y-1.5 text-xs border border-slate-100">
+                                <div class="flex justify-between items-baseline gap-2">
+                                    <span class="text-slate-400 text-[11px]">Debitur</span>
+                                    <span class="font-semibold text-slate-800 text-right"><?= esc($row['nama_debitur'] ?: '-') ?></span>
+                                </div>
+                                <div class="flex justify-between items-baseline gap-2">
+                                    <span class="text-slate-400 text-[11px]">Usaha / Tipe</span>
+                                    <span class="text-slate-600 text-right"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?> &middot; <span class="font-medium text-slate-700"><?= $isBadan ? 'Badan Usaha' : 'Perorangan' ?></span></span>
+                                </div>
+                                <div class="flex justify-between items-baseline gap-2 pt-1 border-t border-slate-200/60">
+                                    <span class="text-slate-500 font-medium text-[11px]">Plafon</span>
+                                    <span class="font-bold text-blue-700">Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?></span>
+                                </div>
+                                <div class="flex justify-between items-baseline gap-2">
+                                    <span class="text-slate-400 text-[11px]">Tenor &amp; Skema</span>
+                                    <span class="text-slate-700 text-right"><?= (int)($row['tenor_bulan'] ?? 12) ?> bln &middot; <?= esc($row['skema_pembayaran'] ?? 'Balloon Payment') ?></span>
+                                </div>
+                                <div class="flex justify-between items-baseline gap-2">
+                                    <span class="text-slate-400 text-[11px]">Jaminan</span>
+                                    <span class="text-slate-600"><?= esc($row['jenis_jaminan'] ?? 'On Hand') ?></span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-2 pt-1">
+                                <button type="button"
+                                        onclick="bukaModalHasilReview(<?= $row['kredit_id'] ?>)"
+                                        class="px-2.5 py-1.5 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 text-xs font-semibold rounded-md transition shadow-xs cursor-pointer">
+                                    Keputusan
+                                </button>
+                                <a href="<?= base_url('pengajuan/edit/' . $row['kredit_id']) ?>"
+                                   class="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-semibold rounded-md transition">
+                                    Edit
+                                </a>
+                                <button type="button"
+                                        onclick="hapusPengajuan(<?= $row['kredit_id'] ?>, '<?= esc($row['nomor_aplikasi']) ?>')"
+                                        class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer"
+                                        title="Hapus Pengajuan">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+
+            <!-- Bar Paginasi Responsif -->
+            <div id="paginationBar" class="px-4 sm:px-5 py-3 border-t border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <div class="tabular-nums text-center sm:text-left">
+                    Menampilkan <span id="pageInfoStart" class="font-bold text-slate-900">0</span> &minus; <span id="pageInfoEnd" class="font-bold text-slate-900">0</span> dari <span id="pageInfoTotal" class="font-bold text-slate-900"><?= count($daftar_pengajuan) ?></span> berkas
+                </div>
+                <div class="flex items-center gap-1.5" id="paginationButtons">
+                    <!-- Tombol paginasi akan dirender oleh JavaScript -->
+                </div>
             </div>
         </div>
 
@@ -688,40 +759,181 @@
             document.getElementById('modalHasilReview').classList.add('hidden');
         }
 
-        // Fitur pencarian interaktif tabel pengajuan
+        // Paginasi & Pencarian Responsif Tabel & Kartu Mobile
+        let currentPage = 1;
+        const pageSize = 5;
+
         function filterTabelPengajuan() {
+            currentPage = 1;
+            renderPagination();
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderPagination();
+        }
+
+        function renderPagination() {
             const filterSelect = document.getElementById('filterTipeDebitur');
             const selectedTipe = filterSelect ? filterSelect.value : 'semua';
             const searchInput = document.getElementById('searchInput');
             const term = (searchInput?.value || '').toLowerCase().trim();
-            const rows = document.querySelectorAll('#tabelPengajuan tbody tr[id^="row-kredit-"]');
-            let visibleCount = 0;
 
+            const rows = Array.from(document.querySelectorAll('#tabelPengajuan tbody tr[id^="row-kredit-"]'));
+            const cards = Array.from(document.querySelectorAll('#mobileCardsContainer div[id^="card-kredit-"]'));
+
+            const matchedRows = [];
+            const matchedCards = [];
+
+            // Filter Desktop Rows
             rows.forEach(row => {
                 const rowTipe = row.getAttribute('data-jenis-debitur') || '';
                 const rowText = row.innerText.toLowerCase();
-
                 const matchTipe = (selectedTipe === 'semua' || rowTipe === selectedTipe);
                 const matchSearch = (!term || rowText.includes(term));
 
                 if (matchTipe && matchSearch) {
-                    row.style.display = '';
-                    visibleCount++;
+                    matchedRows.push(row);
                 } else {
                     row.style.display = 'none';
                 }
             });
 
+            // Filter Mobile Cards
+            cards.forEach(card => {
+                const cardTipe = card.getAttribute('data-jenis-debitur') || '';
+                const cardText = card.innerText.toLowerCase();
+                const matchTipe = (selectedTipe === 'semua' || cardTipe === selectedTipe);
+                const matchSearch = (!term || cardText.includes(term));
+
+                if (matchTipe && matchSearch) {
+                    matchedCards.push(card);
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const totalMatches = matchedRows.length;
+            const totalPages = Math.max(1, Math.ceil(totalMatches / pageSize));
+
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+
+            // Render slice baris desktop
+            matchedRows.forEach((row, idx) => {
+                row.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
+            });
+
+            // Render slice kartu mobile
+            matchedCards.forEach((card, idx) => {
+                card.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
+            });
+
+            // Update badge dan info jumlah
             const countDisplay = document.getElementById('countDisplay');
-            if (countDisplay) {
-                countDisplay.innerText = visibleCount;
+            if (countDisplay) countDisplay.innerText = totalMatches;
+
+            const pageInfoStart = document.getElementById('pageInfoStart');
+            const pageInfoEnd = document.getElementById('pageInfoEnd');
+            const pageInfoTotal = document.getElementById('pageInfoTotal');
+
+            if (pageInfoStart && pageInfoEnd && pageInfoTotal) {
+                if (totalMatches === 0) {
+                    pageInfoStart.innerText = '0';
+                    pageInfoEnd.innerText = '0';
+                } else {
+                    pageInfoStart.innerText = (startIndex + 1);
+                    pageInfoEnd.innerText = Math.min(endIndex, totalMatches);
+                }
+                pageInfoTotal.innerText = totalMatches;
             }
+
+            // Render Tombol Paginasi
+            const paginationButtons = document.getElementById('paginationButtons');
+            if (!paginationButtons) return;
+
+            if (totalMatches <= pageSize) {
+                if (totalMatches === 0) {
+                    paginationButtons.innerHTML = '<span class="text-slate-400 text-xs italic">Tidak ada berkas yang cocok</span>';
+                } else {
+                    paginationButtons.innerHTML = `
+                        <button type="button" disabled class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 text-slate-300 bg-white cursor-not-allowed">
+                            Sebelumnya
+                        </button>
+                        <button type="button" class="w-7 h-7 text-xs font-bold rounded-md bg-blue-600 text-white shadow-xs">
+                            1
+                        </button>
+                        <button type="button" disabled class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 text-slate-300 bg-white cursor-not-allowed">
+                            Selanjutnya
+                        </button>
+                    `;
+                }
+                return;
+            }
+
+            let btnHtml = '';
+
+            // Tombol Prev
+            const prevDisabled = (currentPage === 1);
+            btnHtml += `
+                <button type="button" onclick="goToPage(${currentPage - 1})" ${prevDisabled ? 'disabled' : ''}
+                        class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 ${prevDisabled ? 'text-slate-300 bg-white cursor-not-allowed' : 'text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer shadow-xs transition'}">
+                    Sebelumnya
+                </button>
+            `;
+
+            // Tombol Angka Halaman
+            for (let p = 1; p <= totalPages; p++) {
+                if (totalPages > 7) {
+                    if (p !== 1 && p !== totalPages && Math.abs(p - currentPage) > 1) {
+                        if (p === 2 && currentPage > 3) {
+                            btnHtml += `<span class="px-1 text-slate-400">...</span>`;
+                        } else if (p === totalPages - 1 && currentPage < totalPages - 2) {
+                            btnHtml += `<span class="px-1 text-slate-400">...</span>`;
+                        }
+                        continue;
+                    }
+                }
+
+                if (p === currentPage) {
+                    btnHtml += `
+                        <button type="button" class="w-7 h-7 text-xs font-bold rounded-md bg-blue-600 text-white shadow-xs flex items-center justify-center">
+                            ${p}
+                        </button>
+                    `;
+                } else {
+                    btnHtml += `
+                        <button type="button" onclick="goToPage(${p})"
+                                class="w-7 h-7 text-xs font-semibold rounded-md border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 transition flex items-center justify-center cursor-pointer shadow-xs">
+                            ${p}
+                        </button>
+                    `;
+                }
+            }
+
+            // Tombol Next
+            const nextDisabled = (currentPage === totalPages);
+            btnHtml += `
+                <button type="button" onclick="goToPage(${currentPage + 1})" ${nextDisabled ? 'disabled' : ''}
+                        class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 ${nextDisabled ? 'text-slate-300 bg-white cursor-not-allowed' : 'text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer shadow-xs transition'}">
+                    Selanjutnya
+                </button>
+            `;
+
+            paginationButtons.innerHTML = btnHtml;
         }
 
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
-            searchInput.addEventListener('keyup', filterTabelPengajuan);
+            searchInput.addEventListener('input', filterTabelPengajuan);
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPagination();
+        });
 
         // Dropdown Profil
         function toggleProfileDropdown(e) {
@@ -771,7 +983,9 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     const tr = document.getElementById(`row-kredit-${id}`);
+                    const card = document.getElementById(`card-kredit-${id}`);
                     if (tr) tr.style.opacity = '0.5';
+                    if (card) card.style.opacity = '0.5';
 
                     fetch(`<?= base_url('pengajuan/hapus') ?>/${id}`, {
                         method: 'POST',
@@ -782,18 +996,9 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            if (tr) {
-                                tr.style.transition = 'all 0.3s ease';
-                                tr.style.opacity = '0';
-                                tr.style.transform = 'scale(0.95)';
-                                setTimeout(() => {
-                                    tr.remove();
-                                    const tbody = document.querySelector('#tabelPengajuan tbody');
-                                    if (tbody && tbody.querySelectorAll('tr[id^="row-kredit-"]').length === 0) {
-                                        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-12 text-slate-400"><p class="font-medium text-slate-600">Anda belum memiliki berkas pengajuan kredit.</p></td></tr>`;
-                                    }
-                                }, 300);
-                            }
+                            if (tr) tr.remove();
+                            if (card) card.remove();
+                            renderPagination();
                             Swal.fire({
                                 title: 'Berhasil Dihapus',
                                 text: data.message,
@@ -803,11 +1008,13 @@
                             });
                         } else {
                             if (tr) tr.style.opacity = '1';
+                            if (card) card.style.opacity = '1';
                             Swal.fire('Gagal!', data.message || 'Terjadi kesalahan saat menghapus.', 'error');
                         }
                     })
                     .catch(err => {
                         if (tr) tr.style.opacity = '1';
+                        if (card) card.style.opacity = '1';
                         Swal.fire('Error!', 'Koneksi terputus atau terjadi kesalahan.', 'error');
                     });
                 }

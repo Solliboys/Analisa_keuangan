@@ -172,7 +172,7 @@ class Dashboard extends BaseController
                 'total_draft'         => $draftSaya,
                 'total_diajukan'      => $diajukanSaya,
                 'total_disetujui'     => $disetujuiSaya,
-                'daftar_pengajuan'    => array_slice($kreditSaya, 0, 5),
+                'daftar_pengajuan'    => $kreditSaya,
                 'pengaturan_sistem'   => $pengaturanSistem
             ];
 
