@@ -171,20 +171,13 @@
                     </div>
                 </div>
 
-                <!-- Action Button: Export TXT Permohonan IDEB OJK & Lihat KTP -->
+                <!-- Action Button: Export TXT Permohonan IDEB OJK -->
                 <div class="flex flex-wrap items-center gap-2.5 self-start lg:self-auto">
                     <button type="button" onclick="exportTxtPermohonanSlik()" 
                             class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer"
                             title="Unduh berkas TXT baku IDEB OJK untuk diunggah langsung ke portal SLIK OJK">
                         <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         <span>Export TXT IDEB OJK</span>
-                    </button>
-
-                    <button type="button" onclick="bukaModalKtpDebitur()" 
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 active:scale-98 text-slate-700 rounded-xl text-xs font-bold transition border border-slate-200 cursor-pointer"
-                            title="Buka / Periksa Foto Berkas KTP Debitur Asli">
-                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
-                        <span>Periksa KTP</span>
                     </button>
                 </div>
             </div>
@@ -811,62 +804,6 @@
         </div>
     </div>
 
-    <!-- =======================================================
-         MODAL 6: PREVIEW BERKAS KTP DEBITUR
-    ======================================================== -->
-    <div id="modalKtpDebitur" onclick="if(event.target === this) tutupModalKtpDebitur()" style="display: none;" class="fixed inset-0 z-[999] bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
-        <div class="bg-white rounded-3xl border border-slate-200 max-w-2xl w-full p-6 shadow-2xl relative animate-in fade-in duration-200 flex flex-col max-h-[90vh]">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                        🪪
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-900">Berkas KTP Debitur Asli</h3>
-                        <p class="text-[11px] text-slate-500">Diverifikasi untuk pencocokan NIK &amp; Identitas di SLIK OJK</p>
-                    </div>
-                </div>
-                <button type="button" onclick="tutupModalKtpDebitur()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-
-            <div class="py-4 flex-1 overflow-y-auto text-center">
-                <?php if (!empty($ktp_dokumen) && !empty($ktp_dokumen['file_path'])): ?>
-                    <?php 
-                        $ext = strtolower(pathinfo($ktp_dokumen['file_path'], PATHINFO_EXTENSION));
-                        $isImg = in_array($ext, ['jpg', 'jpeg', 'png', 'webp']);
-                    ?>
-                    <?php if ($isImg): ?>
-                        <img src="<?= base_url($ktp_dokumen['file_path']) ?>" 
-                             alt="KTP Debitur" 
-                             class="max-h-[60vh] mx-auto rounded-2xl border border-slate-200 shadow-sm object-contain">
-                    <?php else: ?>
-                        <iframe src="<?= base_url($ktp_dokumen['file_path']) ?>" class="w-full h-[60vh] rounded-2xl border border-slate-200"></iframe>
-                    <?php endif; ?>
-                    <div class="mt-3 text-xs font-semibold text-slate-600">
-                        <?= esc($ktp_dokumen['nama_dokumen'] ?? 'Berkas KTP') ?>
-                    </div>
-                <?php else: ?>
-                    <div class="py-12 px-4 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/60">
-                        <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-300 flex items-center justify-center mx-auto mb-2 text-2xl">
-                            🪪
-                        </div>
-                        <h4 class="text-xs font-bold text-slate-700">Berkas KTP Belum Diunggah</h4>
-                        <p class="text-[11px] text-slate-400 mt-1">Pengusul belum mengunggah file KTP pada dokumen pengajuan.</p>
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
-                <span class="text-slate-400">NIK: <strong><?= esc($nikVal) ?></strong></span>
-                <button type="button" onclick="tutupModalKtpDebitur()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 rounded-xl transition cursor-pointer">
-                    Tutup
-                </button>
-            </div>
-        </div>
-    </div>
-
     <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
         <div class="w-full px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-400">
             &copy; <?= date('Y') ?> <?= esc($namaWeb) ?> &bull; Sistem Verifikasi SLIK OJK Terintegrasi
@@ -904,24 +841,6 @@
         }
         window.salinTeks = salinTeks;
 
-        function bukaModalKtpDebitur() {
-            const modal = document.getElementById('modalKtpDebitur');
-            if (modal) {
-                modal.classList.remove('hidden');
-                modal.style.display = 'flex';
-            }
-        }
-        window.bukaModalKtpDebitur = bukaModalKtpDebitur;
-
-        function tutupModalKtpDebitur() {
-            const modal = document.getElementById('modalKtpDebitur');
-            if (modal) {
-                modal.classList.add('hidden');
-                modal.style.display = 'none';
-            }
-        }
-        window.tutupModalKtpDebitur = tutupModalKtpDebitur;
-
         // Tutup modal jika tombol Escape ditekan
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
@@ -930,7 +849,6 @@
                 if (typeof tutupModalPdfSlik === 'function') tutupModalPdfSlik();
                 if (typeof tutupModalLihatDokumenSlik === 'function') tutupModalLihatDokumenSlik();
                 if (typeof tutupPreviewDocSlik === 'function') tutupPreviewDocSlik();
-                tutupModalKtpDebitur();
             }
         });
     </script>
