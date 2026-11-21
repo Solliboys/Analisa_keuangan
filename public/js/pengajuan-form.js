@@ -3941,7 +3941,7 @@ function initAutoSave() {
 }
 
 // Simpan Form Data via AJAX
-async function simpanForm(isComplete = false, showNotification = true) {
+async function simpanForm(isComplete = false, showNotification = true, isManualDraft = false) {
     if (autoSaveTimer) {
         clearTimeout(autoSaveTimer);
         autoSaveTimer = null;
@@ -4045,6 +4045,14 @@ async function simpanForm(isComplete = false, showNotification = true) {
         btnDraft.innerHTML = '<span class="inline-block animate-spin mr-1">&#9696;</span> Menyimpan...';
     }
 
+    const btnNext = document.getElementById('btnNext');
+    const originalNextHtml = btnNext ? btnNext.innerHTML : null;
+    if (btnNext && isComplete) {
+        btnNext.disabled = true;
+        btnNext.classList.add('opacity-70', 'cursor-not-allowed');
+        btnNext.innerHTML = '<span class="inline-block animate-spin mr-1">&#9696;</span> Menyimpan & Mengajukan...';
+    }
+
     // Update save indicator
     const ind = document.getElementById('saveStatusIndicator');
     if (ind) ind.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Menyimpan data...';
@@ -4081,8 +4089,12 @@ async function simpanForm(isComplete = false, showNotification = true) {
 
             if (isComplete) {
                 setTimeout(() => {
-                    window.location.href = getBaseUrl() + '/pengajuan';
+                    window.location.href = getBaseUrl() + '/dashboard';
                 }, 1200);
+            } else if (isManualDraft) {
+                setTimeout(() => {
+                    window.location.href = getBaseUrl() + '/dashboard';
+                }, 1000);
             }
             return data.kredit_id || true;
         } else {
@@ -4103,6 +4115,11 @@ async function simpanForm(isComplete = false, showNotification = true) {
             btnDraft.disabled = false;
             btnDraft.classList.remove('opacity-70', 'cursor-not-allowed');
             btnDraft.innerHTML = originalDraftHtml;
+        }
+        if (btnNext && originalNextHtml) {
+            btnNext.disabled = false;
+            btnNext.classList.remove('opacity-70', 'cursor-not-allowed');
+            btnNext.innerHTML = originalNextHtml;
         }
     }
 }
