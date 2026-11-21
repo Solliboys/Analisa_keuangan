@@ -21,53 +21,47 @@
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col">
 
 <?php
     if (!isset($pengaturan_sistem)) {
         $pengaturan_sistem = \Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
     }
-    $namaWeb     = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Credit Engine & CAM';
-    $namaLembaga = !empty($pengaturan_sistem['nama_lembaga']) ? $pengaturan_sistem['nama_lembaga'] : 'Portal Account Officer';
-    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
-
-    // Inisial dinamis bila logo gambar belum diunggah
-    $words = preg_split("/[\s,_-]+/", trim($namaWeb));
-    $initials = '';
-    foreach ($words as $w) {
-        if (!empty($w)) $initials .= mb_substr($w, 0, 1);
-        if (mb_strlen($initials) >= 2) break;
+    $rawNamaWeb  = !empty($pengaturan_sistem['nama_aplikasi']) ? trim($pengaturan_sistem['nama_aplikasi']) : '';
+    $namaWeb     = (empty($rawNamaWeb) || preg_match('/(credit\s*engine|cam|bpr)/i', $rawNamaWeb)) ? 'OTW Approved' : $rawNamaWeb;
+    $rawLembaga  = !empty($pengaturan_sistem['nama_lembaga']) ? trim($pengaturan_sistem['nama_lembaga']) : 'Lembaga Pembiayaan';
+    $namaLembaga = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $rawLembaga));
+    $namaLembaga = trim(preg_replace('/\bPT\.?\s*\/\s*/i', '', $namaLembaga));
+    $namaLembaga = trim(preg_replace('/\s+/', ' ', $namaLembaga), " \t\n\r\0\x0B/");
+    if (empty($namaLembaga)) {
+        $namaLembaga = 'Lembaga Pembiayaan';
     }
-    if (empty($initials)) $initials = 'OT';
-    $initials = strtoupper($initials);
+    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png';
 ?>
     <!-- Top Navigation -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-        <div class="w-full px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-3">
-                    <?php if (!empty($logoWeb)): ?>
-                        <img src="<?= base_url($logoWeb) ?>" 
-                             alt="<?= esc($namaWeb) ?>" 
-                             class="w-10 h-10 object-contain rounded-xl border border-slate-200 bg-white p-1 shadow-xs shrink-0">
-                    <?php else: ?>
-                        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-sm shadow-sm shrink-0 tracking-wider">
-                            <?= esc($initials) ?>
-                        </div>
-                    <?php endif; ?>
-                    <div>
-                        <span class="text-lg font-bold text-slate-900 tracking-tight"><?= esc($namaWeb) ?></span>
-                        <span class="text-xs block text-slate-500 font-medium"><?= esc($namaLembaga) ?></span>
+    <header class="bg-white border-t-2 border-t-blue-700 border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-15 sm:h-16 items-center gap-3">
+                <a href="<?= base_url('dashboard') ?>" class="flex items-center gap-2.5 min-w-0">
+                    <img src="<?= base_url($logoWeb) ?>"
+                         alt="<?= esc($namaWeb) ?>"
+                         class="w-8 h-8 object-contain shrink-0">
+                    <div class="min-w-0 leading-tight">
+                        <span class="text-sm sm:text-[15px] font-bold text-slate-950 tracking-tight block truncate"><?= esc($namaWeb) ?></span>
+                        <span class="text-[11px] block text-slate-500 font-medium truncate"><?= esc($namaLembaga) ?></span>
                     </div>
-                </div>
+                </a>
 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 shrink-0">
                     <div class="text-right hidden sm:block">
-                        <div class="text-sm font-bold text-slate-900 leading-tight"><?= esc($nama_lengkap) ?></div>
-                        <span class="inline-flex items-center px-2 py-0.5 mt-0.5 rounded text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                            <?= esc(!empty($jabatan) ? $jabatan : 'Petugas Pengusul') ?>
+                        <div class="text-xs font-semibold text-slate-900 leading-tight"><?= esc($nama_lengkap) ?></div>
+                        <span class="inline-flex items-center px-1.5 py-0.5 mt-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/80">
+                            <?= esc(!empty($jabatan) ? $jabatan : 'Pengusul') ?>
                         </span>
                     </div>
 
@@ -79,32 +73,32 @@
                                 $uRow = \Config\Database::connect()->table('users')->select('foto')->where('id', session()->get('user_id'))->get()->getRowArray();
                                 $fotoProfil = $uRow['foto'] ?? '';
                             }
-                            $avatarSrc = !empty($fotoProfil) ? base_url($fotoProfil) : 'https://ui-avatars.com/api/?name=' . urlencode($nama_lengkap ?? 'AO') . '&background=2563eb&color=fff&bold=true';
+                            $avatarSrc = !empty($fotoProfil) ? base_url($fotoProfil) : 'https://ui-avatars.com/api/?name=' . urlencode($nama_lengkap ?? 'AO') . '&background=1d4ed8&color=fff&bold=true';
                         ?>
-                        <button type="button" onclick="toggleProfileDropdown(event)" class="flex items-center gap-1.5 p-0.5 rounded-full hover:ring-2 hover:ring-blue-400 focus:ring-2 focus:ring-blue-500 transition cursor-pointer">
-                            <img src="<?= $avatarSrc ?>" 
-                                 onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?= urlencode($nama_lengkap ?? 'AO') ?>&background=2563eb&color=fff&bold=true';" 
-                                 alt="Foto Profil" 
-                                 class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-slate-200">
-                            <svg class="w-3.5 h-3.5 text-slate-400 hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <button type="button" onclick="toggleProfileDropdown(event)" class="flex items-center gap-1.5 p-0.5 rounded-full hover:ring-2 hover:ring-blue-600/30 focus:ring-2 focus:ring-blue-700 transition cursor-pointer">
+                            <img src="<?= $avatarSrc ?>"
+                                 onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?= urlencode($nama_lengkap ?? 'AO') ?>&background=1d4ed8&color=fff&bold=true';"
+                                 alt="Foto Profil"
+                                 class="w-9 h-9 rounded-full object-cover border border-slate-200">
+                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
 
                         <!-- Dropdown Menu (Edit Profil & Logout) -->
-                        <div id="dropdownMenuProfil" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in duration-150">
-                            <div class="px-4 py-2 border-b border-slate-100 sm:hidden">
-                                <p class="text-xs font-bold text-slate-800 truncate"><?= esc($nama_lengkap) ?></p>
-                                <p class="text-[10px] text-slate-400"><?= esc(!empty($jabatan) ? $jabatan : 'Petugas Pengusul') ?></p>
+                        <div id="dropdownMenuProfil" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                            <div class="px-3.5 py-2 border-b border-slate-100 sm:hidden">
+                                <p class="text-xs font-semibold text-slate-900 truncate"><?= esc($nama_lengkap) ?></p>
+                                <p class="text-[11px] text-slate-500"><?= esc(!empty($jabatan) ? $jabatan : 'Pengusul') ?></p>
                             </div>
-                            
-                            <a href="<?= base_url('profil') ?>" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition flex items-center gap-2.5">
-                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+
+                            <a href="<?= base_url('profil') ?>" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition flex items-center gap-2">
+                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                 Edit Profil
                             </a>
-                            
+
                             <div class="border-t border-slate-100 my-1"></div>
 
-                            <a href="<?= base_url('auth/logout') ?>" class="w-full text-left px-4 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition flex items-center gap-2.5">
-                                <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                            <a href="<?= base_url('auth/logout') ?>" class="w-full text-left px-3.5 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition flex items-center gap-2">
+                                <svg class="w-3.5 h-3.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                 Logout
                             </a>
                         </div>
@@ -114,129 +108,127 @@
         </div>
     </header>
 
-    <main class="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 min-w-0">
-        
+    <main class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 min-w-0 space-y-5">
+
         <!-- Notifikasi Flash Message -->
         <?php if (session()->getFlashdata('success')): ?>
-            <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center gap-3 text-sm font-semibold shadow-xs">
-                <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div class="px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg flex items-center gap-2.5 text-xs font-medium">
+                <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span><?= session()->getFlashdata('success') ?></span>
             </div>
         <?php endif; ?>
         <?php if (session()->getFlashdata('error')): ?>
-            <div class="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl flex items-center gap-3 text-sm font-semibold shadow-xs">
-                <svg class="w-5 h-5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div class="px-4 py-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-lg flex items-center gap-2.5 text-xs font-medium">
+                <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span><?= session()->getFlashdata('error') ?></span>
             </div>
         <?php endif; ?>
 
-        <!-- Welcome Hero Banner -->
-        <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-6 sm:p-8 text-white shadow-sm mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-blue-100 uppercase tracking-wider">
-                        Ruang Kerja Pengusul Kredit
-                    </span>
-                </div>
-                <h1 class="text-2xl sm:text-3xl font-extrabold mt-3 tracking-tight">Selamat Datang, <?= esc($nama_lengkap) ?>!</h1>
-                <p class="text-sm text-blue-100 mt-1 max-w-xl">
-                    Kelola dan pantau permohonan pembiayaan nasabah Anda. Pastikan berkas 5C lengkap sebelum diajukan ke sidang Komite Kredit.
+        <!-- Clean Workspace Header with Corporate Blue Accent -->
+        <div class="bg-white border border-slate-200 border-l-4 border-l-blue-700 rounded-lg px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="min-w-0">
+                <div class="text-[11px] font-semibold text-blue-700 uppercase tracking-[0.12em]">Ruang Kerja Pengusul</div>
+                <h1 class="text-lg sm:text-xl font-bold text-slate-950 tracking-tight mt-0.5">
+                    Daftar Pengajuan Kredit
+                </h1>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    Kelola permohonan pembiayaan debitur dan lengkapi analisa 5C sebelum diteruskan ke komite.
                 </p>
             </div>
-            <div>
-                <button type="button" onclick="bukaModalPilihDebitur()" class="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-blue-800 hover:bg-blue-50 font-extrabold text-sm rounded-2xl shadow-md hover:shadow-lg transition cursor-pointer">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Tambah Pengajuan
+            <div class="shrink-0">
+                <button type="button" onclick="bukaModalPilihDebitur()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs rounded-md transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Tambah Pengajuan</span>
                 </button>
             </div>
         </div>
 
-        <!-- Personal Performance Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Aplikasi Saya</span>
-                <div class="text-2xl font-extrabold text-slate-900 mt-1"><?= number_format($total_pengajuan) ?></div>
-                <div class="text-xs text-slate-400 mt-1">Total berkas nasabah yang Anda input</div>
+        <!-- Unified 4-Column KPI Hairline Ledger -->
+        <div class="bg-white border border-slate-200 rounded-lg grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 divide-x divide-slate-200 tabular-nums overflow-hidden">
+            <div class="p-4 sm:p-5">
+                <div class="text-[11px] font-medium text-slate-500">Aplikasi Saya</div>
+                <div class="text-xl sm:text-2xl font-bold text-slate-950 mt-1"><?= number_format($total_pengajuan) ?></div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Total berkas diinput</div>
             </div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Total Plafon Diusulkan</span>
-                <div class="text-2xl font-extrabold text-blue-700 mt-1">Rp <?= number_format($total_plafon, 0, ',', '.') ?></div>
-                <div class="text-xs text-slate-400 mt-1">Akumulasi nilai plafon permohonan</div>
+            <div class="p-4 sm:p-5 bg-blue-50/40">
+                <div class="text-[11px] font-semibold text-blue-700">Total Plafon Diusulkan</div>
+                <div class="text-lg sm:text-2xl font-bold text-blue-700 mt-1 truncate">Rp <?= number_format($total_plafon, 0, ',', '.') ?></div>
+                <div class="text-[11px] text-slate-500 mt-0.5">Akumulasi nilai permohonan</div>
             </div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <span class="text-xs font-bold text-amber-600 uppercase tracking-wider">Draft / Belum Final</span>
-                <div class="text-2xl font-extrabold text-amber-600 mt-1"><?= number_format($total_draft) ?></div>
-                <div class="text-xs text-slate-400 mt-1">Perlu dilengkapi sebelum diajukan</div>
+            <div class="p-4 sm:p-5">
+                <div class="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span>Draft / Belum Final</span>
+                </div>
+                <div class="text-xl sm:text-2xl font-bold text-slate-950 mt-1"><?= number_format($total_draft) ?></div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Perlu dilengkapi</div>
             </div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Disetujui Komite</span>
-                <div class="text-2xl font-extrabold text-emerald-700 mt-1"><?= number_format($total_disetujui) ?></div>
-                <div class="text-xs text-slate-400 mt-1">Siap akad & pencairan kredit</div>
+            <div class="p-4 sm:p-5">
+                <div class="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                    <span>Disetujui Komite</span>
+                </div>
+                <div class="text-xl sm:text-2xl font-bold text-slate-950 mt-1"><?= number_format($total_disetujui) ?></div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Siap akad &amp; pencairan</div>
             </div>
         </div>
 
         <!-- Table Card: Daftar Berkas Pengajuan Terakhir (Full Width) -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-            <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+            <div class="px-4 sm:px-5 py-3.5 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
                     <!-- Search Box -->
                     <div class="relative w-full sm:w-72">
-                        <input type="text" id="searchInput" placeholder="Cari nomor CAM, debitur, usaha..." 
-                               class="w-full pl-9 pr-3 py-2 text-xs font-medium border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs">
-                        <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <input type="text" id="searchInput" placeholder="Cari nomor aplikasi, debitur, usaha..."
+                               class="w-full h-9 pl-9 pr-3 text-xs font-medium text-slate-900 placeholder-slate-400 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700/10 focus:border-blue-700 transition">
+                        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
 
                     <!-- Dropdown Filter Tipe Debitur -->
-                    <div class="relative w-full sm:w-56 shrink-0">
+                    <div class="relative w-full sm:w-48 shrink-0">
                         <select id="filterTipeDebitur" onchange="filterTabelPengajuan()"
-                                class="w-full appearance-none pl-9 pr-9 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs cursor-pointer">
+                                class="w-full h-9 appearance-none pl-3 pr-8 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700/10 focus:border-blue-700 transition cursor-pointer">
                             <option value="semua">Semua Tipe Debitur</option>
-                            <option value="perorangan">👤 Perorangan</option>
-                            <option value="badan_usaha">🏢 Badan Usaha</option>
+                            <option value="perorangan">Perorangan</option>
+                            <option value="badan_usaha">Badan Usaha</option>
                         </select>
-                        <div class="absolute left-3 top-2.5 pointer-events-none text-slate-400">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                        </div>
-                        <div class="absolute right-3 top-2.5 pointer-events-none text-slate-400">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 9l-7 7-7-7"></path></svg>
+                        <div class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-4 justify-between sm:justify-end">
-                    <div class="text-xs text-slate-500 font-medium">
-                        Menampilkan <span id="countDisplay" class="font-bold text-slate-800"><?= count($daftar_pengajuan) ?></span> pengajuan
+                    <div class="text-xs text-slate-500">
+                        Menampilkan <span id="countDisplay" class="font-semibold text-slate-900 tabular-nums"><?= count($daftar_pengajuan) ?></span> pengajuan
                     </div>
-                    <a href="<?= base_url('pengajuan') ?>" class="text-xs font-bold text-blue-600 hover:text-blue-800 hidden sm:inline">
+                    <a href="<?= base_url('pengajuan') ?>" class="text-xs font-semibold text-blue-700 hover:text-blue-800 hidden sm:inline">
                         Lihat Semua &rarr;
                     </a>
                 </div>
             </div>
 
             <div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
-                <table class="w-full min-w-[820px] text-left text-sm text-slate-600" id="tabelPengajuan">
-                    <thead class="bg-slate-50 text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                <table class="w-full min-w-[820px] text-left text-xs text-slate-600 tabular-nums" id="tabelPengajuan">
+                    <thead class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                         <tr>
-                            <th class="py-3.5 px-4">No. Aplikasi</th>
-                            <th class="py-3.5 px-4">Nama Debitur & Usaha</th>
-                            <th class="py-3.5 px-4">Tipe Debitur</th>
-                            <th class="py-3.5 px-4">Plafon Pinjaman</th>
-                            <th class="py-3.5 px-4">Skema & Tenor</th>
-                            <th class="py-3.5 px-4">Jaminan</th>
-                            <th class="py-3.5 px-4 text-center">Status Pengajuan</th>
-                            <th class="py-3.5 px-4">Tanggal Buat</th>
-                            <th class="py-3.5 px-4 text-center">Aksi</th>
+                            <th class="py-3 px-4">No. Aplikasi</th>
+                            <th class="py-3 px-4">Debitur &amp; Usaha</th>
+                            <th class="py-3 px-4">Tipe</th>
+                            <th class="py-3 px-4 text-right">Plafon</th>
+                            <th class="py-3 px-4">Skema &amp; Tenor</th>
+                            <th class="py-3 px-4">Jaminan</th>
+                            <th class="py-3 px-4 text-center">Status</th>
+                            <th class="py-3 px-4">Tanggal</th>
+                            <th class="py-3 px-4 text-right">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 font-normal">
+                    <tbody class="divide-y divide-slate-200/80">
                         <?php if (empty($daftar_pengajuan)): ?>
                             <tr>
                                 <td colspan="9" class="text-center py-12 text-slate-400">
-                                    <div class="w-12 h-12 mx-auto mb-3 text-slate-300">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    </div>
-                                    <p class="font-medium text-slate-600">Anda belum memiliki berkas pengajuan kredit.</p>
-                                    <p class="text-xs text-slate-400 mt-1">Klik tombol "+ Buat Pengajuan & CAM Baru" di atas untuk memulai analisa.</p>
+                                    <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit.</p>
+                                    <p class="text-[11px] text-slate-400 mt-1">Klik tombol "Tambah Pengajuan" di atas untuk mulai menginput berkas.</p>
                                 </td>
                             </tr>
                         <?php else: ?>
@@ -246,42 +238,30 @@
                                     $isBadan = (!empty($jdRaw) && (stripos($jdRaw, 'badan') !== false || stripos($jdRaw, 'pt') !== false || stripos($jdRaw, 'cv') !== false));
                                     $tipeKey = $isBadan ? 'badan_usaha' : 'perorangan';
                                 ?>
-                                <tr class="hover:bg-slate-50 transition" id="row-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>">
-                                    <td class="py-3.5 px-4 font-bold text-slate-900 whitespace-nowrap">
+                                <tr class="hover:bg-blue-50/30 transition-colors" id="row-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>">
+                                    <td class="py-3 px-4 font-semibold text-slate-950 whitespace-nowrap">
                                         <?= esc($row['nomor_aplikasi']) ?>
-                                        <span class="block text-xs font-normal text-slate-400"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?></span>
+                                        <span class="block text-[11px] font-normal text-slate-400"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?></span>
                                     </td>
-                                    <td class="py-3.5 px-4">
-                                        <div class="font-bold text-slate-900"><?= esc($row['nama_debitur'] ?: '-') ?></div>
-                                        <div class="text-xs text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?></div>
+                                    <td class="py-3 px-4">
+                                        <div class="font-semibold text-slate-900"><?= esc($row['nama_debitur'] ?: '-') ?></div>
+                                        <div class="text-[11px] text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?></div>
                                     </td>
-                                    <td class="py-3.5 px-4 whitespace-nowrap">
-                                        <?php if ($isBadan): ?>
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
-                                                <svg class="w-3.5 h-3.5 text-indigo-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                                                Badan Usaha
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs">
-                                                <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                                Perorangan
-                                            </span>
-                                        <?php endif; ?>
+                                    <td class="py-3 px-4 whitespace-nowrap text-slate-700 font-medium">
+                                        <?= $isBadan ? 'Badan Usaha' : 'Perorangan' ?>
                                     </td>
-                                    <td class="py-3.5 px-4 font-bold text-blue-700 whitespace-nowrap">
+                                    <td class="py-3 px-4 text-right font-semibold text-blue-700 whitespace-nowrap">
                                         Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?>
                                     </td>
-                                    <td class="py-3.5 px-4 whitespace-nowrap">
-                                        <div class="font-semibold text-slate-800"><?= esc($row['skema_pembayaran'] ?? 'Balloon Payment') ?></div>
-                                        <div class="text-xs text-slate-500"><?= (int)($row['tenor_bulan'] ?? 12) ?> Bulan (<?= (float)($row['bunga_per_bulan'] ?? 0) ?>%/bln)</div>
+                                    <td class="py-3 px-4 whitespace-nowrap">
+                                        <div class="font-medium text-slate-800"><?= esc($row['skema_pembayaran'] ?? 'Balloon Payment') ?></div>
+                                        <div class="text-[11px] text-slate-500"><?= (int)($row['tenor_bulan'] ?? 12) ?> bln &middot; <?= (float)($row['bunga_per_bulan'] ?? 0) ?>%/bln</div>
                                     </td>
-                                    <td class="py-3.5 px-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-700">
-                                            <?= esc($row['jenis_jaminan'] ?? 'On Hand') ?>
-                                        </span>
+                                    <td class="py-3 px-4 whitespace-nowrap text-slate-600">
+                                        <?= esc($row['jenis_jaminan'] ?? 'On Hand') ?>
                                     </td>
                                     <!-- Status Pengajuan -->
-                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                    <td class="py-3 px-4 text-center whitespace-nowrap">
                                         <?php
                                             $rawStatus = trim($row['status_pengajuan'] ?? '');
                                             if (empty($rawStatus) && !empty($row['status_komite'])) {
@@ -293,66 +273,60 @@
                                             $st = strtolower($rawStatus);
 
                                             if (strpos($st, 'bersyarat') !== false) {
-                                                $badgeClass = 'bg-amber-50 text-amber-800 border-amber-300 ring-1 ring-amber-200/50';
+                                                $badgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
                                                 $dotClass   = 'bg-amber-500';
                                                 $statusLabel= 'Bersyarat';
                                             } elseif ($st === 'disetujui' || strpos($st, 'setuju') !== false) {
-                                                $badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200/50';
-                                                $dotClass   = 'bg-emerald-500';
+                                                $badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                                                $dotClass   = 'bg-emerald-600';
                                                 $statusLabel= 'Disetujui';
                                             } elseif ($st === 'ditolak' || strpos($st, 'tolak') !== false) {
-                                                $badgeClass = 'bg-rose-50 text-rose-700 border-rose-300 ring-1 ring-rose-200/50';
-                                                $dotClass   = 'bg-rose-500';
+                                                $badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+                                                $dotClass   = 'bg-rose-600';
                                                 $statusLabel= 'Ditolak';
                                             } elseif ($st === 'revisi' || strpos($st, 'revisi') !== false) {
-                                                $badgeClass = 'bg-purple-50 text-purple-700 border-purple-300 ring-1 ring-purple-200/50';
-                                                $dotClass   = 'bg-purple-600';
+                                                $badgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
+                                                $dotClass   = 'bg-amber-600';
                                                 $statusLabel= 'Perlu Revisi';
                                             } elseif ($st === 'diajukan') {
                                                 $badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
-                                                $dotClass   = 'bg-blue-500';
+                                                $dotClass   = 'bg-blue-700';
                                                 $statusLabel= 'Diajukan';
                                             } else {
-                                                $badgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+                                                $badgeClass = 'bg-slate-100 text-slate-600 border-slate-200';
                                                 $dotClass   = 'bg-slate-400';
                                                 $statusLabel= 'Draft';
                                             }
                                         ?>
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border <?= $badgeClass ?> shadow-2xs">
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border <?= $badgeClass ?>">
                                             <span class="w-1.5 h-1.5 rounded-full <?= $dotClass ?>"></span>
                                             <span><?= esc($statusLabel) ?></span>
                                         </span>
                                     </td>
-                                    <td class="py-3.5 px-4 text-xs text-slate-500 whitespace-nowrap">
+                                    <td class="py-3 px-4 text-[11px] text-slate-500 whitespace-nowrap">
                                         <?= date('d M Y', strtotime($row['created_at'])) ?>
                                     </td>
-                                    <!-- Aksi (Hasil Review, Edit Form, Hapus) -->
-                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                                        <div class="inline-flex items-center gap-1.5">
-                                            <!-- Tombol Hasil Review / Keputusan Reviewer -->
-                                            <button type="button" 
-                                                    onclick="bukaModalHasilReview(<?= $row['kredit_id'] ?>)" 
-                                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border border-purple-200/70 text-xs font-bold rounded-lg transition shadow-2xs cursor-pointer" 
+                                    <!-- Aksi -->
+                                    <td class="py-3 px-4 text-right whitespace-nowrap">
+                                        <div class="inline-flex items-center justify-end gap-1.5">
+                                            <button type="button"
+                                                    onclick="bukaModalHasilReview(<?= $row['kredit_id'] ?>)"
+                                                    class="px-2.5 py-1 bg-white text-slate-700 hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 border border-slate-200 text-[11px] font-semibold rounded-md transition cursor-pointer"
                                                     title="Lihat Keputusan & Catatan Reviewer">
-                                                <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
-                                                <span>Review</span>
+                                                Keputusan
                                             </button>
 
-                                            <!-- Tombol Edit Form -->
-                                            <a href="<?= base_url('pengajuan/edit/' . $row['kredit_id']) ?>" 
-                                               class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 text-xs font-bold rounded-lg transition border border-blue-200/50" 
+                                            <a href="<?= base_url('pengajuan/edit/' . $row['kredit_id']) ?>"
+                                               class="px-2.5 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/80 text-[11px] font-semibold rounded-md transition"
                                                title="Buka / Edit Analisa">
-                                                Edit Form
+                                                Edit
                                             </a>
 
-                                            <!-- Tombol Hapus (AJAX Cepat) -->
-                                            <button type="button" 
+                                            <button type="button"
                                                     onclick="hapusPengajuan(<?= $row['kredit_id'] ?>, '<?= esc($row['nomor_aplikasi']) ?>')"
-                                                    class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer" 
+                                                    class="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer"
                                                     title="Hapus Pengajuan">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                             </button>
                                         </div>
                                     </td>
@@ -364,13 +338,12 @@
             </div>
         </div>
 
-
-
     </main>
 
-    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
-        <div class="w-full px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
-            &copy; <?= date('Y') ?> <?= esc($namaWeb) ?>. Hak Akses Account Officer (Pengusul).
+    <footer class="bg-white border-t border-slate-200 py-3.5 mt-auto">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
+            <span>&copy; <?= date('Y') ?> <?= esc($namaWeb) ?> &middot; <?= esc($namaLembaga) ?></span>
+            <span>Portal Pengusul Kredit</span>
         </div>
     </footer>
 
