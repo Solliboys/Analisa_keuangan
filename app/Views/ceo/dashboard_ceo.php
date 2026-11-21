@@ -129,203 +129,266 @@
         </div>
 
         <!-- Metric Performance Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Berkas Masuk</span>
-                <div class="text-2xl font-extrabold text-slate-900 mt-1"><?= number_format($total_pengajuan ?? 0) ?></div>
-                <div class="text-xs text-slate-400 mt-1">Total berkas nasabah terdaftar</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+            <!-- Card 1: Total Berkas Masuk -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 relative overflow-hidden group">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Berkas Masuk</span>
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2"><?= number_format($total_pengajuan ?? 0) ?></div>
+                <div class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                    <span>Total nasabah terdaftar</span>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Menunggu Review</span>
-                <div class="text-2xl font-extrabold text-blue-700 mt-1"><?= number_format($total_menunggu ?? 0) ?></div>
-                <div class="text-xs text-slate-400 mt-1">Status Diajukan (Belum diputuskan)</div>
+
+            <!-- Card 2: Menunggu Review -->
+            <div class="bg-gradient-to-br from-blue-50/80 via-white to-blue-50/40 rounded-2xl p-5 border border-blue-200/90 shadow-sm shadow-blue-500/5 hover:shadow-md hover:border-blue-300 transition-all duration-200 relative overflow-hidden group">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-[11px] font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                        <span>Menunggu Review</span>
+                    </span>
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-blue-700 mt-2"><?= number_format($total_menunggu ?? 0) ?></div>
+                <div class="mt-1">
+                    <span class="text-xs text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60 inline-flex items-center gap-1">Belum diputuskan</span>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <span class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Pengajuan Disetujui</span>
-                <div class="text-2xl font-extrabold text-emerald-700 mt-1"><?= number_format($total_disetujui ?? 0) ?></div>
-                <div class="text-xs text-slate-400 mt-1">Disetujui oleh Reviewer / Komite</div>
+
+            <!-- Card 3: Pengajuan Disetujui -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 relative overflow-hidden group">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span>Disetujui</span>
+                    </span>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-2"><?= number_format($total_disetujui ?? 0) ?></div>
+                <div class="mt-1">
+                    <span class="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 inline-flex items-center gap-1">Disetujui komite</span>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <span class="text-xs font-bold text-purple-600 uppercase tracking-wider">Perlu Revisi</span>
-                <div class="text-2xl font-extrabold text-purple-700 mt-1"><?= number_format($total_revisi ?? 0) ?></div>
-                <div class="text-xs text-slate-400 mt-1">Dikembalikan ke staf untuk perbaikan</div>
+
+            <!-- Card 4: Perlu Revisi -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 relative overflow-hidden group">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                        <span>Perlu Revisi</span>
+                    </span>
+                    <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </div>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-purple-700 mt-2"><?= number_format($total_revisi ?? 0) ?></div>
+                <div class="mt-1">
+                    <span class="text-xs text-purple-700 font-semibold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200/60 inline-flex items-center gap-1">Perbaikan staf</span>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Pengajuan Ditolak</span>
-                <div class="text-2xl font-extrabold text-rose-700 mt-1"><?= number_format($total_ditolak ?? 0) ?></div>
-                <div class="text-xs text-slate-400 mt-1">Tidak memenuhi syarat risiko kredit</div>
+
+            <!-- Card 5: Pengajuan Ditolak -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 relative overflow-hidden group">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        <span>Ditolak</span>
+                    </span>
+                    <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                    </div>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-rose-700 mt-2"><?= number_format($total_ditolak ?? 0) ?></div>
+                <div class="mt-1">
+                    <span class="text-xs text-rose-700 font-semibold bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200/60 inline-flex items-center gap-1">Risiko tidak lolos</span>
+                </div>
             </div>
         </div>
 
-        <!-- Table Card: Daftar Berkas Pengajuan untuk CEO (Full Width) -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-            <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="relative w-full sm:w-80">
-                    <input type="text" id="searchInput" placeholder="Cari nomor CAM, debitur, usaha..." 
-                           class="w-full pl-9 pr-3 py-2 text-xs font-medium border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition">
-                    <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div class="text-xs text-slate-500 font-medium">
-                        Menampilkan <span class="font-bold text-slate-800"><?= count($daftar_pengajuan ?? []) ?></span> pengajuan
+        <!-- Table Card: Daftar Berkas Pengajuan untuk CEO & Direksi (Full Width) -->
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden mb-8">
+            <div class="px-4 sm:px-5 py-3.5 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+                    <!-- Search Box -->
+                    <div class="relative w-full sm:w-72">
+                        <input type="text" id="searchInput" placeholder="Cari nomor aplikasi, debitur, usaha..."
+                               class="w-full h-9 pl-9 pr-3 text-xs font-medium text-slate-900 placeholder-slate-400 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700/10 focus:border-blue-700 transition">
+                        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
-                    <a href="<?= base_url('pengajuan') ?>" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hidden sm:inline">
+
+                    <!-- Dropdown Filter Tipe Debitur -->
+                    <div class="relative w-full sm:w-44 shrink-0">
+                        <select id="filterTipeDebitur" onchange="filterTabelPengajuan()"
+                                class="w-full h-9 appearance-none pl-3 pr-8 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700/10 focus:border-blue-700 transition cursor-pointer">
+                            <option value="semua">Semua Tipe Debitur</option>
+                            <option value="perorangan">Perorangan</option>
+                            <option value="badan_usaha">Badan Usaha</option>
+                        </select>
+                        <div class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+
+                    <!-- Dropdown Filter Status Pengajuan -->
+                    <div class="relative w-full sm:w-44 shrink-0">
+                        <select id="filterStatus" onchange="filterTabelPengajuan()"
+                                class="w-full h-9 appearance-none pl-3 pr-8 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700/10 focus:border-blue-700 transition cursor-pointer">
+                            <option value="semua">Semua Status</option>
+                            <option value="diajukan">Menunggu Review</option>
+                            <option value="disetujui">Disetujui</option>
+                            <option value="revisi">Perlu Revisi</option>
+                            <option value="ditolak">Ditolak</option>
+                        </select>
+                        <div class="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 justify-between sm:justify-end">
+                    <div class="text-xs text-slate-500">
+                        Total <span id="countDisplay" class="font-semibold text-slate-900 tabular-nums"><?= count($daftar_pengajuan ?? []) ?></span> pengajuan
+                    </div>
+                    <a href="<?= base_url('pengajuan') ?>" class="text-xs font-semibold text-blue-700 hover:text-blue-800 hidden sm:inline">
                         Lihat Semua &rarr;
                     </a>
                 </div>
             </div>
 
-            <div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
-                <table class="w-full min-w-[860px] text-left text-sm text-slate-600" id="tabelPengajuan">
-                    <thead class="bg-slate-50 text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
+            <?php
+                $getStatusInfo = function($row) {
+                    $rawStatus = trim($row['status_pengajuan'] ?? '');
+                    if (empty($rawStatus) && !empty($row['status_komite'])) {
+                        $rawStatus = trim($row['status_komite']);
+                    }
+                    if (empty($rawStatus)) {
+                        $rawStatus = 'Draft';
+                    }
+                    $st = strtolower($rawStatus);
+
+                    if (strpos($st, 'bersyarat') !== false) {
+                        return ['key' => 'bersyarat', 'badge' => 'bg-amber-50 text-amber-800 border-amber-200', 'dot' => 'bg-amber-500', 'label' => 'Bersyarat'];
+                    } elseif ($st === 'disetujui' || strpos($st, 'setuju') !== false) {
+                        return ['key' => 'disetujui', 'badge' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'dot' => 'bg-emerald-600', 'label' => 'Disetujui'];
+                    } elseif ($st === 'ditolak' || strpos($st, 'tolak') !== false) {
+                        return ['key' => 'ditolak', 'badge' => 'bg-rose-50 text-rose-700 border-rose-200', 'dot' => 'bg-rose-600', 'label' => 'Ditolak'];
+                    } elseif ($st === 'revisi' || strpos($st, 'revisi') !== false) {
+                        return ['key' => 'revisi', 'badge' => 'bg-purple-50 text-purple-700 border-purple-200', 'dot' => 'bg-purple-600', 'label' => 'Perlu Revisi'];
+                    } elseif ($st === 'diajukan') {
+                        return ['key' => 'diajukan', 'badge' => 'bg-blue-50 text-blue-700 border-blue-200', 'dot' => 'bg-blue-700', 'label' => 'Diajukan'];
+                    }
+                    return ['key' => 'draft', 'badge' => 'bg-slate-100 text-slate-600 border-slate-200', 'dot' => 'bg-slate-400', 'label' => 'Draft'];
+                };
+
+                $getSlikInfo = function($row) {
+                    $slikStatus = $row['status_slik'] ?? 'Belum Terbit';
+                    if ($slikStatus === 'Terbit') {
+                        if (!empty($row['ada_tunggakan_slik'])) {
+                            return ['class' => 'bg-rose-50 text-rose-700 border-rose-200', 'text' => 'Kol 2-5 (Tunggakan)'];
+                        } else {
+                            return ['class' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'text' => 'Kol 1 (Lancar)'];
+                        }
+                    }
+                    return ['class' => 'bg-amber-50 text-amber-700 border-amber-200', 'text' => 'Belum Terbit'];
+                };
+            ?>
+
+            <!-- Desktop Table View (>= 768px) -->
+            <div class="hidden md:block w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+                <table class="w-full min-w-[860px] text-left text-xs text-slate-600 tabular-nums" id="tabelPengajuan">
+                    <thead class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                         <tr>
-                            <th class="py-3.5 px-4">ID Pengajuan</th>
-                            <th class="py-3.5 px-4">Nama Debitur & Usaha</th>
-                            <th class="py-3.5 px-4">Plafon & Tenor</th>
-                            <th class="py-3.5 px-4 text-center">Status SLIK</th>
-                            <th class="py-3.5 px-4 text-center">Status Pengajuan</th>
-                            <th class="py-3.5 px-4">Catatan Keputusan</th>
-                            <th class="py-3.5 px-4">Tanggal Permohonan</th>
-                            <th class="py-3.5 px-4 text-center">Aksi</th>
+                            <th class="py-3 px-4">No. Aplikasi</th>
+                            <th class="py-3 px-4">Nama Debitur &amp; Usaha</th>
+                            <th class="py-3 px-4">Tipe</th>
+                            <th class="py-3 px-4 text-right">Plafon &amp; Tenor</th>
+                            <th class="py-3 px-4 text-center">Status SLIK</th>
+                            <th class="py-3 px-4 text-center">Status Pengajuan</th>
+                            <th class="py-3 px-4">Catatan Keputusan</th>
+                            <th class="py-3 px-4">Tanggal Permohonan</th>
+                            <th class="py-3 px-4 text-center">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 font-normal">
+                    <tbody class="divide-y divide-slate-200/80">
                         <?php if (empty($daftar_pengajuan)): ?>
-                            <tr>
-                                <td colspan="8" class="text-center py-12 text-slate-400">
-                                    <div class="w-12 h-12 mx-auto mb-3 text-slate-300">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    </div>
-                                    <p class="font-medium text-slate-600">Belum ada berkas pengajuan kredit yang masuk.</p>
-                                    <p class="text-xs text-slate-400 mt-1">Daftar berkas nasabah yang diinput staf pengusul akan otomatis muncul di sini untuk ditinjau oleh Komite / CEO.</p>
+                            <tr id="emptyTableRow">
+                                <td colspan="9" class="text-center py-12 text-slate-400">
+                                    <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit yang masuk.</p>
+                                    <p class="text-[11px] text-slate-400 mt-1">Daftar berkas nasabah yang diinput staf pengusul akan otomatis muncul di sini untuk ditinjau oleh Komite / Direksi.</p>
                                 </td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($daftar_pengajuan as $row): ?>
-                                <tr class="hover:bg-slate-50 transition" id="row-kredit-<?= $row['kredit_id'] ?>">
-                                    <!-- 1. ID Pengajuan -->
-                                    <td class="py-3.5 px-4 font-bold text-slate-900 whitespace-nowrap">
+                                <?php
+                                    $jdRaw = $row['jenis_debitur'] ?? '';
+                                    $isBadan = (!empty($jdRaw) && (stripos($jdRaw, 'badan') !== false || stripos($jdRaw, 'pt') !== false || stripos($jdRaw, 'cv') !== false));
+                                    $tipeKey = $isBadan ? 'badan_usaha' : 'perorangan';
+                                    $stInfo = $getStatusInfo($row);
+                                    $slInfo = $getSlikInfo($row);
+                                    $catatanReviewer = trim($row['catatan_reviewer'] ?? '');
+                                ?>
+                                <tr class="hover:bg-blue-50/30 transition-colors" id="row-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>" data-status="<?= $stInfo['key'] ?>">
+                                    <td class="py-3 px-4 font-semibold text-slate-950 whitespace-nowrap">
                                         <?= esc($row['nomor_aplikasi']) ?>
-                                        <span class="block text-xs font-normal text-slate-400"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?></span>
+                                        <span class="block text-[11px] font-normal text-slate-400"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?></span>
                                     </td>
-
-                                    <!-- 2. Nama Debitur & Usaha -->
-                                    <td class="py-3.5 px-4">
-                                        <div class="font-bold text-slate-900"><?= esc($row['nama_debitur'] ?: '-') ?></div>
-                                        <div class="text-xs text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?></div>
+                                    <td class="py-3 px-4">
+                                        <div class="font-semibold text-slate-900"><?= esc($row['nama_debitur'] ?: '-') ?></div>
+                                        <div class="text-[11px] text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?></div>
                                     </td>
-
-                                    <!-- 3. Plafon & Tenor -->
-                                    <td class="py-3.5 px-4 whitespace-nowrap">
-                                        <div class="font-bold text-blue-700">Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?></div>
-                                        <div class="text-xs text-slate-400"><?= (int)($row['tenor_bulan'] ?? 12) ?> Bulan &bull; <?= esc($row['skema_pembayaran'] ?? 'Installment') ?></div>
+                                    <td class="py-3 px-4 whitespace-nowrap text-slate-700 font-medium">
+                                        <?= $isBadan ? 'Badan Usaha' : 'Perorangan' ?>
                                     </td>
-
-                                    <!-- 4. Status SLIK OJK -->
-                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                                        <?php
-                                            $slikStatus = $row['status_slik'] ?? 'Belum Terbit';
-                                            if ($slikStatus === 'Terbit') {
-                                                if (!empty($row['ada_tunggakan_slik'])) {
-                                                    $slikClass = 'bg-rose-50 text-rose-700 border-rose-200';
-                                                    $slikText  = 'Kol 2-5 (Tunggakan)';
-                                                } else {
-                                                    $slikClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                                                    $slikText  = 'Kol 1 (Lancar)';
-                                                }
-                                            } else {
-                                                $slikClass = 'bg-amber-50 text-amber-700 border-amber-200';
-                                                $slikText  = 'Belum Terbit';
-                                            }
-                                        ?>
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border <?= $slikClass ?>">
-                                            <?= esc($slikText) ?>
+                                    <td class="py-3 px-4 text-right whitespace-nowrap">
+                                        <div class="font-semibold text-blue-700">Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?></div>
+                                        <div class="text-[11px] text-slate-500"><?= (int)($row['tenor_bulan'] ?? 12) ?> bln &middot; <?= esc($row['skema_pembayaran'] ?? 'Installment') ?></div>
+                                    </td>
+                                    <td class="py-3 px-4 text-center whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border <?= $slInfo['class'] ?>">
+                                            <?= esc($slInfo['text']) ?>
                                         </span>
                                     </td>
-
-                                    <!-- 5. Status Pengajuan -->
-                                    <td class="py-3.5 px-4 text-center whitespace-nowrap" id="status-badge-container-<?= $row['kredit_id'] ?>">
-                                        <?php
-                                            $rawStatus = trim($row['status_pengajuan'] ?? '');
-                                            if (empty($rawStatus) && !empty($row['status_komite'])) {
-                                                $rawStatus = trim($row['status_komite']);
-                                            }
-                                            if (empty($rawStatus)) {
-                                                $rawStatus = 'Draft';
-                                            }
-                                            $st = strtolower($rawStatus);
-
-                                            if (strpos($st, 'bersyarat') !== false) {
-                                                $badgeClass = 'bg-amber-50 text-amber-800 border-amber-300 ring-1 ring-amber-200/50';
-                                                $dotClass   = 'bg-amber-500';
-                                                $statusLabel= 'Bersyarat';
-                                            } elseif ($st === 'disetujui' || strpos($st, 'setuju') !== false) {
-                                                $badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-300';
-                                                $dotClass   = 'bg-emerald-500';
-                                                $statusLabel= 'Disetujui';
-                                            } elseif ($st === 'ditolak' || strpos($st, 'tolak') !== false) {
-                                                $badgeClass = 'bg-rose-50 text-rose-700 border-rose-300';
-                                                $dotClass   = 'bg-rose-500';
-                                                $statusLabel= 'Ditolak';
-                                            } elseif ($st === 'revisi' || strpos($st, 'revisi') !== false) {
-                                                $badgeClass = 'bg-purple-50 text-purple-700 border-purple-300 ring-1 ring-purple-200/50';
-                                                $dotClass   = 'bg-purple-600';
-                                                $statusLabel= 'Perlu Revisi';
-                                            } elseif ($st === 'diajukan') {
-                                                $badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
-                                                $dotClass   = 'bg-blue-500';
-                                                $statusLabel= 'Diajukan';
-                                            } else {
-                                                $badgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
-                                                $dotClass   = 'bg-slate-400';
-                                                $statusLabel= !empty($rawStatus) ? $rawStatus : 'Draft';
-                                            }
-                                        ?>
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border <?= $badgeClass ?> shadow-2xs">
-                                            <span class="w-1.5 h-1.5 rounded-full <?= $dotClass ?>"></span>
-                                            <span><?= esc($statusLabel) ?></span>
+                                    <td class="py-3 px-4 text-center whitespace-nowrap" id="status-badge-container-<?= $row['kredit_id'] ?>">
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border <?= $stInfo['badge'] ?>">
+                                            <span class="w-1.5 h-1.5 rounded-full <?= $stInfo['dot'] ?>"></span>
+                                            <span><?= esc($stInfo['label']) ?></span>
                                         </span>
                                     </td>
-
-                                    <!-- 6. Catatan Keputusan Reviewer / Komite -->
-                                    <td class="py-3.5 px-4 min-w-[200px] max-w-[320px]">
-                                        <?php 
-                                            $catatanReviewer = trim($row['catatan_reviewer'] ?? '');
-                                        ?>
+                                    <td class="py-3 px-4 min-w-[180px] max-w-[280px]">
                                         <?php if (!empty($catatanReviewer)): ?>
-                                            <div class="text-xs text-slate-700 leading-relaxed font-medium bg-slate-50/80 p-2 rounded-xl border border-slate-200/80" title="<?= esc($catatanReviewer) ?>">
-                                                <div class="line-clamp-2 hover:line-clamp-none transition-all cursor-default">
-                                                    <?= esc($catatanReviewer) ?>
-                                                </div>
+                                            <div class="text-[11px] text-slate-700 font-medium bg-slate-50 p-2 rounded-lg border border-slate-200/80 leading-relaxed truncate" title="<?= esc($catatanReviewer) ?>">
+                                                <?= esc($catatanReviewer) ?>
                                             </div>
                                         <?php else: ?>
-                                            <span class="text-xs text-slate-400 italic font-normal flex items-center gap-1">
-                                                <span class="text-slate-300">&mdash;</span>
-                                                <span>Belum ada catatan</span>
+                                            <span class="text-[11px] text-slate-400 italic font-normal flex items-center gap-1">
+                                                <span>&mdash; Belum ada catatan</span>
                                             </span>
                                         <?php endif; ?>
                                     </td>
-
-                                    <!-- 7. Tanggal Permohonan -->
-                                    <td class="py-3.5 px-4 text-xs text-slate-500 whitespace-nowrap">
+                                    <td class="py-3 px-4 text-[11px] text-slate-500 whitespace-nowrap">
                                         <?= date('d M Y', strtotime($row['created_at'])) ?>
                                     </td>
-
-                                    <!-- 8. Aksi (Edit, PDF) -->
-                                    <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                    <td class="py-3 px-4 text-center whitespace-nowrap">
                                         <div class="inline-flex items-center gap-1.5">
-                                            <!-- Edit (Buka Form Review & Keputusan) -->
-                                            <a href="<?= base_url('reviewer/review/' . $row['kredit_id']) ?>" 
-                                               class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-lg transition shadow-xs flex items-center gap-1.5" title="Buka Form Review & Keputusan">
+                                            <a href="<?= base_url('reviewer/review/' . $row['kredit_id']) ?>"
+                                               class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-[11px] font-semibold rounded-md transition shadow-xs flex items-center gap-1"
+                                               title="Buka Form Review &amp; Keputusan">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                                 <span>Review</span>
                                             </a>
-
-                                            <!-- Tombol Hasil AI: Evaluasi 5C & Skor CAM -->
-                                            <button type="button" 
-                                                    onclick="bukaModalHasilAI(<?= $row['kredit_id'] ?>)" 
-                                                    class="px-2.5 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/80 text-xs font-bold rounded-lg transition cursor-pointer flex items-center gap-1 shadow-2xs" 
-                                                    title="Lihat Laporan Evaluasi AI & Scoring 5C">
+                                            <button type="button"
+                                                    onclick="bukaModalHasilAI(<?= $row['kredit_id'] ?>)"
+                                                    class="px-2.5 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/80 text-[11px] font-semibold rounded-md transition cursor-pointer flex items-center gap-1 shadow-2xs"
+                                                    title="Lihat Laporan Evaluasi AI &amp; Scoring 5C">
                                                 <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                                 <span>Hasil AI</span>
                                             </button>
@@ -336,6 +399,94 @@
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Card View (< 768px) -->
+            <div class="block md:hidden divide-y divide-slate-100" id="mobileCardsContainer">
+                <?php if (empty($daftar_pengajuan)): ?>
+                    <div class="p-6 text-center text-slate-400" id="mobileEmptyState">
+                        <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit yang masuk.</p>
+                        <p class="text-[11px] text-slate-400 mt-1">Daftar berkas nasabah yang diinput staf pengusul akan otomatis muncul di sini.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($daftar_pengajuan as $row): ?>
+                        <?php
+                            $jdRaw = $row['jenis_debitur'] ?? '';
+                            $isBadan = (!empty($jdRaw) && (stripos($jdRaw, 'badan') !== false || stripos($jdRaw, 'pt') !== false || stripos($jdRaw, 'cv') !== false));
+                            $tipeKey = $isBadan ? 'badan_usaha' : 'perorangan';
+                            $stInfo = $getStatusInfo($row);
+                            $slInfo = $getSlikInfo($row);
+                            $catatanReviewer = trim($row['catatan_reviewer'] ?? '');
+                        ?>
+                        <div class="p-4 space-y-3 hover:bg-blue-50/20 transition-colors" id="card-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>" data-status="<?= $stInfo['key'] ?>">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-900"><?= esc($row['nomor_aplikasi']) ?></div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?> &middot; <?= date('d M Y', strtotime($row['created_at'])) ?></div>
+                                </div>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border <?= $stInfo['badge'] ?> shrink-0">
+                                    <span class="w-1.5 h-1.5 rounded-full <?= $stInfo['dot'] ?>"></span>
+                                    <span><?= esc($stInfo['label']) ?></span>
+                                </span>
+                            </div>
+
+                            <div class="bg-slate-50/80 rounded-lg p-2.5 space-y-1.5 text-xs border border-slate-100">
+                                <div class="flex justify-between items-baseline gap-2">
+                                    <span class="text-slate-400 text-[11px]">Debitur</span>
+                                    <span class="font-semibold text-slate-800 text-right"><?= esc($row['nama_debitur'] ?: '-') ?></span>
+                                </div>
+                                <div class="flex justify-between items-baseline gap-2">
+                                    <span class="text-slate-400 text-[11px]">Usaha / Tipe</span>
+                                    <span class="text-slate-600 text-right"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?> &middot; <span class="font-medium text-slate-700"><?= $isBadan ? 'Badan Usaha' : 'Perorangan' ?></span></span>
+                                </div>
+                                <div class="flex justify-between items-baseline gap-2 pt-1 border-t border-slate-200/60">
+                                    <span class="text-slate-500 font-medium text-[11px]">Plafon</span>
+                                    <span class="font-bold text-blue-700">Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?></span>
+                                </div>
+                                <div class="flex justify-between items-baseline gap-2">
+                                    <span class="text-slate-400 text-[11px]">Tenor &amp; Skema</span>
+                                    <span class="text-slate-700 text-right"><?= (int)($row['tenor_bulan'] ?? 12) ?> bln &middot; <?= esc($row['skema_pembayaran'] ?? 'Installment') ?></span>
+                                </div>
+                                <div class="flex justify-between items-baseline gap-2">
+                                    <span class="text-slate-400 text-[11px]">Status SLIK</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border <?= $slInfo['class'] ?>">
+                                        <?= esc($slInfo['text']) ?>
+                                    </span>
+                                </div>
+                                <?php if (!empty($catatanReviewer)): ?>
+                                    <div class="pt-1 border-t border-slate-200/60">
+                                        <span class="text-slate-400 text-[11px] block mb-0.5">Catatan Keputusan:</span>
+                                        <p class="text-[11px] text-slate-700 font-medium bg-white p-1.5 rounded border border-slate-200/80 leading-relaxed"><?= esc($catatanReviewer) ?></p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="flex items-center justify-end gap-2 pt-1">
+                                <a href="<?= base_url('reviewer/review/' . $row['kredit_id']) ?>"
+                                   class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold rounded-md transition shadow-xs flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                    <span>Review</span>
+                                </a>
+                                <button type="button"
+                                        onclick="bukaModalHasilAI(<?= $row['kredit_id'] ?>)"
+                                        class="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 text-xs font-semibold rounded-md transition shadow-2xs flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    <span>Hasil AI</span>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+
+            <!-- Bar Paginasi Responsif -->
+            <div id="paginationBar" class="px-4 sm:px-5 py-3 border-t border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <div class="tabular-nums text-center sm:text-left">
+                    Menampilkan <span id="pageInfoStart" class="font-bold text-slate-900">0</span> &minus; <span id="pageInfoEnd" class="font-bold text-slate-900">0</span> dari <span id="pageInfoTotal" class="font-bold text-slate-900"><?= count($daftar_pengajuan ?? []) ?></span> berkas
+                </div>
+                <div class="flex items-center gap-1.5" id="paginationButtons">
+                    <!-- Tombol paginasi akan dirender oleh JavaScript -->
+                </div>
             </div>
         </div>
 
@@ -440,18 +591,191 @@
     </footer>
 
     <script>
-        // Fitur pencarian interaktif tabel pengajuan
+        // Paginasi & Pencarian Responsif Tabel & Kartu Mobile
+        let currentPage = 1;
+        const pageSize = 5;
+
+        function filterTabelPengajuan() {
+            currentPage = 1;
+            renderPagination();
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const filterDebitur = document.getElementById('filterTipeDebitur');
+            const selectedTipe = filterDebitur ? filterDebitur.value : 'semua';
+
+            const filterStatusElem = document.getElementById('filterStatus');
+            const selectedStatus = filterStatusElem ? filterStatusElem.value : 'semua';
+
+            const searchInput = document.getElementById('searchInput');
+            const term = (searchInput?.value || '').toLowerCase().trim();
+
+            const rows = Array.from(document.querySelectorAll('#tabelPengajuan tbody tr[id^="row-kredit-"]'));
+            const cards = Array.from(document.querySelectorAll('#mobileCardsContainer div[id^="card-kredit-"]'));
+
+            const matchedRows = [];
+            const matchedCards = [];
+
+            // Filter Desktop Rows
+            rows.forEach(row => {
+                const rowTipe = row.getAttribute('data-jenis-debitur') || '';
+                const rowStatus = row.getAttribute('data-status') || '';
+                const rowText = row.innerText.toLowerCase();
+
+                const matchTipe = (selectedTipe === 'semua' || rowTipe === selectedTipe);
+                const matchStatus = (selectedStatus === 'semua' || rowStatus === selectedStatus);
+                const matchSearch = (!term || rowText.includes(term));
+
+                if (matchTipe && matchStatus && matchSearch) {
+                    matchedRows.push(row);
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Filter Mobile Cards
+            cards.forEach(card => {
+                const cardTipe = card.getAttribute('data-jenis-debitur') || '';
+                const cardStatus = card.getAttribute('data-status') || '';
+                const cardText = card.innerText.toLowerCase();
+
+                const matchTipe = (selectedTipe === 'semua' || cardTipe === selectedTipe);
+                const matchStatus = (selectedStatus === 'semua' || cardStatus === selectedStatus);
+                const matchSearch = (!term || cardText.includes(term));
+
+                if (matchTipe && matchStatus && matchSearch) {
+                    matchedCards.push(card);
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const totalMatches = matchedRows.length;
+            const totalPages = Math.max(1, Math.ceil(totalMatches / pageSize));
+
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+
+            // Render slice baris desktop
+            matchedRows.forEach((row, idx) => {
+                row.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
+            });
+
+            // Render slice kartu mobile
+            matchedCards.forEach((card, idx) => {
+                card.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
+            });
+
+            // Update info jumlah
+            const countDisplay = document.getElementById('countDisplay');
+            if (countDisplay) countDisplay.innerText = totalMatches;
+
+            const pageInfoStart = document.getElementById('pageInfoStart');
+            const pageInfoEnd = document.getElementById('pageInfoEnd');
+            const pageInfoTotal = document.getElementById('pageInfoTotal');
+
+            if (pageInfoStart && pageInfoEnd && pageInfoTotal) {
+                if (totalMatches === 0) {
+                    pageInfoStart.innerText = '0';
+                    pageInfoEnd.innerText = '0';
+                } else {
+                    pageInfoStart.innerText = (startIndex + 1);
+                    pageInfoEnd.innerText = Math.min(endIndex, totalMatches);
+                }
+                pageInfoTotal.innerText = totalMatches;
+            }
+
+            // Render Tombol Paginasi
+            const paginationButtons = document.getElementById('paginationButtons');
+            if (!paginationButtons) return;
+
+            if (totalMatches <= pageSize) {
+                if (totalMatches === 0) {
+                    paginationButtons.innerHTML = '<span class="text-slate-400 text-xs italic">Tidak ada berkas yang cocok</span>';
+                } else {
+                    paginationButtons.innerHTML = `
+                        <button type="button" disabled class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 text-slate-300 bg-white cursor-not-allowed">
+                            Sebelumnya
+                        </button>
+                        <button type="button" class="w-7 h-7 text-xs font-bold rounded-md bg-blue-600 text-white shadow-xs">
+                            1
+                        </button>
+                        <button type="button" disabled class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 text-slate-300 bg-white cursor-not-allowed">
+                            Selanjutnya
+                        </button>
+                    `;
+                }
+                return;
+            }
+
+            let btnHtml = '';
+
+            // Tombol Prev
+            const prevDisabled = (currentPage === 1);
+            btnHtml += `
+                <button type="button" onclick="goToPage(${currentPage - 1})" ${prevDisabled ? 'disabled' : ''}
+                        class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 ${prevDisabled ? 'text-slate-300 bg-white cursor-not-allowed' : 'text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer shadow-xs transition'}">
+                    Sebelumnya
+                </button>
+            `;
+
+            // Tombol Angka Halaman
+            for (let p = 1; p <= totalPages; p++) {
+                if (totalPages > 7) {
+                    if (p !== 1 && p !== totalPages && Math.abs(p - currentPage) > 1) {
+                        if (p === 2 && currentPage > 3) {
+                            btnHtml += `<span class="px-1 text-slate-400">...</span>`;
+                        } else if (p === totalPages - 1 && currentPage < totalPages - 2) {
+                            btnHtml += `<span class="px-1 text-slate-400">...</span>`;
+                        }
+                        continue;
+                    }
+                }
+
+                if (p === currentPage) {
+                    btnHtml += `
+                        <button type="button" class="w-7 h-7 text-xs font-bold rounded-md bg-blue-600 text-white shadow-xs flex items-center justify-center">
+                            ${p}
+                        </button>
+                    `;
+                } else {
+                    btnHtml += `
+                        <button type="button" onclick="goToPage(${p})"
+                                class="w-7 h-7 text-xs font-semibold rounded-md border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 transition flex items-center justify-center cursor-pointer shadow-xs">
+                            ${p}
+                        </button>
+                    `;
+                }
+            }
+
+            // Tombol Next
+            const nextDisabled = (currentPage === totalPages);
+            btnHtml += `
+                <button type="button" onclick="goToPage(${currentPage + 1})" ${nextDisabled ? 'disabled' : ''}
+                        class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 ${nextDisabled ? 'text-slate-300 bg-white cursor-not-allowed' : 'text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer shadow-xs transition'}">
+                    Selanjutnya
+                </button>
+            `;
+
+            paginationButtons.innerHTML = btnHtml;
+        }
+
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
-            searchInput.addEventListener('keyup', function() {
-                const term = this.value.toLowerCase();
-                const rows = document.querySelectorAll('#tabelPengajuan tbody tr');
-                rows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(term) ? '' : 'none';
-                });
-            });
+            searchInput.addEventListener('input', filterTabelPengajuan);
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPagination();
+        });
 
         // Fitur pencarian interaktif tabel log aktivitas
         const searchLogInput = document.getElementById('searchLogInput');
@@ -493,7 +817,7 @@
 
         function bukaModalHasilAI(kreditId) {
             const item = (pengajuanDataStore || []).find(x => x.kredit_id == kreditId);
-            const judul = item ? `Laporan Hasil AI (CAM) - ${item.nomor_aplikasi || ''}` : 'Laporan Hasil AI (CAM)';
+            const judul = item ? 'Laporan Hasil AI - ' + (item.nomor_aplikasi || '') : 'Laporan Hasil AI';
             const judulElem = document.getElementById('aiModalJudul');
             if (judulElem) judulElem.innerText = judul;
 
