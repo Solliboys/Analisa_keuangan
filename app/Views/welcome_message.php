@@ -151,8 +151,9 @@
                         <span>Sistem Analisa &amp; Persetujuan Kredit</span>
                     </div>
 
-                    <h1 class="text-3xl sm:text-5xl font-extrabold text-slate-950 tracking-[-0.03em] leading-[1.08]">
-                        Keputusan kredit lebih cepat, terukur, dan berbasis data.
+                    <h1 class="text-3xl sm:text-[2.75rem] font-bold text-slate-950 tracking-[-0.025em] leading-[1.14]">
+                        Analisa kredit yang rapi,<br class="hidden sm:inline">
+                        <span class="text-blue-700">persetujuan lebih pasti.</span>
                     </h1>
 
                     <p class="text-sm sm:text-base text-slate-600 leading-relaxed max-w-xl">
@@ -192,10 +193,15 @@
                         <div class="rounded-xl bg-white border border-slate-200/90 p-5 sm:p-6 space-y-5">
                             <!-- Card Top -->
                             <div class="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
-                                <div class="min-w-0">
-                                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ringkasan Evaluasi Kredit</div>
-                                    <div class="text-sm font-extrabold text-slate-950 mt-0.5 truncate">UD Sumber Rejeki</div>
-                                    <div class="text-[11px] text-slate-500">Modal Kerja &bull; 24 Bulan (Anuitas)</div>
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-10 h-10 rounded-lg border border-slate-200 bg-slate-50/80 p-1.5 flex items-center justify-center shrink-0">
+                                        <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWebBersih) ?>" class="w-full h-full object-contain">
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ringkasan Evaluasi Kredit</div>
+                                        <div class="text-sm font-bold text-slate-950 mt-0.5 truncate">UD Sumber Rejeki</div>
+                                        <div class="text-[11px] text-slate-500">Modal Kerja &bull; 24 Bulan (Anuitas)</div>
+                                    </div>
                                 </div>
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
