@@ -7,15 +7,52 @@
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 11px; line-height: 1.5; color: #1e293b; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; padding: 0 !important; color: #000000 !important; }
-            .page-sheet { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
-            .page-break { page-break-before: always; break-before: page; padding-top: 15mm; }
-            @page { size: A4; margin: 12mm 15mm; }
+        *, *::before, *::after {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            font-size: 11px; 
+            line-height: 1.5; 
+            color: #1e293b;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            table-layout: auto;
+        }
+        th, td { 
+            border: 1px solid #cbd5e1; 
+            padding: 4.5px 6px; 
+            vertical-align: top;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        th { 
+            background-color: #f8fafc; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            font-size: 9.5px; 
+            color: #334155; 
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        /* Responsive on small mobile screen */
+        @media (max-width: 640px) {
+            body { font-size: 10px; }
+            th, td { padding: 3.5px 4px; font-size: 8.5px; }
+            th { font-size: 8px; }
+        }
+
         html.is-modal .no-print-toolbar,
         .is-modal .no-print-toolbar { display: none !important; }
         html.is-modal body,
@@ -24,9 +61,82 @@
             html.is-modal body,
             .is-modal body { padding: 0.25rem !important; }
         }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #cbd5e1; padding: 5px 8px; vertical-align: top; }
-        th { background-color: #f8fafc; font-weight: 700; text-transform: uppercase; font-size: 10px; color: #334155; }
+
+        /* PRINT STYLES - Fix missing colors and table clipping */
+        @media print {
+            *, *::before, *::after {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            .no-print, .no-print-toolbar { display: none !important; }
+            html, body { 
+                background: white !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                color: #000000 !important; 
+                font-size: 8.5px !important;
+                line-height: 1.35 !important;
+                width: 100% !important;
+            }
+            .page-sheet { 
+                border: none !important; 
+                box-shadow: none !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                max-width: 100% !important; 
+                width: 100% !important; 
+            }
+            .page-break { 
+                page-break-before: always; 
+                break-before: page; 
+                padding-top: 6mm; 
+            }
+            @page { 
+                size: A4 portrait; 
+                margin: 8mm 10mm; 
+            }
+            /* Do NOT clip overflow in print */
+            .overflow-x-auto, div[class*="overflow-x-auto"] {
+                overflow: visible !important;
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            /* Force all tables to fit 100% width on print without clipping */
+            table {
+                width: 100% !important;
+                min-width: 100% !important;
+                max-width: 100% !important;
+                table-layout: fixed !important;
+                font-size: 8px !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                padding: 2.5px 3.5px !important;
+                font-size: 8px !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+                white-space: normal !important;
+            }
+            th {
+                font-size: 7.5px !important;
+                background-color: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .print-bg-bar {
+                background-color: #2563eb !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .print-bg-track {
+                background-color: #e2e8f0 !important;
+                border: 1px solid #cbd5e1 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
     </style>
     <script>
         if (window.self !== window.top || window.location.search.includes('modal=1')) {
@@ -239,7 +349,7 @@
 
             <!-- Tabel Parameter Nilai -->
             <div class="w-full overflow-x-auto my-2">
-            <table class="min-w-[420px]">
+            <table class="w-full text-[10px] sm:text-xs">
                 <thead>
                     <tr>
                         <th style="width: 45%;">PARAMETER</th>
@@ -316,14 +426,14 @@
                 <div class="text-[11px] font-bold text-slate-700 uppercase mb-3">
                     GRAFIK 1. PERBANDINGAN SKOR 5C: ANALIS VS REVIEWER (BATAS CUKUP: 60)
                 </div>
-                <div class="space-y-2 text-xs">
+                <div class="space-y-2.5 text-xs">
                     <div>
                         <div class="flex justify-between text-[11px] font-semibold mb-0.5">
                             <span>Character (20%)</span>
                             <span><?= max(60, min(95, $skorAI - 2)) ?> / 100</span>
                         </div>
-                        <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
-                            <div class="bg-blue-600 h-full rounded-full" style="width: <?= max(60, min(95, $skorAI - 2)) ?>%;"></div>
+                        <div class="w-full print-bg-track bg-slate-200 h-3.5 rounded-full overflow-hidden border border-slate-300" style="background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
+                            <div class="print-bg-bar bg-blue-600 h-full rounded-full" style="width: <?= max(60, min(95, $skorAI - 2)) ?>%; background-color: #2563eb !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;"></div>
                         </div>
                     </div>
                     <div>
@@ -331,8 +441,8 @@
                             <span>Capacity (30%)</span>
                             <span><?= max(50, min(90, $skorAI - 5)) ?> / 100</span>
                         </div>
-                        <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
-                            <div class="bg-blue-600 h-full rounded-full" style="width: <?= max(50, min(90, $skorAI - 5)) ?>%;"></div>
+                        <div class="w-full print-bg-track bg-slate-200 h-3.5 rounded-full overflow-hidden border border-slate-300" style="background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
+                            <div class="print-bg-bar bg-blue-600 h-full rounded-full" style="width: <?= max(50, min(90, $skorAI - 5)) ?>%; background-color: #2563eb !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;"></div>
                         </div>
                     </div>
                     <div>
@@ -340,8 +450,8 @@
                             <span>Capital (15%)</span>
                             <span><?= max(50, min(85, $skorAI - 8)) ?> / 100</span>
                         </div>
-                        <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
-                            <div class="bg-blue-600 h-full rounded-full" style="width: <?= max(50, min(85, $skorAI - 8)) ?>%;"></div>
+                        <div class="w-full print-bg-track bg-slate-200 h-3.5 rounded-full overflow-hidden border border-slate-300" style="background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
+                            <div class="print-bg-bar bg-blue-600 h-full rounded-full" style="width: <?= max(50, min(85, $skorAI - 8)) ?>%; background-color: #2563eb !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;"></div>
                         </div>
                     </div>
                     <div>
@@ -349,8 +459,8 @@
                             <span>Collateral (25%)</span>
                             <span>95 / 100</span>
                         </div>
-                        <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
-                            <div class="bg-blue-600 h-full rounded-full" style="width: 95%;"></div>
+                        <div class="w-full print-bg-track bg-slate-200 h-3.5 rounded-full overflow-hidden border border-slate-300" style="background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
+                            <div class="print-bg-bar bg-blue-600 h-full rounded-full" style="width: 95%; background-color: #2563eb !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;"></div>
                         </div>
                     </div>
                     <div>
@@ -358,8 +468,8 @@
                             <span>Condition (10%)</span>
                             <span><?= max(45, min(80, $skorAI - 10)) ?> / 100</span>
                         </div>
-                        <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
-                            <div class="bg-blue-600 h-full rounded-full" style="width: <?= max(45, min(80, $skorAI - 10)) ?>%;"></div>
+                        <div class="w-full print-bg-track bg-slate-200 h-3.5 rounded-full overflow-hidden border border-slate-300" style="background-color: #e2e8f0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
+                            <div class="print-bg-bar bg-blue-600 h-full rounded-full" style="width: <?= max(45, min(80, $skorAI - 10)) ?>%; background-color: #2563eb !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;"></div>
                         </div>
                     </div>
                 </div>
@@ -367,17 +477,17 @@
 
             <!-- Tabel Rincian Bobot 5C -->
             <div class="w-full overflow-x-auto my-2">
-            <table class="min-w-[640px]">
+            <table class="w-full min-w-[540px] sm:min-w-full text-[9px] sm:text-xs">
                 <thead>
                     <tr>
-                        <th>PARAMETER 5C</th>
-                        <th>BOBOT</th>
-                        <th>SKOR ANALIS</th>
-                        <th>STATUS</th>
-                        <th>SKOR REVIEWER</th>
-                        <th>NILAI TERTIMBANG</th>
-                        <th>CATATAN / TEMUAN</th>
-                        <th>KEYAKINAN</th>
+                        <th style="width: 14%;">PARAMETER 5C</th>
+                        <th style="width: 8%;">BOBOT</th>
+                        <th style="width: 10%;">SKOR ANALIS</th>
+                        <th style="width: 10%;">STATUS</th>
+                        <th style="width: 10%;">SKOR REVIEWER</th>
+                        <th style="width: 12%;">NILAI TERTIMBANG</th>
+                        <th style="width: 24%;">CATATAN / TEMUAN</th>
+                        <th style="width: 12%;">KEYAKINAN</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -486,14 +596,14 @@
                     A. Analisis Character (Karakter & Integritas) - Bobot: 20% | Skor: <?= $sChar ?>/100
                 </div>
                 <div class="w-full overflow-x-auto my-2">
-                <table class="mb-2 min-w-[500px]">
+                <table class="w-full mb-2 text-[9px] sm:text-xs">
                     <thead>
                         <tr>
-                            <th>INDIKATOR / RASIO</th>
-                            <th>FORMULA</th>
-                            <th>ANGKA FORMULIR</th>
-                            <th>ANGKA RIIL SLIK</th>
-                            <th>STATUS</th>
+                            <th style="width: 28%;">INDIKATOR / RASIO</th>
+                            <th style="width: 18%;">FORMULA</th>
+                            <th style="width: 18%;">ANGKA FORMULIR</th>
+                            <th style="width: 18%;">ANGKA RIIL SLIK</th>
+                            <th style="width: 18%;">STATUS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -530,15 +640,15 @@
                         Rincian Fasilitas Kredit Bank Lain (SLIK OJK / iDeb):
                     </div>
                     <div class="w-full overflow-x-auto my-2">
-                    <table class="mb-2 text-[10px] min-w-[560px]">
+                    <table class="w-full mb-2 text-[9px] sm:text-[10px]">
                         <thead>
                             <tr class="bg-slate-100">
                                 <th style="width: 20%;">Debitur / Pemilik</th>
-                                <th style="width: 25%;">Bank / Lembaga</th>
+                                <th style="width: 24%;">Bank / Lembaga</th>
                                 <th style="width: 15%;">Plafon</th>
                                 <th style="width: 15%;">Baki Debet</th>
                                 <th style="width: 12%;">Kolektibilitas</th>
-                                <th style="width: 13%;">Keterangan</th>
+                                <th style="width: 14%;">Keterangan</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -577,14 +687,14 @@
                     B. Analisis Capacity (Kapasitas Keuangan & Arus Kas) - Bobot: 30% | Skor: <?= $sCap ?>/100
                 </div>
                 <div class="w-full overflow-x-auto my-2">
-                <table class="mb-2 min-w-[520px]">
+                <table class="w-full mb-2 text-[9px] sm:text-xs">
                     <thead>
                         <tr>
-                            <th>INDIKATOR / RASIO</th>
-                            <th>FORMULA</th>
-                            <th>BASIS REKENING KORAN</th>
-                            <th>BASIS WAWANCARA</th>
-                            <th>STATUS</th>
+                            <th style="width: 26%;">INDIKATOR / RASIO</th>
+                            <th style="width: 18%;">FORMULA</th>
+                            <th style="width: 21%;">BASIS REKENING KORAN</th>
+                            <th style="width: 21%;">BASIS WAWANCARA</th>
+                            <th style="width: 14%;">STATUS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -676,15 +786,15 @@
                     <p class="text-xs text-slate-400 italic">Data agunan tidak tercatat.</p>
                 <?php else: ?>
                     <div class="w-full overflow-x-auto my-2">
-                    <table class="mb-2 min-w-[560px]">
+                    <table class="w-full mb-2 text-[9px] sm:text-xs">
                         <thead>
                             <tr>
-                                <th>OBJEK AGUNAN</th>
-                                <th>JENIS & NOMOR</th>
-                                <th>NILAI PASAR (MV)</th>
-                                <th>LIKUIDASI (LV)</th>
-                                <th>COVERAGE MV</th>
-                                <th>COVERAGE LV</th>
+                                <th style="width: 24%;">OBJEK AGUNAN</th>
+                                <th style="width: 20%;">JENIS & NOMOR</th>
+                                <th style="width: 17%;">NILAI PASAR (MV)</th>
+                                <th style="width: 17%;">LIKUIDASI (LV)</th>
+                                <th style="width: 11%;">COVERAGE MV</th>
+                                <th style="width: 11%;">COVERAGE LV</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -734,12 +844,12 @@
             </h2>
 
             <div class="w-full overflow-x-auto my-2">
-            <table class="mb-4 min-w-[480px]">
+            <table class="w-full mb-4 text-[9px] sm:text-xs">
                 <thead>
                     <tr>
-                        <th style="width: 50%;">KOMPONEN BIAYA</th>
-                        <th>TARIF / DASAR</th>
-                        <th>NOMINAL RUPIAH</th>
+                        <th style="width: 48%;">KOMPONEN BIAYA</th>
+                        <th style="width: 26%;">TARIF / DASAR</th>
+                        <th style="width: 26%;">NOMINAL RUPIAH</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -815,13 +925,13 @@
             </h2>
 
             <div class="w-full overflow-x-auto my-2">
-            <table class="min-w-[520px]">
+            <table class="w-full text-[9px] sm:text-xs">
                 <thead>
                     <tr>
-                        <th>JENIS KETENTUAN</th>
-                        <th>RINCIAN PERSYARATAN TINDAK LANJUT</th>
-                        <th>TUJUAN MITIGASI RISIKO</th>
-                        <th>PENILAIAN KECUKUPAN</th>
+                        <th style="width: 22%;">JENIS KETENTUAN</th>
+                        <th style="width: 38%;">RINCIAN PERSYARATAN TINDAK LANJUT</th>
+                        <th style="width: 25%;">TUJUAN MITIGASI RISIKO</th>
+                        <th style="width: 15%;">PENILAIAN KECUKUPAN</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -877,12 +987,12 @@
 
             <!-- Tabel Kekuatan & Risiko -->
             <div class="w-full overflow-x-auto my-2">
-            <table class="mb-6 min-w-[480px]">
+            <table class="w-full mb-6 text-[9.5px] sm:text-xs">
                 <thead>
                     <tr>
-                        <th style="width: 33%;">KEKUATAN UTAMA</th>
+                        <th style="width: 34%;">KEKUATAN UTAMA</th>
                         <th style="width: 33%;">RISIKO UTAMA</th>
-                        <th>FAKTOR KETIDAKPASTIAN UTAMA</th>
+                        <th style="width: 33%;">FAKTOR KETIDAKPASTIAN UTAMA</th>
                     </tr>
                 </thead>
                 <tbody>
