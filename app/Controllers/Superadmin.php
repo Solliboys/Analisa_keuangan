@@ -266,6 +266,13 @@ class Superadmin extends BaseController
             }
         }
         if (!empty($updateAi)) {
+            $rawUserId   = session()->get('user_id') ?? session()->get('id');
+            $validUserId = (is_numeric($rawUserId) && (int)$rawUserId > 0) ? (int)$rawUserId : null;
+            if ($validUserId) {
+                $userExists = $db->table('users')->where('id', $validUserId)->countAllResults() > 0;
+                $updateAi['diubah_oleh'] = $userExists ? $validUserId : null;
+            }
+            $updateAi['updated_at'] = date('Y-m-d H:i:s');
             $db->table('pengaturan_ai')->where('id', 1)->update($updateAi);
         }
 
