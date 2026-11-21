@@ -116,13 +116,13 @@
             </nav>
 
             <!-- Right CTA & Mobile Menu Toggle -->
-            <div class="flex items-center gap-2.5">
-                <a href="<?= $portalUrl ?>" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold transition shadow-2xs">
+            <div class="flex items-center gap-2">
+                <a href="<?= $portalUrl ?>" class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition shadow-2xs">
                     <span><?= $portalCta ?></span>
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </a>
-                <button type="button" onclick="toggleMobileNav()" class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition cursor-pointer" aria-label="Buka Menu">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                <button type="button" onclick="toggleMobileNav()" class="md:hidden inline-flex items-center justify-center w-8 h-8 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 transition cursor-pointer" aria-label="Buka Menu">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
             </div>
         </div>
@@ -142,90 +142,90 @@
         <div class="absolute inset-0 bg-grid-subtle opacity-45 pointer-events-none"></div>
         <div class="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
 
-        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 sm:pt-16 sm:pb-24">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-7 pb-12 sm:pt-16 sm:pb-24">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                 <!-- Left Copy (7 cols) -->
-                <div class="lg:col-span-7 space-y-6">
-                    <div class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">
+                <div class="lg:col-span-7 space-y-4 sm:space-y-6">
+                    <div class="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-700"></span>
                         <span>Sistem Analisa &amp; Persetujuan Kredit</span>
                     </div>
 
-                    <h1 class="text-3xl sm:text-[2.75rem] font-bold text-slate-950 tracking-[-0.025em] leading-[1.14]">
+                    <h1 class="text-[1.75rem] sm:text-[2.75rem] font-bold text-slate-950 tracking-[-0.025em] leading-[1.15]">
                         Analisa kredit yang rapi,<br class="hidden sm:inline">
                         <span class="text-blue-700">persetujuan lebih pasti.</span>
                     </h1>
 
-                    <p class="text-sm sm:text-base text-slate-600 leading-relaxed max-w-xl">
+                    <p class="text-[13px] sm:text-base text-slate-600 leading-relaxed max-w-xl">
                         <?= esc($namaWebBersih) ?> menyatukan pengajuan debitur, verifikasi SLIK, pembacaan mutasi rekening koran otomatis, hingga persetujuan komite dalam satu alur kerja yang transparan bagi <?= esc($namaLembagaBersih) ?>.
                     </p>
 
-                    <div class="flex flex-wrap items-center gap-3 pt-1">
-                        <a href="<?= base_url('simulasi') ?>" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition shadow-xs">
+                    <div class="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3 pt-1">
+                        <a href="<?= base_url('simulasi') ?>" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-slate-950 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold transition shadow-xs">
                             <span>Coba Simulasi Pengajuan</span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </a>
-                        <a href="#simulasi" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs sm:text-sm font-bold transition">
+                        <a href="#simulasi" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs sm:text-sm font-semibold transition">
                             <span>Kalkulator Cepat</span>
                         </a>
                     </div>
 
                     <!-- Trust Strip -->
-                    <div class="pt-6 border-t border-slate-200/90 grid grid-cols-3 gap-4 max-w-lg">
+                    <div class="pt-5 sm:pt-6 border-t border-slate-200/90 grid grid-cols-3 gap-2.5 sm:gap-4 max-w-lg">
                         <div>
-                            <div class="text-lg sm:text-xl font-extrabold text-slate-950 tabular-nums">4 Peran</div>
-                            <div class="text-[11px] text-slate-500 font-medium mt-0.5">Pengusul hingga Komite</div>
+                            <div class="text-sm sm:text-xl font-bold text-slate-950 tabular-nums">4 Peran</div>
+                            <div class="text-[11px] text-slate-500 font-medium leading-snug mt-0.5">Pengusul hingga Komite</div>
                         </div>
-                        <div class="border-l border-slate-200 pl-4">
-                            <div class="text-lg sm:text-xl font-extrabold text-slate-950 tabular-nums">5C &amp; DSCR</div>
-                            <div class="text-[11px] text-slate-500 font-medium mt-0.5">Skoring &amp; rasio otomatis</div>
+                        <div class="border-l border-slate-200 pl-2.5 sm:pl-4">
+                            <div class="text-sm sm:text-xl font-bold text-slate-950 tabular-nums">5C &amp; DSCR</div>
+                            <div class="text-[11px] text-slate-500 font-medium leading-snug mt-0.5">Skoring &amp; rasio otomatis</div>
                         </div>
-                        <div class="border-l border-slate-200 pl-4">
-                            <div class="text-lg sm:text-xl font-extrabold text-slate-950 tabular-nums">A4 PDF</div>
-                            <div class="text-[11px] text-slate-500 font-medium mt-0.5">Laporan siap komite</div>
+                        <div class="border-l border-slate-200 pl-2.5 sm:pl-4">
+                            <div class="text-sm sm:text-xl font-bold text-slate-950 tabular-nums">A4 PDF</div>
+                            <div class="text-[11px] text-slate-500 font-medium leading-snug mt-0.5">Laporan siap komite</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Right Authentic Product Preview Card (5 cols) -->
                 <div class="lg:col-span-5">
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-2 sm:p-3 shadow-sm">
-                        <div class="rounded-xl bg-white border border-slate-200/90 p-5 sm:p-6 space-y-5">
+                    <div class="rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50/70 p-1.5 sm:p-2.5 shadow-sm">
+                        <div class="rounded-lg sm:rounded-xl bg-white border border-slate-200/90 p-4 sm:p-6 space-y-4 sm:space-y-5">
                             <!-- Card Top -->
-                            <div class="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    <div class="w-10 h-10 rounded-lg border border-slate-200 bg-slate-50/80 p-1.5 flex items-center justify-center shrink-0">
+                            <div class="flex items-start justify-between gap-2.5 pb-3.5 sm:pb-4 border-b border-slate-100">
+                                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-lg border border-slate-200 bg-slate-50/80 p-1.5 flex items-center justify-center shrink-0">
                                         <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWebBersih) ?>" class="w-full h-full object-contain">
                                     </div>
                                     <div class="min-w-0">
-                                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ringkasan Evaluasi Kredit</div>
-                                        <div class="text-sm font-bold text-slate-950 mt-0.5 truncate">UD Sumber Rejeki</div>
-                                        <div class="text-[11px] text-slate-500">Modal Kerja &bull; 24 Bulan (Anuitas)</div>
+                                        <div class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400">Ringkasan Evaluasi Kredit</div>
+                                        <div class="text-[13px] sm:text-sm font-bold text-slate-950 mt-0.5 truncate">UD Sumber Rejeki</div>
+                                        <div class="text-[11px] text-slate-500 truncate">Modal Kerja &bull; 24 Bln (Anuitas)</div>
                                     </div>
                                 </div>
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                                     Layak
                                 </span>
                             </div>
 
                             <!-- Key Financial Figures -->
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/70">
-                                    <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Plafon Diajukan</div>
-                                    <div class="text-sm font-extrabold text-slate-950 tabular-nums mt-1">Rp 250.000.000</div>
+                            <div class="grid grid-cols-2 gap-2.5 sm:gap-3">
+                                <div class="p-2.5 sm:p-3 rounded-lg bg-slate-50 border border-slate-200/70">
+                                    <div class="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-slate-500">Plafon Diajukan</div>
+                                    <div class="text-[13px] sm:text-sm font-bold text-slate-950 tabular-nums mt-1">Rp 250.000.000</div>
                                 </div>
-                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/70">
-                                    <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Angsuran / Bulan</div>
-                                    <div class="text-sm font-extrabold text-blue-700 tabular-nums mt-1">Rp 11.768.368</div>
+                                <div class="p-2.5 sm:p-3 rounded-lg bg-slate-50 border border-slate-200/70">
+                                    <div class="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-slate-500">Angsuran / Bulan</div>
+                                    <div class="text-[13px] sm:text-sm font-bold text-blue-700 tabular-nums mt-1">Rp 11.768.368</div>
                                 </div>
-                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/70">
-                                    <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Rasio DSCR</div>
-                                    <div class="text-sm font-extrabold text-emerald-700 tabular-nums mt-1">2,97x <span class="text-[10px] font-semibold text-slate-400">(Aman)</span></div>
+                                <div class="p-2.5 sm:p-3 rounded-lg bg-slate-50 border border-slate-200/70">
+                                    <div class="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-slate-500">Rasio DSCR</div>
+                                    <div class="text-[13px] sm:text-sm font-bold text-emerald-700 tabular-nums mt-1">2,97x <span class="text-[10px] font-semibold text-slate-400">(Aman)</span></div>
                                 </div>
-                                <div class="p-3 rounded-lg bg-slate-50 border border-slate-200/70">
-                                    <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Coverage Agunan</div>
-                                    <div class="text-sm font-extrabold text-slate-950 tabular-nums mt-1">182,0% <span class="text-[10px] font-semibold text-slate-400">LV</span></div>
+                                <div class="p-2.5 sm:p-3 rounded-lg bg-slate-50 border border-slate-200/70">
+                                    <div class="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-slate-500">Coverage Agunan</div>
+                                    <div class="text-[13px] sm:text-sm font-bold text-slate-950 tabular-nums mt-1">182,0% <span class="text-[10px] font-semibold text-slate-400">LV</span></div>
                                 </div>
                             </div>
 
