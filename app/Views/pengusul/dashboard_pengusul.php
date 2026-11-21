@@ -124,52 +124,97 @@
             </div>
         <?php endif; ?>
 
-        <!-- Clean Workspace Header with Corporate Blue Accent -->
-        <div class="bg-white border border-slate-200 border-l-4 border-l-blue-700 rounded-lg px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div class="min-w-0">
-                <div class="text-[11px] font-semibold text-blue-700 uppercase tracking-[0.12em]">Ruang Kerja Pengusul</div>
-                <h1 class="text-lg sm:text-xl font-bold text-slate-950 tracking-tight mt-0.5">
+        <!-- Welcome Hero Banner (Biru Elegan seperti Desain Awal) -->
+        <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 rounded-2xl p-6 sm:p-7 text-white shadow-lg shadow-blue-500/10 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <!-- Ambient Decorative Elements -->
+            <div class="pointer-events-none absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
+            <div class="pointer-events-none absolute -left-10 -top-10 w-48 h-48 bg-sky-400/15 rounded-full blur-xl"></div>
+
+            <div class="relative z-10 min-w-0">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/15 text-blue-100 uppercase tracking-wider backdrop-blur-xs border border-white/10 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Ruang Kerja Pengusul</span>
+                </div>
+                <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight leading-tight">
                     Daftar Pengajuan Kredit
                 </h1>
-                <p class="text-xs text-slate-500 mt-0.5">
+                <p class="text-xs sm:text-sm text-blue-100/90 mt-1 max-w-2xl leading-relaxed">
                     Kelola permohonan pembiayaan debitur dan lengkapi analisa 5C sebelum diteruskan ke komite.
                 </p>
             </div>
-            <div class="shrink-0">
-                <button type="button" onclick="bukaModalPilihDebitur()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs rounded-md transition cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+
+            <div class="relative z-10 shrink-0">
+                <button type="button" onclick="bukaModalPilihDebitur()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-white text-blue-700 hover:bg-blue-50 hover:text-blue-800 font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all transform hover:scale-[1.02] cursor-pointer">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
                     <span>Tambah Pengajuan</span>
                 </button>
             </div>
         </div>
 
-        <!-- Unified 4-Column KPI Hairline Ledger -->
-        <div class="bg-white border border-slate-200 rounded-lg grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 divide-x divide-slate-200 tabular-nums overflow-hidden">
-            <div class="p-4 sm:p-5">
-                <div class="text-[11px] font-medium text-slate-500">Aplikasi Saya</div>
-                <div class="text-xl sm:text-2xl font-bold text-slate-950 mt-1"><?= number_format($total_pengajuan) ?></div>
-                <div class="text-[11px] text-slate-400 mt-0.5">Total berkas diinput</div>
-            </div>
-            <div class="p-4 sm:p-5 bg-blue-50/40">
-                <div class="text-[11px] font-semibold text-blue-700">Total Plafon Diusulkan</div>
-                <div class="text-lg sm:text-2xl font-bold text-blue-700 mt-1 truncate">Rp <?= number_format($total_plafon, 0, ',', '.') ?></div>
-                <div class="text-[11px] text-slate-500 mt-0.5">Akumulasi nilai permohonan</div>
-            </div>
-            <div class="p-4 sm:p-5">
-                <div class="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                    <span>Draft / Belum Final</span>
+        <!-- 4-Column Stat Cards (Wow & Clean) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 tabular-nums">
+            <!-- Card 1: Aplikasi Saya -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 relative overflow-hidden group">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Aplikasi Saya</span>
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
                 </div>
-                <div class="text-xl sm:text-2xl font-bold text-slate-950 mt-1"><?= number_format($total_draft) ?></div>
-                <div class="text-[11px] text-slate-400 mt-0.5">Perlu dilengkapi</div>
-            </div>
-            <div class="p-4 sm:p-5">
-                <div class="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                    <span>Disetujui Komite</span>
+                <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2"><?= number_format($total_pengajuan) ?></div>
+                <div class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                    <span>Total berkas diinput</span>
                 </div>
-                <div class="text-xl sm:text-2xl font-bold text-slate-950 mt-1"><?= number_format($total_disetujui) ?></div>
-                <div class="text-[11px] text-slate-400 mt-0.5">Siap akad &amp; pencairan</div>
+            </div>
+
+            <!-- Card 2: Total Plafon Diusulkan -->
+            <div class="bg-gradient-to-br from-blue-50/80 via-white to-blue-50/40 rounded-2xl p-5 border border-blue-200/90 shadow-sm shadow-blue-500/5 hover:shadow-md hover:border-blue-300 transition-all duration-200 relative overflow-hidden group">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-[11px] font-bold text-blue-700 uppercase tracking-wider">Total Plafon Diusulkan</span>
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+                <div class="text-xl sm:text-2xl font-extrabold text-blue-700 mt-2 truncate">Rp <?= number_format($total_plafon, 0, ',', '.') ?></div>
+                <div class="text-xs text-blue-600/80 font-medium mt-1 flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                    <span>Akumulasi nilai permohonan</span>
+                </div>
+            </div>
+
+            <!-- Card 3: Draft / Belum Final -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 relative overflow-hidden group">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span>Draft / Belum Final</span>
+                    </span>
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </div>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2"><?= number_format($total_draft) ?></div>
+                <div class="mt-1">
+                    <span class="text-xs text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60 inline-flex items-center gap-1">Perlu dilengkapi</span>
+                </div>
+            </div>
+
+            <!-- Card 4: Disetujui Komite -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 relative overflow-hidden group">
+                <div class="flex items-center justify-between gap-3">
+                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span>Disetujui Komite</span>
+                    </span>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                </div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-2"><?= number_format($total_disetujui) ?></div>
+                <div class="mt-1">
+                    <span class="text-xs text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 inline-flex items-center gap-1">Siap akad &amp; pencairan</span>
+                </div>
             </div>
         </div>
 
@@ -405,7 +450,7 @@
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </div>
                     <div>
-                        <h3 class="text-sm font-extrabold text-slate-900" id="aiModalJudul">Laporan Hasil AI (CAM)</h3>
+                        <h3 class="text-sm font-extrabold text-slate-900" id="aiModalJudul">Laporan Analisis Kredit AI</h3>
                         <p class="text-[11px] text-slate-500">Evaluasi Risiko 5C & Rekomendasi Komite</p>
                     </div>
                 </div>
@@ -425,7 +470,7 @@
                 </div>
             </div>
 
-            <!-- Modal Body: Iframe Halaman Laporan CAM Sesuai Screenshot -->
+            <!-- Modal Body: Iframe Halaman Laporan Analisis Kredit -->
             <div class="flex-1 overflow-hidden bg-slate-100 p-0">
                 <iframe id="iframeLaporanCAM" src="" class="w-full h-[78vh] border-0"></iframe>
             </div>
@@ -520,10 +565,10 @@
         // Data pengajuan yang dikirim dari controller untuk modal cepat
         const pengajuanDataStore = <?= json_encode($daftar_pengajuan ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
 
-        // Modal Hasil AI (Menampilkan Dokumen Laporan CAM Sesuai Screenshot)
+        // Modal Hasil AI (Menampilkan Dokumen Laporan Analisis Kredit)
         function bukaModalHasilAI(kreditId) {
             const item = (pengajuanDataStore || []).find(x => x.kredit_id == kreditId);
-            const judul = item ? `Laporan Hasil AI (CAM) - ${item.nomor_aplikasi || ''}` : 'Laporan Hasil AI (CAM)';
+            const judul = item ? `Laporan Analisis Kredit AI - ${item.nomor_aplikasi || ''}` : 'Laporan Analisis Kredit AI';
             const judulElem = document.getElementById('aiModalJudul');
             if (judulElem) judulElem.innerText = judul;
 
@@ -591,7 +636,7 @@
                 sub.innerText = 'Pengajuan telah disetujui resmi oleh Reviewer / Komite Kredit';
                 panduanBox.className = 'p-3.5 rounded-2xl border text-xs bg-emerald-50/60 border-emerald-200 text-emerald-900';
                 panduanTitle.innerText = 'Tindak Lanjut Pengusul:';
-                panduanDesc.innerText = 'Pengajuan telah lolos evaluasi. Anda dapat mencetak lembar CAM PDF resmi dan mempersiapkan proses akad serta pencairan kredit.';
+                panduanDesc.innerText = 'Pengajuan telah lolos evaluasi. Anda dapat mencetak lembar Analisis Kredit PDF resmi dan mempersiapkan proses akad serta pencairan kredit.';
             } else if (st.includes('tolak')) {
                 banner.className = 'p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-1.5 bg-rose-50 text-rose-900 border-rose-300 ring-1 ring-rose-200/50';
                 badge.innerText = 'DITOLAK';
