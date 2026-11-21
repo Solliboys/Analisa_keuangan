@@ -151,30 +151,24 @@
     </div>
 
     <!-- MAIN WORKBENCH -->
-    <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 min-w-0 relative z-10">
+    <main class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 min-w-0 relative z-10">
         
-        <!-- TOP HORIZONTAL STEPPER -->
-        <div class="mb-6 no-print">
-            <!-- Progress Sub-bar -->
-            <div class="flex items-center justify-between text-xs text-slate-500 mb-2.5 px-1">
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-slate-900">Alur Simulasi Kredit</span>
-                    <span class="text-slate-300">&bull;</span>
-                    <span class="text-slate-600">Langkah <span id="simStepNum" class="font-bold text-blue-600">1</span> dari 5</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button type="button" onclick="isiContohSimulasi()" class="sm:hidden text-xs font-semibold text-blue-600 hover:underline">Isi Contoh</button>
-                    <button type="button" onclick="resetSimulasi()" class="sm:hidden text-xs font-semibold text-slate-500 hover:underline">Reset</button>
-                </div>
+        <!-- TOP HORIZONTAL STEPPER (DI TENGAH) -->
+        <div class="mb-8 no-print text-center flex flex-col items-center justify-center">
+            <!-- Progress Sub-bar Centered -->
+            <div class="inline-flex items-center justify-center gap-2 text-xs text-slate-500 mb-2.5 px-3.5 py-1 rounded-full bg-white border border-slate-200/80 shadow-xs">
+                <span class="font-bold text-slate-900">Alur Simulasi Kredit</span>
+                <span class="text-slate-300">&bull;</span>
+                <span class="text-slate-600">Langkah <span id="simStepNum" class="font-bold text-blue-600">1</span> dari 5</span>
             </div>
 
-            <!-- Horizontal Progress Track -->
-            <div class="h-1.5 w-full bg-slate-200/80 rounded-full overflow-hidden mb-3">
+            <!-- Horizontal Progress Track Centered -->
+            <div class="h-1.5 w-full max-w-xl mx-auto bg-slate-200/80 rounded-full overflow-hidden mb-4">
                 <div id="simProgressBar" class="h-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-300 rounded-full" style="width: 20%;"></div>
             </div>
 
-            <!-- Stepper Navigation Pills -->
-            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <!-- Stepper Navigation Pills Centered -->
+            <div class="flex items-center justify-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-1 max-w-full">
                 <?php foreach ($simSteps as $n => $st): ?>
                     <button type="button" onclick="goSimTab(<?= $n ?>)" id="sim-step-btn-<?= $n ?>"
                             class="group shrink-0 inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-left transition-all cursor-pointer <?= $n === 1 ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/25' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50' ?>">
@@ -190,11 +184,8 @@
             </div>
         </div>
 
-        <!-- 2-COLUMN WORKBENCH: FORM ON LEFT + LIVE SUMMARY ON RIGHT -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-            <!-- LEFT COLUMN: FORM WORKSPACE (Cols 1-8) -->
-            <div class="lg:col-span-8 space-y-5">
+        <!-- FORM WORKSPACE FULL WIDTH (RATA KANAN KIRI) -->
+        <div class="w-full space-y-6">
 
                 <!-- STEP 1: APLIKASI KREDIT -->
                 <div id="sim-tab-1" class="sim-tab-panel active bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
@@ -672,80 +663,71 @@
                     </div>
                 </div>
 
-            </div>
-
-            <!-- RIGHT COLUMN: LIVE DECISION ENGINE RAIL (Cols 9-12, Sticky Desktop) -->
-            <div class="lg:col-span-4 lg:sticky lg:top-20 space-y-4 no-print">
-                <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
-                    
-                    <!-- Rail Header -->
-                    <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50/80 to-white">
-                        <div class="flex items-center gap-2">
+                <!-- KEPUTUSAN LANGSUNG & RINGKASAN ESTIMASI (DI AKHIR) -->
+                <div class="w-full bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden no-print mt-3">
+                    <!-- Header -->
+                    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50/80 via-white to-blue-50/30">
+                        <div class="flex items-center gap-2.5">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span class="text-xs font-bold text-slate-900 uppercase tracking-wider">Keputusan Langsung</span>
+                            <span class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Keputusan Langsung &amp; Ringkasan Estimasi</span>
                         </div>
-                        <span id="rail_status" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Layak
+                        <span id="rail_status" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Layak Disetujui
                         </span>
                     </div>
 
-                    <!-- Hero Metric: Angsuran -->
-                    <div class="p-5 border-b border-slate-100 bg-gradient-to-b from-blue-50/30 to-transparent">
-                        <div class="text-xs font-semibold text-slate-500">Estimasi Angsuran Bulanan</div>
-                        <div id="rail_angs" class="text-2xl font-extrabold text-blue-600 tracking-tight mt-1 tabular-nums">Rp 0</div>
-                        <div class="flex items-center justify-between text-[11px] text-slate-500 mt-2 pt-2 border-t border-slate-100">
-                            <span>Plafon Pokok</span>
-                            <span id="rail_plafon" class="font-bold text-slate-800 tabular-nums">Rp 0</span>
+                    <!-- Main Grid -->
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+                        <!-- Angsuran Bulanan -->
+                        <div class="md:col-span-5 p-5 rounded-xl bg-blue-50/50 border border-blue-100 text-left">
+                            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Estimasi Angsuran Bulanan</div>
+                            <div id="rail_angs" class="text-3xl font-extrabold text-blue-600 tracking-tight mt-1 tabular-nums">Rp 0</div>
+                            <div class="flex items-center justify-between text-xs text-slate-600 mt-3 pt-3 border-t border-blue-200/60">
+                                <span>Plafon: <strong id="rail_plafon" class="text-slate-900 tabular-nums">Rp 0</strong></span>
+                                <span>Net Cashflow: <strong id="rail_net" class="text-slate-900 tabular-nums">Rp 0</strong></span>
+                            </div>
                         </div>
-                        <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1">
-                            <span>Net Cashflow / bln</span>
-                            <span id="rail_net" class="font-bold text-slate-800 tabular-nums">Rp 0</span>
+
+                        <!-- 3 KPIs Bar -->
+                        <div class="md:col-span-4 grid grid-cols-3 divide-x divide-slate-100 border border-slate-200 rounded-xl bg-slate-50/60 text-center tabular-nums p-2">
+                            <div class="py-2.5 px-1">
+                                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Skor 5C</div>
+                                <div id="rail_skor" class="text-lg font-extrabold text-blue-700 mt-0.5">85,6</div>
+                                <div class="text-[9px] text-slate-400 mt-0.5">dari 100</div>
+                            </div>
+                            <div class="py-2.5 px-1">
+                                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">DSCR</div>
+                                <div id="rail_dscr" class="text-lg font-extrabold text-emerald-700 mt-0.5">2,97x</div>
+                                <div class="text-[9px] text-slate-400 mt-0.5">Min 1,3x</div>
+                            </div>
+                            <div class="py-2.5 px-1">
+                                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cov. LV</div>
+                                <div id="rail_cov" class="text-lg font-extrabold text-slate-900 mt-0.5">182%</div>
+                                <div class="text-[9px] text-slate-400 mt-0.5">Min 100%</div>
+                            </div>
+                        </div>
+
+                        <!-- CTA & Net Cair -->
+                        <div class="md:col-span-3 flex flex-col justify-center space-y-2.5">
+                            <div class="flex items-center justify-between text-xs px-1">
+                                <span class="text-slate-500 font-medium">Dana Cair Bersih:</span>
+                                <strong id="rail_cair" class="text-emerald-700 font-extrabold text-sm tabular-nums">Rp 0</strong>
+                            </div>
+                            <button type="button" onclick="goSimTab(5)" class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs cursor-pointer">
+                                <span>Buka Memo Lengkap</span>
+                                <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- 3-KPI Bar -->
-                    <div class="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 text-center tabular-nums">
-                        <div class="p-3.5">
-                            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Skor 5C</div>
-                            <div id="rail_skor" class="text-base font-extrabold text-blue-700 mt-0.5">85,6</div>
-                            <div class="text-[9px] text-slate-400 mt-0.5">dari 100</div>
-                        </div>
-                        <div class="p-3.5">
-                            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">DSCR</div>
-                            <div id="rail_dscr" class="text-base font-extrabold text-emerald-700 mt-0.5">2,97x</div>
-                            <div class="text-[9px] text-slate-400 mt-0.5">Min 1,3x</div>
-                        </div>
-                        <div class="p-3.5">
-                            <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cov. LV</div>
-                            <div id="rail_cov" class="text-base font-extrabold text-slate-900 mt-0.5">182%</div>
-                            <div class="text-[9px] text-slate-400 mt-0.5">Min 100%</div>
-                        </div>
+                    <!-- Trust Note -->
+                    <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500">
+                        <span class="material-symbols-outlined text-[16px] text-blue-600 shrink-0">verified_user</span>
+                        <span>Semua perhitungan menggunakan formula standar perbankan nasional untuk mitigasi risiko kredit yang akurat dan terpercaya.</span>
                     </div>
-
-                    <!-- Bottom Summary & Jump to Memo -->
-                    <div class="p-4 bg-slate-50/70 space-y-3">
-                        <div class="flex items-center justify-between text-xs tabular-nums">
-                            <span class="text-slate-500 font-medium">Dana Cair Bersih:</span>
-                            <strong id="rail_cair" class="text-slate-950 font-bold text-sm">Rp 0</strong>
-                        </div>
-                        <button type="button" onclick="goSimTab(5)" class="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs cursor-pointer">
-                            <span>Buka Memo Lengkap</span>
-                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                        </button>
-                    </div>
-
                 </div>
 
-                <!-- Quick Help / Trust Box -->
-                <div class="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex items-start gap-3 text-xs text-slate-600">
-                    <span class="material-symbols-outlined text-[20px] text-blue-600 shrink-0 mt-0.5">verified_user</span>
-                    <p class="leading-relaxed text-[11px]">
-                        Semua perhitungan menggunakan formula standar perbankan nasional untuk mitigasi risiko kredit yang akurat dan terpercaya.
-                    </p>
-                </div>
             </div>
-
-        </div>
     </main>
 
     <!-- Footer Simple -->
