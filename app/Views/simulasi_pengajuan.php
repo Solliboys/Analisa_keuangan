@@ -95,10 +95,26 @@
         </div>
     </header>
 
-    <!-- Mobile Sandbox Note -->
-    <div class="md:hidden bg-white border-b border-slate-200 px-4 py-1.5 text-[11px] text-slate-500 flex items-center justify-between no-print">
-        <span>Sandbox &middot; Data lokal, tidak disimpan</span>
-        <span class="font-semibold text-slate-800 tabular-nums">Tahap <span id="simStepNumMobile">1</span>/5</span>
+    <!-- Mobile Compact Live Strip -->
+    <div class="lg:hidden bg-white border-b border-slate-200 px-4 py-2 no-print">
+        <div class="flex items-center justify-between text-[11px] text-slate-500 mb-1.5">
+            <span>Sandbox &middot; Tidak disimpan</span>
+            <span class="font-semibold text-slate-800 tabular-nums">Tahap <span id="simStepNumMobile">1</span>/5</span>
+        </div>
+        <div class="grid grid-cols-3 divide-x divide-slate-200 border border-slate-200 rounded-md bg-slate-50/70 text-center tabular-nums">
+            <div class="py-1.5 px-1">
+                <div class="text-[9px] font-medium text-slate-500 uppercase">Angsuran/bln</div>
+                <div id="mob_angs" class="text-[11px] font-bold text-slate-950 truncate">Rp 0</div>
+            </div>
+            <div class="py-1.5 px-1">
+                <div class="text-[9px] font-medium text-slate-500 uppercase">Skor 5C</div>
+                <div id="mob_skor" class="text-[11px] font-bold text-blue-700">85,6</div>
+            </div>
+            <div class="py-1.5 px-1">
+                <div class="text-[9px] font-medium text-slate-500 uppercase">DSCR</div>
+                <div id="mob_dscr" class="text-[11px] font-bold text-slate-950">2,97x</div>
+            </div>
+        </div>
     </div>
 
     <!-- Backdrop Mobile Drawer -->
@@ -773,7 +789,7 @@
             document.getElementById('out_t5_cair').innerText    = fmtRp(cair);
             document.getElementById('out_t5_angs').innerText    = fmtRp(angsDipilih);
 
-            // Right Sticky Rail
+            // Right Sticky Rail & Mobile Strip
             document.getElementById('rail_angs').innerText   = fmtRp(angsDipilih);
             document.getElementById('rail_plafon').innerText = fmtRp(plafon);
             document.getElementById('rail_net').innerText    = fmtRp(netCf);
@@ -781,6 +797,13 @@
             document.getElementById('rail_dscr').innerText   = dscr.toFixed(2).replace('.', ',') + 'x';
             document.getElementById('rail_cov').innerText    = Math.round(covLv) + '%';
             document.getElementById('rail_cair').innerText   = fmtRp(cair);
+
+            const mobAngs = document.getElementById('mob_angs');
+            const mobSkor = document.getElementById('mob_skor');
+            const mobDscr = document.getElementById('mob_dscr');
+            if (mobAngs) mobAngs.innerText = fmtRp(angsDipilih);
+            if (mobSkor) mobSkor.innerText = skorTotal.toFixed(1).replace('.', ',');
+            if (mobDscr) mobDscr.innerText = dscr.toFixed(2).replace('.', ',') + 'x';
         }
 
         function isiContohSimulasi() {

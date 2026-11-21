@@ -424,52 +424,59 @@
     <!-- =======================================================
          SECTION 4: SIMULASI KREDIT & RASIO LTV INTERAKTIF
     ======================================================== -->
-    <section id="simulasi" class="py-16 sm:py-24 bg-slate-50 border-b border-slate-200/80">
+    <section id="simulasi" class="py-12 sm:py-20 bg-slate-50 border-b border-slate-200/80">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="max-w-2xl mb-10">
-                <div class="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700 mb-2">Simulasi Interaktif</div>
-                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-[-0.025em]">
-                    Hitung estimasi angsuran &amp; rasio LTV secara instan.
-                </h2>
-                <p class="text-sm text-slate-600 mt-2">
-                    Sesuaikan plafon, nilai agunan, tenor, dan metode bunga untuk melihat gambaran pembiayaan sebelum masuk ke portal.
-                </p>
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-7 sm:mb-9">
+                <div class="max-w-xl">
+                    <div class="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-700 mb-1.5">Kalkulator Cepat</div>
+                    <h2 class="text-xl sm:text-3xl font-bold text-slate-950 tracking-[-0.025em]">
+                        Hitung estimasi angsuran &amp; rasio LTV.
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-600 mt-1.5">
+                        Sesuaikan plafon, nilai agunan, tenor, dan bunga untuk melihat gambaran cicilan secara langsung.
+                    </p>
+                </div>
+                <a href="<?= base_url('simulasi') ?>" class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-800 shrink-0">
+                    <span>Buka Simulasi Pengajuan 5 Tahap</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <!-- Unified 2-Pane Hairline Calculator -->
+            <div class="bg-white border border-slate-200 rounded-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200">
                 <!-- Controls Panel (7 cols) -->
-                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 space-y-6">
+                <div class="lg:col-span-7 p-5 sm:p-7 space-y-5">
                     <!-- Plafon -->
-                    <div class="space-y-2.5">
+                    <div class="space-y-2">
                         <div class="flex items-center justify-between text-xs">
-                            <label for="simPlafon" class="font-bold text-slate-700">Plafon Pinjaman</label>
-                            <span id="lblSimPlafon" class="font-extrabold text-slate-950 tabular-nums">Rp 250.000.000</span>
+                            <label for="simPlafon" class="font-medium text-slate-700">Plafon Pinjaman</label>
+                            <span id="lblSimPlafon" class="font-bold text-slate-950 tabular-nums">Rp 250.000.000</span>
                         </div>
                         <input type="range" id="simPlafon" min="10000000" max="2000000000" step="10000000" value="250000000" class="w-full" oninput="hitungSimulasiLanding()">
-                        <div class="flex justify-between text-[10px] text-slate-400 font-medium tabular-nums">
-                            <span>Rp 10 Juta</span>
-                            <span>Rp 2 Miliar</span>
+                        <div class="flex justify-between text-[10px] text-slate-400 tabular-nums">
+                            <span>Rp 10 Jt</span>
+                            <span>Rp 2 M</span>
                         </div>
                     </div>
 
                     <!-- Nilai Agunan -->
-                    <div class="space-y-2.5">
+                    <div class="space-y-2">
                         <div class="flex items-center justify-between text-xs">
-                            <label for="simAgunan" class="font-bold text-slate-700">Nilai Pasar Agunan (MV)</label>
-                            <span id="lblSimAgunan" class="font-extrabold text-slate-950 tabular-nums">Rp 500.000.000</span>
+                            <label for="simAgunan" class="font-medium text-slate-700">Nilai Pasar Agunan (MV)</label>
+                            <span id="lblSimAgunan" class="font-bold text-slate-950 tabular-nums">Rp 500.000.000</span>
                         </div>
                         <input type="range" id="simAgunan" min="20000000" max="4000000000" step="10000000" value="500000000" class="w-full" oninput="hitungSimulasiLanding()">
-                        <div class="flex justify-between text-[10px] text-slate-400 font-medium tabular-nums">
-                            <span>Rp 20 Juta</span>
-                            <span>Rp 4 Miliar</span>
+                        <div class="flex justify-between text-[10px] text-slate-400 tabular-nums">
+                            <span>Rp 20 Jt</span>
+                            <span>Rp 4 M</span>
                         </div>
                     </div>
 
                     <!-- Grid: Tenor, Bunga, Metode -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
                         <div>
-                            <label for="simTenor" class="block text-xs font-bold text-slate-700 mb-1.5">Tenor (Bulan)</label>
-                            <select id="simTenor" onchange="hitungSimulasiLanding()" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 focus:border-blue-600 focus:outline-none cursor-pointer">
+                            <label for="simTenor" class="block text-[11px] font-medium text-slate-600 mb-1.5">Tenor</label>
+                            <select id="simTenor" onchange="hitungSimulasiLanding()" class="w-full h-9 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-900 focus:border-blue-700 focus:outline-none cursor-pointer">
                                 <option value="6">6 Bulan</option>
                                 <option value="12">12 Bulan</option>
                                 <option value="18">18 Bulan</option>
@@ -480,12 +487,12 @@
                             </select>
                         </div>
                         <div>
-                            <label for="simBunga" class="block text-xs font-bold text-slate-700 mb-1.5">Bunga / Tahun (%)</label>
-                            <input type="number" id="simBunga" value="12" min="1" max="36" step="0.5" oninput="hitungSimulasiLanding()" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 tabular-nums focus:border-blue-600 focus:outline-none">
+                            <label for="simBunga" class="block text-[11px] font-medium text-slate-600 mb-1.5">Bunga (% / thn)</label>
+                            <input type="number" id="simBunga" value="12" min="1" max="36" step="0.5" oninput="hitungSimulasiLanding()" class="w-full h-9 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-900 tabular-nums focus:border-blue-700 focus:outline-none">
                         </div>
-                        <div>
-                            <label for="simMetode" class="block text-xs font-bold text-slate-700 mb-1.5">Metode Bunga</label>
-                            <select id="simMetode" onchange="hitungSimulasiLanding()" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 focus:border-blue-600 focus:outline-none cursor-pointer">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label for="simMetode" class="block text-[11px] font-medium text-slate-600 mb-1.5">Metode Bunga</label>
+                            <select id="simMetode" onchange="hitungSimulasiLanding()" class="w-full h-9 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-900 focus:border-blue-700 focus:outline-none cursor-pointer">
                                 <option value="ANUITAS" selected>Anuitas</option>
                                 <option value="FLAT">Flat</option>
                             </select>
@@ -493,42 +500,42 @@
                     </div>
                 </div>
 
-                <!-- Output Executive Card (5 cols) -->
-                <div class="lg:col-span-5 bg-slate-950 text-white rounded-2xl p-6 sm:p-8 flex flex-col justify-between gap-6">
-                    <div class="space-y-6">
-                        <div>
-                            <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Estimasi Angsuran per Bulan</div>
-                            <div id="outSimAngsuran" class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight tabular-nums mt-1.5">
+                <!-- Output Ledger Pane (5 cols) -->
+                <div class="lg:col-span-5 bg-slate-50/70 p-5 sm:p-7 flex flex-col justify-between gap-5">
+                    <div class="space-y-4">
+                        <div class="pb-4 border-b border-slate-200">
+                            <div class="text-[11px] font-medium text-slate-500">Estimasi Angsuran / Bulan</div>
+                            <div id="outSimAngsuran" class="text-2xl sm:text-3xl font-bold text-slate-950 tracking-tight tabular-nums mt-1">
                                 Rp 11.768.368
                             </div>
                         </div>
 
-                        <div class="space-y-3 pt-4 border-t border-slate-800 text-xs tabular-nums">
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-400">Rasio LTV (Plafon / Agunan)</span>
-                                <span class="flex items-center gap-2">
-                                    <strong id="outSimLtv" class="text-white font-bold">50,0%</strong>
-                                    <span id="outSimLtvBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Aman</span>
+                        <div class="space-y-2.5 text-xs tabular-nums">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-slate-500">Rasio LTV (Plafon / MV)</span>
+                                <span class="flex items-center gap-1.5">
+                                    <strong id="outSimLtv" class="text-slate-950 font-semibold">50,0%</strong>
+                                    <span id="outSimLtvBadge" class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Aman</span>
                                 </span>
                             </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-400">Coverage Agunan (MV)</span>
-                                <strong id="outSimCov" class="text-white font-bold">200,0%</strong>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-slate-500">Coverage Agunan</span>
+                                <strong id="outSimCov" class="text-slate-950 font-semibold">200,0%</strong>
                             </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-400">Estimasi Total Pengembalian</span>
-                                <strong id="outSimTotal" class="text-slate-200 font-semibold">Rp 282.440.832</strong>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-slate-500">Estimasi Total Pengembalian</span>
+                                <strong id="outSimTotal" class="text-slate-700 font-semibold">Rp 282.440.832</strong>
                             </div>
                         </div>
                     </div>
 
-                    <div class="pt-4 border-t border-slate-800 space-y-3">
-                        <a href="<?= $portalUrl ?>" class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold transition">
-                            <span>Ajukan &amp; Analisa di Portal</span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    <div class="pt-4 border-t border-slate-200 space-y-2.5">
+                        <a href="<?= base_url('simulasi') ?>" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition">
+                            <span>Coba Simulasi Lengkap (5C &amp; DSCR)</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </a>
-                        <p class="text-[10px] text-slate-500 text-center">
-                            Hasil simulasi bersifat estimasi indikatif dan dapat disesuaikan pada tahap analisa komite.
+                        <p class="text-[10px] text-slate-400 text-center leading-relaxed">
+                            Simulasi bersifat indikatif tanpa menyimpan data ke database.
                         </p>
                     </div>
                 </div>
@@ -615,13 +622,13 @@
             if (badge) {
                 if (ltv <= 70) {
                     badge.innerText = 'Aman';
-                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+                    badge.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
                 } else if (ltv <= 85) {
                     badge.innerText = 'Moderat';
-                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                    badge.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200';
                 } else {
                     badge.innerText = 'Tinggi';
-                    badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30';
+                    badge.className = 'px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200';
                 }
             }
         }
