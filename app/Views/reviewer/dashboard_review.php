@@ -20,10 +20,13 @@
     <title><?= esc($title ?? 'Workspace Reviewer & Komite Kredit') ?></title>
     <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png?v=2') ?>">
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
-    <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
-    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
+    <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col">
 
@@ -40,7 +43,7 @@
     $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png?v=2';
 ?>
     <!-- Top Navigation -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <header class="bg-white border-t-2 border-t-blue-700 border-b border-slate-200 sticky top-0 z-30">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-15 sm:h-16 items-center gap-3">
                 <a href="<?= base_url('dashboard') ?>" class="flex items-center gap-2.5 min-w-0">
@@ -104,10 +107,10 @@
         </div>
     </header>
 
-    <main class="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 min-w-0">
+    <main class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 min-w-0 space-y-5">
         
         <!-- Welcome Hero Banner (Biru Elegan seperti Desain Pengusul) -->
-        <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 rounded-2xl p-6 sm:p-7 text-white shadow-lg shadow-blue-500/10 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5 mb-6">
+        <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 rounded-2xl p-6 sm:p-7 text-white shadow-lg shadow-blue-500/10 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5" style="background-color: #1d4ed8; background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #4338ca 100%); color: #ffffff;">
             <!-- Ambient Decorative Elements -->
             <div class="pointer-events-none absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
             <div class="pointer-events-none absolute -left-10 -top-10 w-48 h-48 bg-sky-400/15 rounded-full blur-xl"></div>
@@ -127,7 +130,7 @@
         </div>
 
         <!-- 5-Column Metric Cards (Wow & Clean) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 mb-8 tabular-nums">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 tabular-nums">
             <!-- Card 1: Total Berkas Masuk -->
             <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 relative overflow-hidden group">
                 <div class="flex items-center justify-between gap-3">
@@ -213,7 +216,7 @@
         </div>
 
         <!-- Table Card: Daftar Berkas Pengajuan untuk Reviewer (Full Width) -->
-        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden mb-8">
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
             <div class="px-4 sm:px-5 py-3.5 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
                     <!-- Search Box -->

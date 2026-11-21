@@ -70,13 +70,6 @@ main a[class*="bg-purple-600"]:hover {
     border-color: #1e40af !important;
 }
 
-/* Flatten decorative banner gradients (if any remain) into clean corporate blue-accented sheet */
-main div[class*="bg-gradient-to-r"][class*="from-blue-"],
-main div[class*="bg-gradient-to-r"][class*="from-indigo-"],
-main div[class*="bg-gradient-to-r"][class*="from-slate-"] {
-    background-image: none !important;
-}
-
 /* Crisp corporate inputs, selects, textareas */
 main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]),
 main select,
