@@ -243,10 +243,10 @@
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#kontak">Kontak</a>
         </nav>
 
-        <!-- Right Header Actions (Masuk Portal & Mobile Hamburger) -->
+        <!-- Right Header Actions (Login & Mobile Hamburger) -->
         <div class="flex items-center gap-2 sm:gap-3">
             <a class="inline-flex items-center gap-1.5 px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-full bg-white hover:bg-blue-50 text-blue-600 hover:text-blue-700 border border-blue-200/90 font-bold text-xs sm:text-sm transition-all duration-200 shadow-xs hover:shadow-sm" href="<?= base_url('auth') ?>">
-                <span>Masuk Portal</span>
+                <span>Login</span>
                 <span class="material-symbols-outlined text-[14px] sm:text-[16px]">arrow_forward</span>
             </a>
             <!-- Mobile Navigation Toggle Button -->

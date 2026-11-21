@@ -118,7 +118,7 @@
                     <span>Reset</span>
                 </button>
                 <a href="<?= $portalUrl ?>" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 hover:shadow-blue-500/40 transition">
-                    <span>Masuk Portal</span>
+                    <span>Login</span>
                     <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                 </a>
             </div>
@@ -757,7 +757,7 @@
             <div class="flex items-center gap-4 text-slate-400">
                 <a href="<?= base_url('/') ?>" class="hover:text-slate-700 transition">Beranda</a>
                 <span>&bull;</span>
-                <a href="<?= $portalUrl ?>" class="hover:text-blue-600 font-semibold transition">Masuk Portal</a>
+                <a href="<?= $portalUrl ?>" class="hover:text-blue-600 font-semibold transition">Login</a>
             </div>
         </div>
     </footer>
