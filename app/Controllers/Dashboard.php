@@ -476,7 +476,7 @@ class Dashboard extends BaseController
             // Ambil riwayat log aktivitas terbaru
             $recentLogs = [];
             try {
-                $recentLogs = $db->table('log_aktivitas')->orderBy('created_at', 'DESC')->limit(5)->get()->getResultArray() ?? [];
+                $recentLogs = $db->table('log_aktivitas')->orderBy('created_at', 'DESC')->limit(100)->get()->getResultArray() ?? [];
             } catch (\Throwable $e) {
                 $recentLogs = [];
             }

@@ -513,7 +513,7 @@
                         <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                     <div class="text-xs text-slate-500 font-medium whitespace-nowrap hidden sm:inline">
-                        Menampilkan <span class="font-bold text-slate-800"><?= count($recent_logs ?? []) ?></span> aktivitas
+                        Menampilkan <span id="countLogDisplay" class="font-bold text-slate-800"><?= count($recent_logs ?? []) ?></span> aktivitas
                     </div>
                     <a href="<?= base_url('log') ?>" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hidden sm:inline whitespace-nowrap">
                         Lihat Semua &rarr;
@@ -521,7 +521,8 @@
                 </div>
             </div>
 
-            <div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
+            <!-- Desktop Table View (>= 768px) -->
+            <div class="hidden md:block w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
                 <table class="w-full min-w-[700px] text-left text-xs border-collapse" id="tabelLogAktivitas">
                     <thead class="bg-slate-50 text-[11px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
                         <tr>
@@ -534,7 +535,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         <?php if (empty($recent_logs)): ?>
-                            <tr>
+                            <tr id="emptyLogTableRow">
                                 <td colspan="5" class="py-10 text-center text-slate-400 italic">
                                     <div class="w-10 h-10 mx-auto mb-2 text-slate-300">
                                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -543,15 +544,16 @@
                                 </td>
                             </tr>
                         <?php else: ?>
-                            <?php foreach ($recent_logs as $lg): ?>
+                            <?php foreach ($recent_logs as $idx => $lg): ?>
                                 <?php
                                     $stUpper = strtoupper($lg['status'] ?? 'SUCCESS');
                                     $stClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
                                     if ($stUpper === 'WARNING') $stClass = 'bg-amber-50 text-amber-700 border-amber-200';
                                     elseif ($stUpper === 'DANGER' || $stUpper === 'ERROR') $stClass = 'bg-rose-50 text-rose-700 border-rose-200';
                                     elseif ($stUpper === 'INFO') $stClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                                    $logId = $lg['id'] ?? ($idx + 1);
                                 ?>
-                                <tr class="hover:bg-slate-50/80 transition-colors">
+                                <tr class="hover:bg-slate-50/80 transition-colors" id="row-log-<?= $logId ?>">
                                     <td class="py-3 px-4 font-mono-code text-[11px] text-slate-500 whitespace-nowrap">
                                         <?= date('d M Y H:i:s', strtotime($lg['created_at'])) ?>
                                     </td>
@@ -579,6 +581,64 @@
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Card View (< 768px) -->
+            <div class="md:hidden divide-y divide-slate-100" id="mobileLogCardsContainer">
+                <?php if (empty($recent_logs)): ?>
+                    <div class="text-center py-10 px-4 text-slate-400 italic text-xs">
+                        Belum ada log aktivitas yang tercatat di sistem.
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($recent_logs as $idx => $lg): ?>
+                        <?php
+                            $stUpper = strtoupper($lg['status'] ?? 'SUCCESS');
+                            $stClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                            if ($stUpper === 'WARNING') $stClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                            elseif ($stUpper === 'DANGER' || $stUpper === 'ERROR') $stClass = 'bg-rose-50 text-rose-700 border-rose-200';
+                            elseif ($stUpper === 'INFO') $stClass = 'bg-blue-50 text-blue-700 border-blue-200';
+                            $logId = $lg['id'] ?? ($idx + 1);
+                        ?>
+                        <div class="p-4 space-y-2.5 hover:bg-slate-50/50 transition-colors" id="card-log-<?= $logId ?>">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <div class="text-xs font-bold text-slate-900"><?= esc($lg['nama_user'] ?? 'System') ?></div>
+                                    <div class="text-[11px] text-slate-400 font-mono-code mt-0.5">
+                                        <?= date('d M Y H:i:s', strtotime($lg['created_at'])) ?>
+                                        <?php if (!empty($lg['ip_address'])): ?>
+                                            &bull; <?= esc($lg['ip_address']) ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border <?= $stClass ?> shrink-0">
+                                    <?= esc($lg['status'] ?? 'SUCCESS') ?>
+                                </span>
+                            </div>
+
+                            <div class="bg-slate-50/80 rounded-lg p-2.5 space-y-1.5 text-xs border border-slate-100">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-slate-400 text-[10px] font-medium uppercase">Modul:</span>
+                                    <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-white text-slate-700 border border-slate-200">
+                                        <?= esc($lg['modul'] ?? 'SISTEM') ?>
+                                    </span>
+                                </div>
+                                <p class="text-slate-700 text-xs leading-relaxed">
+                                    <?= esc($lg['aktivitas']) ?>
+                                </p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+
+            <!-- Bar Paginasi Responsif Log -->
+            <div id="paginationLogBar" class="px-4 sm:px-5 py-3 border-t border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <div class="tabular-nums text-center sm:text-left">
+                    Menampilkan <span id="pageLogInfoStart" class="font-bold text-slate-900">0</span> &minus; <span id="pageLogInfoEnd" class="font-bold text-slate-900">0</span> dari <span id="pageLogInfoTotal" class="font-bold text-slate-900"><?= count($recent_logs ?? []) ?></span> aktivitas
+                </div>
+                <div class="flex items-center gap-1.5" id="paginationLogButtons">
+                    <!-- Tombol paginasi log dirender via JS -->
+                </div>
             </div>
         </div>
 
@@ -773,22 +833,172 @@
             searchInput.addEventListener('input', filterTabelPengajuan);
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            renderPagination();
-        });
+        // Paginasi & Pencarian Responsif Tabel Log Aktivitas
+        let currentLogPage = 1;
+        const pageSizeLog = 5;
 
-        // Fitur pencarian interaktif tabel log aktivitas
+        function filterTabelLog() {
+            currentLogPage = 1;
+            renderLogPagination();
+        }
+
+        function goToLogPage(page) {
+            currentLogPage = page;
+            renderLogPagination();
+        }
+
+        function renderLogPagination() {
+            const searchLogInput = document.getElementById('searchLogInput');
+            const term = (searchLogInput?.value || '').toLowerCase().trim();
+
+            const rows = Array.from(document.querySelectorAll('#tabelLogAktivitas tbody tr[id^="row-log-"]'));
+            const cards = Array.from(document.querySelectorAll('#mobileLogCardsContainer div[id^="card-log-"]'));
+
+            const matchedRows = [];
+            const matchedCards = [];
+
+            // Filter Desktop Rows
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                if (!term || text.includes(term)) {
+                    matchedRows.push(row);
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Filter Mobile Cards
+            cards.forEach(card => {
+                const text = card.innerText.toLowerCase();
+                if (!term || text.includes(term)) {
+                    matchedCards.push(card);
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const totalMatches = matchedRows.length;
+            const totalPages = Math.max(1, Math.ceil(totalMatches / pageSizeLog));
+
+            if (currentLogPage > totalPages) currentLogPage = totalPages;
+            if (currentLogPage < 1) currentLogPage = 1;
+
+            const startIndex = (currentLogPage - 1) * pageSizeLog;
+            const endIndex = startIndex + pageSizeLog;
+
+            // Render slice baris desktop
+            matchedRows.forEach((row, idx) => {
+                row.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
+            });
+
+            // Render slice kartu mobile
+            matchedCards.forEach((card, idx) => {
+                card.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
+            });
+
+            // Update info jumlah
+            const countLogDisplay = document.getElementById('countLogDisplay');
+            if (countLogDisplay) countLogDisplay.innerText = totalMatches;
+
+            const pageLogInfoStart = document.getElementById('pageLogInfoStart');
+            const pageLogInfoEnd = document.getElementById('pageLogInfoEnd');
+            const pageLogInfoTotal = document.getElementById('pageLogInfoTotal');
+
+            if (pageLogInfoStart && pageLogInfoEnd && pageLogInfoTotal) {
+                if (totalMatches === 0) {
+                    pageLogInfoStart.innerText = '0';
+                    pageLogInfoEnd.innerText = '0';
+                } else {
+                    pageLogInfoStart.innerText = (startIndex + 1);
+                    pageLogInfoEnd.innerText = Math.min(endIndex, totalMatches);
+                }
+                pageLogInfoTotal.innerText = totalMatches;
+            }
+
+            // Render Tombol Paginasi Log
+            const paginationLogButtons = document.getElementById('paginationLogButtons');
+            if (!paginationLogButtons) return;
+
+            if (totalMatches <= pageSizeLog) {
+                if (totalMatches === 0) {
+                    paginationLogButtons.innerHTML = '<span class="text-slate-400 text-xs italic">Tidak ada aktivitas yang cocok</span>';
+                } else {
+                    paginationLogButtons.innerHTML = `
+                        <button type="button" disabled class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 text-slate-300 bg-white cursor-not-allowed">
+                            Sebelumnya
+                        </button>
+                        <button type="button" class="w-7 h-7 text-xs font-bold rounded-md bg-blue-600 text-white shadow-xs">
+                            1
+                        </button>
+                        <button type="button" disabled class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 text-slate-300 bg-white cursor-not-allowed">
+                            Selanjutnya
+                        </button>
+                    `;
+                }
+                return;
+            }
+
+            let btnHtml = '';
+
+            // Tombol Prev
+            const prevDisabled = (currentLogPage === 1);
+            btnHtml += `
+                <button type="button" onclick="goToLogPage(${currentLogPage - 1})" ${prevDisabled ? 'disabled' : ''}
+                        class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 ${prevDisabled ? 'text-slate-300 bg-white cursor-not-allowed' : 'text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer shadow-xs transition'}">
+                    Sebelumnya
+                </button>
+            `;
+
+            // Tombol Angka Halaman
+            for (let p = 1; p <= totalPages; p++) {
+                if (totalPages > 7) {
+                    if (p !== 1 && p !== totalPages && Math.abs(p - currentLogPage) > 1) {
+                        if (p === 2 && currentLogPage > 3) {
+                            btnHtml += `<span class="px-1 text-slate-400">...</span>`;
+                        } else if (p === totalPages - 1 && currentLogPage < totalPages - 2) {
+                            btnHtml += `<span class="px-1 text-slate-400">...</span>`;
+                        }
+                        continue;
+                    }
+                }
+
+                if (p === currentLogPage) {
+                    btnHtml += `
+                        <button type="button" class="w-7 h-7 text-xs font-bold rounded-md bg-blue-600 text-white shadow-xs flex items-center justify-center">
+                            ${p}
+                        </button>
+                    `;
+                } else {
+                    btnHtml += `
+                        <button type="button" onclick="goToLogPage(${p})"
+                                class="w-7 h-7 text-xs font-semibold rounded-md border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 transition flex items-center justify-center cursor-pointer shadow-xs">
+                            ${p}
+                        </button>
+                    `;
+                }
+            }
+
+            // Tombol Next
+            const nextDisabled = (currentLogPage === totalPages);
+            btnHtml += `
+                <button type="button" onclick="goToLogPage(${currentLogPage + 1})" ${nextDisabled ? 'disabled' : ''}
+                        class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 ${nextDisabled ? 'text-slate-300 bg-white cursor-not-allowed' : 'text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer shadow-xs transition'}">
+                    Selanjutnya
+                </button>
+            `;
+
+            paginationLogButtons.innerHTML = btnHtml;
+        }
+
         const searchLogInput = document.getElementById('searchLogInput');
         if (searchLogInput) {
-            searchLogInput.addEventListener('keyup', function() {
-                const term = this.value.toLowerCase();
-                const rows = document.querySelectorAll('#tabelLogAktivitas tbody tr');
-                rows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(term) ? '' : 'none';
-                });
-            });
+            searchLogInput.addEventListener('input', filterTabelLog);
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPagination();
+            renderLogPagination();
+        });
 
         // Dropdown Profil
         function toggleProfileDropdown(e) {
