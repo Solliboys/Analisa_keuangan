@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    </style>
     <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png?v=2') ?>">
-    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
+    </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
 
@@ -95,29 +95,17 @@
 ?>
 
     <!-- Top Bar Navigation -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-        <div class="w-full px-3 sm:px-6 lg:px-8">
-            <div class="flex flex-wrap justify-between min-h-16 py-2.5 items-center gap-2">
-                <!-- Brand & Breadcrumb -->
-                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-                    <a href="<?= base_url('dashboard') ?>" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 border border-slate-200 rounded-xl transition shrink-0" title="Kembali ke Dashboard">
-                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                        <span class="hidden sm:inline">Kembali</span>
-                    </a>
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                            <span class="text-[10px] sm:text-xs font-bold text-blue-600 uppercase tracking-wider">Reviewer / Komite</span>
-                            <span class="text-slate-300 hidden sm:inline">&bull;</span>
-                            <span class="text-[10px] sm:text-xs font-semibold text-slate-500 truncate"><?= esc($kredit['nomor_aplikasi']) ?></span>
-                        </div>
-                        <h1 class="text-sm sm:text-base font-extrabold text-slate-900 leading-tight truncate">
-                            Evaluasi &amp; Lembar Keputusan Reviewer
-                        </h1>
-                    </div>
-                </div>
+    <header class="bg-white border-t-2 border-t-blue-700 border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-14 sm:h-16 items-center gap-3">
+                <!-- Tombol Kembali Saja Sesuai Permintaan User -->
+                <a href="<?= base_url('dashboard') ?>" class="inline-flex items-center gap-2 px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:text-blue-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition shadow-xs" title="Kembali ke Dashboard">
+                    <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    <span>Kembali</span>
+                </a>
 
                 <!-- Right Action: Status Badge -->
-                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                <div class="flex items-center gap-2 shrink-0">
                     <?php
                         $badgeHeader = 'bg-blue-50 text-blue-700 border-blue-200';
                         if ($statusAplikasi === 'Disetujui') $badgeHeader = 'bg-emerald-50 text-emerald-700 border-emerald-200';
@@ -125,7 +113,7 @@
                         elseif (strpos(strtolower($statusAplikasi), 'revisi') !== false) $badgeHeader = 'bg-purple-50 text-purple-700 border-purple-300 ring-1 ring-purple-200/50';
                         elseif ($statusAplikasi === 'Ditolak') $badgeHeader = 'bg-rose-50 text-rose-700 border-rose-200';
                     ?>
-                    <span class="inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold border whitespace-nowrap <?= $badgeHeader ?>">
+                    <span class="inline-flex items-center px-2.5 sm:px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap <?= $badgeHeader ?>">
                         Status: <?= esc($statusAplikasi) ?>
                     </span>
                 </div>
@@ -134,7 +122,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+    <main class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 min-w-0 space-y-6">
         
         <!-- ============================================================== -->
         <!-- ROW 1: KOTAK DILURUSKAN (KIRI: RINGKASAN BERKAS, KANAN: KEPUTUSAN) -->
@@ -145,21 +133,21 @@
             <div class="lg:col-span-7 flex flex-col">
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
                     <!-- Header Card Ringkasan Inputan (Tinggi dan styling lurus dengan panel kanan) -->
-                    <div class="p-5 border-b border-blue-100 bg-blue-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-[92px]">
+                    <div class="p-4 sm:p-5 border-b border-blue-100 bg-blue-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-0 sm:min-h-[92px]">
                         <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-blue-700 uppercase tracking-wider">No. CAM: <?= esc($kredit['nomor_aplikasi']) ?></span>
-                                <span class="text-slate-300">&bull;</span>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs font-bold text-blue-700 uppercase tracking-wider">No. Aplikasi: <?= esc($kredit['nomor_aplikasi']) ?></span>
+                                <span class="text-slate-300 hidden sm:inline">&bull;</span>
                                 <span class="text-xs text-slate-500 font-medium"><?= date('d F Y', strtotime($kredit['created_at'])) ?></span>
                             </div>
-                            <h2 class="text-lg font-extrabold text-slate-900 mt-0.5">
+                            <h2 class="text-base sm:text-lg font-extrabold text-slate-900 mt-0.5">
                                 <?= esc(($kredit['nama_debitur'] ?? '') ?: 'Nama Debitur Belum Terisi') ?>
                             </h2>
                             <span class="text-xs text-slate-500 font-medium"><?= esc(($kredit['nama_usaha'] ?? '') ?: ($kredit['jenis_debitur'] ?? 'Individu')) ?></span>
                         </div>
                         <div class="sm:text-right">
                             <span class="text-[11px] text-slate-500 uppercase font-bold tracking-wider block">Plafon Pengajuan</span>
-                            <div class="text-xl font-extrabold text-blue-700">
+                            <div class="text-lg sm:text-xl font-extrabold text-blue-700">
                                 Rp <?= number_format((float)($kredit['plafon_pengajuan'] ?? 0), 0, ',', '.') ?>
                             </div>
                             <span class="text-xs text-slate-500 font-medium"><?= (int)($kredit['tenor_bulan'] ?? 12) ?> Bulan &bull; <?= esc($kredit['skema_pembayaran'] ?? 'Installment') ?></span>
@@ -167,7 +155,7 @@
                     </div>
 
                     <!-- Body: 4 Kotak Ringkas Data Pokok Pengajuan (DILURUSKAN DENGAN TINGGI RATA) -->
-                    <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
                         <div class="flex items-center justify-between pb-1 border-b border-slate-100">
                             <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                                 <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -265,9 +253,9 @@
                                         <span class="text-slate-400 text-[11px]">Nilai Likuidasi (LV):</span>
                                         <strong class="text-slate-800">Rp <?= number_format($total_lv, 0, ',', '.') ?></strong>
                                     </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-slate-400 text-[11px]">Coverage Jaminan:</span>
-                                        <strong class="text-blue-700"><?= $coverage_lv ?>%</strong>
+                                    <div class="flex justify-between items-baseline gap-2">
+                                        <span class="text-slate-400 text-[11px] shrink-0">Coverage Jaminan:</span>
+                                        <strong class="text-blue-700 truncate max-w-[140px] sm:max-w-[200px]" title="<?= $coverage_lv ?>%"><?= $coverage_lv ?>%</strong>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-slate-400 text-[11px]">Omzet Bulanan:</span>
@@ -290,17 +278,17 @@
             <div class="lg:col-span-5 flex flex-col">
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
                     <!-- Header Card (Tinggi dan styling lurus sejajar dengan header kiri) -->
-                    <div class="p-5 border-b border-slate-100 bg-blue-50/60 min-h-[92px] flex flex-col justify-center">
-                        <div class="flex items-center justify-between">
+                    <div class="p-4 sm:p-5 border-b border-slate-100 bg-blue-50/60 min-h-0 sm:min-h-[92px] flex flex-col justify-center">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full <?= !empty($currentDecision) ? 'bg-emerald-500' : 'bg-blue-600 animate-pulse' ?>"></span>
-                                <h2 class="text-sm font-extrabold text-blue-900 uppercase tracking-wider">
+                                <h2 class="text-xs sm:text-sm font-extrabold text-blue-900 uppercase tracking-wider">
                                     Lembar Keputusan Reviewer
                                 </h2>
                             </div>
                             <?php if (!empty($currentDecision)): ?>
-                                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
-                                    🔒 Mode Lihat (Sudah Di-review)
+                                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200 shrink-0">
+                                    Mode Lihat (Sudah Di-review)
                                 </span>
                             <?php endif; ?>
                         </div>
@@ -320,7 +308,7 @@
                         <!-- TAMPILAN READ-ONLY: KETIKA PETUGAS REVIEW TELAH SELESAI       -->
                         <!-- CEO CUKUP MELIHAT, BEGITUPUN SEBALIKNYA                        -->
                         <!-- ============================================================== -->
-                        <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
                             <?php
                                 $finalAlertClass = 'bg-slate-50 border-slate-200 text-slate-900';
                                 $finalIconClass  = 'bg-slate-600 text-white';
@@ -438,7 +426,7 @@
                     <?php endif; ?>
 
                     <div id="containerFormEditReviewer" class="<?= $isFinalized ? 'hidden' : '' ?> flex-1 flex flex-col justify-between">
-                    <form id="formKeputusanReviewer" class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <form id="formKeputusanReviewer" class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
                         <input type="hidden" name="kredit_id" value="<?= esc($kredit['kredit_id']) ?>">
 
                         <!-- Pilihan Keputusan: 4 OPSI (Setuju, Bersyarat, Revisi ke AO, Tolak) -->
@@ -505,7 +493,7 @@
                                       class="w-full text-xs text-slate-800 border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-600 transition placeholder:text-slate-400"
                                       placeholder="Tuliskan catatan pertimbangan kelayakan kredit, klausul syarat pencairan, atau alasan penolakan..."><?= esc($currentCatatan) ?></textarea>
                             <p class="text-[11px] text-slate-400 mt-1" id="catatanHelperText">
-                                Catatan ini akan dicatat resmi dalam risalah komite dan tertulis di dokumen CAM.
+                                Catatan ini akan dicatat resmi dalam risalah komite dan tertulis di dokumen keputusan.
                             </p>
                         </div>
 
@@ -549,7 +537,7 @@
         <!-- ROW 2: HASIL ANALISIS AI PER 5C (MEMANJANG PENUH & ADA TOMBOL LIHAT) -->
         <!-- ============================================================== -->
         <div class="w-full">
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
                 <!-- Header Card AI 5C Memanjang Penuh + Tombol Lihat -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div class="flex items-center gap-2.5">
