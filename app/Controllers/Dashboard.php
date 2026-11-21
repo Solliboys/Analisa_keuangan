@@ -186,12 +186,15 @@ class Dashboard extends BaseController
             // Tampilkan seluruh berkas pengajuan kredit yang masuk untuk antrean verifikasi SLIK
             $semuaKredit = $kreditModel->orderBy('created_at', 'DESC')->findAll();
             
-            $totalPengajuan = count($semuaKredit);
-            $totalPlafon    = 0;
-            $totalDraft     = 0;
-            $totalDiajukan  = 0;
-            $totalDisetujui = 0;
-            $totalSlikChecked = 0;
+            $totalPengajuan     = count($semuaKredit);
+            $totalPlafon        = 0;
+            $totalDraft         = 0;
+            $totalDiajukan      = 0;
+            $totalDisetujui     = 0;
+            $totalSlikChecked   = 0;
+            $totalSlikLancar    = 0;
+            $totalSlikTunggakan = 0;
+            $totalMenungguSlik  = 0;
 
             // Preload SLIK sekali (hilangkan N+1 query di dalam loop)
             $slikByKredit = [];
@@ -236,12 +239,20 @@ class Dashboard extends BaseController
                     } else {
                         $k['hasil_slik'] = 'Kol 1 (Lancar / Bersih)';
                     }
-                } elseif (($k['status_slik'] ?? '') === 'Menunggu Pengecekan' || strtolower($k['status_pengajuan'] ?? '') !== 'draft') {
-                    $k['status_slik'] = 'Menunggu Pengecekan';
-                    $k['hasil_slik']  = 'Menunggu Pengecekan Petugas SLIK';
+                    if ($adaTunggakan) {
+                        $totalSlikTunggakan++;
+                    } else {
+                        $totalSlikLancar++;
+                    }
                 } else {
-                    $k['status_slik'] = 'Belum Terbit';
-                    $k['hasil_slik']  = 'Menunggu Pengecekan';
+                    $totalMenungguSlik++;
+                    if (($k['status_slik'] ?? '') === 'Menunggu Pengecekan' || strtolower($k['status_pengajuan'] ?? '') !== 'draft') {
+                        $k['status_slik'] = 'Menunggu Pengecekan';
+                        $k['hasil_slik']  = 'Menunggu Pengecekan Petugas SLIK';
+                    } else {
+                        $k['status_slik'] = 'Belum Terbit';
+                        $k['hasil_slik']  = 'Menunggu Pengecekan';
+                    }
                 }
             }
             unset($k);
@@ -256,7 +267,10 @@ class Dashboard extends BaseController
                 'total_diajukan'      => $totalDiajukan,
                 'total_disetujui'     => $totalDisetujui,
                 'total_slik_checked'  => $totalSlikChecked,
-                'daftar_pengajuan'    => array_slice($semuaKredit, 0, 5),
+                'total_slik_lancar'   => $totalSlikLancar,
+                'total_slik_tunggakan'=> $totalSlikTunggakan,
+                'total_menunggu_slik' => $totalMenungguSlik,
+                'daftar_pengajuan'    => $semuaKredit,
                 'pengaturan_sistem'   => $pengaturanSistem
             ];
 
