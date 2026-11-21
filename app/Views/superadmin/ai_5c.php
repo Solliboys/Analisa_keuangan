@@ -161,9 +161,9 @@
                         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800" id="metricTitle">
                             PARAMETER METRIK RISIKO PILAR AGUNAN
                         </h2>
-                        <span class="text-xs text-slate-400 font-medium">(Regulasi OJK &amp; Kebijakan Risiko BPR)</span>
+                        <span class="text-xs text-slate-400 font-medium">(Regulasi OJK &amp; Kebijakan Risiko Pembiayaan)</span>
                     </div>
-                    <a href="javascript:void(0)" onclick="alert('Panduan Scoring sesuai POJK No. 40/POJK.03/2019 tentang Penilaian Kualitas Aset BPR.')" class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition">
+                    <a href="javascript:void(0)" onclick="alert('Panduan Scoring sesuai kebijakan manajemen risiko pembiayaan dan prinsip kehati-hatian OJK.')" class="text-xs font-semibold text-blue-700 hover:text-blue-800 flex items-center gap-1 transition">
                         <span>Panduan Scoring</span>
                         <span>&gt;</span>
                     </a>
@@ -202,89 +202,61 @@
 
             </div>
 
-            <!-- Card 2: System Directive / Prompt Pipeline Editor -->
-            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden mb-8">
-                
-                <!-- Dark Header Bar -->
-                <div class="bg-[#0f172a] text-white p-4">
+            <!-- Card 2: Panduan Penilaian AI (Mode Bahasa Sehari-hari untuk Admin) -->
+            <div class="bg-white rounded-lg border border-slate-200 overflow-hidden mb-8">
+
+                <!-- Header Ramah Admin (Tanpa Jargon Kode) -->
+                <div class="bg-slate-50 border-b border-slate-200 px-5 py-4 space-y-3">
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                        
-                        <!-- Left: Directive Title & Model Temperature -->
-                        <div class="flex items-center gap-3">
-                            <div class="p-1.5 rounded-lg bg-slate-800 text-blue-400">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                                </svg>
-                            </div>
-                            <span class="text-xs font-bold tracking-tight text-white" id="directiveTitle">
-                                System Directive: Collateral Underwriter
-                            </span>
-                            <span class="text-[11px] text-slate-400 font-mono">
-                                Model Temp: 0.15 (Strict)
-                            </span>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-950" id="directiveTitle">
+                                Panduan Penilaian AI: Pilar Agunan (Collateral)
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">
+                                Tulis arahan dengan bahasa sehari-hari seperti menjelaskan ke analis kredit. Data debitur (plafon, agunan, omzet, SLIK) otomatis dibaca sistem tanpa perlu sintaks.
+                            </p>
                         </div>
 
-                        <!-- Right: Variable Tag Pills -->
-                        <div class="flex flex-wrap items-center gap-1.5 text-xs">
-                            <span class="text-slate-400 text-[11px] mr-1">Sisipkan Variabel:</span>
-                            
-                            <button type="button" onclick="insertVariable('{{dokumen_agunan}}')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-mono text-[11px] border border-slate-700 transition">
-                                {{dokumen_agunan}}
+                        <!-- Preset Gaya Penilaian (1-Klik) -->
+                        <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+                            <span class="text-[11px] font-medium text-slate-500 mr-1">Gaya Penilaian:</span>
+                            <button type="button" onclick="terapkanPresetGaya('ketat')" class="px-2.5 py-1 rounded-md bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-slate-700 text-[11px] font-semibold border border-slate-200 transition cursor-pointer">
+                                Ketat (Konservatif)
                             </button>
-                            <button type="button" onclick="insertVariable('{{nilai_pasar_agunan}}')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-mono text-[11px] border border-slate-700 transition">
-                                {{nilai_pasar_agunan}}
+                            <button type="button" onclick="terapkanPresetGaya('standar')" class="px-2.5 py-1 rounded-md bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-slate-700 text-[11px] font-semibold border border-slate-200 transition cursor-pointer">
+                                Seimbang (Standar)
                             </button>
-                            <button type="button" onclick="insertVariable('{{plafon_diajukan}}')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-mono text-[11px] border border-slate-700 transition">
-                                {{plafon_diajukan}}
-                            </button>
-                            <button type="button" onclick="insertVariable('{{coverage_ratio}}')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-mono text-[11px] border border-slate-700 transition">
-                                {{coverage_ratio}}
-                            </button>
-
-                            <!-- Format Button -->
-                            <button type="button" onclick="formatPrompt()" class="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-[11px] flex items-center gap-1.5 transition ml-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                                </svg>
-                                <span>Format</span>
+                            <button type="button" onclick="terapkanPresetGaya('fleksibel')" class="px-2.5 py-1 rounded-md bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-slate-700 text-[11px] font-semibold border border-slate-200 transition cursor-pointer">
+                                Fleksibel
                             </button>
                         </div>
+                    </div>
 
+                    <!-- Chip Tambah Poin Aturan Cepat (Dinamis per Pilar) -->
+                    <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-200/80">
+                        <span class="text-[11px] font-medium text-slate-500 mr-1">Tambah Poin Aturan:</span>
+                        <div id="quickRuleChips" class="flex flex-wrap items-center gap-1.5">
+                            <!-- Diisi dinamis oleh JS sesuai pilar aktif -->
+                        </div>
+                        <button type="button" onclick="formatPrompt()" class="ml-auto px-2.5 py-1 rounded-md bg-white hover:bg-slate-100 text-slate-600 font-medium text-[11px] border border-slate-200 transition cursor-pointer">
+                            Rapikan Teks
+                        </button>
                     </div>
                 </div>
 
-                <!-- Code / Directive Editor Body -->
+                <!-- Kotak Aturan Bahasa Normal -->
                 <div class="p-4 sm:p-5 bg-white">
-                    <textarea id="promptEditor" rows="12" class="w-full font-mono-code text-xs sm:text-[13px] text-slate-800 leading-relaxed outline-none resize-y border-0 bg-transparent focus:ring-0 p-0" spellcheck="false">Anda adalah Penilai Agunan & Legal Officer BPR berstandar perbankan untuk pilar COLLATERAL (Jaminan). Pastikan prinsip Kehati-hatian (Prudential Banking) terpenuhi secara mutlak.
-
-Input Variabel Kredit:
-- Dokumen Legalitas : {{dokumen_agunan}} (SHM / SHGB / BPKB)
-- Taksasi Pasar     : {{nilai_pasar_agunan}}
-- Estimasi Likuidasi: {{nilai_likuidasi}}
-- Plafon Diajukan   : {{plafon_diajukan}}
-
-System Execution Directives:
-1. Kalkulasi Loan-to-Value (LTV) dan rasio likuidasi terhadap plafon kredit.</textarea>
+                    <textarea id="promptEditor" rows="10" placeholder="Contoh: Pastikan nilai likuidasi agunan minimal 100% dari plafon pinjaman, sertifikat jelas atas nama debitur, dan beri catatan risiko bila agunan sulit dijual." class="w-full text-[13px] text-slate-800 leading-relaxed outline-none resize-y border border-slate-200 rounded-md p-3.5 bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-700/10" spellcheck="false"></textarea>
                 </div>
 
-                <!-- Editor Status Footer -->
-                <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                    <div class="flex items-center gap-4">
-                        <span class="inline-flex items-center gap-1.5 text-emerald-600 font-semibold">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                            </svg>
-                            Sintaks &amp; Variabel: 4/4 Terdeteksi Valid
-                        </span>
-                        <span class="inline-flex items-center gap-1.5 text-blue-600 font-medium">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z" />
-                            </svg>
-                            Output Schema: JSON Validated Strict
-                        </span>
+                <!-- Footer Status Ramah Admin -->
+                <div class="px-5 py-3 border-t border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-2 text-slate-600">
+                        <span class="w-2 h-2 rounded-full bg-emerald-600 shrink-0"></span>
+                        <span>Aturan siap dipakai — data debitur otomatis disambungkan oleh sistem saat analisis berjalan.</span>
                     </div>
-                    <span class="text-slate-400 font-mono text-[11px]" id="tokenCount">
-                        Approx. 184 Tokens
+                    <span class="text-slate-400 text-[11px] tabular-nums shrink-0" id="tokenCount">
+                        0 kata
                     </span>
                 </div>
 
@@ -499,7 +471,7 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
                 bobot: 25,
                 threshold: 80,
                 fokus: 'Riwayat Kolektibilitas SLIK & Integritas',
-                directive: 'System Directive: Character Underwriter',
+                directive: 'Panduan Penilaian AI: Pilar Karakter (Character)',
                 prompt: <?= json_encode(!empty($pengaturan_ai['prompt_character']) ? $pengaturan_ai['prompt_character'] : null) ?> || defaultPrompts.character
             },
             capacity: {
@@ -507,7 +479,7 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
                 bobot: 25,
                 threshold: 75,
                 fokus: 'Kemampuan Arus Kas & Debt Service Ratio (DSR)',
-                directive: 'System Directive: Capacity Underwriter',
+                directive: 'Panduan Penilaian AI: Pilar Kapasitas (Capacity)',
                 prompt: <?= json_encode(!empty($pengaturan_ai['prompt_capacity']) ? $pengaturan_ai['prompt_capacity'] : null) ?> || defaultPrompts.capacity
             },
             capital: {
@@ -515,7 +487,7 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
                 bobot: 15,
                 threshold: 70,
                 fokus: 'Struktur Modal Bersih & Solvabilitas Usaha',
-                directive: 'System Directive: Capital Underwriter',
+                directive: 'Panduan Penilaian AI: Pilar Permodalan (Capital)',
                 prompt: <?= json_encode(!empty($pengaturan_ai['prompt_capital']) ? $pengaturan_ai['prompt_capital'] : null) ?> || defaultPrompts.capital
             },
             collateral: {
@@ -523,7 +495,7 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
                 bobot: 20,
                 threshold: 75,
                 fokus: 'Legalitas & Nilai Likuidasi Jaminan',
-                directive: 'System Directive: Collateral Underwriter',
+                directive: 'Panduan Penilaian AI: Pilar Agunan (Collateral)',
                 prompt: <?= json_encode(!empty($pengaturan_ai['prompt_collateral']) ? $pengaturan_ai['prompt_collateral'] : null) ?> || defaultPrompts.collateral
             },
             condition: {
@@ -531,7 +503,7 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
                 bobot: 15,
                 threshold: 65,
                 fokus: 'Prospek Industri & Kondisi Makro Ekonomi',
-                directive: 'System Directive: Condition Underwriter',
+                directive: 'Panduan Penilaian AI: Pilar Kondisi Usaha (Condition)',
                 prompt: <?= json_encode(!empty($pengaturan_ai['prompt_condition']) ? $pengaturan_ai['prompt_condition'] : null) ?> || defaultPrompts.condition
             },
             reviewer: {
@@ -539,10 +511,87 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
                 bobot: 100,
                 threshold: 75,
                 fokus: 'Sintesis Komprehensif Scoring 5C & Rekomendasi Komite',
-                directive: 'System Directive: Master Underwriting Reviewer',
+                directive: 'Panduan Penilaian AI: Kesimpulan & Rekomendasi Akhir',
                 prompt: <?= json_encode(!empty($pengaturan_ai['prompt_final']) ? $pengaturan_ai['prompt_final'] : null) ?> || defaultPrompts.reviewer
             }
         };
+
+        const quickRulesByPillar = {
+            character: [
+                { label: '+ Wajib SLIK Kol 1 (Lancar)', text: 'Pastikan riwayat SLIK OJK berstatus Kol 1 (Lancar) tanpa tunggakan aktif.' },
+                { label: '+ Cek Reputasi & Web Check', text: 'Periksa rekam jejak debitur dari hasil Web Check dan pastikan tidak ada kasus hukum.' },
+                { label: '+ Tolak Jika Pernah Macet', text: 'Beri peringatan keras atau skor rendah jika terdapat riwayat kolektibilitas Kol 3-5.' }
+            ],
+            capacity: [
+                { label: '+ Wajib DSCR >= 1,3x', text: 'Pastikan kemampuan bayar (DSCR) minimal 1,3 kali dari total angsuran bulanan.' },
+                { label: '+ Cek Mutasi Rekening Koran', text: 'Cocokkan klaim omzet usaha dengan rata-rata mutasi kredit di rekening koran.' },
+                { label: '+ Hitung Cicilan Eksisting', text: 'Perhitungkan seluruh cicilan pinjaman lain dari SLIK sebelum menyimpulkan surplus arus kas.' }
+            ],
+            capital: [
+                { label: '+ Cek Modal Sendiri & Aset', text: 'Evaluasi kecukupan modal sendiri serta cadangan kas usaha debitur.' },
+                { label: '+ Cek Rasio Utang vs Aset', text: 'Beri catatan risiko bila total kewajiban melebihi 70% dari total aset usaha.' }
+            ],
+            collateral: [
+                { label: '+ Wajib Coverage LV >= 100%', text: 'Pastikan nilai likuidasi agunan (LV) minimal 100% menutupi plafon pinjaman.' },
+                { label: '+ Cek Legalitas SHM / BPKB', text: 'Verifikasi kelengkapan legalitas agunan dan kesesuaian nama pemilik pada sertifikat.' },
+                { label: '+ Cek Kemudahan Jual Aset', text: 'Berikan catatan risiko likuiditas bila lokasi atau kondisi agunan sulit dijual kembali.' }
+            ],
+            condition: [
+                { label: '+ Cek Lama Usaha >= 2 Thn', text: 'Prioritaskan usaha yang sudah berjalan stabil minimal 2 tahun dengan pelanggan tetap.' },
+                { label: '+ Analisa Prospek Sektor', text: 'Evaluasi prospek sektor usaha debitur terhadap daya beli pasar saat ini.' }
+            ],
+            reviewer: [
+                { label: '+ Ringkas Kelebihan & Risiko', text: 'Sajikan ringkasan poin kekuatan debitur, risiko utama, dan syarat mitigasi secara jelas.' },
+                { label: '+ Beri Rekomendasi Plafon', text: 'Sertakan rekomendasi plafon aman jika plafon yang diajukan dinilai terlalu tinggi.' }
+            ]
+        };
+
+        function renderQuickRuleChips(pillarKey) {
+            const box = document.getElementById('quickRuleChips');
+            if (!box) return;
+            const items = quickRulesByPillar[pillarKey] || quickRulesByPillar.collateral;
+            box.innerHTML = items.map((item, i) => `
+                <button type="button" onclick="tambahAturanCepat('${pillarKey}', ${i})"
+                        class="px-2.5 py-1 rounded-md bg-blue-50/70 hover:bg-blue-100 text-blue-700 text-[11px] font-semibold border border-blue-200/80 transition cursor-pointer">
+                    ${item.label}
+                </button>
+            `).join('');
+        }
+
+        function tambahAturanCepat(pillarKey, idx) {
+            const items = quickRulesByPillar[pillarKey] || [];
+            const item = items[idx];
+            if (!item) return;
+            const textarea = document.getElementById('promptEditor');
+            const cur = textarea.value.trim();
+            const line = '- ' + item.text;
+            textarea.value = cur ? (cur + '\n' + line) : line;
+            textarea.focus();
+            updateTokenCount();
+        }
+
+        function terapkanPresetGaya(mode) {
+            const namaPilar = {
+                character: 'Karakter & Riwayat SLIK',
+                capacity: 'Kapasitas & Arus Kas',
+                capital: 'Permodalan & Aset',
+                collateral: 'Agunan & Nilai Jaminan',
+                condition: 'Kondisi & Prospek Usaha',
+                reviewer: 'Keputusan Akhir Komite'
+            }[currentPillar] || 'Penilaian Kredit';
+
+            const templates = {
+                ketat: `Lakukan penilaian ketat (konservatif) pada pilar ${namaPilar}.\n- Utamakan prinsip kehati-hatian penuh; jika ada data meragukan atau rasio di bawah standar, turunkan skor secara tegas.\n- Wajib cantumkan seluruh potensi risiko dan syarat mitigasi sebelum pembiayaan dapat disetujui.`,
+                standar: `Lakukan penilaian objektif dan seimbang pada pilar ${namaPilar}.\n- Evaluasi kesesuaian data debitur dengan standar kelayakan pembiayaan yang berlaku.\n- Jelaskan poin kekuatan, potensi risiko, dan rekomendasi perbaikan secara ringkas dalam bahasa Indonesia yang mudah dipahami.`,
+                fleksibel: `Lakukan penilaian suportif namun tetap terukur pada pilar ${namaPilar}.\n- Pertimbangkan potensi pertumbuhan usaha debitur selama risiko utama masih dapat dimitigasi.\n- Jika ada kekurangan minor, sarankan syarat tambahan (Disetujui Bersyarat) dibandingkan langsung menolak.`
+            };
+
+            const textarea = document.getElementById('promptEditor');
+            if (textarea && templates[mode]) {
+                textarea.value = templates[mode];
+                updateTokenCount();
+            }
+        }
 
         let currentPillar = 'collateral';
 
@@ -570,6 +619,7 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
             document.getElementById('promptEditor').value = data.prompt;
             document.getElementById('btnRunText').innerText = `Terapkan & Jalankan Analisis (${capitalize(pillarKey)})`;
 
+            renderQuickRuleChips(pillarKey);
             updateTokenCount();
         }
 
@@ -613,8 +663,8 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
         function updateTokenCount() {
             const text = document.getElementById('promptEditor').value;
             const words = text.trim().split(/\s+/).filter(Boolean).length;
-            const approxTokens = Math.round(words * 1.33);
-            document.getElementById('tokenCount').innerText = `Approx. ${approxTokens} Tokens`;
+            const el = document.getElementById('tokenCount');
+            if (el) el.innerText = `${words} kata`;
         }
 
         function resetDefaultPrompt() {
