@@ -275,27 +275,27 @@
     </div>
 </header>
 
-<main class="relative z-10 pt-18 sm:pt-32">
+<main class="relative z-10 pt-20 sm:pt-32">
     <!-- HERO SECTION WITH INSPIRATION GRAPHICS & FLOATING METRIC CARDS -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 pt-3 sm:pt-6 pb-12 sm:pb-20 text-center flex flex-col items-center relative">
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 pt-2 sm:pt-6 pb-12 sm:pb-20 text-center flex flex-col items-center relative">
         <!-- Top Pill Tag (Teks model AI dihapus sesuai instruksi) -->
-        <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 rounded-full bg-white/90 backdrop-blur border border-blue-200/80 shadow-2xs hover:border-blue-300 transition-colors mb-3.5 sm:mb-6 cursor-default">
-            <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-500 animate-pulse"></span>
-            <span class="text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">Engine AI 5C • Autonomous Underwriting</span>
+        <div class="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-white/90 backdrop-blur border border-blue-200/80 shadow-2xs hover:border-blue-300 transition-colors mb-3 sm:mb-6 cursor-default mx-auto">
+            <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-500 animate-pulse shrink-0"></span>
+            <span class="text-[10px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider whitespace-nowrap">Engine AI 5C • Autonomous Underwriting</span>
         </div>
 
         <!-- Main Headline -->
-        <h1 class="text-2xl xs:text-3xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 max-w-4xl leading-[1.2] sm:leading-[1.12] mb-3 sm:mb-6">
-            Ubah Analisis Kredit Manual <br class="hidden xs:inline sm:hidden"/>Menjadi <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 bg-clip-text text-transparent">Presisi &amp; Otomatis</span>
+        <h1 class="text-2xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight text-slate-900 max-w-4xl leading-[1.2] sm:leading-[1.12] mb-3 sm:mb-6 text-center mx-auto">
+            Ubah Analisis Kredit Manual Menjadi <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 bg-clip-text text-transparent">Presisi &amp; Otomatis</span>
         </h1>
 
         <!-- Subheadline -->
-        <p class="text-xs sm:text-lg lg:text-xl text-slate-500 max-w-2xl leading-relaxed mb-5 sm:mb-8 px-2 sm:px-0">
+        <p class="text-xs sm:text-lg lg:text-xl text-slate-500 max-w-2xl leading-relaxed mb-5 sm:mb-8 px-2 sm:px-0 text-center mx-auto">
             Otomasi penyusunan <span class="text-slate-800 font-semibold">Laporan Analisis Kelayakan Kredit</span> dan scoring 5C dalam hitungan detik. Terintegrasi SLIK OJK real-time untuk <?= esc($namaLembagaBersih) ?> dan Lembaga Keuangan.
         </p>
 
         <!-- CTA Buttons (Stacked Full-Width on Mobile, Row on Desktop) -->
-        <div class="relative z-20 flex flex-col sm:flex-row items-center gap-2.5 sm:gap-4 mb-6 sm:mb-10 w-full sm:w-auto px-2 sm:px-0 max-w-sm sm:max-w-none">
+        <div class="relative z-20 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-4 mb-6 sm:mb-10 w-full sm:w-auto px-4 sm:px-0 max-w-sm sm:max-w-none mx-auto">
             <a class="w-full sm:w-auto px-6 sm:px-8 py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm sm:text-base transition-all duration-200 shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 flex items-center justify-center gap-2 group cursor-pointer text-center" href="<?= base_url('simulasi') ?>">
                 <span>Uji Coba Sandbox Sekarang</span>
                 <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">bolt</span>
@@ -307,7 +307,7 @@
         </div>
 
         <!-- HERO VISUAL COMPOSITION: RESPONSIVE & NON-OVERLAPPING -->
-        <div class="relative w-full max-w-6xl mt-2 min-h-0 sm:min-h-[480px] lg:min-h-[580px] flex items-center justify-center px-1 sm:px-2">
+        <div class="relative w-full max-w-6xl mt-2 min-h-0 sm:min-h-[480px] lg:min-h-[580px] flex items-center justify-center mx-auto">
             <!-- SVG CURVED CONNECTING LINES (Desktop Only) -->
             <svg class="absolute inset-0 w-full h-full pointer-events-none hidden xl:block z-10" fill="none" viewbox="0 0 1152 580" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -430,7 +430,7 @@
             </div>
 
             <!-- MAIN CENTER CARD: DATA ANALYTICS & SCORING TREND -->
-            <div class="w-full max-w-2xl bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200/90 p-4 sm:p-8 shadow-2xl relative z-20 text-left">
+            <div class="w-full max-w-xl sm:max-w-2xl bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200/90 p-4 sm:p-8 shadow-2xl relative z-20 text-left mx-auto">
                 <!-- Header of Mockup Card -->
                 <div class="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 gap-2">
                     <div>
@@ -485,7 +485,7 @@
                         </svg>
 
                         <!-- Floating Tooltip Pill -->
-                        <div class="absolute left-[54%] sm:left-[62%] top-1 -translate-x-1/2 -translate-y-full mb-1">
+                        <div class="absolute left-[64%] top-1 -translate-x-1/2 -translate-y-full mb-1">
                             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2.5 sm:px-3 py-1 rounded-lg sm:rounded-xl shadow-lg flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-bold whitespace-nowrap">
                                 <span>Score: 88.0 (Grade A)</span>
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
@@ -518,7 +518,7 @@
         </div>
 
         <!-- Mobile Floating Highlights Carousel -->
-        <div class="w-full max-w-2xl mt-3 sm:mt-4 grid grid-cols-2 gap-2.5 sm:gap-3 xl:hidden">
+        <div class="w-full max-w-xl sm:max-w-2xl mt-3 sm:mt-4 grid grid-cols-2 gap-2.5 sm:gap-3 xl:hidden mx-auto">
             <div class="glass-card rounded-xl sm:rounded-2xl p-2.5 sm:p-3 text-left">
                 <div class="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase truncate">Total Fasilitas</div>
                 <div class="text-xs sm:text-sm font-extrabold text-slate-900 mt-0.5 truncate"><?= esc($statKreditCount) ?></div>
