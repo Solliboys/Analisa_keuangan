@@ -42,7 +42,6 @@
     $rawLembaga  = !empty($pengaturan_sistem['nama_lembaga']) ? trim($pengaturan_sistem['nama_lembaga']) : '';
     $namaLembaga = !empty($rawLembaga) ? $rawLembaga : 'Lembaga Pembiayaan';
     $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png?v=2';
-    $petugasSlikAktif = (int)($pengaturan_sistem['petugas_slik_aktif'] ?? (($pengaturan_sistem['ijin_pengusul_isi_slik'] ?? 1) == 0 ? 1 : 0));
 ?>
     <!-- Top Navigation -->
     <header class="bg-white border-t-2 border-t-blue-700 border-b border-slate-200 sticky top-0 z-30">
@@ -127,36 +126,6 @@
                 </h1>
                 <p class="text-xs sm:text-sm text-blue-100/90 mt-1 max-w-2xl leading-relaxed">
                     Periksa riwayat fasilitas pembiayaan nasabah dan terbitkan status kolektibilitas untuk mendukung evaluasi 5C.
-                </p>
-            </div>
-
-            <!-- Quick Control: Pemisahan Peran Petugas SLIK -->
-            <div class="relative z-10 bg-white/10 backdrop-blur-md border border-white/20 p-3.5 sm:p-4 rounded-xl flex items-center justify-between gap-4 self-stretch md:self-auto shrink-0 min-w-[280px]">
-                <div>
-                    <span class="text-[10px] font-semibold uppercase tracking-wider text-blue-100 block">Status Peran Petugas SLIK</span>
-                    <span id="labelStatusAkses" class="text-xs font-bold text-white block mt-0.5">
-                        <?= $petugasSlikAktif === 1 ? 'Petugas SLIK AKTIF (SOP Ketat)' : 'Petugas SLIK NONAKTIF (Mode Fleksibel)' ?>
-                    </span>
-                </div>
-                <button type="button" onclick="toggleAksesPengusul()" id="btnToggleAkses"
-                        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 <?= $petugasSlikAktif === 1 ? 'bg-amber-400 text-slate-900 hover:bg-amber-300 shadow-sm' : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-sm' ?>">
-                    <?= $petugasSlikAktif === 1 ? 'Nonaktifkan' : 'Aktifkan' ?>
-                </button>
-            </div>
-        </div>
-
-        <!-- Banner Peringatan Jika Petugas SLIK Nonaktif -->
-        <div id="bannerPetugasSlikNonaktif" class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3 shadow-2xs <?= $petugasSlikAktif === 0 ? '' : 'hidden' ?>">
-            <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 text-sm shadow-xs">
-                &excl;
-            </div>
-            <div class="flex-1">
-                <div class="flex items-center gap-2">
-                    <h4 class="font-bold text-xs uppercase tracking-wide text-amber-900">Peran Petugas SLIK Sedang Dinonaktifkan (Mode Fleksibel AO)</h4>
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900">Pengusul Mandiri</span>
-                </div>
-                <p class="text-xs text-amber-800 mt-1 leading-relaxed">
-                    Saat ini sistem berjalan dalam <strong>Mode Fleksibel (Single AO)</strong>. Pengusul memiliki wewenang untuk langsung memproses hasil SLIK, menentukan status kolektibilitas, dan mengunggah berkas iDeb di formulir pengajuan kredit tanpa menunggu Petugas SLIK. Anda tetap dapat memantau data atau mengaktifkan kembali pemisahan peran kapan saja.
                 </p>
             </div>
         </div>
@@ -741,60 +710,6 @@
                 menu.classList.add('hidden');
             }
         });
-
-        // Toggle Status Peran Petugas SLIK
-        function toggleAksesPengusul() {
-            const btn = document.getElementById('btnToggleAkses');
-            const lbl = document.getElementById('labelStatusAkses');
-            const banner = document.getElementById('bannerPetugasSlikNonaktif');
-            if (btn) btn.disabled = true;
-
-            fetch('<?= base_url('slik/toggle-akses-pengusul') ?>', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (btn) btn.disabled = false;
-                if (data.status) {
-                    const isAktif = (data.petugas_slik_aktif === 1);
-                    if (lbl) {
-                        lbl.innerHTML = isAktif ? 'Petugas SLIK AKTIF (SOP Ketat)' : 'Petugas SLIK NONAKTIF (Mode Fleksibel)';
-                    }
-                    if (btn) {
-                        btn.innerHTML = isAktif ? 'Nonaktifkan' : 'Aktifkan';
-                        btn.className = isAktif 
-                            ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 bg-amber-400 text-slate-900 hover:bg-amber-300 shadow-sm' 
-                            : 'px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer shrink-0 bg-emerald-500 hover:bg-emerald-400 text-white shadow-sm';
-                    }
-                    if (banner) {
-                        if (isAktif) {
-                            banner.classList.add('hidden');
-                        } else {
-                            banner.classList.remove('hidden');
-                        }
-                    }
-
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'success',
-                        title: data.message,
-                        showConfirmButton: false,
-                        timer: 2500,
-                        timerProgressBar: true
-                    });
-                } else {
-                    Swal.fire('Gagal', data.message || 'Terjadi kesalahan sistem.', 'error');
-                }
-            })
-            .catch(err => {
-                if (btn) btn.disabled = false;
-                Swal.fire('Error', 'Gagal menghubungi server.', 'error');
-            });
-        }
     </script>
 </body>
 </html>
