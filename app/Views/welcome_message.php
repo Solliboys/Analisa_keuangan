@@ -1,5 +1,5 @@
 <?php
-    $namaWeb     = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Credit AI';
+    $namaWeb     = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'Credit Engine AI';
     $namaLembaga = !empty($pengaturan_sistem['nama_lembaga']) ? $pengaturan_sistem['nama_lembaga'] : 'Lembaga Pembiayaan';
     $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
     $sloganWeb   = !empty($pengaturan_sistem['slogan_aplikasi']) ? $pengaturan_sistem['slogan_aplikasi'] : 'Autonomous Credit Underwriting AI';
@@ -7,6 +7,34 @@
     $teleponWeb  = !empty($pengaturan_sistem['telepon_lembaga']) ? $pengaturan_sistem['telepon_lembaga'] : '(021) 5088-2900';
     $alamatWeb   = !empty($pengaturan_sistem['alamat_lembaga']) ? $pengaturan_sistem['alamat_lembaga'] : 'Financial Center, Jakarta Selatan';
     $modelAi     = !empty($pengaturan_ai['model_ai']) ? $pengaturan_ai['model_ai'] : 'Gemini AI';
+
+    // Filter sanitasi bebas kata CAM dan BPR secara mutlak
+    $namaWebBersih     = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $namaWeb));
+    if (empty($namaWebBersih)) { $namaWebBersih = 'Credit Engine AI'; }
+
+    $namaLembagaBersih = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $namaLembaga));
+    if (empty($namaLembagaBersih)) { $namaLembagaBersih = 'Lembaga Pembiayaan'; }
+
+    $sloganWebBersih   = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $sloganWeb));
+    if (empty($sloganWebBersih)) { $sloganWebBersih = 'Autonomous Underwriting System'; }
+
+    $alamatBersih      = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $alamatWeb));
+    $alamatBersih      = trim(preg_replace('/\s+/', ' ', $alamatBersih));
+    if (empty($alamatBersih)) { $alamatBersih = 'Financial Center, Jakarta Selatan'; }
+
+    // Format Nomor WhatsApp & Telepon Terintegrasi
+    $rawTelp = preg_replace('/[^0-9]/', '', $teleponWeb);
+    if (str_starts_with($rawTelp, '08')) {
+        $waNumberClean = '62' . substr($rawTelp, 1);
+        $waFormatted   = '+62 ' . substr($rawTelp, 1, 3) . '-' . substr($rawTelp, 4, 4) . '-' . substr($rawTelp, 8);
+    } elseif (str_starts_with($rawTelp, '628')) {
+        $waNumberClean = $rawTelp;
+        $waFormatted   = '+' . substr($rawTelp, 0, 2) . ' ' . substr($rawTelp, 2, 3) . '-' . substr($rawTelp, 5, 4) . '-' . substr($rawTelp, 9);
+    } else {
+        // Nomor WhatsApp layanan resmi yang sinkron
+        $waNumberClean = '6281250882900';
+        $waFormatted   = '+62 812-5088-2900';
+    }
 
     $statKreditCount = !empty($total_kredit) && $total_kredit > 0 ? number_format($total_kredit, 0, ',', '.') . '+' : '61.000+';
     $statPlafonTotal = !empty($total_plafon) && $total_plafon > 0 ? 'Rp ' . number_format($total_plafon / 1000000000, 1, ',', '.') . ' Miliar' : 'Rp 48.5 Miliar';
@@ -17,8 +45,8 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <meta content="web_standard" name="shell-type"/>
-    <title><?= esc($namaWeb) ?> - Autonomous Underwriting AI &amp; Evaluasi 5C</title>
-    <meta name="description" content="Platform Credit Engine dan Analisis Kelayakan Kredit modern berbasis AI 5C terintegrasi SLIK OJK untuk Lembaga Keuangan dan Pembiayaan.">
+    <title><?= esc($namaWebBersih) ?> - Autonomous Underwriting AI &amp; Evaluasi 5C</title>
+    <meta name="description" content="Platform Credit Engine dan Analisis Kelayakan Kredit modern berbasis AI 5C terintegrasi SLIK OJK untuk <?= esc($namaLembagaBersih) ?> dan Lembaga Keuangan.">
 
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
@@ -204,18 +232,18 @@
 <!-- STICKY HEADER -->
 <header class="fixed top-0 inset-x-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-100 transition-all">
     <div class="max-w-7xl mx-auto h-20 px-4 sm:px-8 flex items-center justify-between">
-        <!-- Logo -->
+        <!-- Logo & Dynamic Brand Identity -->
         <a class="flex items-center gap-3 group" href="<?= base_url() ?>">
             <?php if (!empty($logoWeb)): ?>
-                <img src="<?= base_url($logoWeb) ?>" alt="Logo" class="w-10 h-10 object-contain rounded-2xl shadow-md group-hover:scale-105 transition-transform">
+                <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWebBersih) ?>" class="h-9 sm:h-10 w-auto max-w-[150px] object-contain rounded-xl shadow-xs group-hover:scale-105 transition-transform">
             <?php else: ?>
                 <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
                     <span class="material-symbols-outlined text-[22px]">auto_awesome</span>
                 </div>
             <?php endif; ?>
-            <div class="flex flex-col">
-                <span class="text-[17px] font-extrabold tracking-tight text-slate-900 leading-tight"><?= esc($namaWeb) ?><span class="text-blue-600">.</span></span>
-                <span class="text-[10px] sm:text-[11px] font-semibold tracking-wider text-slate-400 uppercase">AI 5C Credit Engine</span>
+            <div class="flex flex-col text-left">
+                <span class="text-[17px] font-extrabold tracking-tight text-slate-900 leading-tight"><?= esc($namaWebBersih) ?><span class="text-blue-600">.</span></span>
+                <span class="text-[10px] sm:text-[11px] font-semibold tracking-wider text-slate-400 uppercase truncate max-w-[180px] sm:max-w-none"><?= esc($sloganWebBersih) ?></span>
             </div>
         </a>
 
@@ -226,10 +254,17 @@
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#simulasi">Kalkulator</a>
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#komparasi">Keunggulan</a>
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#faq">FAQ</a>
+            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#kontak">Kontak</a>
         </nav>
 
-        <!-- Right Header Actions (Visible in Mobile & Desktop) -->
+        <!-- Right Header Actions (WhatsApp & Masuk Portal) -->
         <div class="flex items-center gap-2 sm:gap-3">
+            <a class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 font-bold text-xs sm:text-sm transition-all" 
+               href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
+               target="_blank" rel="noopener noreferrer">
+                <svg class="w-4 h-4 fill-current text-emerald-600 shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                <span>WhatsApp</span>
+            </a>
             <a class="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-slate-900 text-white hover:bg-blue-600 font-semibold text-xs sm:text-sm transition-all duration-200 shadow-sm hover:shadow-md" href="<?= base_url('auth') ?>">
                 <span>Masuk Portal</span>
                 <span class="material-symbols-outlined text-[15px] sm:text-[16px]">arrow_forward</span>
@@ -241,12 +276,10 @@
 <main class="relative z-10 pt-28 sm:pt-32">
     <!-- HERO SECTION WITH INSPIRATION GRAPHICS & FLOATING METRIC CARDS -->
     <section class="max-w-7xl mx-auto px-4 sm:px-8 pt-6 pb-20 text-center flex flex-col items-center relative">
-        <!-- Top Pill Tag -->
+        <!-- Top Pill Tag (Teks model AI dihapus sesuai instruksi) -->
         <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 backdrop-blur border border-blue-200/80 shadow-sm hover:border-blue-300 transition-colors mb-6 cursor-default">
             <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
             <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Engine AI 5C • Autonomous Underwriting</span>
-            <span class="text-slate-300 font-light">|</span>
-            <span class="text-xs font-semibold text-blue-600"><?= esc($modelAi) ?> Online</span>
         </div>
 
         <!-- Main Headline -->
@@ -256,16 +289,22 @@
 
         <!-- Subheadline -->
         <p class="text-base sm:text-xl text-slate-500 max-w-2xl leading-relaxed mb-8 px-2">
-            Otomasi penyusunan <span class="text-slate-800 font-semibold">Laporan Analisis Kredit</span> dan scoring 5C dalam hitungan detik. Terintegrasi SLIK OJK real-time untuk Institusi &amp; Lembaga Pembiayaan.
+            Otomasi penyusunan <span class="text-slate-800 font-semibold">Laporan Analisis Kelayakan Kredit</span> dan scoring 5C dalam hitungan detik. Terintegrasi SLIK OJK real-time untuk <?= esc($namaLembagaBersih) ?> dan Lembaga Keuangan.
         </p>
 
-        <!-- CTA Buttons -->
-        <div class="relative z-20 flex flex-col sm:flex-row items-center gap-4 mb-10 w-full sm:w-auto px-4">
+        <!-- CTA Buttons (Termasuk Tombol WhatsApp Resmi) -->
+        <div class="relative z-20 flex flex-col sm:flex-row items-center gap-3.5 mb-10 w-full sm:w-auto px-4">
             <a class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-base transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 flex items-center justify-center gap-2 group cursor-pointer" href="<?= base_url('auth') ?>">
                 <span>Uji Coba Sandbox Sekarang</span>
                 <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">bolt</span>
             </a>
-            <a class="w-full sm:w-auto px-7 py-3.5 rounded-full bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 hover:border-slate-300 font-semibold text-base transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer" href="#alur-kerja">
+            <a class="w-full sm:w-auto px-6 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base transition-all duration-200 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 flex items-center justify-center gap-2 group cursor-pointer" 
+               href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
+               target="_blank" rel="noopener noreferrer">
+                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                <span>Tanya WhatsApp</span>
+            </a>
+            <a class="w-full sm:w-auto px-6 py-3.5 rounded-full bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 hover:border-slate-300 font-semibold text-base transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer" href="#alur-kerja">
                 <span class="material-symbols-outlined text-[20px] text-slate-400">play_circle</span>
                 <span>Lihat Cara Kerja</span>
             </a>
@@ -331,22 +370,22 @@
                             <span class="text-xs font-extrabold text-slate-900">Komite Approval</span>
                             <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                         </div>
-                        <div class="text-[11px] text-slate-500">Auto-Pass Level 1</div>
+                        <div class="text-[11px] text-slate-500">Four-Eyes Principle</div>
                         <div class="flex items-center gap-1 mt-1">
                             <span class="h-1.5 w-8 bg-blue-500 rounded-full"></span>
                             <span class="h-1.5 w-4 bg-indigo-300 rounded-full"></span>
-                            <span class="text-[9px] font-bold text-slate-400">4-Eyes</span>
+                            <span class="text-[9px] font-bold text-slate-400">Reviewer &amp; CEO</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- FLOATING CARD 3: BOTTOM LEFT (Positioned cleanly outside Center Card) -->
+            <!-- FLOATING CARD 3: BOTTOM LEFT -->
             <div class="absolute bottom-4 left-0 xl:-left-12 z-30 animate-float-medium hidden xl:block">
                 <div class="glass-card rounded-2xl p-4 w-56 text-left transition-all hover:scale-105">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold text-slate-800">Plafon Disbursed</span>
-                        <span class="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Bulanan</span>
+                        <span class="text-xs font-bold text-slate-800">Total Plafon Terkalkulasi</span>
+                        <span class="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Agregat</span>
                     </div>
                     <div class="h-16 flex items-end justify-between gap-2 px-1">
                         <div class="w-3.5 bg-purple-200 rounded-t-md h-[45%]"></div>
@@ -357,20 +396,20 @@
                         <div class="w-3.5 bg-purple-300 rounded-t-md h-[80%]"></div>
                     </div>
                     <div class="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] font-bold mt-2">
-                        <span class="text-slate-400">Pertumbuhan</span>
-                        <span class="text-emerald-600 flex items-center gap-0.5"><span class="material-symbols-outlined text-[13px]">arrow_upward</span> +32.4%</span>
+                        <span class="text-slate-400">Volume Plafon</span>
+                        <span class="text-emerald-600 flex items-center gap-0.5"><?= esc($statPlafonTotal) ?></span>
                     </div>
                 </div>
             </div>
 
-            <!-- FLOATING CARD 4: BOTTOM RIGHT (Positioned cleanly outside Center Card) -->
+            <!-- FLOATING CARD 4: BOTTOM RIGHT -->
             <div class="absolute bottom-4 right-0 xl:-right-12 z-30 animate-float-slow hidden xl:block">
                 <div class="glass-card rounded-2xl p-4 w-56 text-left relative transition-all hover:scale-105">
                     <div class="absolute -top-3.5 -right-2 bg-white border border-slate-200/80 rounded-xl px-2.5 py-1 shadow-md flex items-center gap-1.5">
-                        <div class="text-[9px] text-slate-400 font-bold uppercase">Akurasi AI</div>
+                        <div class="text-[9px] text-slate-400 font-bold uppercase">Akurasi Scoring</div>
                         <div class="text-xs font-black text-blue-600">99.4%</div>
                     </div>
-                    <div class="text-xs font-bold text-slate-800 mb-2">Statistik Risiko Portofolio</div>
+                    <div class="text-xs font-bold text-slate-800 mb-2">Profil Risiko Portofolio</div>
                     <div class="flex items-center gap-2.5">
                         <div class="relative w-12 h-12 shrink-0">
                             <svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
@@ -394,7 +433,7 @@
                 </div>
             </div>
 
-            <!-- MAIN CENTER CARD: DATA ANALYTICS & SCORING TREND (Fully visible & unblocked) -->
+            <!-- MAIN CENTER CARD: DATA ANALYTICS & SCORING TREND -->
             <div class="w-full max-w-2xl bg-white/95 backdrop-blur-xl rounded-3xl border border-slate-200/90 p-5 sm:p-8 shadow-2xl relative z-20 text-left">
                 <!-- Header of Mockup Card -->
                 <div class="flex flex-wrap items-center justify-between pb-4 border-b border-slate-100 gap-2">
@@ -407,7 +446,7 @@
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Live Scoring
                         </span>
                         <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200 hidden sm:inline-block">
-                            PT Surya Sentosa Jaya
+                            Simulasi Debitur 5C
                         </span>
                     </div>
                 </div>
@@ -448,10 +487,11 @@
                             <path d="M 0 185 C 50 180, 90 165, 130 155 C 170 145, 200 130, 240 140 C 280 150, 310 115, 350 110 C 390 105, 420 145, 460 125 C 480 115, 495 105, 500 100" fill="none" stroke="#38bdf8" stroke-linecap="round" stroke-opacity="0.8" stroke-width="2.5"></path>
                             <circle cx="320" cy="35" fill="#ffffff" r="5.5" stroke="#2563eb" stroke-width="3"></circle>
                         </svg>
+
                         <!-- Floating Tooltip Pill -->
                         <div class="absolute left-[60%] sm:left-[62%] top-1 -translate-x-1/2 -translate-y-full mb-1">
                             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded-xl shadow-lg flex items-center gap-1.5 text-xs font-bold">
-                                <span>Score: 94.8</span>
+                                <span>Score: 88.0 (Grade A)</span>
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                             </div>
                             <div class="w-2.5 h-2.5 bg-indigo-600 transform rotate-45 mx-auto -mt-1 rounded-xs"></div>
@@ -462,8 +502,8 @@
                 <!-- Quick Micro Stats Grid inside card -->
                 <div class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-left">
                     <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Plafon Usulan</span>
-                        <span class="text-xs sm:text-sm font-extrabold text-slate-900">Rp 350 Juta</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Plafon Diajukan</span>
+                        <span class="text-xs sm:text-sm font-extrabold text-slate-900">Rp 250 Juta</span>
                     </div>
                     <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                         <span class="text-[10px] text-slate-400 uppercase font-bold block">SLIK OJK</span>
@@ -474,8 +514,8 @@
                         <span class="text-xs sm:text-sm font-extrabold text-blue-600">1.62x Sehat</span>
                     </div>
                     <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Status Laporan</span>
-                        <span class="text-xs sm:text-sm font-extrabold text-indigo-600">Ready PDF</span>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Rekomendasi</span>
+                        <span class="text-xs sm:text-sm font-extrabold text-emerald-600">Disetujui Penuh</span>
                     </div>
                 </div>
             </div>
@@ -505,7 +545,7 @@
             </div>
             <div>
                 <div class="text-xs text-slate-400 font-semibold uppercase">Coverage Agunan</div>
-                <div class="text-lg font-extrabold text-slate-900 mt-0.5">145% Tercover</div>
+                <div class="text-lg font-extrabold text-slate-900 mt-0.5">150% Tercover</div>
             </div>
             <div>
                 <div class="text-xs text-slate-400 font-semibold uppercase">Kepatuhan</div>
@@ -518,24 +558,24 @@
     <section class="max-w-7xl mx-auto px-4 sm:px-8 py-20 relative" id="fitur">
         <div class="text-center max-w-3xl mx-auto mb-16">
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">
-                <span>Fitur Unggulan</span>
+                <span>Fitur Unggulan Sistem</span>
             </div>
             <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                Solusi Lengkap Evaluasi 5C &amp; <br class="hidden sm:block"/>Otomasi Analisis Kredit Institusional
+                Solusi Lengkap Evaluasi 5C &amp; <br class="hidden sm:block"/>Otomasi Analisis Kredit Perorangan &amp; Usaha
             </h2>
             <p class="text-slate-500 text-base sm:text-lg mt-4">
-                Platform terpadu untuk percepatan proses kredit tanpa mengorbankan ketelitian manajemen risiko pembiayaan.
+                Sistem terpadu untuk percepatan proses kredit tanpa mengorbankan ketelitian tata kelola risiko kehati-hatian perbankan.
             </p>
         </div>
-        <!-- Bento Cards Grid -->
+        <!-- Bento Cards Grid (3 Kolom Utama Sesuai Sistem Aktual) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Card 1: SLIK OJK Intelligence -->
+            <!-- Card 1: SLIK OJK & Verifikasi Yuridis -->
             <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
                 <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Modul 01</div>
-                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Verifikasi SLIK OJK (iDeb)</h3>
+                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Pilar 01 • Character &amp; Legal</div>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Verifikasi SLIK OJK &amp; Cek Hukum MA</h3>
                     <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Pemeriksaan riwayat debitur otomatis, penguraian baki debet antar bank, serta deteksi keterlambatan Kol 1–5 secara akurat.
+                        Pemeriksaan riwayat debitur otomatis, penguraian baki debet antar bank, deteksi tunggakan Kol 1–5, serta integrasi direktori putusan hukum MA / SIPP peradilan.
                     </p>
                 </div>
                 <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col gap-3">
@@ -545,67 +585,70 @@
                     </div>
                     <div class="space-y-2">
                         <div class="flex items-center justify-between text-xs py-1 border-b border-slate-200">
-                            <span class="text-slate-500">Bank Mandiri (KPR)</span>
+                            <span class="text-slate-500">Baki Debet Aktif</span>
                             <span class="font-semibold text-slate-800">Rp 120.000.000</span>
                         </div>
                         <div class="flex items-center justify-between text-xs py-1">
-                            <span class="text-slate-500">BCA (Modal Kerja)</span>
-                            <span class="font-semibold text-slate-800">Rp 75.000.000</span>
+                            <span class="text-slate-500">Cek Sengketa MA/SIPP</span>
+                            <span class="font-bold text-emerald-600">Bersih (0 Perkara)</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Card 2: Financial Ratio Engine -->
+            <!-- Card 2: Financial Ratio & Rekening Koran -->
             <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
                 <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Modul 02</div>
-                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Kalkulator Rasio &amp; DSCR</h3>
+                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Pilar 02 • Capacity &amp; Cashflow</div>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Analisis Rekening Koran &amp; DSCR</h3>
                     <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Kalkulasi instan kemampuan angsuran, debt service coverage ratio (DSCR), loan-to-value (LTV), dan simulasi bunga flat/efektif.
+                        Kalkulasi instan kemampuan angsuran, mutasi kas 3-6 bulan terakhir, debt service coverage ratio (DSCR), DSR, dan daya tahan modal kerja.
                     </p>
                 </div>
                 <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col gap-3">
                     <div class="flex justify-between items-center text-xs">
-                        <span class="text-slate-500 font-medium">DSCR Target Benchmark</span>
-                        <span class="font-extrabold text-blue-600">1.62x (Aman &gt; 1.3x)</span>
+                        <span class="text-slate-500 font-medium">DSCR Target Threshold</span>
+                        <span class="font-extrabold text-blue-600">1.62x (Sehat &gt; 1.3x)</span>
                     </div>
                     <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                         <div class="bg-blue-500 h-full rounded-full w-[82%]"></div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 pt-1 text-center">
                         <div class="bg-white p-2 rounded-lg border border-slate-100">
-                            <span class="text-[10px] text-slate-400 block uppercase font-bold">LTV Ratio</span>
-                            <span class="text-sm font-extrabold text-slate-800">66.7%</span>
+                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Saldo Rata-rata</span>
+                            <span class="text-sm font-extrabold text-slate-800">Rp 48.5 Jt/bln</span>
                         </div>
                         <div class="bg-white p-2 rounded-lg border border-slate-100">
-                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Net Cashflow</span>
-                            <span class="text-sm font-extrabold text-emerald-600">Surplus</span>
+                            <span class="text-[10px] text-slate-400 block uppercase font-bold">Arus Kas Riil</span>
+                            <span class="text-sm font-extrabold text-emerald-600">Surplus Aktif</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Card 3: 5C Scoring Radar & Document Export -->
+            <!-- Card 3: Agunan & Ekspor Laporan Komite -->
             <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
                 <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Modul 03</div>
-                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Dokumen Analisis Kredit 1-Click PDF</h3>
+                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Pilar 03 • Collateral &amp; Output</div>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Taksasi Agunan &amp; Laporan PDF</h3>
                     <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Satu klik untuk mengonversi seluruh parameter analisis menjadi berkas memorandum evaluasi kredit resmi siap cetak dan tandatangan komite.
+                        Penilaian rasio penutupan agunan (SHM, SHGB, BPKB), nilai likuidasi, batas aman LTV, serta ekspor dokumen laporan analisa kredit resmi untuk sidang komite.
                     </p>
                 </div>
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-                            <span class="material-symbols-outlined text-[24px]">picture_as_pdf</span>
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700">Rasio Coverage Agunan</span>
+                        <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[11px] font-bold">150.0% (LTV 66.7%)</span>
+                    </div>
+                    <div class="flex items-center gap-3 pt-1 border-t border-slate-200">
+                        <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
                         </div>
-                        <div>
-                            <span class="text-xs font-bold text-slate-800 block">Laporan_Analisis_Kredit_2026.pdf</span>
-                            <span class="text-[11px] text-slate-400">12 Halaman Standar Kepatuhan</span>
+                        <div class="text-left">
+                            <span class="text-xs font-bold text-slate-800 block">Laporan Analisis Kredit</span>
+                            <span class="text-[11px] text-slate-400">Siap Cetak &amp; Disahkan Komite</span>
                         </div>
                     </div>
-                    <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-bold">Siap Cetak</span>
                 </div>
             </div>
         </div>
@@ -707,17 +750,17 @@
         </div>
     </section>
 
-    <!-- SECTION: 4-STEP PROCESS -->
+    <!-- SECTION: 4-STEP PROCESS (SESUAI ALUR KERJA SISTEM AKTUAL) -->
     <section class="max-w-7xl mx-auto px-4 sm:px-8 py-20" id="alur-kerja">
         <div class="text-center max-w-3xl mx-auto mb-16">
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-4">
                 <span>Alur Kerja Praktis</span>
             </div>
             <h2 class="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                4 Langkah Evaluasi Kredit Mandiri
+                4 Tahap Analisis Kredit Berjenjang
             </h2>
             <p class="text-slate-500 text-base sm:text-lg mt-3">
-                Proses otomatis tanpa kerumitan spreadsheet dari pengumpulan data hingga persetujuan final.
+                Proses terstruktur dari inisiasi pengusul, verifikasi SLIK OJK, inferensi AI 5C, hingga keputusan final komite.
             </p>
         </div>
         <!-- Step Cards Grid -->
@@ -728,14 +771,15 @@
                     <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-lg text-slate-900 mb-6">
                         01
                     </div>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Perorangan &amp; Usaha</div>
                     <h3 class="text-lg font-bold text-slate-900 mb-2">Input Berkas &amp; Agunan</h3>
                     <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Unggah identitas calon debitur, legalitas usaha, dan bukti agunan secara digital tanpa tumpukan kertas.
+                        Staff Pengusul mengunggah identitas calon debitur, profil usaha, mutasi rekening bank, dan data fisik agunan.
                     </p>
                 </div>
                 <div class="pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
                     <span class="material-symbols-outlined text-[16px]">check_circle</span>
-                    <span>Digital Ingestion</span>
+                    <span>Pengusul Kredit</span>
                 </div>
             </div>
             <!-- Step 02 -->
@@ -744,14 +788,15 @@
                     <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-lg text-slate-900 mb-6">
                         02
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Sinkronisasi SLIK OJK</h3>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pemeriksaan iDeb</div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Verifikasi SLIK OJK</h3>
                     <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Mesin menarik data riwayat fasilitas aktif, tunggakan kredit, dan histori kolektibilitas secara langsung.
+                        Petugas SLIK memeriksa riwayat fasilitas pinjaman aktif, baki debet antar bank, serta catatan kolektibilitas historis.
                     </p>
                 </div>
                 <div class="pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
                     <span class="material-symbols-outlined text-[16px]">check_circle</span>
-                    <span>iDeb Real-time Query</span>
+                    <span>iDeb SLIK OJK</span>
                 </div>
             </div>
             <!-- Step 03 -->
@@ -762,14 +807,14 @@
                         03
                     </div>
                     <div class="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider mb-1">AI 5C Core Engine</div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Inferensi &amp; Scoring 5C</h3>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Scoring &amp; Review Independen</h3>
                     <p class="text-sm text-slate-600 leading-relaxed mb-6">
-                        Model AI memvalidasi Character, Capacity, Capital, Collateral, &amp; Condition serta menghasilkan skor kelayakan.
+                        Senior Reviewer memvalidasi rekomendasi AI: Character, Capacity, Capital, Collateral, Condition, serta penetapan Grade A–D.
                     </p>
                 </div>
                 <div class="pt-4 border-t border-blue-100 flex items-center gap-2 text-xs font-bold text-blue-700">
                     <span class="material-symbols-outlined text-[16px]">verified</span>
-                    <span>Kalkulasi Otomatis 5C</span>
+                    <span>Senior Reviewer AI</span>
                 </div>
             </div>
             <!-- Step 04 -->
@@ -778,14 +823,15 @@
                     <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-lg text-slate-900 mb-6">
                         04
                     </div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-2">Penerbitan Laporan Kredit</h3>
+                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sidang Komite Kredit</div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Keputusan CEO &amp; Laporan</h3>
                     <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                        Komite kredit menerima lembar laporan evaluasi terstandarisasi siap tanda tangan dan persetujuan formal.
+                        Komite Kredit/CEO menerbitkan keputusan persetujuan akhir dan mencetak lembar laporan analisa fasilitas resmi.
                     </p>
                 </div>
                 <div class="pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
                     <span class="material-symbols-outlined text-[16px]">check_circle</span>
-                    <span>Ekspor Laporan PDF</span>
+                    <span>Laporan Resmi &amp; PDF</span>
                 </div>
             </div>
         </div>
@@ -801,15 +847,21 @@
                         <span>Keunggulan Kompetitif</span>
                     </div>
                     <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                        Mengapa Lembaga Pembiayaan Beralih ke <br/><span class="text-blue-600"><?= esc($namaWeb) ?></span>
+                        Mengapa Lembaga Pembiayaan Beralih ke <br/><span class="text-blue-600"><?= esc($namaWebBersih) ?></span>
                     </h2>
                     <p class="text-slate-500 text-sm sm:text-base leading-relaxed">
                         Tinggalkan proses analisis manual berhari-hari yang rentan salah rumus. Dapatkan efisiensi 95% dengan audit trail kepatuhan lengkap.
                     </p>
-                    <div class="pt-4">
+                    <div class="pt-4 flex flex-wrap items-center gap-3">
                         <a class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-slate-950 text-white font-bold text-sm hover:bg-blue-600 transition-colors shadow-sm cursor-pointer" href="<?= base_url('auth') ?>">
                             <span>Daftar Akses Institusi</span>
                             <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </a>
+                        <a class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-bold text-sm transition-colors cursor-pointer" 
+                           href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
+                           target="_blank" rel="noopener noreferrer">
+                            <svg class="w-4 h-4 fill-current text-emerald-600" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                            <span>Hubungi Kami</span>
                         </a>
                     </div>
                 </div>
@@ -890,11 +942,11 @@
         <div class="space-y-3">
             <details class="group bg-white rounded-2xl border border-slate-200/90 p-5 cursor-pointer">
                 <summary class="flex items-center justify-between font-bold text-slate-800 text-base">
-                    <span>Bagaimana integrasi SLIK OJK bekerja di <?= esc($namaWeb) ?>?</span>
+                    <span>Bagaimana verifikasi data SLIK OJK berjalan di <?= esc($namaWebBersih) ?>?</span>
                     <span class="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform">expand_more</span>
                 </summary>
                 <p class="text-sm text-slate-500 leading-relaxed mt-3 pt-3 border-t border-slate-100">
-                    Engine membaca file iDeb SLIK OJK yang diunggah dan mengekstrak kolektibilitas fasilitas aktif, baki debet, serta histori tunggakan dalam hitungan detik tanpa input manual.
+                    Engine memverifikasi data iDeb SLIK OJK yang diinputkan oleh Pengusul atau Petugas SLIK, lalu menguraikan baki debet aktif, beban angsuran perbankan lain, dan status kolektibilitas historis untuk mitigasi risiko.
                 </p>
             </details>
             <details class="group bg-white rounded-2xl border border-slate-200/90 p-5 cursor-pointer">
@@ -903,7 +955,7 @@
                     <span class="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform">expand_more</span>
                 </summary>
                 <p class="text-sm text-slate-500 leading-relaxed mt-3 pt-3 border-t border-slate-100">
-                    Ya, format laporan evaluasi dan memorandum kredit disusun sesuai standar kehati-hatian finansial, mencakup analisis 5C, mitigasi risiko, kalkulasi DSCR, LTV, dan kolom persetujuan komite berjenjang (four-eyes principle).
+                    Ya, format laporan evaluasi dan memorandum fasilitas kredit disusun sesuai standar kehati-hatian industri keuangan, mencakup analisis 5C, mitigasi risiko, kalkulasi DSCR, LTV, dan kolom notulensi persetujuan komite berjenjang (four-eyes principle).
                 </p>
             </details>
             <details class="group bg-white rounded-2xl border border-slate-200/90 p-5 cursor-pointer">
@@ -912,7 +964,7 @@
                     <span class="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform">expand_more</span>
                 </summary>
                 <p class="text-sm text-slate-500 leading-relaxed mt-3 pt-3 border-t border-slate-100">
-                    Seluruh data dienkripsi dengan standar perbankan AES-256 dan TLS 1.3. <?= esc($namaWeb) ?> beroperasi dengan kontrol kepatuhan standar ISO 27001 dan regulasi perlindungan data pribadi.
+                    Seluruh data dienkripsi dengan standar perbankan AES-256 dan TLS 1.3. <?= esc($namaWebBersih) ?> beroperasi dengan kontrol kepatuhan standar keamanan data serta regulasi perlindungan data pribadi.
                 </p>
             </details>
         </div>
@@ -931,14 +983,17 @@
                     Tingkatkan Kecepatan Underwriting Kredit Institusi Anda Sekarang
                 </h2>
                 <p class="text-blue-100 text-sm sm:text-lg max-w-xl mx-auto leading-relaxed">
-                    Bergabung bersama jaringan lembaga pembiayaan dan institusi finansial yang telah memodernisasi evaluasi 5C dan penerbitan laporan analisis mereka.
+                    Bergabung bersama <?= esc($namaLembagaBersih) ?> yang telah memodernisasi evaluasi 5C dan penerbitan laporan analisis kelayakan pembiayaan secara terstandar.
                 </p>
                 <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
                     <a class="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-base transition-all shadow-md hover:scale-105 cursor-pointer" href="<?= base_url('auth') ?>">
                         Buka Portal Sistem
                     </a>
-                    <a class="w-full sm:w-auto px-7 py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-base transition-colors border border-white/20 cursor-pointer" href="mailto:<?= esc($emailWeb) ?>">
-                        Jadwalkan Demo Institusi
+                    <a class="w-full sm:w-auto px-7 py-4 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base transition-all shadow-md hover:scale-105 flex items-center justify-center gap-2 cursor-pointer" 
+                       href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
+                       target="_blank" rel="noopener noreferrer">
+                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                        <span>Konsultasi WhatsApp</span>
                     </a>
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-4 text-xs font-semibold text-blue-100/90">
@@ -951,65 +1006,86 @@
     </section>
 </main>
 
-<!-- FOOTER -->
-<footer class="relative z-10 bg-slate-50 border-t border-slate-200/80 mt-12">
+<!-- FOOTER (DINAMIS DARI PENGATURAN SISTEM & NOMOR WHATSAPP) -->
+<footer class="relative z-10 bg-slate-50 border-t border-slate-200/80 mt-12" id="kontak">
     <div class="max-w-7xl mx-auto px-4 sm:px-8 py-16">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10">
-            <!-- Brand Info -->
+            <!-- Brand Info Dinamis -->
             <div class="lg:col-span-5 space-y-4">
                 <div class="flex items-center gap-3">
                     <?php if (!empty($logoWeb)): ?>
-                        <img src="<?= base_url($logoWeb) ?>" alt="Logo" class="w-9 h-9 object-contain rounded-xl">
+                        <img src="<?= base_url($logoWeb) ?>" alt="Logo" class="h-9 sm:h-10 w-auto max-w-[150px] object-contain rounded-xl">
                     <?php else: ?>
                         <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white">
                             <span class="material-symbols-outlined text-[20px]">auto_awesome</span>
                         </div>
                     <?php endif; ?>
-                    <span class="text-xl font-extrabold text-slate-900 tracking-tight"><?= esc($namaWeb) ?><span class="text-blue-600">.</span></span>
+                    <span class="text-xl font-extrabold text-slate-900 tracking-tight"><?= esc($namaWebBersih) ?><span class="text-blue-600">.</span></span>
                 </div>
                 <p class="text-sm text-slate-500 leading-relaxed max-w-sm">
-                    Platform AI 5C Credit Engine &amp; Autonomous Underwriting untuk <?= esc($namaLembaga) ?> dan Lembaga Pembiayaan di seluruh Indonesia.
+                    Platform AI 5C Credit Engine &amp; Autonomous Underwriting resmi milik <span class="font-bold text-slate-700"><?= esc($namaLembagaBersih) ?></span> untuk percepatan evaluasi kelayakan fasilitas pembiayaan.
                 </p>
                 <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 pt-2">
                     <span class="material-symbols-outlined text-[18px] text-blue-600">verified</span>
-                    <span>Standar Kepatuhan OJK &amp; Bersertifikasi ISO 27001</span>
+                    <span>Standar Kepatuhan OJK &amp; Bersertifikasi Keamanan Data</span>
                 </div>
             </div>
+
             <!-- Links Modul -->
             <div class="lg:col-span-2 space-y-3">
                 <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Modul Engine</h4>
                 <ul class="space-y-2 text-sm text-slate-500">
                     <li><a class="hover:text-blue-600 transition-colors" href="#fitur">SLIK OJK Intelligence</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Scoring 5C Matrix</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Kalkulator DSCR &amp; LTV</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Ekspor Laporan PDF</a></li>
+                    <li><a class="hover:text-blue-600 transition-colors" href="#simulasi">Kalkulator DSCR &amp; LTV</a></li>
+                    <li><a class="hover:text-blue-600 transition-colors" href="#alur-kerja">Laporan Analisis PDF</a></li>
                 </ul>
             </div>
+
             <!-- Links Navigasi -->
             <div class="lg:col-span-2 space-y-3">
                 <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Navigasi</h4>
                 <ul class="space-y-2 text-sm text-slate-500">
-                    <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Fitur AI</a></li>
+                    <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Fitur Utama</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#alur-kerja">Alur Analisis</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#simulasi">Sandbox Kalkulasi</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#komparasi">Perbandingan</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#faq">FAQ</a></li>
                 </ul>
             </div>
-            <!-- Kantor Operasional -->
+
+            <!-- Kantor Operasional & Kontak WhatsApp Dinamis -->
             <div class="lg:col-span-3 space-y-3">
-                <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Kantor Operasional</h4>
+                <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Kantor &amp; Kontak Resmi</h4>
+                <div class="text-xs font-bold text-slate-800">
+                    <?= esc($namaLembagaBersih) ?>
+                </div>
                 <p class="text-xs text-slate-500 leading-relaxed">
-                    <?= esc($alamatWeb) ?>
+                    <?= esc($alamatBersih) ?>
                 </p>
-                <div class="text-xs text-slate-600 font-semibold pt-1">
-                    <?= esc($emailWeb) ?>
+                <div class="space-y-2 pt-1 text-xs">
+                    <div class="flex items-center gap-2 text-slate-600">
+                        <span class="material-symbols-outlined text-[16px] text-blue-600 shrink-0">mail</span>
+                        <a href="mailto:<?= esc($emailWeb) ?>" class="hover:text-blue-600 transition-colors font-medium"><?= esc($emailWeb) ?></a>
+                    </div>
+                    <div class="flex items-center gap-2 text-slate-600">
+                        <span class="material-symbols-outlined text-[16px] text-blue-600 shrink-0">call</span>
+                        <span class="font-medium"><?= esc($teleponWeb) ?></span>
+                    </div>
+                    <div class="pt-1">
+                        <a href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
+                           target="_blank" rel="noopener noreferrer" 
+                           class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition-all shadow-2xs">
+                            <svg class="w-3.5 h-3.5 fill-current text-emerald-600 shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                            <span>WhatsApp: <?= esc($waFormatted) ?></span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
         <!-- Footer Bottom -->
         <div class="mt-12 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-            <div>© <?= date('Y') ?> <?= esc($namaWeb) ?>. Hak Cipta Dilindungi.</div>
+            <div>© <?= date('Y') ?> <?= esc($namaWebBersih) ?> • <?= esc($namaLembagaBersih) ?>. Seluruh hak cipta dilindungi.</div>
             <div class="flex items-center gap-6">
                 <a class="hover:text-slate-700 transition-colors" href="#">Syarat &amp; Ketentuan</a>
                 <a class="hover:text-slate-700 transition-colors" href="#">Kebijakan Privasi</a>
@@ -1018,6 +1094,16 @@
         </div>
     </div>
 </footer>
+
+<!-- FLOATING WHATSAPP BUTTON (RESPONSIVE) -->
+<a href="https://wa.me/<?= esc($waNumberClean) ?>?text=Halo%20<?= urlencode($namaWebBersih) ?>%2C%20saya%20ingin%20konsultasi%20layanan%20kredit%20AI" 
+   target="_blank" 
+   rel="noopener noreferrer" 
+   class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 hover:scale-105 transition-all group cursor-pointer"
+   title="Hubungi Kami via WhatsApp">
+    <svg class="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+    <span class="hidden sm:inline">WhatsApp</span>
+</a>
 
 <!-- CLIENT-SIDE SIMULATOR SCRIPT -->
 <script>
