@@ -546,12 +546,12 @@
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Hasil Evaluasi AI per Prinsip 5C</h3>
+                                <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Evaluasi 5C AI</h3>
                                 <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                    AI Underwriting Engine
+                                    AI Engine
                                 </span>
                             </div>
-                            <p class="text-xs text-slate-500">Evaluasi komprehensif risiko perbankan terhadap Character, Capacity, Capital, Collateral, & Condition</p>
+                            <p class="text-xs text-slate-500">Analisa kelayakan kredit berdasarkan prinsip 5C.</p>
                         </div>
                     </div>
 
