@@ -1,20 +1,36 @@
-body { 
-    font-family: 'Plus Jakarta Sans', sans-serif; 
+/* ========================================================
+   OTW APPROVED — CLEAN CORPORATE FINTECH FORM SYSTEM
+   Applies uniformly across all 12 tabs (Perorangan & Badan Usaha)
+   ======================================================== */
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #f8fafc !important;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
 }
+
+.tabular-nums,
+#camForm table,
+#camForm input[type="number"],
+#camForm input[inputmode="numeric"] {
+    font-variant-numeric: tabular-nums;
+}
+
 .step-tab.active {
-    background-color: #4f46e5;
+    background-color: #1d4ed8;
     color: #ffffff;
     font-weight: 600;
 }
 .step-tab.completed {
-    border-color: #6366f1;
-    color: #4338ca;
+    border-color: #1d4ed8;
+    color: #1d4ed8;
 }
-.tab-panel { 
-    display: none; 
+.tab-panel {
+    display: none;
 }
-.tab-panel.active { 
-    display: block; 
+.tab-panel.active {
+    display: block;
 }
 
 /* Custom sleek scrollbar for verticalStepperList */
@@ -37,22 +53,111 @@ body {
 }
 
 /* ========================================================
+   ANTI-AI-SLOP NORMALIZATION ACROSS ALL TABS (#camForm)
+   ======================================================== */
+
+/* 1. Sharper institutional radii (6px - 8px max) */
+#camForm .rounded-3xl,
+#camForm .rounded-2xl {
+    border-radius: 0.5rem !important;
+}
+#camForm .rounded-xl {
+    border-radius: 0.375rem !important;
+}
+
+/* 2. Replace heavy glowing/drop shadows with flat hairline surfaces */
+#camForm .shadow-2xl,
+#camForm .shadow-xl,
+#camForm .shadow-lg,
+#camForm .shadow-md,
+#camForm .shadow-sm {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* 3. Unify purple/indigo/violet AI-slop gradients & buttons to Corporate Blue (#1D4ED8) */
+#camForm button[class*="bg-gradient-to-"],
+#camForm a[class*="bg-gradient-to-"],
+#camForm button[class*="bg-indigo-600"],
+#camForm button[class*="bg-indigo-700"],
+#camForm button[class*="bg-purple-600"],
+#camForm button[class*="bg-purple-700"],
+#camForm button[class*="bg-violet-600"],
+#camForm .bg-blue-600 {
+    background-image: none !important;
+    background-color: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+#camForm button[class*="bg-gradient-to-"]:hover,
+#camForm a[class*="bg-gradient-to-"]:hover,
+#camForm button[class*="bg-indigo-600"]:hover,
+#camForm button[class*="bg-purple-600"]:hover,
+#camForm .bg-blue-600:hover {
+    background-color: #1e40af !important;
+    border-color: #1e40af !important;
+}
+
+/* Flatten decorative light gradients on info banners/cards */
+#camForm div[class*="bg-gradient-to-r"],
+#camForm div[class*="bg-gradient-to-br"] {
+    background-image: none !important;
+}
+#camForm div[class*="from-purple-50"],
+#camForm div[class*="from-indigo-50"],
+#camForm div[class*="from-blue-50"] {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* 4. Crisp corporate inputs, selects, and textareas */
+#camForm input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+#camForm select,
+#camForm textarea {
+    border-color: #cbd5e1 !important;
+    border-radius: 0.375rem !important;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+#camForm input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):hover:not(:disabled):not([readonly]),
+#camForm select:hover:not(:disabled),
+#camForm textarea:hover:not(:disabled):not([readonly]) {
+    border-color: #94a3b8 !important;
+}
+#camForm input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):focus,
+#camForm select:focus,
+#camForm textarea:focus {
+    outline: none !important;
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1) !important;
+}
+#camForm input[readonly],
+#camForm input:disabled,
+#camForm select:disabled {
+    background-color: #f8fafc !important;
+    color: #475569 !important;
+}
+
+/* 5. Stepper active refinement */
+#formStepperDrawer button[id^="step-item-"] {
+    border-radius: 0.375rem !important;
+}
+
+/* ========================================================
    STYLING DROPDOWN SELECT: PANAH / CHEVRON LEBIH KE TENGAH
    ======================================================== */
 select:not([multiple]):not([size]) {
     appearance: none !important;
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23334155' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
-    background-position: right 1.25rem center !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23475569' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 0.85rem center !important;
     background-repeat: no-repeat !important;
-    background-size: 1.15rem 1.15rem !important;
-    padding-right: 3rem !important;
+    background-size: 1rem 1rem !important;
+    padding-right: 2.5rem !important;
     cursor: pointer;
 }
 
 select:not([multiple]):not([size]):disabled {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
     cursor: not-allowed;
 }
-
