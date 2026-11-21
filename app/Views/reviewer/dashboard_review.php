@@ -257,7 +257,7 @@
 
                 <div class="flex items-center gap-4 justify-between sm:justify-end">
                     <div class="text-xs text-slate-500">
-                        Menampilkan <span id="countDisplay" class="font-semibold text-slate-900 tabular-nums"><?= count($daftar_pengajuan ?? []) ?></span> pengajuan
+                        Total <span id="countDisplay" class="font-semibold text-slate-900 tabular-nums"><?= count($daftar_pengajuan ?? []) ?></span> pengajuan
                     </div>
                     <a href="<?= base_url('pengajuan') ?>" class="text-xs font-semibold text-blue-700 hover:text-blue-800 hidden sm:inline">
                         Lihat Semua &rarr;
