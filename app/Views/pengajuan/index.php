@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($title) ?> | OTW Credit Engine</title>
+    <title><?= esc($title) ?> | OTW Approved</title>
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
@@ -11,6 +11,8 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
 
@@ -18,9 +20,9 @@
     if (!isset($pengaturan_sistem)) {
         $pengaturan_sistem = \Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
     }
-    $namaWeb       = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Credit Engine & CAM';
+    $namaWeb       = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Approved';
     $namaLembaga   = !empty($pengaturan_sistem['nama_lembaga']) ? $pengaturan_sistem['nama_lembaga'] : 'Portal Account Officer';
-    $logoWeb       = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
+    $logoWeb       = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : 'img/logo-oap.png';
     $isPengusul    = strtolower(trim($jabatan ?? '')) === 'pengusul';
     $roleBadgeText = $isPengusul ? 'Petugas Pengusul' : esc($jabatan);
 
@@ -236,8 +238,8 @@
                         <select id="filterTipeDebitur" onchange="filterTabelPengajuan()"
                                 class="w-full appearance-none pl-9 pr-9 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs cursor-pointer">
                             <option value="semua">Semua Tipe Debitur</option>
-                            <option value="perorangan">👤 Perorangan</option>
-                            <option value="badan_usaha">🏢 Badan Usaha</option>
+                            <option value="perorangan">ðŸ‘¤ Perorangan</option>
+                            <option value="badan_usaha">ðŸ¢ Badan Usaha</option>
                         </select>
                         <div class="absolute left-3 top-2.5 pointer-events-none text-slate-400">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>

@@ -23,14 +23,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'Executive Command Dashboard') ?></title>
-    <!-- Tailwind CSS CDN -->
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
-    <!-- Google Fonts -->
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .font-mono-code { font-family: 'JetBrains Mono', monospace; }
-    </style>
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
+    <style>.font-mono-code { font-family: 'JetBrains Mono', monospace; }</style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
@@ -94,28 +91,24 @@
                 </div>
             <?php endif; ?>
 
-            <!-- EXECUTIVE BANNER (WARNA BIRU ELEGAN) -->
-            <div class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 rounded-2xl p-5 sm:p-6 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="space-y-1">
-                    <div class="flex items-center gap-2">
-                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white uppercase tracking-wider border border-white/25">
-                            Pusat Komando Eksekutif
-                        </span>
-                        <span class="text-blue-200 text-xs">&bull;</span>
-                        <span class="text-xs text-blue-100 font-medium"><?= esc($pengaturan_sistem['nama_lembaga'] ?? 'Lembaga Pembiayaan') ?></span>
+            <!-- EXECUTIVE HEADER (CLEAN CORPORATE BLUE ACCENT) -->
+            <div class="bg-white border border-slate-200 border-l-4 border-l-blue-700 rounded-lg p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="space-y-0.5">
+                    <div class="text-[11px] font-semibold text-blue-700 uppercase tracking-[0.12em]">
+                        Pusat Komando Superadmin
                     </div>
-                    <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white">
-                        Selamat Datang, <?= esc($nama_lengkap ?? 'Super Administrator') ?>
+                    <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-950">
+                        Ringkasan Portofolio &amp; Kontrol Sistem
                     </h1>
-                    <p class="text-xs text-blue-100/90">
-                        Pantau ringkasan portofolio pembiayaan, keputusan sidang komite, dan audit sistem secara real-time.
+                    <p class="text-xs text-slate-500">
+                        Pantau pengajuan pembiayaan, keputusan komite, akun pengguna, dan log audit sistem.
                     </p>
                 </div>
 
                 <?php if (($users_pending ?? 0) > 0): ?>
                     <div class="shrink-0">
-                        <a href="<?= base_url('superadmin/manajemen_user') ?>" class="inline-flex items-center gap-2 px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow-sm transition">
-                            <span class="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                        <a href="<?= base_url('superadmin/manajemen_user') ?>" class="inline-flex items-center gap-2 px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-semibold text-xs rounded-md transition">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
                             <span>Persetujuan Pengusul Baru (<?= $users_pending ?>) &rarr;</span>
                         </a>
                     </div>

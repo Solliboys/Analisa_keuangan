@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -16,6 +16,8 @@
             font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; 
         }
     </style>
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
 
@@ -90,7 +92,7 @@
                     <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
                         <div class="flex items-center gap-2.5">
                             <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
-                                🏢
+                                ðŸ¢
                             </div>
                             <div>
                                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
@@ -196,7 +198,7 @@
                     <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
                         <div class="flex items-center gap-2.5">
                             <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
-                                📞
+                                ðŸ“ž
                             </div>
                             <div>
                                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
@@ -280,7 +282,7 @@
                                 <?= esc($pengaturan_sistem['alamat_lembaga'] ?? 'BPR Financial Center, Lantai 8, Jakarta Selatan') ?>
                             </div>
                             <div class="text-[11px] text-slate-400 mt-0.5">
-                                Telp: <span id="previewTeleponLembaga" class="font-medium text-slate-600"><?= esc($pengaturan_sistem['telepon_lembaga'] ?? '(021) 5088-2900') ?></span> • 
+                                Telp: <span id="previewTeleponLembaga" class="font-medium text-slate-600"><?= esc($pengaturan_sistem['telepon_lembaga'] ?? '(021) 5088-2900') ?></span> â€¢ 
                                 Email: <span id="previewEmailLembaga" class="font-medium text-slate-600"><?= esc($pengaturan_sistem['email_lembaga'] ?? 'info@otwkredit.id') ?></span>
                             </div>
                             <div class="border-b-2 border-slate-800 mt-3 mb-1"></div>
@@ -298,7 +300,7 @@
                     <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
                         <div class="flex items-center gap-2.5">
                             <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
-                                🛡️
+                                ðŸ›¡ï¸
                             </div>
                             <div>
                                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
@@ -308,7 +310,7 @@
                             </div>
                         </div>
                         <span id="badgeStatusSlikSetting" class="text-[11px] font-bold px-2.5 py-1 rounded-md border <?= $isPetugasSlikAktif === 1 ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-slate-600 bg-slate-100 border-slate-200' ?>">
-                            <?= $isPetugasSlikAktif === 1 ? '🟢 Petugas SLIK Aktif' : '⚪ Petugas SLIK Nonaktif' ?>
+                            <?= $isPetugasSlikAktif === 1 ? 'ðŸŸ¢ Petugas SLIK Aktif' : 'âšª Petugas SLIK Nonaktif' ?>
                         </span>
                     </div>
 
@@ -356,16 +358,16 @@
                 <!-- CARD: MANAJEMEN FITUR & MODUL (FEATURE SWITCHES) -->
                 <?php
                     $ffList = [
-                        ['key' => 'fitur_ai_aktif', 'icon' => '🤖', 'judul' => 'AI 5C & Cek Rekam Jejak (Web Check)', 'desc' => 'ON: tombol analisa AI & cek rekam jejak otomatis tersedia. OFF: analis mengisi manual.', 'def' => 1],
-                        ['key' => 'fitur_badan_usaha_aktif', 'icon' => '🏢', 'judul' => 'Pembiayaan Badan Usaha (PT / CV)', 'desc' => 'ON: pilihan Badan Usaha tersedia di pengajuan. OFF: hanya Perorangan.', 'def' => 1],
-                        ['key' => 'fitur_disbursement_aktif', 'icon' => '💰', 'judul' => 'Modul Disbursement & Repayment', 'desc' => 'ON: tab simulasi biaya pencairan & kemampuan angsur tampil. OFF: disembunyikan.', 'def' => 1],
-                        ['key' => 'mode_strict_dokumen', 'icon' => '📁', 'judul' => 'Mode Ketat Dokumen Wajib', 'desc' => 'ON: pengajuan tidak bisa dikirim sebelum berkas wajib (KTP, dll) diunggah. OFF: fleksibel.', 'def' => 0],
+                        ['key' => 'fitur_ai_aktif', 'icon' => 'ðŸ¤–', 'judul' => 'AI 5C & Cek Rekam Jejak (Web Check)', 'desc' => 'ON: tombol analisa AI & cek rekam jejak otomatis tersedia. OFF: analis mengisi manual.', 'def' => 1],
+                        ['key' => 'fitur_badan_usaha_aktif', 'icon' => 'ðŸ¢', 'judul' => 'Pembiayaan Badan Usaha (PT / CV)', 'desc' => 'ON: pilihan Badan Usaha tersedia di pengajuan. OFF: hanya Perorangan.', 'def' => 1],
+                        ['key' => 'fitur_disbursement_aktif', 'icon' => 'ðŸ’°', 'judul' => 'Modul Disbursement & Repayment', 'desc' => 'ON: tab simulasi biaya pencairan & kemampuan angsur tampil. OFF: disembunyikan.', 'def' => 1],
+                        ['key' => 'mode_strict_dokumen', 'icon' => 'ðŸ“', 'judul' => 'Mode Ketat Dokumen Wajib', 'desc' => 'ON: pengajuan tidak bisa dikirim sebelum berkas wajib (KTP, dll) diunggah. OFF: fleksibel.', 'def' => 0],
                     ];
                     $modeKomite = $pengaturan_sistem['mode_approval_komite'] ?? 'cepat';
                 ?>
                 <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-2xs w-full">
                     <div class="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
-                        <div class="w-8 h-8 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold text-sm">🎛️</div>
+                        <div class="w-8 h-8 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center font-bold text-sm">ðŸŽ›ï¸</div>
                         <div>
                             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Manajemen Fitur &amp; Modul Sistem</h2>
                             <p class="text-[11px] text-slate-400">Aktifkan / nonaktifkan fitur lanjutan kapan saja tanpa mengubah kode. Tersimpan langsung saat saklar diklik.</p>
@@ -392,25 +394,25 @@
                         <!-- Mode Persetujuan Komite -->
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80">
                             <div class="min-w-0">
-                                <div class="text-xs font-extrabold text-slate-900">⚖️ Mode Persetujuan Komite</div>
+                                <div class="text-xs font-extrabold text-slate-900">âš–ï¸ Mode Persetujuan Komite</div>
                                 <p class="text-[11px] text-slate-500 mt-0.5"><b>Cepat:</b> Reviewer ATAU CEO, siapa cepat memutuskan. <b>Bertingkat:</b> Reviewer dulu, lalu CEO.</p>
                             </div>
                             <select id="selectModeKomite" onchange="setModeKomite(this.value)" class="shrink-0 px-3 py-2 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-xl cursor-pointer">
                                 <option value="cepat" <?= $modeKomite === 'cepat' ? 'selected' : '' ?>>Cepat (Siapa Cepat)</option>
-                                <option value="bertingkat" <?= $modeKomite === 'bertingkat' ? 'selected' : '' ?>>Bertingkat (Reviewer → CEO)</option>
+                                <option value="bertingkat" <?= $modeKomite === 'bertingkat' ? 'selected' : '' ?>>Bertingkat (Reviewer â†’ CEO)</option>
                             </select>
                         </div>
                     </div>
 
                     <p class="mt-4 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                        ℹ️ Saklar sudah tersimpan dan tercatat di Log Aktivitas. Penerapan di setiap form/tab dilakukan bertahap sesuai fitur masing-masing.
+                        â„¹ï¸ Saklar sudah tersimpan dan tercatat di Log Aktivitas. Penerapan di setiap form/tab dilakukan bertahap sesuai fitur masing-masing.
                     </p>
                 </div>
 
                 <!-- CARD: BACKUP & ARSIP DATA -->
                 <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-2xs w-full">
                     <div class="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
-                        <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">💾</div>
+                        <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">ðŸ’¾</div>
                         <div>
                             <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Backup &amp; Arsip Data</h2>
                             <p class="text-[11px] text-slate-400">Unduh salinan data untuk disimpan di flashdisk / hard disk eksternal (disarankan rutin, minimal tiap tahun).</p>
@@ -418,14 +420,14 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2">
-                            <div class="text-xs font-extrabold text-slate-900">🗄️ Backup Database (.sql)</div>
+                            <div class="text-xs font-extrabold text-slate-900">ðŸ—„ï¸ Backup Database (.sql)</div>
                             <p class="text-[11px] text-slate-500">Seluruh data pengajuan, user, pengaturan, dan log dalam satu file SQL.</p>
-                            <a href="<?= base_url('superadmin/backup-database') ?>" class="inline-flex px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">⬇️ Unduh Backup Database</a>
+                            <a href="<?= base_url('superadmin/backup-database') ?>" class="inline-flex px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">â¬‡ï¸ Unduh Backup Database</a>
                         </div>
                         <div class="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/80 space-y-2">
-                            <div class="text-xs font-extrabold text-slate-900">📦 Backup Berkas Upload (.zip)</div>
+                            <div class="text-xs font-extrabold text-slate-900">ðŸ“¦ Backup Berkas Upload (.zip)</div>
                             <p class="text-[11px] text-slate-500">Semua dokumen, bukti, dan foto yang diunggah. Ukuran bisa besar.</p>
-                            <a href="<?= base_url('superadmin/backup-berkas') ?>" class="inline-flex px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">⬇️ Unduh Backup Berkas</a>
+                            <a href="<?= base_url('superadmin/backup-berkas') ?>" class="inline-flex px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">â¬‡ï¸ Unduh Backup Berkas</a>
                         </div>
                     </div>
                     <p class="mt-4 text-[11px] text-slate-500">Salinan juga tersimpan otomatis di server pada folder <code>writable/backups/</code>. Untuk arsip tahunan, unduh kedua file lalu salin ke flashdisk.</p>
@@ -550,7 +552,7 @@
                     <button type="submit" 
                             id="btnSimpanPengaturan" 
                             class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-2 transition-colors shadow-xs shadow-blue-500/20 cursor-pointer">
-                        <span>💾</span>
+                        <span>ðŸ’¾</span>
                         <span>Simpan Pengaturan Lembaga &amp; Kontak</span>
                     </button>
                 </div>
@@ -626,7 +628,7 @@
                 }
                 if (badge) {
                     badge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md border text-emerald-700 bg-emerald-50 border-emerald-200';
-                    badge.innerText = '🟢 Petugas SLIK Aktif';
+                    badge.innerText = 'ðŸŸ¢ Petugas SLIK Aktif';
                 }
                 if (text) text.innerText = 'Status: AKTIF';
                 if (labelMode) {
@@ -649,7 +651,7 @@
                 }
                 if (badge) {
                     badge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md border text-slate-600 bg-slate-100 border-slate-200';
-                    badge.innerText = '⚪ Petugas SLIK Nonaktif';
+                    badge.innerText = 'âšª Petugas SLIK Nonaktif';
                 }
                 if (text) text.innerText = 'Status: NONAKTIF';
                 if (labelMode) {

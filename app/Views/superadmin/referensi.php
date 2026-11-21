@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -27,6 +27,8 @@
             border-radius: 4px;
         }
     </style>
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
 
@@ -154,7 +156,7 @@
                             <option value="">Semua Jenis (Tampilkan Semua Data)</option>
                             
                             <!-- Kelompok 1: Referensi Formulir Dinamis -->
-                            <optgroup label="📂 REFERENSI FORMULIR DINAMIS (Bisa Tambah / Edit / Hapus)">
+                            <optgroup label="ðŸ“‚ REFERENSI FORMULIR DINAMIS (Bisa Tambah / Edit / Hapus)">
                                 <?php foreach ($daftar_jenis as $j): ?>
                                     <?php 
                                         $cat = $map_metadata[$j]['kategori'] ?? 'fleksibel';
@@ -169,7 +171,7 @@
                             </optgroup>
 
                             <!-- Kelompok 2: Referensi Inti Sistem -->
-                            <optgroup label="🔒 REFERENSI INTI SISTEM (Terkunci - Hanya Edit)">
+                            <optgroup label="ðŸ”’ REFERENSI INTI SISTEM (Terkunci - Hanya Edit)">
                                 <?php foreach ($daftar_jenis as $j): ?>
                                     <?php 
                                         $cat = $map_metadata[$j]['kategori'] ?? 'fleksibel';
@@ -428,7 +430,7 @@
                                     class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-white hover:bg-slate-50/50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs appearance-none cursor-pointer">
                                 <option value="" disabled selected>Pilih Jenis Referensi</option>
                                 
-                                <optgroup label="📂 Opsi Formulir Dinamis">
+                                <optgroup label="ðŸ“‚ Opsi Formulir Dinamis">
                                     <?php foreach ($daftar_jenis as $j): ?>
                                         <?php 
                                             $cat = $map_metadata[$j]['kategori'] ?? 'fleksibel';
@@ -440,7 +442,7 @@
                                     <?php endforeach; ?>
                                 </optgroup>
 
-                                <optgroup label="🔒 Parameter Sistem Inti">
+                                <optgroup label="ðŸ”’ Parameter Sistem Inti">
                                     <?php foreach ($daftar_jenis as $j): ?>
                                         <?php 
                                             $cat = $map_metadata[$j]['kategori'] ?? 'fleksibel';

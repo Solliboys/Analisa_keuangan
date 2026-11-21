@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -11,13 +11,15 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
 
 <?php
-    $namaWeb     = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Credit Engine & CAM';
+    $namaWeb     = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Approved';
     $namaLembaga = !empty($pengaturan_sistem['nama_lembaga']) ? $pengaturan_sistem['nama_lembaga'] : 'Portal Account Officer';
-    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
+    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : 'img/logo-oap.png';
 
     $statusAplikasi  = $kredit['status_pengajuan'] ?? 'Draft';
     $currentDecision = $keputusan_reviewer['status_approval'] ?? ($statusAplikasi === 'Disetujui' || $statusAplikasi === 'Disetujui Bersyarat' || $statusAplikasi === 'Bersyarat' || $statusAplikasi === 'Ditolak' || $statusAplikasi === 'Revisi' ? $statusAplikasi : '');
@@ -229,7 +231,7 @@
                                     </div>
                                     <?php if (!empty($kredit['berkas_slik_pdf'])): ?>
                                         <a href="<?= base_url($kredit['berkas_slik_pdf']) ?>" target="_blank" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline flex items-center gap-0.5" title="Lihat Laporan iDeb Resmi PDF">
-                                            <span>PDF iDeb ↗</span>
+                                            <span>PDF iDeb â†—</span>
                                         </a>
                                     <?php endif; ?>
                                 </span>
@@ -298,7 +300,7 @@
                             </div>
                             <?php if (!empty($currentDecision)): ?>
                                 <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
-                                    🔒 Mode Lihat (Sudah Di-review)
+                                    ðŸ”’ Mode Lihat (Sudah Di-review)
                                 </span>
                             <?php endif; ?>
                         </div>

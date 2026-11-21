@@ -1,0 +1,108 @@
+/* ========================================================
+   OTW APPROVED — UNIFIED CLEAN CORPORATE FINTECH PORTAL CSS
+   Shared across Petugas SLIK, Reviewer, CEO, Superadmin,
+   Pengajuan List, Verifikasi, Review, and Profil pages.
+   ======================================================== */
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    background-color: #f8fafc !important;
+    color: #0f172a;
+    -webkit-font-smoothing: antialiased;
+}
+
+.tabular-nums,
+table,
+td,
+th {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Crisp corporate top bar accent */
+header.sticky {
+    border-top: 2px solid #1d4ed8;
+    box-shadow: none !important;
+}
+
+/* Sharpen bubbly AI-slop radii across portal cards & controls */
+main .rounded-3xl,
+main .rounded-2xl,
+aside .rounded-2xl {
+    border-radius: 0.5rem !important;
+}
+
+main .rounded-xl,
+header .rounded-xl,
+aside .rounded-xl {
+    border-radius: 0.375rem !important;
+}
+
+/* Flatten heavy AI-slop shadows into hairline corporate surfaces */
+main .shadow-2xl,
+main .shadow-xl,
+main .shadow-lg,
+main .shadow-md,
+main .shadow-sm {
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* Unify purple/indigo/violet AI-slop gradients & primary buttons to Corporate Blue (#1D4ED8) */
+main button[class*="bg-gradient-to-"],
+main a[class*="bg-gradient-to-"],
+main button[class*="bg-indigo-600"],
+main a[class*="bg-indigo-600"],
+main button[class*="bg-purple-600"],
+main a[class*="bg-purple-600"] {
+    background-image: none !important;
+    background-color: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+main button[class*="bg-gradient-to-"]:hover,
+main a[class*="bg-gradient-to-"]:hover,
+main button[class*="bg-indigo-600"]:hover,
+main a[class*="bg-indigo-600"]:hover,
+main button[class*="bg-purple-600"]:hover,
+main a[class*="bg-purple-600"]:hover {
+    background-color: #1e40af !important;
+    border-color: #1e40af !important;
+}
+
+/* Flatten decorative banner gradients (if any remain) into clean corporate blue-accented sheet */
+main div[class*="bg-gradient-to-r"][class*="from-blue-"],
+main div[class*="bg-gradient-to-r"][class*="from-indigo-"],
+main div[class*="bg-gradient-to-r"][class*="from-slate-"] {
+    background-image: none !important;
+}
+
+/* Crisp corporate inputs, selects, textareas */
+main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]),
+main select,
+main textarea {
+    border-color: #cbd5e1;
+    border-radius: 0.375rem !important;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]):not([type="range"]):focus,
+main select:focus,
+main textarea:focus {
+    outline: none !important;
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1) !important;
+}
+
+/* Clean table polish */
+main table thead th {
+    background-color: #f8fafc;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+main table tbody tr:hover {
+    background-color: rgba(239, 246, 255, 0.45);
+}

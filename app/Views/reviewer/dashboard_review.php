@@ -18,55 +18,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= esc($title ?? 'Workspace Reviewer & Komite Kredit') ?></title>
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
 </head>
-<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col">
 
 <?php
     if (!isset($pengaturan_sistem)) {
         $pengaturan_sistem = \Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
     }
-    $namaWeb     = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Credit Engine & CAM';
-    $namaLembaga = !empty($pengaturan_sistem['nama_lembaga']) ? $pengaturan_sistem['nama_lembaga'] : 'Portal Account Officer';
-    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
-
-    // Inisial dinamis
-    $words = preg_split("/[\s,_-]+/", trim($namaWeb));
-    $initials = '';
-    foreach ($words as $w) {
-        if (!empty($w)) $initials .= mb_substr($w, 0, 1);
-        if (mb_strlen($initials) >= 2) break;
-    }
-    if (empty($initials)) $initials = 'OT';
-    $initials = strtoupper($initials);
+    $rawNamaWeb  = !empty($pengaturan_sistem['nama_aplikasi']) ? trim($pengaturan_sistem['nama_aplikasi']) : '';
+    $namaWeb     = (empty($rawNamaWeb) || preg_match('/(credit\s*engine|cam|bpr)/i', $rawNamaWeb)) ? 'OTW Approved' : $rawNamaWeb;
+    $rawLembaga  = !empty($pengaturan_sistem['nama_lembaga']) ? trim($pengaturan_sistem['nama_lembaga']) : 'Lembaga Pembiayaan';
+    $namaLembaga = trim(preg_replace('/\b(BPR|CAM)\b/i', '', $rawLembaga));
+    $namaLembaga = trim(preg_replace('/\bPT\.?\s*\/\s*/i', '', $namaLembaga));
+    $namaLembaga = trim(preg_replace('/\s+/', ' ', $namaLembaga), " \t\n\r\0\x0B/") ?: 'Lembaga Pembiayaan';
+    $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? trim($pengaturan_sistem['logo_aplikasi']) : 'img/logo-oap.png';
 ?>
     <!-- Top Navigation -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-        <div class="w-full px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-3">
-                    <?php if (!empty($logoWeb)): ?>
-                        <img src="<?= base_url($logoWeb) ?>" 
-                             alt="<?= esc($namaWeb) ?>" 
-                             class="w-10 h-10 object-contain rounded-xl border border-slate-200 bg-white p-1 shadow-xs shrink-0">
-                    <?php elseif (file_exists(FCPATH . 'logo_otwe_besar.png')): ?>
-                        <img src="<?= base_url('logo_otwe_besar.png') ?>" 
-                             alt="<?= esc($namaWeb) ?>" 
-                             class="h-10 w-auto max-w-[120px] object-contain rounded-xl border border-slate-200 bg-white p-1 shadow-xs shrink-0">
-                    <?php else: ?>
-                        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-extrabold text-sm shadow-sm shrink-0 tracking-wider">
-                            <?= esc($initials) ?>
-                        </div>
-                    <?php endif; ?>
-                    <div>
-                        <span class="text-lg font-bold text-slate-900 tracking-tight"><?= esc($namaWeb) ?></span>
-                        <span class="text-xs block text-slate-500 font-medium"><?= esc($namaLembaga) ?></span>
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-15 sm:h-16 items-center gap-3">
+                <a href="<?= base_url('dashboard') ?>" class="flex items-center gap-2.5 min-w-0">
+                    <img src="<?= base_url($logoWeb) ?>"
+                         alt="<?= esc($namaWeb) ?>"
+                         class="w-8 h-8 object-contain shrink-0">
+                    <div class="min-w-0 leading-tight">
+                        <span class="text-sm sm:text-[15px] font-bold text-slate-950 tracking-tight block truncate"><?= esc($namaWeb) ?></span>
+                        <span class="text-[11px] block text-slate-500 font-medium truncate"><?= esc($namaLembaga) ?></span>
                     </div>
-                </div>
+                </a>
 
                 <div class="flex items-center gap-3">
                     <div class="text-right hidden sm:block">
@@ -121,14 +106,14 @@
 
     <main class="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 min-w-0">
         
-        <!-- Welcome Hero Banner -->
-        <div class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 rounded-3xl p-6 sm:p-8 text-white shadow-sm mb-8">
-            <span class="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-blue-100 uppercase tracking-wider">
+        <!-- Clean Workspace Header with Corporate Blue Accent -->
+        <div class="bg-white border border-slate-200 border-l-4 border-l-blue-700 rounded-lg p-4 sm:p-5 mb-6">
+            <div class="text-[11px] font-semibold text-blue-700 uppercase tracking-[0.12em]">
                 Ruang Kerja <?= esc(!empty($jabatan) ? $jabatan : 'Reviewer Kredit') ?>
-            </span>
-            <h1 class="text-2xl sm:text-3xl font-extrabold mt-3 tracking-tight">Selamat Datang, <?= esc($nama_lengkap) ?>!</h1>
-            <p class="text-sm text-blue-100 mt-1 max-w-3xl leading-relaxed">
-                Tinjau berkas analisa kredit (CAM), evaluasi kepatuhan 5C serta riwayat SLIK OJK, dan berikan keputusan mutlak persetujuan (Approve) atau penolakan (Reject) permohonan kredit.
+            </div>
+            <h1 class="text-lg sm:text-xl font-bold text-slate-950 tracking-tight mt-0.5">Evaluasi &amp; Keputusan Kredit</h1>
+            <p class="text-xs text-slate-500 mt-0.5 max-w-3xl">
+                Tinjau kelengkapan analisa 5C, riwayat SLIK OJK, serta arus kas debitur untuk menetapkan persetujuan, revisi, atau penolakan.
             </p>
         </div>
 

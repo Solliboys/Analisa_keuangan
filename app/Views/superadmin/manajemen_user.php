@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -16,6 +16,8 @@
             font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; 
         }
     </style>
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
 
@@ -287,7 +289,7 @@
                                                     <?php endif; ?>
                                                 </div>
                                                 <div class="text-xs text-slate-400 user-email mt-0.5">
-                                                    @<?= esc($u['username']) ?> <?= !empty($u['email']) ? '• ' . esc($u['email']) : '' ?>
+                                                    @<?= esc($u['username']) ?> <?= !empty($u['email']) ? 'â€¢ ' . esc($u['email']) : '' ?>
                                                 </div>
                                             </div>
                                         </div>
@@ -820,7 +822,7 @@
                                 <span class="font-bold text-slate-900 user-name">${user.nama_lengkap}</span>
                             </div>
                             <div class="text-xs text-slate-400 user-email mt-0.5">
-                                @${user.username} ${user.email ? '• ' + user.email : ''}
+                                @${user.username} ${user.email ? 'â€¢ ' + user.email : ''}
                             </div>
                         </div>
                     </div>
@@ -895,7 +897,7 @@
         function konfirmasiHapus(id, namaUser, username) {
             Swal.fire({
                 title: 'Hapus Pengguna?',
-                html: `Apakah Anda yakin ingin menghapus akun <b>${namaUser}</b> (@${username})?<br><span class="text-xs text-rose-500 font-medium mt-1 inline-block">⚠️ Tindakan ini akan menghapus data pengguna secara langsung dari database.</span>`,
+                html: `Apakah Anda yakin ingin menghapus akun <b>${namaUser}</b> (@${username})?<br><span class="text-xs text-rose-500 font-medium mt-1 inline-block">âš ï¸ Tindakan ini akan menghapus data pengguna secara langsung dari database.</span>`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#e11d48',
@@ -1096,10 +1098,10 @@
             const statusEl = document.getElementById('modalStatus');
             if (status === 'Aktif') {
                 statusEl.className = 'font-bold text-emerald-600';
-                statusEl.innerHTML = '● Aktif (Dapat Login)';
+                statusEl.innerHTML = 'â— Aktif (Dapat Login)';
             } else {
                 statusEl.className = 'font-bold text-rose-600';
-                statusEl.innerHTML = '● Tidak Aktif (Dinonaktifkan)';
+                statusEl.innerHTML = 'â— Tidak Aktif (Dinonaktifkan)';
             }
 
             document.getElementById('userDetailModal').classList.remove('hidden');

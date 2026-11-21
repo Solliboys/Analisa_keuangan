@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($title ?? 'Log Aktivitas Sistem') ?> | <?= esc($pengaturan_sistem['nama_aplikasi'] ?? 'OTW Credit Engine') ?></title>
+    <title><?= esc($title ?? 'Log Aktivitas Sistem') ?> | <?= esc($pengaturan_sistem['nama_aplikasi'] ?? 'OTW Approved') ?></title>
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
@@ -12,6 +12,8 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .font-mono-code { font-family: 'JetBrains Mono', monospace; }
     </style>
+    <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
 
@@ -19,9 +21,9 @@
     if (!isset($pengaturan_sistem)) {
         $pengaturan_sistem = \Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
     }
-    $namaWeb       = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Credit Engine & CAM';
+    $namaWeb       = !empty($pengaturan_sistem['nama_aplikasi']) ? $pengaturan_sistem['nama_aplikasi'] : 'OTW Approved';
     $namaLembaga   = !empty($pengaturan_sistem['nama_lembaga']) ? $pengaturan_sistem['nama_lembaga'] : 'Portal Account Officer';
-    $logoWeb       = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : '';
+    $logoWeb       = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : 'img/logo-oap.png';
     $jabatanUser   = session()->get('jabatan') ?? ($jabatan ?? 'User');
     $roleBadgeText = esc($jabatanUser);
 
@@ -126,7 +128,7 @@
             <div>
                 <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
                     <span class="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-lg shadow-2xs border border-purple-200">
-                        📜
+                        ðŸ“œ
                     </span>
                     <span>Log Aktivitas Sistem & Audit Trail</span>
                 </h1>
@@ -442,7 +444,7 @@
 
                 Swal.fire({
                     title: `<div class="text-base font-bold text-slate-900 flex items-center justify-center gap-2">
-                                <span>📜 Detail Audit Log #${d.id}</span>
+                                <span>ðŸ“œ Detail Audit Log #${d.id}</span>
                             </div>`,
                     html: `
                         <div class="text-left space-y-3 text-xs">
