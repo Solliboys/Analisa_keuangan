@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @var string $title
  * @var string $nama_lengkap

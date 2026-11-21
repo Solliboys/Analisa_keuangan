@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @var string $title
  * @var string $nama_lengkap
@@ -344,7 +344,7 @@
             <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-base shadow-2xs border border-purple-100">
-                        ðŸ“œ
+                        📜
                     </div>
                     <div>
                         <h2 class="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">

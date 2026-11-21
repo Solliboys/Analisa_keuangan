@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $bulanIndo = [
     1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni',
     7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
@@ -137,7 +137,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
         <div class="mb-5 p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs" id="bannerAlurPetugasSlik">
             <div class="flex items-start gap-3 min-w-0">
                 <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 text-sm shadow-xs">
-                    ðŸ”’
+                    🔒
                 </div>
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2 flex-wrap">
@@ -164,7 +164,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
     <?php else: ?>
         <div class="mb-5 p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 text-emerald-950 flex items-start gap-3 shadow-2xs">
             <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shrink-0 text-sm shadow-xs">
-                âš¡
+                ⚡
             </div>
             <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
@@ -442,7 +442,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
             <div id="formTambahFasilitasSlikContainer" class="hidden p-4 rounded-xl border border-blue-200 bg-blue-50/50 space-y-3 transition">
                 <div class="font-bold text-xs text-blue-900 flex items-center justify-between">
                     <span>Input Catatan Fasilitas Pinjaman</span>
-                    <button type="button" onclick="tutupFormTambahFasilitasSlik()" class="text-slate-400 hover:text-slate-600">âœ•</button>
+                    <button type="button" onclick="tutupFormTambahFasilitasSlik()" class="text-slate-400 hover:text-slate-600">✕</button>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
                     <div>
@@ -537,7 +537,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                                         </span>
                                     </td>
                                     <td class="py-2 px-2 text-center">
-                                        <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus">âœ•</button>
+                                        <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus">✕</button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -656,7 +656,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                     </div>
                     <div class="flex items-center gap-2">
                         <a id="btnBukaPdfTab" href="#" target="_blank" class="px-3 py-1 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-bold transition">
-                            Buka di Tab Baru â†—
+                            Buka di Tab Baru ↗
                         </a>
                         <button type="button" onclick="tutupModalPdfSlik(); bukaModalUploadHasilSlik(currentActiveSlikIndex);" class="px-3 py-1 bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 rounded-lg text-xs font-bold transition">
                             Unggah Ulang
@@ -785,7 +785,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
         <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
             <h3 class="text-sm sm:text-base font-bold text-slate-900">Pengajuan SLIK <?= (isset($view_folder) && $view_folder === 'badan_usaha') ? 'Badan Usaha' : 'Perorangan' ?></h3>
             <button type="button" onclick="tutupModalTambahPermohonanSlik()" class="text-slate-400 hover:text-slate-600 text-lg p-1 transition cursor-pointer">
-                âœ•
+                ✕
             </button>
         </div>
 

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -58,7 +58,7 @@
                 <div>
                     <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
                         <span class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm shadow-md shadow-blue-500/20">
-                            ðŸ“œ
+                            📜
                         </span>
                         Log Aktivitas &amp; Audit Trail Sistem
                     </h1>
@@ -86,7 +86,7 @@
                 <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                     <div class="flex items-center justify-between">
                         <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Aktivitas</span>
-                        <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">ðŸ“‹</span>
+                        <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">📋</span>
                     </div>
                     <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">
                         <?= number_format($total_logs ?? count($logs ?? []), 0, ',', '.') ?>
@@ -98,7 +98,7 @@
                 <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                     <div class="flex items-center justify-between">
                         <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Hari Ini</span>
-                        <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold">ðŸ“…</span>
+                        <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs font-bold">📅</span>
                     </div>
                     <div class="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-2">
                         <?= number_format($today_logs ?? 0, 0, ',', '.') ?>
@@ -110,7 +110,7 @@
                 <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                     <div class="flex items-center justify-between">
                         <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Operasi Berhasil</span>
-                        <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold">âœ…</span>
+                        <span class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold">✅</span>
                     </div>
                     <div class="text-2xl sm:text-3xl font-extrabold text-indigo-600 mt-2">
                         <?= number_format($success_logs ?? 0, 0, ',', '.') ?>
@@ -122,7 +122,7 @@
                 <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                     <div class="flex items-center justify-between">
                         <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Peringatan / Alert</span>
-                        <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs font-bold">âš ï¸</span>
+                        <span class="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-xs font-bold">⚠️</span>
                     </div>
                     <div class="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-2">
                         <?= number_format($warning_logs ?? 0, 0, ',', '.') ?>
@@ -173,7 +173,7 @@
 
                         <?php if (!empty($filter_q) || !empty($filter_modul) || !empty($filter_status)): ?>
                             <a href="<?= base_url('superadmin/log') ?>" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs transition cursor-pointer" title="Reset Filter">
-                                âœ•
+                                ✕
                             </a>
                         <?php endif; ?>
                     </div>
@@ -212,7 +212,7 @@
                                 <tr>
                                     <td colspan="7" class="py-12 text-center text-slate-400">
                                         <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2 text-xl">
-                                            ðŸ“„
+                                            📄
                                         </div>
                                         <p class="font-bold text-slate-600 text-sm">Belum Ada Data Log Aktivitas</p>
                                         <p class="text-[11px] text-slate-400 mt-1">Tidak ditemukan log aktivitas yang sesuai dengan kriteria filter.</p>
@@ -344,7 +344,7 @@
             <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/90">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                        ðŸ“Š
+                        📊
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-slate-900 leading-tight">
@@ -450,7 +450,7 @@
 
                 <!-- Informasi Browser / User Agent -->
                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/80 flex items-start gap-2.5">
-                    <span class="text-base leading-none">ðŸ’»</span>
+                    <span class="text-base leading-none">💻</span>
                     <div class="flex-1 min-w-0">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Perangkat / Browser User Agent</span>
                         <span id="detailLogUserAgent" class="text-[11px] text-slate-600 font-mono-code block break-all mt-0.5 select-all">-</span>

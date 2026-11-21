@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -231,7 +231,7 @@
                                     </div>
                                     <?php if (!empty($kredit['berkas_slik_pdf'])): ?>
                                         <a href="<?= base_url($kredit['berkas_slik_pdf']) ?>" target="_blank" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline flex items-center gap-0.5" title="Lihat Laporan iDeb Resmi PDF">
-                                            <span>PDF iDeb â†—</span>
+                                            <span>PDF iDeb ↗</span>
                                         </a>
                                     <?php endif; ?>
                                 </span>
@@ -300,7 +300,7 @@
                             </div>
                             <?php if (!empty($currentDecision)): ?>
                                 <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
-                                    ðŸ”’ Mode Lihat (Sudah Di-review)
+                                    🔒 Mode Lihat (Sudah Di-review)
                                 </span>
                             <?php endif; ?>
                         </div>

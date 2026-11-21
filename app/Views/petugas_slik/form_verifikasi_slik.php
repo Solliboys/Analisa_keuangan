@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -412,7 +412,7 @@
                                 </label>
                                 <?php if (!empty($berkasPdfVal)): ?>
                                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                        Sudah Ada File âœ“
+                                        Sudah Ada File ✓
                                     </span>
                                 <?php endif; ?>
                             </div>
@@ -439,7 +439,7 @@
                                 </span>
                                 <a href="<?= base_url($berkasPdfVal) ?>" target="_blank" class="px-3 py-1 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-blue-700 font-bold transition flex items-center gap-1 shadow-2xs">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                    <span>Buka PDF â†—</span>
+                                    <span>Buka PDF ↗</span>
                                 </a>
                             </div>
                         <?php endif; ?>
@@ -455,7 +455,7 @@
                                 </label>
                                 <?php if (!empty($berkasTxtVal)): ?>
                                     <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                        Sudah Ada File âœ“
+                                        Sudah Ada File ✓
                                     </span>
                                 <?php endif; ?>
                             </div>
@@ -561,7 +561,7 @@
             <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                        ðŸªª
+                        🪪
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-slate-900">Berkas KTP Debitur Asli</h3>
@@ -592,7 +592,7 @@
                 <?php else: ?>
                     <div class="py-12 px-4 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/60">
                         <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-300 flex items-center justify-center mx-auto mb-2 text-2xl">
-                            ðŸªª
+                            🪪
                         </div>
                         <h4 class="text-xs font-bold text-slate-700">Berkas KTP Belum Diunggah</h4>
                         <p class="text-[11px] text-slate-400 mt-1">Pengusul belum mengunggah file KTP pada Langkah 5 (Berkas Dokumen).</p>

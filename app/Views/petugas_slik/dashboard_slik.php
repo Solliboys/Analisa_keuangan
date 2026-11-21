@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @var string $title
  * @var string $nama_lengkap
@@ -138,7 +138,7 @@
         <!-- Banner Peringatan Jika Petugas SLIK Nonaktif -->
         <div id="bannerPetugasSlikNonaktif" class="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3 shadow-2xs <?= $petugasSlikAktif === 0 ? '' : 'hidden' ?>">
             <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shrink-0 text-sm shadow-xs">
-                âš ï¸
+                ⚠️
             </div>
             <div class="flex-1">
                 <div class="flex items-center gap-2">
@@ -434,7 +434,7 @@
                 if (data.status) {
                     const isAktif = (data.petugas_slik_aktif === 1);
                     if (lbl) {
-                        lbl.innerHTML = isAktif ? 'ðŸŸ¢ Petugas SLIK AKTIF (SOP Ketat)' : 'âšª Petugas SLIK NONAKTIF (Mode Fleksibel)';
+                        lbl.innerHTML = isAktif ? '🟢 Petugas SLIK AKTIF (SOP Ketat)' : '⚪ Petugas SLIK NONAKTIF (Mode Fleksibel)';
                     }
                     if (btn) {
                         btn.innerHTML = isAktif ? 'Nonaktifkan' : 'Aktifkan';

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @var string $title
  * @var string $nama_lengkap
@@ -164,7 +164,7 @@
                     <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
                             <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
-                                ðŸ“‘
+                                📑
                             </div>
                             <div>
                                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Pengajuan Kredit Terbaru</h2>
@@ -237,7 +237,7 @@
                     <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
                             <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
-                                ðŸ“œ
+                                📜
                             </div>
                             <div>
                                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Log Aktivitas Sistem Terkini</h2>

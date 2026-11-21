@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -238,8 +238,8 @@
                         <select id="filterTipeDebitur" onchange="filterTabelPengajuan()"
                                 class="w-full appearance-none pl-9 pr-9 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition shadow-2xs cursor-pointer">
                             <option value="semua">Semua Tipe Debitur</option>
-                            <option value="perorangan">ðŸ‘¤ Perorangan</option>
-                            <option value="badan_usaha">ðŸ¢ Badan Usaha</option>
+                            <option value="perorangan">👤 Perorangan</option>
+                            <option value="badan_usaha">🏢 Badan Usaha</option>
                         </select>
                         <div class="absolute left-3 top-2.5 pointer-events-none text-slate-400">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>

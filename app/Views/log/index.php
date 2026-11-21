@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -128,7 +128,7 @@
             <div>
                 <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
                     <span class="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-lg shadow-2xs border border-purple-200">
-                        ðŸ“œ
+                        📜
                     </span>
                     <span>Log Aktivitas Sistem & Audit Trail</span>
                 </h1>
@@ -444,7 +444,7 @@
 
                 Swal.fire({
                     title: `<div class="text-base font-bold text-slate-900 flex items-center justify-center gap-2">
-                                <span>ðŸ“œ Detail Audit Log #${d.id}</span>
+                                <span>📜 Detail Audit Log #${d.id}</span>
                             </div>`,
                     html: `
                         <div class="text-left space-y-3 text-xs">

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -107,21 +107,21 @@
                     
                     <!-- Tab 1: Character -->
                     <button type="button" onclick="switchPillar('character')" id="tab-character" class="pillar-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition">
-                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">âœ“</span>
+                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">✓</span>
                         <span>1. Character</span>
                         <span class="text-slate-400 font-normal">(25%)</span>
                     </button>
 
                     <!-- Tab 2: Capacity -->
                     <button type="button" onclick="switchPillar('capacity')" id="tab-capacity" class="pillar-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition">
-                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">âœ“</span>
+                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">✓</span>
                         <span>2. Capacity</span>
                         <span class="text-slate-400 font-normal">(25%)</span>
                     </button>
 
                     <!-- Tab 3: Capital -->
                     <button type="button" onclick="switchPillar('capital')" id="tab-capital" class="pillar-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition">
-                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">âœ“</span>
+                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">✓</span>
                         <span>3. Capital</span>
                         <span class="text-slate-400 font-normal">(15%)</span>
                     </button>
@@ -137,14 +137,14 @@
 
                     <!-- Tab 5: Condition -->
                     <button type="button" onclick="switchPillar('condition')" id="tab-condition" class="pillar-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition">
-                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">âœ“</span>
+                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">✓</span>
                         <span>5. Condition</span>
                         <span class="text-slate-400 font-normal">(15%)</span>
                     </button>
 
                     <!-- Tab 6: Reviewer -->
                     <button type="button" onclick="switchPillar('reviewer')" id="tab-reviewer" class="pillar-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition">
-                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">âœ“</span>
+                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">✓</span>
                         <span>6. Reviewer</span>
                         <span class="text-slate-400 font-normal">(100%)</span>
                     </button>

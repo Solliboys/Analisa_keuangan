@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -316,7 +316,7 @@
             <div class="p-5 border-b border-blue-100 bg-gradient-to-r from-blue-50/80 via-white to-blue-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md font-extrabold text-lg shrink-0">
-                        âš–ï¸
+                        ⚖️
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
@@ -503,7 +503,7 @@
                         <div class="bg-gradient-to-br from-indigo-50/80 via-white to-blue-50/80 rounded-2xl border border-indigo-100 p-4 space-y-2.5 shadow-2xs">
                             <div class="flex items-center justify-between pb-2 border-b border-indigo-100">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="text-sm">âœ¨</span>
+                                    <span class="text-sm">✨</span>
                                     <h3 class="text-xs font-extrabold text-indigo-900 uppercase tracking-wider">
                                         Analisis 5C & Skor AI
                                     </h3>
@@ -627,8 +627,8 @@
             }
 
             // Kotak 1: Calon Debitur & Usaha
-            document.getElementById('modalDebiturNama').innerText = (data.nama_debitur || '-') + (data.npwp_pribadi ? ' â€¢ NIK: ' + data.npwp_pribadi : '');
-            document.getElementById('modalDebiturUsaha').innerText = (data.nama_usaha || '-') + (data.sektor_usaha ? ' â€¢ ' + data.sektor_usaha : '');
+            document.getElementById('modalDebiturNama').innerText = (data.nama_debitur || '-') + (data.npwp_pribadi ? ' • NIK: ' + data.npwp_pribadi : '');
+            document.getElementById('modalDebiturUsaha').innerText = (data.nama_usaha || '-') + (data.sektor_usaha ? ' • ' + data.sektor_usaha : '');
             document.getElementById('modalDebiturHp').innerText = data.nomor_hp || '-';
             document.getElementById('modalDebiturLama').innerText = data.lama_usaha ? data.lama_usaha : '-';
 
@@ -779,7 +779,7 @@
             <div class="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div class="flex items-center gap-2.5">
                     <div class="w-9 h-9 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                        ðŸ“‹
+                        📋
                     </div>
                     <div>
                         <h3 class="text-sm font-extrabold text-slate-800">Pilih Kategori Pengajuan</h3>

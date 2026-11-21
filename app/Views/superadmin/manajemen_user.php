@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -289,7 +289,7 @@
                                                     <?php endif; ?>
                                                 </div>
                                                 <div class="text-xs text-slate-400 user-email mt-0.5">
-                                                    @<?= esc($u['username']) ?> <?= !empty($u['email']) ? 'â€¢ ' . esc($u['email']) : '' ?>
+                                                    @<?= esc($u['username']) ?> <?= !empty($u['email']) ? '• ' . esc($u['email']) : '' ?>
                                                 </div>
                                             </div>
                                         </div>
@@ -822,7 +822,7 @@
                                 <span class="font-bold text-slate-900 user-name">${user.nama_lengkap}</span>
                             </div>
                             <div class="text-xs text-slate-400 user-email mt-0.5">
-                                @${user.username} ${user.email ? 'â€¢ ' + user.email : ''}
+                                @${user.username} ${user.email ? '• ' + user.email : ''}
                             </div>
                         </div>
                     </div>
@@ -897,7 +897,7 @@
         function konfirmasiHapus(id, namaUser, username) {
             Swal.fire({
                 title: 'Hapus Pengguna?',
-                html: `Apakah Anda yakin ingin menghapus akun <b>${namaUser}</b> (@${username})?<br><span class="text-xs text-rose-500 font-medium mt-1 inline-block">âš ï¸ Tindakan ini akan menghapus data pengguna secara langsung dari database.</span>`,
+                html: `Apakah Anda yakin ingin menghapus akun <b>${namaUser}</b> (@${username})?<br><span class="text-xs text-rose-500 font-medium mt-1 inline-block">⚠️ Tindakan ini akan menghapus data pengguna secara langsung dari database.</span>`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#e11d48',

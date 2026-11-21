@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($title) ?> â€” OTW Approved</title>
+    <title><?= esc($title) ?> — OTW Approved</title>
     <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
@@ -50,7 +50,7 @@
     <main class="w-full px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 min-w-0">
         <div class="flex flex-col lg:flex-row items-start gap-5 lg:gap-6 min-w-0">
             
-            <!-- SIDEBAR STEPPER KIRI (1 - 11) â€” Slide-Over Drawer di HP, Sticky di Desktop -->
+            <!-- SIDEBAR STEPPER KIRI (1 - 11) — Slide-Over Drawer di HP, Sticky di Desktop -->
             <aside id="formStepperDrawer" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] -translate-x-full transition-transform duration-200 ease-out bg-white border-r border-slate-200 p-4 shadow-xl flex flex-col lg:static lg:sticky lg:top-20 lg:z-10 lg:translate-x-0 lg:w-72 lg:max-w-none lg:shrink-0 lg:rounded-lg lg:border lg:shadow-none lg:max-h-[calc(100vh-140px)]">
                 <!-- Stepper Progress Header -->
                 <div class="flex items-center justify-between pb-2.5 shrink-0 gap-2">
@@ -277,7 +277,7 @@
             <div class="px-5 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-amber-400 border border-white/10 shrink-0 text-lg">
-                        âš–ï¸
+                        ⚖️
                     </div>
                     <div>
                         <h3 class="text-sm font-bold tracking-tight text-white flex items-center gap-2">
@@ -288,7 +288,7 @@
                     </div>
                 </div>
                 <button type="button" onclick="tutupModalCekMa()" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer font-bold">
-                    âœ•
+                    ✕
                 </button>
             </div>
 
@@ -296,7 +296,7 @@
             <div class="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
                 <!-- Info UU PDP Badge -->
                 <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs flex items-start gap-2.5">
-                    <span class="text-base leading-none">â„¹ï¸</span>
+                    <span class="text-base leading-none">ℹ️</span>
                     <div class="leading-relaxed">
                         <strong class="font-bold">Ketentuan Publikasi Peradilan (UU PDP):</strong>
                         Dokumen putusan Mahkamah Agung mempublikasikan <span class="font-semibold underline">Nama Lengkap & Domisili Hukum</span>, namun <span class="font-semibold">NIK disamarkan</span>. Pencarian menggunakan kombinasi Nama Lengkap Debitur dan Kota.
@@ -327,11 +327,11 @@
                 <div class="flex flex-wrap items-center gap-2.5">
                     <button type="button" id="btnJalankanScanMa" onclick="jalankanScanPerkaraMa()" class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                        <span>âš¡ Scan Otomatis (AI Legal Assistant)</span>
+                        <span>⚡ Scan Otomatis (AI Legal Assistant)</span>
                     </button>
                     <button type="button" onclick="bukaPortalResmiMa()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition shadow-2xs cursor-pointer">
                         <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                        <span>ðŸŒ Buka Portal Resmi MA</span>
+                        <span>🌐 Buka Portal Resmi MA</span>
                     </button>
                 </div>
 
@@ -340,14 +340,14 @@
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Hasil Verifikasi Peradilan:</span>
                         <span id="modal_ma_status_badge" class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            ðŸŸ¢ NIHIL PERKARA / BERSIH
+                            🟢 NIHIL PERKARA / BERSIH
                         </span>
                     </div>
 
                     <!-- Profil Subjek Teridentifikasi -->
                     <div id="modal_ma_area_profil" class="hidden p-3 bg-blue-50/80 border border-blue-200 rounded-xl text-xs text-blue-950 space-y-1">
                         <div class="font-bold flex items-center gap-1.5 text-blue-900">
-                            <span>ðŸ‘¤ Profil Subjek / Figur Teridentifikasi:</span>
+                            <span>👤 Profil Subjek / Figur Teridentifikasi:</span>
                         </div>
                         <p id="modal_ma_profil_teks" class="text-[11px] text-blue-900/90 leading-relaxed"></p>
                     </div>
@@ -355,7 +355,7 @@
                     <!-- Ringkasan Temuan Hukum & SIPP -->
                     <div id="modal_ma_area_ringkasan" class="hidden p-3 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-800 space-y-1">
                         <div class="font-bold flex items-center gap-1.5 text-slate-700">
-                            <span>âš–ï¸ Temuan Riwayat Hukum & SIPP:</span>
+                            <span>⚖️ Temuan Riwayat Hukum & SIPP:</span>
                         </div>
                         <p id="modal_ma_ringkasan_teks" class="text-[11px] text-slate-600 leading-relaxed"></p>
                     </div>
@@ -373,7 +373,7 @@
                     Tutup
                 </button>
                 <button type="button" id="btnTerapkanMa" onclick="terapkanHasilMaKeForm()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer">
-                    <span>âœ… Terapkan Hasil ke Kolom SIPP</span>
+                    <span>✅ Terapkan Hasil ke Kolom SIPP</span>
                 </button>
             </div>
         </div>
@@ -386,7 +386,7 @@
             <div class="px-5 py-4 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white flex items-center justify-between shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-amber-300 border border-white/20 shrink-0 text-lg">
-                        âš¡
+                        ⚡
                     </div>
                     <div>
                         <h3 class="text-sm font-bold tracking-wide">AI Web Check & Background Screening (5 Aspek)</h3>
@@ -404,7 +404,7 @@
                 <div class="bg-blue-50/60 border border-blue-200/80 rounded-xl p-4 space-y-3">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-                            <span>ðŸ“‹ Konfirmasi Data Calon Debitur yang Akan Dipindai:</span>
+                            <span>📋 Konfirmasi Data Calon Debitur yang Akan Dipindai:</span>
                         </span>
                         <span class="text-[10px] text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md font-semibold">Bisa disesuaikan/dilengkapi</span>
                     </div>
@@ -441,7 +441,7 @@
                     <div class="border border-blue-200/90 rounded-xl p-3 bg-white space-y-2.5 shadow-2xs">
                         <div class="flex items-center justify-between">
                             <span class="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
-                                <span>ðŸ“Ž Unggah Dokumen / Foto Bukti Pendukung (5 Aspek):</span>
+                                <span>📎 Unggah Dokumen / Foto Bukti Pendukung (5 Aspek):</span>
                             </span>
                             <span class="text-[10px] text-slate-400">PDF, JPG, PNG (Maks 10MB)</span>
                         </div>
@@ -449,7 +449,7 @@
                             <!-- 1. SIPP -->
                             <div class="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between gap-1.5">
                                 <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                                    <span>âš–ï¸ 1. Bukti SIPP / MA</span>
+                                    <span>⚖️ 1. Bukti SIPP / MA</span>
                                 </span>
                                 <div class="flex items-center gap-2">
                                     <label class="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md border border-blue-200 shadow-2xs shrink-0">
@@ -466,7 +466,7 @@
                             <!-- 2. Media Online -->
                             <div class="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between gap-1.5">
                                 <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                                    <span>ðŸŒ 2. Bukti Media Online / Kliping</span>
+                                    <span>🌐 2. Bukti Media Online / Kliping</span>
                                 </span>
                                 <div class="flex items-center gap-2">
                                     <label class="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md border border-blue-200 shadow-2xs shrink-0">
@@ -483,7 +483,7 @@
                             <!-- 3. DTTOT -->
                             <div class="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between gap-1.5">
                                 <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                                    <span>ðŸ›¡ï¸ 3. Bukti DTTOT / APU-PPT</span>
+                                    <span>🛡️ 3. Bukti DTTOT / APU-PPT</span>
                                 </span>
                                 <div class="flex items-center gap-2">
                                     <label class="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md border border-blue-200 shadow-2xs shrink-0">
@@ -500,7 +500,7 @@
                             <!-- 4. Lelang -->
                             <div class="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between gap-1.5">
                                 <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                                    <span>ðŸ›ï¸ 4. Bukti Lelang KPKNL</span>
+                                    <span>🏛️ 4. Bukti Lelang KPKNL</span>
                                 </span>
                                 <div class="flex items-center gap-2">
                                     <label class="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md border border-blue-200 shadow-2xs shrink-0">
@@ -517,7 +517,7 @@
                             <!-- 5. Lingkungan -->
                             <div class="p-2.5 rounded-lg border border-slate-200/80 bg-slate-50/70 flex flex-col justify-between gap-1.5 sm:col-span-2">
                                 <span class="text-[11px] font-bold text-slate-700 flex items-center gap-1">
-                                    <span>ðŸ‘¥ 5. Bukti Kroscek Lingkungan / Reputasi Sosial</span>
+                                    <span>👥 5. Bukti Kroscek Lingkungan / Reputasi Sosial</span>
                                 </span>
                                 <div class="flex items-center gap-2">
                                     <label class="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md border border-blue-200 shadow-2xs shrink-0">
@@ -538,7 +538,7 @@
                         <span class="text-[11px] text-slate-500 italic">Pastikan data & bukti sudah sesuai sebelum memproses.</span>
                         <button type="button" id="btnMulaiScanWebcheck" onclick="eksekusiAiWebcheckModal()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shadow-xs hover:shadow-md flex items-center gap-2 cursor-pointer">
                             <svg class="w-4 h-4 text-amber-300 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            <span>ðŸš€ Mulai Investigasi AI (5 Aspek)</span>
+                            <span>🚀 Mulai Investigasi AI (5 Aspek)</span>
                         </button>
                     </div>
                 </div>
@@ -550,11 +550,11 @@
                     </div>
                     <h4 class="text-xs font-bold text-slate-800">Sedang Melakukan Investigasi Digital 5 Aspek Web Check...</h4>
                     <div class="max-w-md mx-auto grid grid-cols-1 gap-1 text-[11px] text-slate-600 text-left bg-white p-3 rounded-lg border border-slate-200">
-                        <div class="flex items-center gap-2"><span class="text-blue-600">âš–ï¸</span> 1. Memeriksa Direktori Putusan MA & SIPP Peradilan...</div>
-                        <div class="flex items-center gap-2"><span class="text-blue-600">ðŸŒ</span> 2. Merayap Jejak Berita Digital & Adverse Media...</div>
-                        <div class="flex items-center gap-2"><span class="text-blue-600">ðŸ›¡ï¸</span> 3. Memverifikasi Database APU-PPT & DTTOT PPATK...</div>
-                        <div class="flex items-center gap-2"><span class="text-blue-600">ðŸ›ï¸</span> 4. Menelusuri Portal Sita & Lelang Eksekusi KPKNL...</div>
-                        <div class="flex items-center gap-2"><span class="text-blue-600">ðŸ‘¥</span> 5. Mengukur Reputasi Sosial & Integritas Lingkungan...</div>
+                        <div class="flex items-center gap-2"><span class="text-blue-600">⚖️</span> 1. Memeriksa Direktori Putusan MA & SIPP Peradilan...</div>
+                        <div class="flex items-center gap-2"><span class="text-blue-600">🌐</span> 2. Merayap Jejak Berita Digital & Adverse Media...</div>
+                        <div class="flex items-center gap-2"><span class="text-blue-600">🛡️</span> 3. Memverifikasi Database APU-PPT & DTTOT PPATK...</div>
+                        <div class="flex items-center gap-2"><span class="text-blue-600">🏛️</span> 4. Menelusuri Portal Sita & Lelang Eksekusi KPKNL...</div>
+                        <div class="flex items-center gap-2"><span class="text-blue-600">👥</span> 5. Mengukur Reputasi Sosial & Integritas Lingkungan...</div>
                     </div>
                 </div>
 
@@ -563,7 +563,7 @@
                     <!-- Profil Subjek jika terdeteksi -->
                     <div id="modal_wc_area_profil" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs space-y-1">
                         <div class="font-bold text-blue-900 flex items-center gap-1.5">
-                            <span>ðŸ‘¤ Profil Subjek / Figur Teridentifikasi:</span>
+                            <span>👤 Profil Subjek / Figur Teridentifikasi:</span>
                         </div>
                         <p id="modal_wc_profil_teks" class="text-[11px] text-blue-900 leading-relaxed"></p>
                     </div>
@@ -575,7 +575,7 @@
                             <p id="modal_wc_ringkasan_risiko" class="text-xs font-semibold text-slate-800 leading-relaxed"></p>
                         </div>
                         <div id="modal_wc_badge_risiko" class="self-start sm:self-auto px-3 py-1.5 rounded-full text-xs font-extrabold shrink-0 bg-emerald-100 text-emerald-800 border border-emerald-200">
-                            ðŸŸ¢ LOW RISK / BERSIH
+                            🟢 LOW RISK / BERSIH
                         </div>
                     </div>
 
@@ -583,7 +583,7 @@
                     <div id="modal_wc_area_berita" class="hidden p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2 shadow-2xs">
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-                                <span>ðŸ“° Bukti Berita & Jejak Digital Ditemukan (Real-Time):</span>
+                                <span>📰 Bukti Berita & Jejak Digital Ditemukan (Real-Time):</span>
                             </span>
                             <span class="text-[10px] text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full font-semibold">Live Google News</span>
                         </div>
@@ -597,7 +597,7 @@
                         <!-- 1. SIPP -->
                         <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1.5 shadow-2xs">
                             <label class="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
-                                <span>âš–ï¸ 1. Penelusuran Perkara Pengadilan (SIPP & MA)</span>
+                                <span>⚖️ 1. Penelusuran Perkara Pengadilan (SIPP & MA)</span>
                                 <span class="text-[10px] text-slate-400 font-normal">Perdata, Pidana, Wanprestasi & Kepailitan</span>
                             </label>
                             <textarea id="modal_wc_res_sipp" rows="2" class="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2.5 bg-slate-50/60 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 leading-relaxed"></textarea>
@@ -606,7 +606,7 @@
                         <!-- 2. Media Online -->
                         <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1.5 shadow-2xs">
                             <label class="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
-                                <span>ðŸŒ 2. Pencarian Media Online & Jejak Digital (Adverse News)</span>
+                                <span>🌐 2. Pencarian Media Online & Jejak Digital (Adverse News)</span>
                                 <span class="text-[10px] text-slate-400 font-normal">Publikasi perselisihan, penipuan, atau eksposur negatif</span>
                             </label>
                             <textarea id="modal_wc_res_internet" rows="2" class="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2.5 bg-slate-50/60 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 leading-relaxed"></textarea>
@@ -615,7 +615,7 @@
                         <!-- 3. Watchlist APU-PPT -->
                         <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1.5 shadow-2xs">
                             <label class="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
-                                <span>ðŸ›¡ï¸ 3. Kepatuhan APU-PPT (Daftar Terduga Teroris & DTTOT PPATK)</span>
+                                <span>🛡️ 3. Kepatuhan APU-PPT (Daftar Terduga Teroris & DTTOT PPATK)</span>
                                 <span class="text-[10px] text-slate-400 font-normal">Anti Pencucian Uang & Pendanaan Terorisme</span>
                             </label>
                             <textarea id="modal_wc_res_watchlist" rows="2" class="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2.5 bg-slate-50/60 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 leading-relaxed"></textarea>
@@ -624,7 +624,7 @@
                         <!-- 4. Lelang KPKNL -->
                         <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1.5 shadow-2xs">
                             <label class="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
-                                <span>ðŸ›ï¸ 4. Status Objek Lelang Sita Eksekusi (KPKNL / lelang.go.id)</span>
+                                <span>🏛️ 4. Status Objek Lelang Sita Eksekusi (KPKNL / lelang.go.id)</span>
                                 <span class="text-[10px] text-slate-400 font-normal">Pemeriksaan status sita jaminan aktif</span>
                             </label>
                             <textarea id="modal_wc_res_lelang" rows="2" class="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2.5 bg-slate-50/60 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 leading-relaxed"></textarea>
@@ -633,7 +633,7 @@
                         <!-- 5. Lingkungan -->
                         <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1.5 shadow-2xs">
                             <label class="block text-[11px] font-bold text-slate-700 flex items-center justify-between">
-                                <span>ðŸ‘¥ 5. Kroscek Lingkungan Sekitar & Reputasi Karakter</span>
+                                <span>👥 5. Kroscek Lingkungan Sekitar & Reputasi Karakter</span>
                                 <span class="text-[10px] text-slate-400 font-normal">Konfirmasi integritas di domisili & mitra usaha</span>
                             </label>
                             <textarea id="modal_wc_res_negatif" rows="2" class="w-full text-xs text-slate-800 border border-slate-200 rounded-lg p-2.5 bg-slate-50/60 focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-200 leading-relaxed"></textarea>
@@ -648,7 +648,7 @@
                     Batal / Tutup
                 </button>
                 <button type="button" id="btnTerapkanSemuaWebcheck" onclick="terapkanSemuaHasilWebcheck()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <span>âœ… Terapkan Semua Hasil ke Form (Tab 7)</span>
+                    <span>✅ Terapkan Semua Hasil ke Form (Tab 7)</span>
                 </button>
             </div>
         </div>
