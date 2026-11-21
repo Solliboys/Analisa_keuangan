@@ -26,12 +26,8 @@
                 <div class="flex items-center gap-2 sm:gap-3 min-w-0">
                     <a href="<?= base_url('dashboard') ?>" class="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-blue-700 bg-slate-100 hover:bg-blue-50 border border-slate-200 rounded-xl transition shrink-0" title="Kembali ke Dashboard">
                         <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                        <span class="hidden sm:inline">Kembali</span>
+                        <span>Kembali</span>
                     </a>
-                    <div class="min-w-0">
-                        <span class="text-sm sm:text-lg font-bold text-slate-900 tracking-tight block truncate">Pengaturan Profil Akun</span>
-                        <span class="text-[11px] sm:text-xs hidden sm:block text-slate-500 font-medium truncate"><?= esc($namaWeb) ?> &bull; Kelola informasi pribadi akun Anda</span>
-                    </div>
                 </div>
 
                 <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">

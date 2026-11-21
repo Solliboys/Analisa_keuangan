@@ -26,12 +26,6 @@
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         <span>Kembali</span>
                     </a>
-                    <span class="hidden sm:inline text-slate-300">|</span>
-                    <div class="hidden sm:flex items-center gap-2 min-w-0">
-                        <img src="<?= base_url('img/logo-oap.png?v=2') ?>" alt="OTW Approved" class="w-6 h-6 object-contain shrink-0">
-                        <span class="text-xs font-bold text-slate-900 truncate">Form Pengajuan Kredit</span>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/80 shrink-0">Badan Usaha</span>
-                    </div>
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -361,7 +355,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Rekomendasi Narasi (Siap Diterapkan ke Form CAM SIPP):</label>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Rekomendasi Narasi (Siap Diterapkan ke Form Analisis Kredit SIPP):</label>
                         <textarea id="modal_ma_hasil_narasi" rows="3" class="w-full text-xs font-medium text-slate-800 border border-slate-300 rounded-xl p-3 bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 leading-relaxed"></textarea>
                     </div>
                 </div>
