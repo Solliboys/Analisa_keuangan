@@ -35,7 +35,7 @@ class Dashboard extends BaseController
         if ($role === 'superadmin') {
             // Data Komprehensif Superadmin: Seluruh Pengajuan, User Management, AI Setting
             $totalPengajuan = $kreditModel->countAllResults();
-            $semuaKredit    = $kreditModel->orderBy('created_at', 'DESC')->findAll(10);
+            $semuaKredit    = $kreditModel->orderBy('created_at', 'DESC')->findAll(5);
             
             $totalPlafon = 0;
             $pendingKomite = 0;
@@ -256,7 +256,7 @@ class Dashboard extends BaseController
                 'total_diajukan'      => $totalDiajukan,
                 'total_disetujui'     => $totalDisetujui,
                 'total_slik_checked'  => $totalSlikChecked,
-                'daftar_pengajuan'    => array_slice($semuaKredit, 0, 15),
+                'daftar_pengajuan'    => array_slice($semuaKredit, 0, 5),
                 'pengaturan_sistem'   => $pengaturanSistem
             ];
 
@@ -373,7 +373,7 @@ class Dashboard extends BaseController
                 'total_ditolak'       => $totalDitolak,
                 'total_revisi'        => $totalRevisi,
                 'total_draft'         => $totalDraft,
-                'daftar_pengajuan'    => $semuaKredit,
+                'daftar_pengajuan'    => array_slice($semuaKredit, 0, 5),
                 'pengaturan_sistem'   => $pengaturanSistem
             ];
 
@@ -476,7 +476,7 @@ class Dashboard extends BaseController
             // Ambil riwayat log aktivitas terbaru
             $recentLogs = [];
             try {
-                $recentLogs = $db->table('log_aktivitas')->orderBy('created_at', 'DESC')->limit(15)->get()->getResultArray() ?? [];
+                $recentLogs = $db->table('log_aktivitas')->orderBy('created_at', 'DESC')->limit(5)->get()->getResultArray() ?? [];
             } catch (\Throwable $e) {
                 $recentLogs = [];
             }
@@ -492,7 +492,7 @@ class Dashboard extends BaseController
                 'total_ditolak'       => $totalDitolak,
                 'total_revisi'        => $totalRevisi,
                 'total_draft'         => $totalDraft,
-                'daftar_pengajuan'    => $semuaKredit,
+                'daftar_pengajuan'    => array_slice($semuaKredit, 0, 5),
                 'recent_logs'         => $recentLogs,
                 'pengaturan_sistem'   => $pengaturanSistem
             ];
