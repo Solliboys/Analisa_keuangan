@@ -161,11 +161,11 @@
                     </p>
 
                     <div class="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3 pt-1">
-                        <a href="<?= base_url('simulasi') ?>" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-slate-950 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold transition shadow-xs">
+                        <a href="<?= base_url('simulasi') ?>" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-xs sm:text-sm font-semibold transition shadow-xs">
                             <span>Coba Simulasi Pengajuan</span>
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </a>
-                        <a href="#simulasi" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs sm:text-sm font-semibold transition">
+                        <a href="#simulasi" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 text-xs sm:text-sm font-semibold transition">
                             <span>Kalkulator Cepat</span>
                         </a>
                     </div>

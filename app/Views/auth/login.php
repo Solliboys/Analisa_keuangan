@@ -253,17 +253,17 @@ if ($jam >= 4 && $jam < 11) {
             </div>
         </div>
 
-        <!-- RIGHT COLUMN: ARCHITECTURAL BRAND RAIL (Desktop Only — Solid Deep Slate) -->
-        <aside class="hidden lg:flex lg:col-span-5 bg-slate-950 border-l border-slate-900 text-white relative overflow-hidden flex-col justify-between p-10 xl:p-12">
+        <!-- RIGHT COLUMN: ARCHITECTURAL BRAND RAIL (Desktop Only — Solid Corporate Blue) -->
+        <aside class="hidden lg:flex lg:col-span-5 bg-blue-800 border-l border-blue-900 text-white relative overflow-hidden flex-col justify-between p-10 xl:p-12">
             <div class="absolute inset-0 bg-grid-dark pointer-events-none"></div>
 
             <div class="relative z-10 flex items-center justify-between">
-                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">Portal Internal</span>
-                <span class="text-[11px] font-medium text-slate-500"><?= esc($brandLembaga) ?></span>
+                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-200">Portal Internal</span>
+                <span class="text-[11px] font-medium text-blue-200/80"><?= esc($brandLembaga) ?></span>
             </div>
 
             <div class="relative z-10 space-y-6 my-auto py-8">
-                <div class="w-11 h-11 rounded-lg bg-slate-900 border border-slate-800 p-1.5 flex items-center justify-center">
+                <div class="w-11 h-11 rounded-lg bg-white p-1.5 flex items-center justify-center shadow-xs">
                     <img src="<?= base_url($brandLogo) ?>" alt="<?= esc($brandName) ?>" class="w-full h-full object-contain">
                 </div>
 
@@ -271,45 +271,45 @@ if ($jam >= 4 && $jam < 11) {
                     <h2 class="text-2xl font-bold text-white tracking-[-0.02em] leading-snug">
                         Satu alur kerja terpadu untuk persetujuan pembiayaan.
                     </h2>
-                    <p class="text-[13px] text-slate-400 leading-relaxed">
+                    <p class="text-[13px] text-blue-100/90 leading-relaxed">
                         <?= esc($brandName) ?> menyatukan pengajuan debitur, pengecekan SLIK, pembacaan rekening koran, dan keputusan komite dalam satu jejak audit yang transparan.
                     </p>
                 </div>
 
-                <!-- Minimalist Dark Workflow Ledger -->
-                <div class="bg-slate-900/75 border border-slate-800 rounded-lg divide-y divide-slate-800 text-xs">
+                <!-- Minimalist Corporate Blue Workflow Ledger -->
+                <div class="bg-blue-900/50 border border-blue-700/70 rounded-lg divide-y divide-blue-700/60 text-xs">
                     <div class="px-4 py-3 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
-                            <span class="text-[11px] font-semibold text-slate-500 tabular-nums">01</span>
-                            <span class="font-semibold text-slate-100">Pengusul</span>
+                            <span class="text-[11px] font-semibold text-blue-300 tabular-nums">01</span>
+                            <span class="font-semibold text-white">Pengusul</span>
                         </div>
-                        <span class="text-[11px] text-slate-400 truncate">Input berkas, agunan &amp; mutasi</span>
+                        <span class="text-[11px] text-blue-100/85 truncate">Input berkas, agunan &amp; mutasi</span>
                     </div>
                     <div class="px-4 py-3 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
-                            <span class="text-[11px] font-semibold text-slate-500 tabular-nums">02</span>
-                            <span class="font-semibold text-slate-100">Petugas SLIK</span>
+                            <span class="text-[11px] font-semibold text-blue-300 tabular-nums">02</span>
+                            <span class="font-semibold text-white">Petugas SLIK</span>
                         </div>
-                        <span class="text-[11px] text-slate-400 truncate">Verifikasi kolektibilitas &amp; KTP</span>
+                        <span class="text-[11px] text-blue-100/85 truncate">Verifikasi kolektibilitas &amp; KTP</span>
                     </div>
                     <div class="px-4 py-3 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
-                            <span class="text-[11px] font-semibold text-slate-500 tabular-nums">03</span>
-                            <span class="font-semibold text-slate-100">Reviewer</span>
+                            <span class="text-[11px] font-semibold text-blue-300 tabular-nums">03</span>
+                            <span class="font-semibold text-white">Reviewer</span>
                         </div>
-                        <span class="text-[11px] text-slate-400 truncate">Analisa 5C, DSCR &amp; mitigasi</span>
+                        <span class="text-[11px] text-blue-100/85 truncate">Analisa 5C, DSCR &amp; mitigasi</span>
                     </div>
                     <div class="px-4 py-3 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
-                            <span class="text-[11px] font-semibold text-blue-400 tabular-nums">04</span>
+                            <span class="text-[11px] font-semibold text-white tabular-nums">04</span>
                             <span class="font-semibold text-white">Direktur / Komite</span>
                         </div>
-                        <span class="text-[11px] text-slate-400 truncate">Keputusan final &amp; cetak A4</span>
+                        <span class="text-[11px] text-blue-100/85 truncate">Keputusan final &amp; cetak A4</span>
                     </div>
                 </div>
             </div>
 
-            <div class="relative z-10 flex items-center justify-between text-[11px] text-slate-500 pt-4 border-t border-slate-800/80">
+            <div class="relative z-10 flex items-center justify-between text-[11px] text-blue-200/85 pt-4 border-t border-blue-700/60">
                 <span><?= esc($brandEmail) ?></span>
                 <span><?= esc($brandTelepon) ?></span>
             </div>

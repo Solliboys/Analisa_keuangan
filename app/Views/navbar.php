@@ -196,7 +196,7 @@ if (empty($initials)) {
             <div class="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100/70 transition-colors">
                 <div class="flex items-center gap-2.5 min-w-0">
                     <!-- Avatar circle with initials -->
-                    <div class="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0 tracking-tight">
+                    <div class="w-9 h-9 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-xs shrink-0 tracking-tight">
                         <?= esc($initials) ?>
                     </div>
                     <div class="min-w-0 truncate">
