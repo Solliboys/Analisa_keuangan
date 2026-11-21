@@ -226,6 +226,43 @@
                                 $rTgl = $row['tanggal'] ?? (!empty($kredit['created_at']) ? date('d M Y', strtotime($kredit['created_at'])) : '-');
                                 $rStatus = $row['status'] ?? (($kredit['status_slik'] ?? '') === 'Terbit' ? 'Telah Terbit' : 'Menunggu Pengecekan');
                                 $rHasil = $row['hasil'] ?? ($kredit['hasil_slik'] ?? 'Menunggu');
+
+                                // Deteksi file identitas (KTP/NPWP)
+                                $fileIdUrl = '';
+                                $fileIdName = '';
+                                if (!empty($row['file_identitas'])) {
+                                    if (is_array($row['file_identitas'])) {
+                                        $fileIdPath = $row['file_identitas']['path'] ?? '';
+                                        $fileIdUrl = !empty($fileIdPath) ? base_url($fileIdPath) : ($row['file_identitas']['url'] ?? '');
+                                        $fileIdName = $row['file_identitas']['name'] ?? 'Berkas Identitas';
+                                    } else {
+                                        $fileIdUrl = base_url($row['file_identitas']);
+                                        $fileIdName = basename($row['file_identitas']);
+                                    }
+                                } elseif ($idx === 0 && !empty($ktp_dokumen) && !empty($ktp_dokumen['file_path'])) {
+                                    $fileIdUrl = base_url($ktp_dokumen['file_path']);
+                                    $fileIdName = $ktp_dokumen['nama_dokumen'] ?? 'Berkas KTP';
+                                } elseif ($idx === 0 && !empty($kredit['slik_ktp_file'])) {
+                                    $fileIdUrl = base_url($kredit['slik_ktp_file']);
+                                    $fileIdName = basename($kredit['slik_ktp_file']);
+                                }
+
+                                // Deteksi file permohonan
+                                $filePermUrl = '';
+                                $filePermName = '';
+                                if (!empty($row['file_permohonan'])) {
+                                    if (is_array($row['file_permohonan'])) {
+                                        $filePermPath = $row['file_permohonan']['path'] ?? '';
+                                        $filePermUrl = !empty($filePermPath) ? base_url($filePermPath) : ($row['file_permohonan']['url'] ?? '');
+                                        $filePermName = $row['file_permohonan']['name'] ?? 'Berkas Permohonan';
+                                    } else {
+                                        $filePermUrl = base_url($row['file_permohonan']);
+                                        $filePermName = basename($row['file_permohonan']);
+                                    }
+                                } elseif ($idx === 0 && !empty($kredit['slik_surat_kuasa_file'])) {
+                                    $filePermUrl = base_url($kredit['slik_surat_kuasa_file']);
+                                    $filePermName = basename($kredit['slik_surat_kuasa_file']);
+                                }
                                 
                                 $isTerbit = (strtolower($rStatus) === 'telah terbit' || strtolower($rStatus) === 'terbit');
                                 $colorHasil = 'border-slate-300 text-slate-500 bg-slate-50/50';
@@ -301,12 +338,27 @@
                                     </button>
                                 </td>
                                 <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
-                                    <button type="button" onclick="bukaModalLihatDokumenSlik(<?= $idx ?>)" 
-                                            class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md text-[11px] font-semibold transition cursor-pointer shadow-2xs" 
-                                            title="Lihat Berkas Identitas & Permohonan">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                        <span>Lihat</span>
-                                    </button>
+                                    <div class="inline-flex items-center gap-1.5 justify-center">
+                                        <?php if (!empty($fileIdUrl)): ?>
+                                            <button type="button" onclick="bukaPratinjauDokumenSlik('<?= esc($fileIdUrl) ?>', '<?= esc($fileIdName) ?>', 'Dokumen Identitas (KTP/NPWP)')" 
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md text-[10px] font-bold transition cursor-pointer shadow-2xs" 
+                                                    title="Lihat Identitas: <?= esc($fileIdName) ?>">
+                                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
+                                                <span>Identitas</span>
+                                            </button>
+                                        <?php endif; ?>
+                                        <?php if (!empty($filePermUrl)): ?>
+                                            <button type="button" onclick="bukaPratinjauDokumenSlik('<?= esc($filePermUrl) ?>', '<?= esc($filePermName) ?>', 'Dokumen Permohonan SLIK')" 
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-md text-[10px] font-bold transition cursor-pointer shadow-2xs" 
+                                                    title="Lihat Permohonan: <?= esc($filePermName) ?>">
+                                                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                <span>Permohonan</span>
+                                            </button>
+                                        <?php endif; ?>
+                                        <?php if (empty($fileIdUrl) && empty($filePermUrl)): ?>
+                                            <span class="text-slate-400 text-[10px] italic">-</span>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
                                     <button type="button" onclick="bukaModalUploadHasilSlik(<?= $idx ?>)" 
@@ -770,16 +822,21 @@
     <!-- =======================================================
          MODAL 5: PREVIEW BERKAS DOKUMEN SLIK (Image / PDF / TXT)
     ======================================================== -->
-    <div id="modalPreviewDocSlik" class="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 hidden">
+    <div id="modalPreviewDocSlik" onclick="if(event.target === this) tutupPreviewDocSlik()" class="fixed inset-0 z-[60] bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 hidden">
         <div class="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full p-4 sm:p-5 shadow-2xl relative animate-in fade-in duration-200 flex flex-col max-h-[92vh]">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
                 <div class="min-w-0 pr-2">
                     <h3 class="text-sm sm:text-base font-bold text-slate-900 truncate" id="previewDocTitle">Preview Dokumen</h3>
                     <p class="text-xs text-slate-500 truncate" id="previewDocSub">Berkas pengajuan</p>
                 </div>
-                <button type="button" onclick="tutupPreviewDocSlik()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+                <div class="flex items-center gap-2">
+                    <a id="previewDocDownloadBtn" href="#" target="_blank" class="hidden px-2.5 py-1 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold transition items-center gap-1">
+                        Buka di Tab Baru ↗
+                    </a>
+                    <button type="button" onclick="tutupPreviewDocSlik()" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition cursor-pointer shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
             </div>
 
             <div class="flex-1 overflow-auto py-3 flex items-center justify-center min-h-[350px] bg-slate-50/70 rounded-xl mt-3" id="previewDocContainer">
@@ -813,6 +870,64 @@
         window.daftarPermohonanSlikArray = <?= json_encode($daftarPermohonanSlik) ?>;
         window.slikFasilitasArray = <?= json_encode(!empty($slik) ? $slik : []) ?>;
         window.slikDokumenUploaded = <?= json_encode(!empty($daftarPermohonanSlikDocs) ? (object)$daftarPermohonanSlikDocs : new stdClass()) ?>;
+
+        function bukaPratinjauDokumenSlik(url, name, tipe) {
+            if (!url) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Data Kosong',
+                        text: 'Berkas belum diunggah untuk subjek ini.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert('Berkas belum diunggah.');
+                }
+                return;
+            }
+            const previewModal = document.getElementById('modalPreviewDocSlik');
+            const previewTitle = document.getElementById('previewDocTitle');
+            const previewSub = document.getElementById('previewDocSub');
+            const previewDownloadBtn = document.getElementById('previewDocDownloadBtn');
+            const container = document.getElementById('previewDocContainer');
+            if (!previewModal || !container) return;
+
+            if (previewTitle) previewTitle.textContent = tipe || 'Pratinjau Dokumen';
+            if (previewSub) previewSub.textContent = name || '';
+
+            const cleanBase = (window.BASE_URL || '').replace(/\/+$/, '');
+            const fullUrl = url.startsWith('http') ? url : (cleanBase + '/' + url.replace(/^\/+/, ''));
+
+            if (previewDownloadBtn) {
+                previewDownloadBtn.href = fullUrl;
+                previewDownloadBtn.classList.remove('hidden');
+                previewDownloadBtn.classList.add('inline-flex');
+            }
+
+            const ext = fullUrl.split('.').pop().toLowerCase().split('?')[0];
+
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
+                container.innerHTML = `<div class="p-2 flex items-center justify-center w-full"><img src="${fullUrl}" alt="${name || 'Dokumen'}" class="max-h-[70vh] max-w-full object-contain rounded-lg shadow-sm"></div>`;
+            } else {
+                container.innerHTML = `<iframe src="${fullUrl}" class="w-full h-[70vh] border border-slate-200 rounded-lg shadow-inner"></iframe>`;
+            }
+
+            previewModal.classList.remove('hidden');
+            previewModal.style.display = 'flex';
+        }
+        window.bukaPratinjauDokumenSlik = bukaPratinjauDokumenSlik;
+
+        function tutupPreviewDocSlik() {
+            const modal = document.getElementById('modalPreviewDocSlik');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+                const container = document.getElementById('previewDocContainer');
+                if (container) container.innerHTML = '';
+            }
+        }
+        window.tutupPreviewDocSlik = tutupPreviewDocSlik;
 
         function salinTeks(teks, label) {
             if (!teks || teks === '-') {
