@@ -354,6 +354,19 @@ class Pengajuan extends BaseController
         $isReviewer = ($jabatan === 'superadmin' || strpos($jabatan, 'review') !== false || strpos($jabatan, 'direk') !== false || strpos($jabatan, 'ceo') !== false);
         $kreditId = !empty($input['kredit_id']) ? $input['kredit_id'] : null;
 
+        // Cegah Duplicate Entry nomor_aplikasi akibat klik ganda / autosave paralel saat kredit_id masih kosong
+        $reqNomorApp = trim($input['nomor_aplikasi'] ?? '');
+        if (!$kreditId && !empty($reqNomorApp)) {
+            $dupApp = $this->kreditModel->where('nomor_aplikasi', $reqNomorApp)->first();
+            if ($dupApp) {
+                if ($isReviewer || $dupApp['user_id'] == $userId) {
+                    $kreditId = $dupApp['kredit_id'];
+                } else {
+                    $input['nomor_aplikasi'] = 'CAM-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
+                }
+            }
+        }
+
         // Tentukan status pengajuan yang sah
         $statusPengajuan = 'Draft';
         if ($kreditId) {
@@ -1284,9 +1297,10 @@ class Pengajuan extends BaseController
 
         $folder = FCPATH . 'uploads/keuangan/';
         if (!is_dir($folder)) {
-            mkdir($folder, 0777, true);
+            mkdir($folder, 0755, true);
         }
 
+        $allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'xls', 'xlsx', 'csv', 'doc', 'docx'];
         $uploaded = [];
 
         // Cek jika dikirim multiple files via files[]
@@ -1294,7 +1308,11 @@ class Pengajuan extends BaseController
         if (isset($filesObj['files']) && is_array($filesObj['files'])) {
             foreach ($filesObj['files'] as $f) {
                 if ($f && $f->isValid() && !$f->hasMoved()) {
-                    $newName = $f->getRandomName();
+                    $ext = strtolower($f->getClientExtension() ?: $f->guessExtension() ?: '');
+                    if (!in_array($ext, $allowedExt, true) || $f->getSize() > 10 * 1024 * 1024) {
+                        continue;
+                    }
+                    $newName = bin2hex(random_bytes(12)) . '.' . $ext;
                     $f->move($folder, $newName);
                     $uploaded[] = [
                         'nama_file' => $f->getClientName(),
@@ -1304,7 +1322,11 @@ class Pengajuan extends BaseController
             }
         } elseif ($f = $this->request->getFile('file')) {
             if ($f && $f->isValid() && !$f->hasMoved()) {
-                $newName = $f->getRandomName();
+                $ext = strtolower($f->getClientExtension() ?: $f->guessExtension() ?: '');
+                if (!in_array($ext, $allowedExt, true) || $f->getSize() > 10 * 1024 * 1024) {
+                    return $this->response->setJSON(['status' => false, 'message' => 'Format file tidak diizinkan (hanya PDF/Gambar/Excel/Word maks 10 MB)']);
+                }
+                $newName = bin2hex(random_bytes(12)) . '.' . $ext;
                 $f->move($folder, $newName);
                 $uploaded[] = [
                     'nama_file' => $f->getClientName(),
@@ -1412,12 +1434,18 @@ class Pengajuan extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'File tidak valid']);
         }
 
-        $folder = FCPATH . 'uploads/dokumen/';
-        if (!is_dir($folder)) {
-            mkdir($folder, 0777, true);
+        $allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'xls', 'xlsx', 'txt'];
+        $clientExt = strtolower($file->getClientExtension() ?: $file->guessExtension() ?: '');
+        if (!in_array($clientExt, $allowedExt, true) || $file->getSize() > 15 * 1024 * 1024) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Format file tidak diizinkan (hanya PDF/Gambar/Dokumen maks 15 MB)']);
         }
 
-        $newName = $file->getRandomName();
+        $folder = FCPATH . 'uploads/dokumen/';
+        if (!is_dir($folder)) {
+            mkdir($folder, 0755, true);
+        }
+
+        $newName = bin2hex(random_bytes(12)) . '.' . $clientExt;
         $file->move($folder, $newName);
         $destPath = $folder . $newName;
 
@@ -3017,6 +3045,13 @@ class Pengajuan extends BaseController
             return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan');
         }
 
+        // Cegah IDOR: Pengusul hanya boleh mencetak laporan pengajuan miliknya sendiri
+        $jabatanLap = strtolower(session()->get('jabatan') ?? '');
+        $isGlobalLap = ($jabatanLap === 'superadmin' || strpos($jabatanLap, 'ceo') !== false || strpos($jabatanLap, 'direk') !== false || strpos($jabatanLap, 'review') !== false || strpos($jabatanLap, 'slik') !== false);
+        if (!$isGlobalLap && $kredit['user_id'] != session()->get('user_id')) {
+            return redirect()->to('/dashboard')->with('error', 'Akses ditolak: Anda tidak berhak membuka laporan debitur ini.');
+        }
+
         $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
         $tipePemohon = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
 
@@ -3058,6 +3093,13 @@ class Pengajuan extends BaseController
         $kredit = $this->kreditModel->find($id);
         if (!$kredit) {
             return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan');
+        }
+
+        // Cegah IDOR: Pengusul hanya boleh mencetak laporan pengajuan miliknya sendiri
+        $jabatanLap = strtolower(session()->get('jabatan') ?? '');
+        $isGlobalLap = ($jabatanLap === 'superadmin' || strpos($jabatanLap, 'ceo') !== false || strpos($jabatanLap, 'direk') !== false || strpos($jabatanLap, 'review') !== false || strpos($jabatanLap, 'slik') !== false);
+        if (!$isGlobalLap && $kredit['user_id'] != session()->get('user_id')) {
+            return redirect()->to('/dashboard')->with('error', 'Akses ditolak: Anda tidak berhak membuka laporan debitur ini.');
         }
 
         $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
@@ -3109,6 +3151,13 @@ class Pengajuan extends BaseController
         $kredit = $this->kreditModel->find($id);
         if (!$kredit) {
             return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan');
+        }
+
+        // Cegah IDOR: Pengusul hanya boleh mencetak laporan pengajuan miliknya sendiri
+        $jabatanLap = strtolower(session()->get('jabatan') ?? '');
+        $isGlobalLap = ($jabatanLap === 'superadmin' || strpos($jabatanLap, 'ceo') !== false || strpos($jabatanLap, 'direk') !== false || strpos($jabatanLap, 'review') !== false || strpos($jabatanLap, 'slik') !== false);
+        if (!$isGlobalLap && $kredit['user_id'] != session()->get('user_id')) {
+            return redirect()->to('/dashboard')->with('error', 'Akses ditolak: Anda tidak berhak membuka laporan debitur ini.');
         }
 
         $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * @var string $title
  * @var string $nama_lengkap
@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
-    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col">
 

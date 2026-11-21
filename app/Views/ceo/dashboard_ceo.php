@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * @var string $title
  * @var string $nama_lengkap
@@ -24,7 +24,7 @@
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
-    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
     <style>.font-mono-code { font-family: 'JetBrains Mono', monospace; }</style>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col">
@@ -344,7 +344,7 @@
             <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
                     <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-base shadow-2xs border border-purple-100">
-                        📜
+                        ðŸ“œ
                     </div>
                     <div>
                         <h2 class="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">

@@ -41,34 +41,40 @@ class Auth extends BaseController
 
     public function process()
     {
+        // Proteksi brute-force ringan berbasis sesi/IP (maks 10 percobaan gagal per 5 menit)
+        $failCount = (int) (session()->get('login_fail_count') ?? 0);
+        $lockUntil = (int) (session()->get('login_lock_until') ?? 0);
+        if ($lockUntil > time()) {
+            $sisaMenit = max(1, (int) ceil(($lockUntil - time()) / 60));
+            return redirect()->back()->withInput()->with('error', "Terlalu banyak percobaan login gagal. Coba lagi dalam {$sisaMenit} menit.");
+        }
+
         $userModel = new UserModel();
         $username = trim($this->request->getPost('username') ?? '');
-        $password = $this->request->getPost('password');
+        $password = (string) ($this->request->getPost('password') ?? '');
 
         $user = $userModel->where('username', $username)->first();
 
         if ($user) {
-            // Cek password (plain, hash, atau fallback default untuk superadmin)
-            $isSuperadminFlex = ($user['username'] === 'superadmin' && in_array($password, ['admin123', 'superadmin123']));
-
-            // Cek apakah password valid
+            // Verifikasi password yang aman (hapus backdoor hardcoded, auto-hash plaintext legacy)
             $passwordValid = false;
-            if ($isSuperadminFlex) {
+            if (password_verify($password, $user['password'])) {
                 $passwordValid = true;
-            } elseif ($password === $user['password']) {
-                // Plain text — langsung cocok
-                $passwordValid = true;
-            } elseif (password_verify($password, $user['password'])) {
-                $passwordValid = true;
-                // Auto-upgrade: rehash ke cost lebih rendah jika masih cost 10
-                if (password_needs_rehash($user['password'], PASSWORD_BCRYPT, ['cost' => 8])) {
-                    $newHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 8]);
-                    $userModel->update($user['id'], ['password' => $newHash]);
+                if (password_needs_rehash($user['password'], PASSWORD_BCRYPT, ['cost' => 10])) {
+                    $userModel->update($user['id'], ['password' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 10])]);
                 }
+            } elseif (hash_equals((string) $user['password'], $password)) {
+                // Akun legacy plaintext — cocokkan lalu langsung upgrade ke bcrypt hash
+                $passwordValid = true;
+                $userModel->update($user['id'], ['password' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 10])]);
             }
 
             if ($passwordValid) {
                 if ($user['status'] == 1) {
+                    // Reset penghitung gagal & regenerasi ID sesi (cegah Session Fixation)
+                    session()->remove(['login_fail_count', 'login_lock_until']);
+                    session()->regenerate(true);
+
                     $sessionData = [
                         'user_id'      => $user['id'],
                         'username'     => $user['username'],
@@ -116,6 +122,11 @@ class Auth extends BaseController
                     return redirect()->to('/auth');
                 }
             } else {
+                $failCount = (int) (session()->get('login_fail_count') ?? 0) + 1;
+                session()->set('login_fail_count', $failCount);
+                if ($failCount >= 10) {
+                    session()->set('login_lock_until', time() + 300);
+                }
                 try {
                     LogAktivitasModel::catat(
                         'Percobaan login gagal (password salah) untuk username: ' . $username,
@@ -125,10 +136,15 @@ class Auth extends BaseController
                     );
                 } catch (\Throwable $e) {}
 
-                session()->setFlashdata('error', 'Password yang Anda masukkan salah.');
+                session()->setFlashdata('error', 'Username atau password yang Anda masukkan salah.');
                 return redirect()->to('/auth');
             }
         } else {
+            $failCount = (int) (session()->get('login_fail_count') ?? 0) + 1;
+            session()->set('login_fail_count', $failCount);
+            if ($failCount >= 10) {
+                session()->set('login_lock_until', time() + 300);
+            }
             try {
                 LogAktivitasModel::catat(
                     'Percobaan login gagal (username tidak ditemukan): ' . $username,
@@ -138,7 +154,7 @@ class Auth extends BaseController
                 );
             } catch (\Throwable $e) {}
 
-            session()->setFlashdata('error', 'Username "' . esc($username) . '" tidak terdaftar di sistem.');
+            session()->setFlashdata('error', 'Username atau password yang Anda masukkan salah.');
             return redirect()->to('/auth');
         }
     }

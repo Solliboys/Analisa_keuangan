@@ -12,7 +12,7 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
     </style>
     <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png') ?>">
-    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . time()) ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
 

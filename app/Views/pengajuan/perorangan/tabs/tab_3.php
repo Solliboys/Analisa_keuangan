@@ -367,4 +367,40 @@ function sesuaikanStatusPekerjaan(sel) {
         statusSel.value = 'Freelance / Lepas';
     }
 }
+
+function tambahBarisUsaha() {
+    const tpl = document.getElementById('templateBarisUsaha');
+    const firstCard = document.querySelector('#tab-3 .card-usaha-item');
+    const container = firstCard ? firstCard.parentElement : document.querySelector('#tab-3 .space-y-6');
+    if (!tpl || !container) return;
+
+    const existing = container.querySelectorAll('.card-usaha-item');
+    const nextIdx = existing.length;
+    const nextNum = nextIdx + 1;
+    const html = tpl.innerHTML.replace(/__INDEX__/g, String(nextIdx)).replace(/__NUM__/g, String(nextNum));
+    container.insertAdjacentHTML('beforeend', html);
+}
+
+function hapusBarisUsaha(btn) {
+    const card = btn ? btn.closest('.card-usaha-item') : null;
+    if (!card) return;
+    const container = card.parentElement;
+    if (container && container.querySelectorAll('.card-usaha-item').length <= 1) {
+        return;
+    }
+    card.remove();
+    // Rapikan ulang penomoran & indeks input usaha[idx]
+    if (container) {
+        container.querySelectorAll('.card-usaha-item').forEach((item, idx) => {
+            item.dataset.index = String(idx);
+            const numEl = item.querySelector('.usaha-num');
+            const numTitleEl = item.querySelector('.usaha-num-title');
+            if (numEl) numEl.textContent = String(idx + 1);
+            if (numTitleEl) numTitleEl.textContent = String(idx + 1);
+            item.querySelectorAll('[name^="usaha["]').forEach(el => {
+                el.name = el.name.replace(/^usaha\[\d+\]/, `usaha[${idx}]`);
+            });
+        });
+    }
+}
 </script>

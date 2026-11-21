@@ -193,6 +193,15 @@ class Dashboard extends BaseController
             $totalDisetujui = 0;
             $totalSlikChecked = 0;
 
+            // Preload SLIK sekali (hilangkan N+1 query di dalam loop)
+            $slikByKredit = [];
+            $allIdsSlik = !empty($semuaKredit) ? array_column($semuaKredit, 'kredit_id') : [];
+            if (!empty($allIdsSlik)) {
+                foreach ($slikModel->whereIn('kredit_id', $allIdsSlik)->findAll() as $sr) {
+                    $slikByKredit[$sr['kredit_id']][] = $sr;
+                }
+            }
+
             foreach ($semuaKredit as &$k) {
                 $totalPlafon += (float)($k['plafon_pengajuan'] ?? 0);
                 $st = strtolower($k['status_pengajuan'] ?? '');
@@ -200,8 +209,8 @@ class Dashboard extends BaseController
                 elseif ($st === 'diajukan') $totalDiajukan++;
                 elseif (strpos($st, 'setuju') !== false) $totalDisetujui++;
 
-                // Periksa data fasilitas SLIK
-                $slikRows = $slikModel->where('kredit_id', $k['kredit_id'])->findAll();
+                // Periksa data fasilitas SLIK dari map preloaded
+                $slikRows = $slikByKredit[$k['kredit_id']] ?? [];
                 $totalBakiDebet = 0;
                 $adaTunggakan = false;
                 foreach ($slikRows as $sr) {
@@ -291,6 +300,15 @@ class Dashboard extends BaseController
             $totalDitolak   = 0;
             $totalRevisi    = 0;
 
+            // Preload SLIK sekali untuk Reviewer (hilangkan N+1 query)
+            $slikByKreditRev = [];
+            $revIds = !empty($semuaKredit) ? array_column($semuaKredit, 'kredit_id') : [];
+            if (!empty($revIds)) {
+                foreach ($slikModel->whereIn('kredit_id', $revIds)->findAll() as $sr) {
+                    $slikByKreditRev[$sr['kredit_id']][] = $sr;
+                }
+            }
+
             foreach ($semuaKredit as &$k) {
                 $totalPlafon += (float)($k['plafon_pengajuan'] ?? 0);
                 
@@ -314,8 +332,8 @@ class Dashboard extends BaseController
                 // Hubungkan data analisa AI jika ada
                 $k['analisa'] = $mapAnalisa[$k['kredit_id']] ?? null;
 
-                // Periksa data fasilitas SLIK
-                $slikRows = $slikModel->where('kredit_id', $k['kredit_id'])->findAll();
+                // Periksa data fasilitas SLIK dari map preloaded
+                $slikRows = $slikByKreditRev[$k['kredit_id']] ?? [];
                 $totalBakiDebet = 0;
                 $adaTunggakan = false;
                 foreach ($slikRows as $sr) {
@@ -398,6 +416,15 @@ class Dashboard extends BaseController
             $totalDitolak   = 0;
             $totalRevisi    = 0;
 
+            // Preload SLIK sekali untuk CEO (hilangkan N+1 query)
+            $slikByKreditCeo = [];
+            $ceoIds = !empty($semuaKredit) ? array_column($semuaKredit, 'kredit_id') : [];
+            if (!empty($ceoIds)) {
+                foreach ($slikModel->whereIn('kredit_id', $ceoIds)->findAll() as $sr) {
+                    $slikByKreditCeo[$sr['kredit_id']][] = $sr;
+                }
+            }
+
             foreach ($semuaKredit as &$k) {
                 $totalPlafon += (float)($k['plafon_pengajuan'] ?? 0);
                 
@@ -418,7 +445,7 @@ class Dashboard extends BaseController
 
                 $k['analisa'] = $mapAnalisa[$k['kredit_id']] ?? null;
 
-                $slikRows = $slikModel->where('kredit_id', $k['kredit_id'])->findAll();
+                $slikRows = $slikByKreditCeo[$k['kredit_id']] ?? [];
                 $totalBakiDebet = 0;
                 $adaTunggakan = false;
                 foreach ($slikRows as $sr) {
@@ -588,15 +615,20 @@ class Dashboard extends BaseController
         $emailLembaga   = trim($this->request->getPost('email_lembaga') ?? 'info@otwkredit.id');
         $teleponLembaga = trim($this->request->getPost('telepon_lembaga') ?? '(021) 5088-2900');
 
-        // Handle upload logo
+        // Handle upload logo (dengan validasi ketat ekstensi & MIME gambar)
         $logoFile = $this->request->getFile('logo_file');
         $logoPath = null;
         if ($logoFile && $logoFile->isValid() && !$logoFile->hasMoved()) {
+            $ext = strtolower($logoFile->getClientExtension() ?: $logoFile->guessExtension() ?: '');
+            $mime = $logoFile->getMimeType();
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true) || strpos((string) $mime, 'image/') !== 0 || $logoFile->getSize() > 5 * 1024 * 1024) {
+                return redirect()->back()->with('error', 'Format logo harus gambar (JPG/PNG/WEBP) maksimal 5 MB.');
+            }
             $uploadFolder = FCPATH . 'uploads/logo/';
             if (!is_dir($uploadFolder)) {
-                mkdir($uploadFolder, 0777, true);
+                mkdir($uploadFolder, 0755, true);
             }
-            $logoName = 'logo_' . time() . '.' . $logoFile->getExtension();
+            $logoName = 'logo_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
             $logoFile->move($uploadFolder, $logoName);
             $fullLogoPath = $uploadFolder . $logoName;
 
@@ -664,8 +696,12 @@ class Dashboard extends BaseController
             }
         }
 
-        // Simpan ke pengaturan_sistem
-        $db->table('pengaturan_sistem')->where('id', 1)->update($updateData);
+        // Filter kolom agar aman bila schema DB belum memiliki kolom opsional (misal slogan_aplikasi)
+        $existingCols = $db->getFieldNames('pengaturan_sistem');
+        $safeUpdateData = array_intersect_key($updateData, array_flip($existingCols));
+        if (!empty($safeUpdateData)) {
+            $db->table('pengaturan_sistem')->where('id', 1)->update($safeUpdateData);
+        }
 
         // Catat Audit Trail Log
         LogAktivitasModel::catat(
@@ -753,6 +789,16 @@ class Dashboard extends BaseController
         $nomorHp     = trim($this->request->getPost('nomor_hp') ?? '');
         $password    = $this->request->getPost('password');
 
+        if (empty($namaLengkap) || empty($username)) {
+            return redirect()->to('/profil')->with('error', 'Nama lengkap dan username wajib diisi.');
+        }
+
+        // Cek duplikat username milik user lain
+        $dupUser = $userModel->where('username', $username)->where('id !=', $userId)->first();
+        if ($dupUser) {
+            return redirect()->to('/profil')->with('error', 'Username "' . esc($username) . '" sudah digunakan oleh akun lain.');
+        }
+
         $updateData = [
             'nama_lengkap' => $namaLengkap,
             'username'     => $username,
@@ -765,14 +811,19 @@ class Dashboard extends BaseController
             $updateData['password'] = password_hash($password, PASSWORD_DEFAULT);
         }
 
-        // Handle upload foto profil
+        // Handle upload foto profil (dengan validasi ketat ekstensi & MIME gambar)
         $fotoFile = $this->request->getFile('foto_file');
         if ($fotoFile && $fotoFile->isValid() && !$fotoFile->hasMoved()) {
+            $ext = strtolower($fotoFile->getClientExtension() ?: $fotoFile->guessExtension() ?: '');
+            $mime = $fotoFile->getMimeType();
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true) || strpos((string) $mime, 'image/') !== 0 || $fotoFile->getSize() > 5 * 1024 * 1024) {
+                return redirect()->to('/profil')->with('error', 'Foto profil harus berupa gambar JPG/PNG/WEBP maksimal 5 MB.');
+            }
             $uploadFolder = FCPATH . 'uploads/profil/';
             if (!is_dir($uploadFolder)) {
-                mkdir($uploadFolder, 0777, true);
+                mkdir($uploadFolder, 0755, true);
             }
-            $fotoName = 'profil_' . $userId . '_' . time() . '.' . $fotoFile->getExtension();
+            $fotoName = 'profil_' . $userId . '_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $ext;
             $fotoFile->move($uploadFolder, $fotoName);
             $fullFotoPath = $uploadFolder . $fotoName;
 
@@ -797,6 +848,15 @@ class Dashboard extends BaseController
 
     public function laporanAudit()
     {
+        if (!session()->get('logged_in')) {
+            return redirect()->to('/auth')->with('error', 'Silakan login terlebih dahulu.');
+        }
+        $role = strtolower(session()->get('jabatan') ?? '');
+        $isAllowed = ($role === 'superadmin' || strpos($role, 'ceo') !== false || strpos($role, 'direk') !== false || strpos($role, 'review') !== false);
+        if (!$isAllowed) {
+            return redirect()->to('/dashboard')->with('error', 'Akses laporan audit hanya untuk Superadmin, Reviewer, atau Direktur.');
+        }
+
         $db = \Config\Database::connect();
         $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
             'nama_aplikasi' => 'OTW Credit Engine & CAM',
