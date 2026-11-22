@@ -353,23 +353,73 @@ if ($jam >= 4 && $jam < 11) {
         }
 
         function handleLupaSandi() {
+            const curUser = document.getElementById('username')?.value?.trim() || '';
             Swal.fire({
-                title: 'Bantuan Akses & Sandi',
+                title: 'Ajukan Reset Kata Sandi',
                 html: `
                     <div class="text-left text-xs text-slate-600 space-y-3">
-                        <p class="leading-relaxed">Untuk menjaga keamanan dan audit internal, reset kata sandi dikelola langsung oleh Administrator Sistem.</p>
-                        <div class="bg-slate-50 p-3 rounded-md border border-slate-200 text-xs space-y-1 text-slate-700">
-                            <div><span class="text-slate-400">Instansi:</span> <?= esc($brandLembaga) ?></div>
-                            <div><span class="text-slate-400">Email IT:</span> <a href="mailto:<?= esc($brandEmail) ?>" class="text-blue-700 hover:underline"><?= esc($brandEmail) ?></a></div>
-                            <div><span class="text-slate-400">Telepon:</span> <?= esc($brandTelepon) ?></div>
+                        <p class="leading-relaxed">Masukkan <strong>Username</strong> dan <strong>Email terdaftar</strong> Anda. Permintaan akan dikirim ke Superadmin untuk direset ke sandi default dan dikembalikan kepada Anda.</p>
+                        <div class="space-y-2.5">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Username</label>
+                                <input id="reset_username" type="text" value="${curUser.replace(/"/g, '&quot;')}" placeholder="Contoh: pengusul" class="w-full h-9 px-3 border border-slate-300 rounded-md text-xs text-slate-900 focus:border-blue-700 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1">Email Terdaftar</label>
+                                <input id="reset_email" type="email" placeholder="email@instansi.id" class="w-full h-9 px-3 border border-slate-300 rounded-md text-xs text-slate-900 focus:border-blue-700 focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="text-[11px] text-slate-400 pt-1">
+                            Kontak Admin IT: <a href="mailto:<?= esc($brandEmail) ?>" class="text-blue-700 hover:underline"><?= esc($brandEmail) ?></a> &middot; <?= esc($brandTelepon) ?>
                         </div>
                     </div>
                 `,
-                confirmButtonText: 'Mengerti',
+                showCancelButton: true,
+                confirmButtonText: 'Kirim ke Superadmin',
+                cancelButtonText: 'Batal',
                 confirmButtonColor: '#1D4ED8',
+                cancelButtonColor: '#64748B',
                 customClass: {
                     popup: 'rounded-lg',
-                    confirmButton: 'rounded-md px-5 py-2 text-xs font-semibold'
+                    confirmButton: 'rounded-md px-4 py-2 text-xs font-semibold',
+                    cancelButton: 'rounded-md px-4 py-2 text-xs font-semibold'
+                },
+                preConfirm: () => {
+                    const u = document.getElementById('reset_username')?.value?.trim() || '';
+                    const e = document.getElementById('reset_email')?.value?.trim() || '';
+                    if (!u || !e) {
+                        Swal.showValidationMessage('Username dan Email terdaftar wajib diisi.');
+                        return false;
+                    }
+                    const fd = new FormData();
+                    fd.append('username', u);
+                    fd.append('email', e);
+                    return fetch('<?= base_url('auth/request-reset-password') ?>', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: fd
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (!res.status) {
+                            Swal.showValidationMessage(res.message || 'Gagal mengirim permintaan.');
+                            return false;
+                        }
+                        return res;
+                    })
+                    .catch(() => {
+                        Swal.showValidationMessage('Koneksi gagal, silakan coba lagi.');
+                        return false;
+                    });
+                }
+            }).then(result => {
+                if (result.isConfirmed && result.value) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Permintaan Terkirim',
+                        text: result.value.message,
+                        confirmButtonColor: '#1D4ED8'
+                    });
                 }
             });
         }

@@ -156,12 +156,12 @@
 
                     <!-- Body: 4 Kotak Ringkas Data Pokok Pengajuan (DILURUSKAN DENGAN TINGGI RATA) -->
                     <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
-                        <div class="flex items-center justify-between pb-1 border-b border-slate-100">
-                            <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                Ringkasan Berkas Inputan Pengusul
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                            <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2 min-w-0">
+                                <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <span>Ringkasan Berkas Inputan Pengusul</span>
                             </h3>
-                            <span class="text-xs text-slate-400">Data Pokok Analisis</span>
+                            <span class="text-[11px] font-medium text-slate-400 shrink-0 whitespace-nowrap">Data Pokok Analisis</span>
                         </div>
 
                         <!-- Grid 4 Kotak (Diluruskan tingginya dengan flex-1) -->
@@ -639,7 +639,13 @@
                                 <strong class="text-slate-900 block font-bold text-xs">Capacity</strong>
                                 <span class="text-[11px] text-slate-400 block mb-1">Kapasitas Bayar (DSC)</span>
                                 <p class="text-[11px] text-slate-600 leading-relaxed">
-                                    Rasio DSC <strong class="text-emerald-700"><?= number_format($dscVal, 2) ?>x</strong> (&ge; 1.30x) &bull; Omzet rekening koran terkonfirmasi.
+                                    <?php $jmlRek = is_array($rekening ?? null) ? count($rekening) : 0; ?>
+                                    Rasio DSC <strong class="text-emerald-700"><?= number_format($dscVal, 2) ?>x</strong> (&ge; 1.30x) &bull;
+                                    <?php if ($jmlRek > 0): ?>
+                                        Mutasi rekening koran terkonfirmasi (<?= $jmlRek ?> berkas).
+                                    <?php else: ?>
+                                        <span class="text-amber-700 font-medium">Belum ada berkas mutasi rekening koran terunggah.</span>
+                                    <?php endif; ?>
                                 </p>
                             </div>
                             <div class="mt-3 pt-2 border-t border-slate-200/50 flex items-center justify-between text-[11px]">
@@ -665,7 +671,21 @@
                                 <strong class="text-slate-900 block font-bold text-xs">Capital</strong>
                                 <span class="text-[11px] text-slate-400 block mb-1">Permodalan Usaha</span>
                                 <p class="text-[11px] text-slate-600 leading-relaxed">
-                                    Usaha berjalan <?= esc($kredit['lama_usaha'] ?: '1+ thn') ?> dengan arus kas operasional mandiri yang stabil.
+                                    <?php
+                                        $jpRev = strtolower(trim($kredit['jenis_pekerjaan'] ?? ''));
+                                        $namaUsahaRev = trim($kredit['nama_usaha'] ?? '');
+                                        $lamaValRev = trim($kredit['lama_usaha'] ?? '');
+                                        $isKaryawanRev = (strpos($jpRev, 'karyawan') !== false || strpos($jpRev, 'pegawai') !== false || strpos($jpRev, 'pns') !== false || strpos($jpRev, 'bumn') !== false || (empty($namaUsahaRev) && stripos($kredit['jenis_debitur'] ?? '', 'badan') === false));
+                                        if ($isKaryawanRev) {
+                                            echo !empty($lamaValRev)
+                                                ? 'Masa kerja ' . esc($lamaValRev) . ' dengan penghasilan rutin bulanan.'
+                                                : 'Debitur perorangan dengan sumber penghasilan rutin bulanan.';
+                                        } else {
+                                            echo !empty($lamaValRev)
+                                                ? 'Usaha berjalan ' . esc($lamaValRev) . ' dengan arus kas operasional yang terpantau.'
+                                                : 'Usaha aktif dengan arus kas operasional yang terpantau.';
+                                        }
+                                    ?>
                                 </p>
                             </div>
                             <div class="mt-3 pt-2 border-t border-slate-200/50 flex items-center justify-between text-[11px]">
@@ -1138,14 +1158,17 @@
         }
         window.tutupModalDetail5C = tutupModalDetail5C;
 
-        // Cetak dokumen dari iframe modal
+        // Cetak / Unduh dokumen analisis (reliable di HP & Desktop)
         function cetakIframeLaporan() {
-            const iframe = document.getElementById('iframeLaporanCAM');
-            if (iframe && iframe.contentWindow) {
-                iframe.contentWindow.focus();
-                iframe.contentWindow.print();
+            const urlCetak = '<?= base_url('pengajuan/cetak/' . $kredit['kredit_id']) ?>';
+            const w = window.open(urlCetak, '_blank');
+            if (w) {
+                w.addEventListener('load', () => {
+                    try { w.focus(); w.print(); } catch (e) {}
+                });
             } else {
-                window.open('<?= base_url('pengajuan/cetak/' . $kredit['kredit_id']) ?>', '_blank');
+                // Fallback jika popup diblokir browser
+                window.location.href = urlCetak;
             }
         }
 

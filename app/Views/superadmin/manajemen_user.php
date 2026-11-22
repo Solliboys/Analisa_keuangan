@@ -87,6 +87,80 @@
                 </div>
             <?php endif; ?>
 
+            <!-- Permintaan Reset Kata Sandi (Dari Halaman Login) -->
+            <?php if (!empty($reset_requests)): ?>
+                <div class="mb-6 bg-white border border-blue-200 border-l-4 border-l-blue-700 rounded-lg overflow-hidden">
+                    <div class="px-4 sm:px-5 py-3 bg-blue-50/60 border-b border-blue-200/80 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-700"></span>
+                            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Permintaan Reset Kata Sandi (<?= count($reset_requests) ?>)</h3>
+                        </div>
+                        <span class="text-[11px] text-slate-500">Klik reset untuk mengubah ke sandi default <code class="font-mono font-semibold text-blue-700">otw12345</code></span>
+                    </div>
+                    <div class="divide-y divide-slate-200">
+                        <?php foreach ($reset_requests as $req):
+                            $meta = !empty($req['detail_json']) ? (json_decode($req['detail_json'], true) ?: []) : [];
+                            $reqUid = (int)($req['user_id'] ?? ($meta['user_id'] ?? 0));
+                            $reqUser = $meta['username'] ?? ($req['nama_user'] ?? '-');
+                            $reqNama = $meta['nama_lengkap'] ?? ($req['nama_user'] ?? '-');
+                            $reqEmail = $meta['email'] ?? '-';
+                        ?>
+                            <div id="reset-req-row-<?= $reqUid ?>" class="px-4 sm:px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                <div class="min-w-0">
+                                    <div class="font-semibold text-slate-900"><?= esc($reqNama) ?> <span class="text-slate-400 font-mono">(@<?= esc($reqUser) ?>)</span></div>
+                                    <div class="text-[11px] text-slate-500">Email: <?= esc($reqEmail) ?> &middot; Diminta <?= !empty($req['created_at']) ? date('d M Y H:i', strtotime($req['created_at'])) : '-' ?></div>
+                                </div>
+                                <button type="button" onclick="resetSandiDefault(<?= $reqUid ?>, '<?= esc($reqUser) ?>')" class="px-3.5 py-1.5 rounded-md bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold transition cursor-pointer shrink-0">
+                                    Reset ke Sandi Default
+                                </button>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <script>
+                    function resetSandiDefault(userId, username) {
+                        Swal.fire({
+                            title: 'Reset Kata Sandi?',
+                            html: `Ubah kata sandi akun <strong>@${username}</strong> menjadi sandi default <code>otw12345</code>?`,
+                            icon: 'question',
+                            showCancelButton: true,
+                            confirmButtonColor: '#1D4ED8',
+                            cancelButtonColor: '#64748B',
+                            confirmButtonText: 'Ya, Reset Sekarang',
+                            cancelButtonText: 'Batal'
+                        }).then(res => {
+                            if (!res.isConfirmed) return;
+                            fetch(`<?= base_url('superadmin/reset-password-default') ?>/${userId}`, {
+                                method: 'POST',
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                            })
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    const row = document.getElementById(`reset-req-row-${userId}`);
+                                    if (row) row.remove();
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Sandi Direset ke Default',
+                                        html: `
+                                            <div class="text-left text-xs text-slate-600 space-y-2">
+                                                <p>Sandi akun <strong>@${data.username}</strong> (${data.nama_lengkap}) telah diubah. Silakan kirimkan kembali ke user:</p>
+                                                <div class="p-3 rounded-md bg-slate-50 border border-slate-200 font-mono text-sm font-bold text-blue-700 text-center select-all">${data.default_password}</div>
+                                                <p class="text-[11px] text-slate-400">User dapat langsung login lalu mengganti sandi di menu Edit Profil.</p>
+                                            </div>
+                                        `,
+                                        confirmButtonColor: '#1D4ED8',
+                                        confirmButtonText: 'Selesai'
+                                    });
+                                } else {
+                                    Swal.fire('Gagal', data.message || 'Gagal mereset kata sandi.', 'error');
+                                }
+                            });
+                        });
+                    }
+                </script>
+            <?php endif; ?>
+
             <!-- Page Header -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 w-full">
                 <div>

@@ -353,18 +353,80 @@ class Superadmin extends BaseController
             }
         }
 
+        // Ambil antrean permintaan reset sandi yang masih PENDING
+        $resetRequests = [];
+        try {
+            $db = \Config\Database::connect();
+            $resetRequests = $db->table('log_aktivitas')
+                ->where('modul', 'RESET_PASSWORD')
+                ->where('status', 'PENDING')
+                ->orderBy('created_at', 'DESC')
+                ->get()
+                ->getResultArray() ?? [];
+        } catch (\Throwable $e) {
+            $resetRequests = [];
+        }
+
         $data = [
-            'title'          => 'Manajemen Pengguna & Akses | OTW Kredit',
+            'title'          => 'Manajemen Pengguna & Akses | OTW Approved',
             'nama_lengkap'   => session()->get('nama_lengkap') ?? 'Super Administrator',
             'jabatan'        => session()->get('jabatan') ?? 'Superadmin',
             'daftar_users'   => $daftarUsers,
             'total_users'    => $totalUsers,
             'total_aktif'    => $totalAktif,
             'total_nonaktif' => $totalNonaktif,
+            'reset_requests' => $resetRequests,
             'active_menu'    => 'users',
         ];
 
         return view('superadmin/manajemen_user', $data);
+    }
+
+    /**
+     * Reset kata sandi user ke sandi default (otw12345) dan tandai permintaan selesai
+     */
+    public function resetPasswordDefault($userId = null)
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Akses ditolak.']);
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->find($userId);
+        if (!$user) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Pengguna tidak ditemukan.']);
+        }
+
+        $defaultPass = 'otw12345';
+        $userModel->update($userId, [
+            'password'   => password_hash($defaultPass, PASSWORD_BCRYPT, ['cost' => 10]),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        try {
+            $db = \Config\Database::connect();
+            $db->table('log_aktivitas')
+                ->where('modul', 'RESET_PASSWORD')
+                ->where('status', 'PENDING')
+                ->where('user_id', (int) $userId)
+                ->update(['status' => 'RESOLVED']);
+
+            LogAktivitasModel::catat(
+                'Superadmin mereset kata sandi akun @' . $user['username'] . ' (' . $user['nama_lengkap'] . ') ke sandi default',
+                'RESET_PASSWORD',
+                'SUCCESS',
+                ['target_user_id' => (int) $userId, 'username' => $user['username']]
+            );
+        } catch (\Throwable $e) {}
+
+        return $this->response->setJSON([
+            'status'           => 'success',
+            'username'         => $user['username'],
+            'nama_lengkap'     => $user['nama_lengkap'],
+            'email'            => $user['email'] ?? '-',
+            'default_password' => $defaultPass,
+            'message'          => 'Kata sandi akun @' . $user['username'] . ' berhasil direset ke sandi default.'
+        ]);
     }
 
     /**

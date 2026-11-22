@@ -15,6 +15,7 @@ $routes->post('/auth/process', 'Auth::process');
 $routes->post('index.php/auth/process', 'Auth::process');
 $routes->get('/auth/register', 'Auth::register');
 $routes->post('/auth/registerProcess', 'Auth::registerProcess');
+$routes->post('/auth/request-reset-password', 'Auth::requestResetPassword');
 $routes->get('/auth/logout', 'Auth::logout');
 
 $routes->get('/dashboard', 'Dashboard::index');
@@ -92,6 +93,7 @@ $routes->group('superadmin', static function ($routes) {
     $routes->get('toggle-status-user/(:num)', 'Superadmin::toggleStatusUser/$1');
     $routes->get('hapus-user/(:num)', 'Superadmin::hapusUser/$1');
     $routes->post('hapus-user/(:num)', 'Superadmin::hapusUser/$1');
+    $routes->post('reset-password-default/(:num)', 'Superadmin::resetPasswordDefault/$1');
     $routes->post('simpan-pengaturan-ai', 'Superadmin::simpanPengaturanAi');
     $routes->get('pengaturan', 'Superadmin::pengaturan');
     $routes->post('toggle-petugas-slik', 'Superadmin::togglePetugasSlik');

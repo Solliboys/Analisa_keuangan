@@ -42,10 +42,11 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
-                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Audit Engine Online
+            <div class="flex items-center gap-2 shrink-0">
+                <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 whitespace-nowrap">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span class="hidden sm:inline">Audit Engine Online</span>
+                    <span class="sm:hidden">Online</span>
                 </span>
             </div>
         </header>
@@ -187,11 +188,8 @@
                         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
                             Daftar Catatan Audit Trail (<?= count($logs ?? []) ?> Catatan Ditampilkan)
                         </h2>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Tabel bersifat permanen &amp; hanya baca untuk keamanan audit perbankan</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Tabel bersifat permanen &amp; hanya baca untuk keamanan audit sistem</p>
                     </div>
-                    <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
-                        Aksi: Download &amp; Lihat
-                    </span>
                 </div>
 
                 <div class="w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">

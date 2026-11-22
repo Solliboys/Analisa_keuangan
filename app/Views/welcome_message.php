@@ -982,7 +982,7 @@
                     <a class="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-sm sm:text-base transition-all shadow-md hover:scale-105 cursor-pointer text-center" href="<?= base_url('simulasi') ?>">
                         Buka Portal Sistem
                     </a>
-                    <a class="w-full sm:w-auto px-6 sm:px-7 py-3.5 sm:py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm sm:text-base transition-colors border border-white/20 cursor-pointer text-center" href="mailto:<?= esc($emailWeb) ?>">
+                    <a class="w-full sm:w-auto px-6 sm:px-7 py-3.5 sm:py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm sm:text-base transition-colors border border-white/20 cursor-pointer text-center" href="#kontak">
                         Jadwalkan Demo Institusi
                     </a>
                 </div>

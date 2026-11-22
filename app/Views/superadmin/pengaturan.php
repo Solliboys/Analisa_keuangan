@@ -89,19 +89,19 @@
                 
                 <!-- CARD 1: IDENTITAS SISTEM & LEMBAGA -->
                 <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-7 shadow-2xs w-full">
-                    <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
-                                🏢
+                    <div class="flex flex-wrap items-start sm:items-center justify-between gap-2 pb-4 border-b border-slate-100 mb-6">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80 flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
-                                    Identitas Aplikasi &amp; Lembaga Perbankan / BPR
+                                    Identitas Aplikasi &amp; Lembaga Pembiayaan
                                 </h2>
                                 <p class="text-[11px] text-slate-400">Nama brand sistem, slogan navbar, dan instansi resmi</p>
                             </div>
                         </div>
-                        <span class="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">Identitas Utama</span>
+                        <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 shrink-0 whitespace-nowrap">Identitas Utama</span>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

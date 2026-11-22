@@ -249,4 +249,74 @@ class Auth extends BaseController
         session()->destroy();
         return redirect()->to('/login');
     }
+
+    /**
+     * Pengajuan Reset Kata Sandi oleh User -> masuk ke antrean Superadmin (Manajemen User)
+     */
+    public function requestResetPassword()
+    {
+        $username = trim((string) ($this->request->getPost('username') ?? ''));
+        $email    = trim((string) ($this->request->getPost('email') ?? ''));
+
+        if ($username === '' || $email === '') {
+            return $this->response->setJSON([
+                'status'  => false,
+                'message' => 'Username dan Email terdaftar wajib diisi.'
+            ]);
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->where('username', $username)->first();
+        if (!$user) {
+            return $this->response->setJSON([
+                'status'  => false,
+                'message' => 'Username tidak ditemukan di sistem.'
+            ]);
+        }
+
+        $registeredEmail = trim((string) ($user['email'] ?? ''));
+        if ($registeredEmail !== '' && strcasecmp($registeredEmail, $email) !== 0) {
+            return $this->response->setJSON([
+                'status'  => false,
+                'message' => 'Email tidak cocok dengan email akun yang didaftarkan oleh Superadmin.'
+            ]);
+        }
+
+        try {
+            $db = \Config\Database::connect();
+            $existing = $db->table('log_aktivitas')
+                ->where('modul', 'RESET_PASSWORD')
+                ->where('status', 'PENDING')
+                ->where('user_id', (int) $user['id'])
+                ->countAllResults();
+
+            if ($existing === 0) {
+                LogAktivitasModel::catat(
+                    'Permintaan reset kata sandi dari @' . $user['username'] . ' (' . $user['nama_lengkap'] . ') — Email: ' . $email,
+                    'RESET_PASSWORD',
+                    'PENDING',
+                    [
+                        'user_id'      => (int) $user['id'],
+                        'username'     => $user['username'],
+                        'nama_lengkap' => $user['nama_lengkap'],
+                        'email'        => $registeredEmail ?: $email,
+                        'jabatan'      => $user['jabatan'] ?? 'Pengusul'
+                    ],
+                    (int) $user['id'],
+                    $user['nama_lengkap'],
+                    $user['jabatan'] ?? 'Pengusul'
+                );
+            }
+        } catch (\Throwable $e) {
+            return $this->response->setJSON([
+                'status'  => false,
+                'message' => 'Gagal mencatat permintaan reset: ' . $e->getMessage()
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'status'  => true,
+            'message' => 'Permintaan reset kata sandi telah dikirim ke Superadmin. Setelah diproses, sandi default akan dikembalikan kepada Anda.'
+        ]);
+    }
 }
