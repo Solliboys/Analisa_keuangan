@@ -254,9 +254,9 @@ $listJaminan = $refByJenis['kre_jaminan'] ?? [];
                                 <div>
                                     <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                         <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                                        Suku Bunga per Tahun (%)
+                                        Suku Bunga per Tahun (%) <span class="text-rose-500 font-extrabold">*</span>
                                     </label>
-                                    <input type="number" step="0.01" name="bunga_per_tahun" id="bunga_per_tahun" 
+                                    <input type="number" step="0.01" min="0.01" required name="bunga_per_tahun" id="bunga_per_tahun" 
                                            value="<?= (isset($kredit['bunga_per_tahun']) && $kredit['bunga_per_tahun'] !== '' && $kredit['bunga_per_tahun'] !== null) ? esc($kredit['bunga_per_tahun']) : '' ?>" 
                                            placeholder="0" 
                                            class="w-full text-sm font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs"

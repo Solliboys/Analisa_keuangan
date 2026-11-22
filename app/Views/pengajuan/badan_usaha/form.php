@@ -227,21 +227,20 @@
     </main>
 
     <!-- Bottom Sticky Navigation Controls -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-3 z-20 shadow-md">
-        <div class="w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-            <button type="button" onclick="tabNav(-1)" id="btnPrev" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition flex items-center gap-1.5">
-                &larr; Sebelumnya
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-3 z-20">
+        <div class="w-full px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-3">
+            <button type="button" onclick="tabNav(-1)" id="btnPrev" class="px-3.5 sm:px-4 py-2 border border-slate-300 bg-white text-slate-700 rounded-md text-xs font-semibold hover:bg-slate-50 transition cursor-pointer shrink-0">
+                Sebelumnya
             </button>
-            <div class="flex items-center gap-2">
-                <span id="tabStepLabel" class="text-xs font-semibold text-slate-500 hidden sm:inline">Langkah 1 dari 11</span>
+            <div class="hidden md:flex items-center">
+                <span id="tabStepLabel" class="text-xs font-medium text-slate-500 tabular-nums">Langkah 1 dari 11</span>
             </div>
-            <div class="flex items-center gap-3">
-                <button type="button" id="btnSimpanDraft" onclick="simpanForm(false, true, true)" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-2xs">
-                    <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                    <span>Simpan Draft</span>
+            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                <button type="button" id="btnSimpanDraft" onclick="simpanForm(false, true, true)" class="px-3.5 sm:px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 rounded-md text-xs font-semibold transition cursor-pointer">
+                    Simpan Draft
                 </button>
-                <button type="button" onclick="tabNav(1)" id="btnNext" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5">
-                    Selanjutnya &rarr;
+                <button type="button" onclick="tabNav(1)" id="btnNext" class="px-4 sm:px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-md text-xs font-semibold transition cursor-pointer">
+                    Selanjutnya
                 </button>
             </div>
         </div>

@@ -80,34 +80,34 @@ if ($jam >= 4 && $jam < 11) {
         }
     </style>
 </head>
-<body class="min-h-screen bg-white text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+<body class="min-h-screen bg-white text-slate-900 selection:bg-blue-100 selection:text-blue-900 overflow-x-hidden">
 
-    <div class="min-h-screen grid grid-cols-1 lg:grid-cols-12">
+    <div class="min-h-screen flex flex-col lg:grid lg:grid-cols-12">
 
         <!-- LEFT COLUMN: LOGIN FORM -->
-        <div class="lg:col-span-7 flex flex-col justify-between px-5 sm:px-10 py-6 sm:py-8 bg-white">
+        <div class="flex-1 lg:col-span-7 flex flex-col justify-between px-4 sm:px-10 py-5 sm:py-8 bg-white">
             <!-- Top Bar -->
-            <div class="flex items-center justify-between gap-4 max-w-xl w-full mx-auto">
-                <a href="<?= base_url('/') ?>" class="flex items-center gap-2.5 shrink-0">
+            <div class="flex items-center justify-between gap-3 max-w-xl w-full mx-auto">
+                <a href="<?= base_url('/') ?>" class="flex items-center gap-2 shrink-0">
                     <img src="<?= base_url($brandLogo) ?>" alt="<?= esc($brandName) ?>" class="h-7 w-7 object-contain">
                     <span class="text-sm font-bold text-slate-950 tracking-tight"><?= esc($brandName) ?></span>
                 </a>
-                <a href="<?= base_url('/') ?>" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-950 transition">
+                <a href="<?= base_url('/') ?>" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-slate-200 text-xs font-medium text-slate-600 hover:text-blue-700 hover:border-blue-200 hover:bg-blue-50/50 transition shrink-0">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
-                    <span>Kembali ke Beranda</span>
+                    <span>Beranda</span>
                 </a>
             </div>
 
             <!-- Centered Form Container -->
-            <div class="w-full max-w-[380px] mx-auto my-10">
+            <div class="w-full max-w-[400px] mx-auto my-8 sm:my-10">
                 <div class="mb-6">
                     <h1 class="text-xl sm:text-2xl font-bold text-slate-950 tracking-[-0.02em]">
                         Masuk ke Portal
                     </h1>
                     <p class="text-xs sm:text-[13px] text-slate-500 mt-1 leading-relaxed">
-                        Selamat <?= $salam ?>. Masukkan kredensial akun Anda untuk mengakses sistem analisa pembiayaan.
+                        Selamat <span id="salamWaktu"><?= $salam ?></span>. Masukkan kredensial akun Anda untuk mengakses sistem analisa pembiayaan.
                     </p>
                 </div>
 
@@ -318,6 +318,18 @@ if ($jam >= 4 && $jam < 11) {
     </div>
 
     <script>
+        // Sesuaikan salam waktu secara otomatis mengikuti jam lokal perangkat pengguna
+        (function setSalamLokal() {
+            const el = document.getElementById('salamWaktu');
+            if (!el) return;
+            const jam = new Date().getHours();
+            let salam = 'malam';
+            if (jam >= 4 && jam < 11) salam = 'pagi';
+            else if (jam >= 11 && jam < 15) salam = 'siang';
+            else if (jam >= 15 && jam < 18) salam = 'sore';
+            el.textContent = salam;
+        })();
+
         function quickFill(user, pass) {
             const u = document.getElementById('username');
             const p = document.getElementById('password');

@@ -297,54 +297,84 @@
     </div>
 
     <!-- MODAL: Uji Coba Sandbox -->
-    <div id="sandboxModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-xl w-full p-6 animate-in fade-in duration-200">
-            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
-                    </div>
-                    <h3 class="font-bold text-slate-900 text-base">Uji Coba Sandbox Evaluasi 5C</h3>
+    <div id="sandboxModal" onclick="if(event.target === this) closeSandboxModal()" class="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-lg shadow-xl border border-slate-200 max-w-lg w-full overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
+                <div>
+                    <h3 class="font-bold text-slate-950 text-sm">Uji Coba Sandbox Evaluasi 5C</h3>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Simulasi cepat perhitungan LTV &amp; estimasi skor agunan.</p>
                 </div>
-                <button onclick="closeSandboxModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button type="button" onclick="closeSandboxModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100 cursor-pointer" aria-label="Tutup">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            
-            <div class="mt-4 space-y-3 text-xs">
+
+            <div class="p-5 space-y-4 text-xs">
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Simulasi Agunan (SHM / BPKB):</label>
-                    <input type="text" value="SHM No. 412 Luas 240m2 An. Debitur" class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+                    <label for="sb_agunan" class="block font-medium text-slate-700 mb-1.5">Deskripsi Agunan (SHM / BPKB)</label>
+                    <input type="text" id="sb_agunan" value="SHM No. 412 Luas 240m2 An. Debitur" class="w-full h-9 px-3 border border-slate-300 rounded-md text-xs text-slate-900 focus:border-blue-700 focus:outline-none" />
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Taksasi Pasar:</label>
-                        <input type="text" value="Rp 380.000.000" class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+                        <label for="sb_pasar" class="block font-medium text-slate-700 mb-1.5">Taksasi Pasar (Rp)</label>
+                        <input type="text" id="sb_pasar" value="380.000.000" oninput="hitungSandboxAi5c()" class="w-full h-9 px-3 border border-slate-300 rounded-md text-xs font-semibold text-slate-900 tabular-nums focus:border-blue-700 focus:outline-none" />
                     </div>
                     <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Plafon Diajukan:</label>
-                        <input type="text" value="Rp 250.000.000" class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
+                        <label for="sb_plafon" class="block font-medium text-slate-700 mb-1.5">Plafon Diajukan (Rp)</label>
+                        <input type="text" id="sb_plafon" value="250.000.000" oninput="hitungSandboxAi5c()" class="w-full h-9 px-3 border border-slate-300 rounded-md text-xs font-semibold text-slate-900 tabular-nums focus:border-blue-700 focus:outline-none" />
                     </div>
                 </div>
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 mt-2 space-y-1">
-                    <div class="flex justify-between font-semibold text-slate-700">
-                        <span>Hasil Perhitungan LTV:</span>
-                        <span class="text-emerald-600 font-bold">65.7% (Aman &lt; 70%)</span>
+
+                <div class="border border-slate-200 rounded-md divide-y divide-slate-200 bg-slate-50/70 tabular-nums">
+                    <div class="px-4 py-2.5 flex items-center justify-between gap-2">
+                        <span class="text-slate-600">Rasio LTV (Plafon / Pasar)</span>
+                        <span id="sb_out_ltv" class="font-bold text-emerald-700">65,8% (Aman)</span>
                     </div>
-                    <div class="flex justify-between font-semibold text-slate-700">
-                        <span>Skor Kelayakan Agunan AI:</span>
-                        <span class="text-blue-600 font-bold">88 / 100 (Sangat Layak)</span>
+                    <div class="px-4 py-2.5 flex items-center justify-between gap-2">
+                        <span class="text-slate-600">Estimasi Skor Kelayakan Agunan</span>
+                        <span id="sb_out_skor" class="font-bold text-blue-700">88 / 100 (Sangat Layak)</span>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-3">
-                <button type="button" onclick="closeSandboxModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition">
+            <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button type="button" onclick="closeSandboxModal()" class="px-4 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold rounded-md text-xs transition cursor-pointer">
                     Tutup
                 </button>
             </div>
         </div>
     </div>
+    <script>
+        function hitungSandboxAi5c() {
+            const pNum = v => parseFloat(String(v || '0').replace(/[^0-9]/g, '')) || 0;
+            const pasar = pNum(document.getElementById('sb_pasar')?.value);
+            const plafon = pNum(document.getElementById('sb_plafon')?.value);
+            const ltv = pasar > 0 ? (plafon / pasar) * 100 : 0;
+            const outLtv = document.getElementById('sb_out_ltv');
+            const outSkor = document.getElementById('sb_out_skor');
+            if (!outLtv || !outSkor) return;
+
+            let ltvLabel = 'Aman';
+            let ltvCls = 'font-bold text-emerald-700';
+            let skor = 88;
+            let skorLabel = 'Sangat Layak';
+            if (ltv > 85) {
+                ltvLabel = 'Risiko Tinggi';
+                ltvCls = 'font-bold text-rose-700';
+                skor = 54;
+                skorLabel = 'Perlu Tambahan Agunan';
+            } else if (ltv > 70) {
+                ltvLabel = 'Moderat';
+                ltvCls = 'font-bold text-amber-700';
+                skor = 74;
+                skorLabel = 'Layak Bersyarat';
+            }
+            outLtv.className = ltvCls;
+            outLtv.textContent = `${ltv.toFixed(1).replace('.', ',')}% (${ltvLabel})`;
+            outSkor.textContent = `${skor} / 100 (${skorLabel})`;
+        }
+    </script>
 
     <!-- Client-side Interactive Scripts -->
     <script>

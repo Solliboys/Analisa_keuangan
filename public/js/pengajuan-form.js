@@ -143,10 +143,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const kid = document.getElementById('kredit_id')?.value?.trim();
         const activeSteps = getActiveSteps();
         if (kid && !isNew) {
+            // Tandai selesai secara BERURUTAN saja; hentikan begitu menemukan tahap yang belum lengkap
+            // agar tahap-tahap lanjutan (SLIK/Laporan/Disbursement) tidak tiba-tiba terlihat selesai
             for (let t of activeSteps) {
                 const val = validateTabSilent(t);
                 if (val.valid) {
                     tabValidationStatus[t] = true;
+                } else {
+                    break;
                 }
             }
         }
@@ -458,11 +462,14 @@ function validateTab(tabNum) {
             });
         }
     } else if (tabNum === 8) {
-        // Tab 8: Rekening Koran - Seluruh field dibuat opsional kecuali Nama Bank
+        // Tab 8: Rekening Koran — wajib ada minimal 1 data/berkas rekening koran sebelum lanjut
         const rekItems = document.querySelectorAll('.rekening-item');
-        if (rekItems.length > 0) {
+        if (rekItems.length === 0) {
+            const btnUploadRek = document.querySelector('#tab-8 button[onclick*="bukaModalUploadOcrRekening"]') || document.getElementById('tab-8');
+            addError(btnUploadRek, 'Wajib mengunggah minimal 1 berkas mutasi Rekening Koran sebelum melanjutkan ke tahap berikutnya');
+        } else {
             const namaBank = document.querySelector('input[name="rekening[0][nama_bank]"]');
-            if (!namaBank || !namaBank.value.trim()) {
+            if (namaBank && !namaBank.value.trim()) {
                 addError(namaBank, 'Nama bank rekening koran wajib diisi');
             }
         }
@@ -795,11 +802,13 @@ function handleStepperClick(targetTab) {
     tabValidationStatus[currentTab] = true;
     clearAllFieldErrorsInTab(currentTab);
 
-    // Jika melompat maju melewati tahap-tahap sebelumnya, tandai semua tahap yang dilewati menjadi hijau
+    // Jika melompat maju melewati tahap-tahap sebelumnya, hanya tandai hijau tahap yang benar-benar valid
     for (let k = 0; k < targetIdx; k++) {
         const stepNum = steps[k];
-        tabValidationStatus[stepNum] = true;
-        clearAllFieldErrorsInTab(stepNum);
+        if (validateTabSilent(stepNum).valid) {
+            tabValidationStatus[stepNum] = true;
+            clearAllFieldErrorsInTab(stepNum);
+        }
     }
 
     if (normalizeTab(steps[targetIdx]) === 'laporan' || normalizeTab(currentTab) === 9) {

@@ -42,13 +42,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     <link rel="shortcut icon" type="image/png" href="<?= !empty($logoWeb) ? base_url($logoWeb) : base_url('favicon.ico') ?>">
 
-    <!-- TAILWIND CONFIG & PLAY CDN -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script>
-        if (typeof tailwind === 'undefined') {
-            document.write('<script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"><\/script>');
-        }
-    </script>
+    <!-- TAILWIND LOKAL (Instan & Responsif Sejak Frame Pertama) -->
+    <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
     <script id="tailwind-config">
         tailwind.config = {
           darkMode: "class",
@@ -285,9 +280,9 @@
     <!-- HERO SECTION WITH INSPIRATION GRAPHICS & FLOATING METRIC CARDS -->
     <section class="max-w-7xl mx-auto px-4 sm:px-8 pt-2 sm:pt-6 pb-10 sm:pb-20 text-center flex flex-col items-center relative overflow-hidden w-full">
         <!-- Top Pill Tag (Teks model AI dihapus sesuai instruksi) -->
-        <div class="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-blue-50/80 border border-blue-200/80 text-blue-700 shadow-2xs mb-2.5 sm:mb-6 cursor-default mx-auto">
+        <div class="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-blue-50/80 border border-blue-200/80 text-blue-700 shadow-2xs mb-2.5 sm:mb-6 cursor-default mx-auto max-w-full">
             <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-600 animate-pulse shrink-0"></span>
-            <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap">Engine AI 5C • Autonomous Underwriting</span>
+            <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-center">Engine AI 5C &bull; Autonomous Underwriting</span>
         </div>
 
         <!-- Main Headline -->
