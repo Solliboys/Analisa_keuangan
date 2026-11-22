@@ -26,7 +26,7 @@
     $statPlafonTotal   = !empty($total_plafon) && $total_plafon > 0 ? 'Rp ' . number_format($total_plafon / 1000000000, 1, ',', '.') . ' Miliar' : 'Rp 48.5 Miliar';
 ?>
 <!DOCTYPE html>
-<html class="scroll-smooth" lang="id">
+<html class="scroll-smooth overflow-x-hidden w-full max-w-full" lang="id">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
@@ -199,9 +199,15 @@
 
         summary::-webkit-details-marker { display: none; }
         summary { list-style: none; }
+
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+            width: 100% !important;
+        }
     </style>
 </head>
-<body class="bg-[#fafcff] text-slate-900 antialiased overflow-x-hidden selection:bg-brand-500/10 selection:text-brand-600">
+<body class="bg-[#fafcff] text-slate-900 antialiased overflow-x-hidden w-full max-w-full selection:bg-brand-500/10 selection:text-brand-600">
 
 <!-- Ambient Light Mesh Background -->
 <div class="pointer-events-none fixed inset-0 z-0 overflow-hidden">
@@ -275,9 +281,9 @@
     </div>
 </header>
 
-<main class="relative z-10 pt-16 sm:pt-32">
+<main class="relative z-10 pt-16 sm:pt-32 overflow-x-hidden w-full max-w-full">
     <!-- HERO SECTION WITH INSPIRATION GRAPHICS & FLOATING METRIC CARDS -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 pt-2 sm:pt-6 pb-10 sm:pb-20 text-center flex flex-col items-center relative">
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 pt-2 sm:pt-6 pb-10 sm:pb-20 text-center flex flex-col items-center relative overflow-hidden w-full">
         <!-- Top Pill Tag (Teks model AI dihapus sesuai instruksi) -->
         <div class="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-blue-50/80 border border-blue-200/80 text-blue-700 shadow-2xs mb-2.5 sm:mb-6 cursor-default mx-auto">
             <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-600 animate-pulse shrink-0"></span>
@@ -339,8 +345,10 @@
             </svg>
 
             <!-- AMBIENT BACKDROPS -->
-            <div class="absolute -left-12 bottom-4 w-72 h-72 bg-gradient-to-tr from-cyan-400/40 via-sky-400/30 to-transparent rounded-full blur-3xl -z-10 pointer-events-none"></div>
-            <div class="absolute -right-12 bottom-4 w-72 h-72 bg-gradient-to-tl from-purple-400/35 via-indigo-400/25 to-transparent rounded-full blur-3xl -z-10 pointer-events-none"></div>
+            <div class="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+                <div class="absolute -left-12 bottom-4 w-72 h-72 bg-gradient-to-tr from-cyan-400/40 via-sky-400/30 to-transparent rounded-full blur-3xl"></div>
+                <div class="absolute -right-12 bottom-4 w-72 h-72 bg-gradient-to-tl from-purple-400/35 via-indigo-400/25 to-transparent rounded-full blur-3xl"></div>
+            </div>
 
             <!-- FLOATING CARD 1: TOP LEFT -->
             <div class="absolute -top-6 left-0 xl:-left-8 z-30 animate-float-slow hidden lg:flex">
