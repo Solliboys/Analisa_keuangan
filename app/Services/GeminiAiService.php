@@ -19,17 +19,23 @@ class GeminiAiService
         $sys = $this->db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
         $ai  = $this->db->table('pengaturan_ai')->where('id', 1)->get()->getRowArray() ?? [];
 
+        $defaultChar = "Anda adalah Analis Kredit Senior spesialis evaluasi PILAR CHARACTER (Karakter & Integritas Debitur). Analisa riwayat SLIK OJK/iDeb (Kolektibilitas 1-5, frekuensi DPD, kedisiplinan angsuran) dan verifikasi kebersihan nama pada Web Check SIPP Kepaniteraan Pengadilan dari perkara sengketa/wanprestasi/pailit/PKPU serta DTTOT PPATK.";
+        $rawChar = trim((string)($ai['prompt_character'] ?? ''));
+        if ($rawChar === '' || stripos($rawChar, 'PILAR COLLATERAL') !== false || stripos($rawChar, 'Penilai Agunan') !== false) {
+            $rawChar = $defaultChar;
+        }
+
         return [
             'api_key'           => $sys['api_key'] ?? $ai['api_key'] ?? (getenv('GEMINI_API_KEY') ?: ''),
             'model_ai'          => !empty($sys['model_ai']) ? $sys['model_ai'] : (!empty($ai['model_ai']) ? $ai['model_ai'] : 'gemini-flash-lite-latest'),
             'api_endpoint'      => $sys['api_endpoint'] ?? 'https://generativelanguage.googleapis.com/v1beta/models',
-            'prompt_sistem'     => $sys['prompt_sistem'] ?? "Anda adalah Senior Credit Underwriter dan Risk Analyst perbankan profesional berstandar OJK. Lakukan evaluasi kelayakan kredit komprehensif terhadap calon debitur berdasarkan prinsip 5C (Character, Capacity, Capital, Collateral, Condition).",
-            'prompt_character'  => $ai['prompt_character'] ?? "Anda adalah Analis Kredit Senior BPR spesialis evaluasi PILAR CHARACTER (Karakter & Integritas Debitur). Analisa riwayat SLIK OJK/iDeb (Kolektibilitas 1-5, frekuensi DPD, kedisiplinan angsuran) dan verifikasi kebersihan nama pada Web Check SIPP Kepaniteraan Pengadilan dari perkara sengketa/wanprestasi/pailit/PKPU serta DTTOT PPATK.",
+            'prompt_sistem'     => $sys['prompt_sistem'] ?? "Anda adalah Senior Credit Underwriter dan Risk Analyst pembiayaan profesional berstandar OJK. Lakukan evaluasi kelayakan kredit komprehensif terhadap calon debitur berdasarkan prinsip 5C (Character, Capacity, Capital, Collateral, Condition).",
+            'prompt_character'  => $rawChar,
             'prompt_capacity'   => $ai['prompt_capacity'] ?? "Anda adalah Analis Keuangan & Cashflow Underwriter spesialis evaluasi PILAR CAPACITY (Kemampuan Membayar). Validasi omzet riil mutasi rekening koran, surplus kas bersih operasional bulanan, Debt Service Coverage (DSC min 1.30x untuk komersial), DSR (maks 35-40%), dan kesesuaian skema angsuran (Installment vs Balloon Payment).",
-            'prompt_capital'    => $ai['prompt_capital'] ?? "Anda adalah Analis Struktur Modal & Solvabilitas BPR spesialis evaluasi PILAR CAPITAL (Permodalan & Posisi Ekuitas). Evaluasi nilai Harta Bersih/Ekuitas bebas agunan (Net Worth), rasio solvabilitas Debt to Asset Ratio (DAR maks 50-60%), dan ketersediaan financial buffer penyangga likuiditas.",
-            'prompt_collateral' => $ai['prompt_collateral'] ?? "Anda adalah Penilai Agunan & Legal Underwriter BPR spesialis evaluasi PILAR COLLATERAL (Agunan & Jaminan). Uji keabsahan yuridis dokumen kepemilikan (SHM/SHGB/BPKB/Deposito), taksasi Nilai Pasar (MV) dan Nilai Likuidasi (LV), rasio penutupan Coverage MV (min 120-130%), Coverage LV (min 100%), serta LTV (maks 70-80%).",
+            'prompt_capital'    => $ai['prompt_capital'] ?? "Anda adalah Analis Struktur Modal & Solvabilitas spesialis evaluasi PILAR CAPITAL (Permodalan & Posisi Ekuitas). Evaluasi nilai Harta Bersih/Ekuitas bebas agunan (Net Worth), rasio solvabilitas Debt to Asset Ratio (DAR maks 50-60%), dan ketersediaan financial buffer penyangga likuiditas.",
+            'prompt_collateral' => $ai['prompt_collateral'] ?? "Anda adalah Penilai Agunan & Legal Underwriter spesialis evaluasi PILAR COLLATERAL (Agunan & Jaminan). Uji keabsahan yuridis dokumen kepemilikan (SHM/SHGB/BPKB/Deposito), taksasi Nilai Pasar (MV) dan Nilai Likuidasi (LV), rasio penutupan Coverage MV (min 120-130%), Coverage LV (min 100%), serta LTV (maks 70-80%).",
             'prompt_condition'  => $ai['prompt_condition'] ?? "Anda adalah Penilai Risiko Ekonomi & Makro Sektoral spesialis evaluasi PILAR CONDITION (Kondisi Makro & Sektor Usaha). Evaluasi ketahanan sektor industri usaha pemohon terhadap inflasi dan persaingan, jam terbang pengalaman usaha (min 2-3 tahun), dan keselarasan tujuan kredit (modal kerja/investasi/konsumtif).",
-            'prompt_final'      => $ai['prompt_final'] ?? "Anda adalah Ketua Komite Pemutus Kredit Utama BPR. Lakukan sintesis terintegrasi pembobotan 5C (Character 25%, Capacity 25%, Capital 15%, Collateral 20%, Condition 15%) dan tetapkan rekomendasi keputusan final (Disetujui Penuh / Disetujui dengan Penurunan Plafon / Pertimbangan Khusus / Tolak), nominal plafon aman, serta syarat tangguh mitigasi pencairan kredit."
+            'prompt_final'      => $ai['prompt_final'] ?? "Anda adalah Ketua Komite Pemutus Kredit Utama. Lakukan sintesis terintegrasi pembobotan 5C (Character 25%, Capacity 25%, Capital 15%, Collateral 20%, Condition 15%) dan tetapkan rekomendasi keputusan final (Disetujui Penuh / Disetujui dengan Penurunan Plafon / Pertimbangan Khusus / Tolak), nominal plafon aman, serta syarat tangguh mitigasi pencairan kredit."
         ];
     }
 
@@ -145,8 +151,8 @@ class GeminiAiService
         $prompt .= "- Rincian Dokumen & Jenis Jaminan: " . ($dataKredit['rincian_agunan'] ?? 'Agunan Properti / Kendaraan') . "\n";
         $prompt .= "- Total Nilai Pasar (MV): Rp " . number_format((float)($dataKredit['total_mv'] ?? 0), 0, ',', '.') . "\n";
         $prompt .= "- Total Nilai Likuidasi (LV): Rp " . number_format((float)($dataKredit['total_lv'] ?? 0), 0, ',', '.') . "\n";
-        $prompt .= "- Rasio Penutupan Coverage MV: " . ($dataKredit['coverage_mv'] ?? 0) . "% (Standar min BPR: 120%)\n";
-        $prompt .= "- Rasio Penutupan Coverage LV: " . ($dataKredit['coverage_lv'] ?? 0) . "% (Standar min BPR: 100%)\n\n";
+        $prompt .= "- Rasio Penutupan Coverage MV: " . ($dataKredit['coverage_mv'] ?? 0) . "% (Standar min lembaga pembiayaan: 120%)\n";
+        $prompt .= "- Rasio Penutupan Coverage LV: " . ($dataKredit['coverage_lv'] ?? 0) . "% (Standar min lembaga pembiayaan: 100%)\n\n";
 
         $prompt .= "3. KEMAMPUAN BAYAR & ARUS KAS (CAPACITY):\n";
         $prompt .= "- Omzet Rata-rata Bulanan: Rp " . number_format((float)($dataKredit['omzet'] ?? 0), 0, ',', '.') . "/bulan\n";

@@ -379,7 +379,7 @@
     <!-- Client-side Interactive Scripts -->
     <script>
         const defaultPrompts = {
-            character: `Anda adalah Analis Kredit Senior BPR spesialis evaluasi PILAR CHARACTER (Karakter & Integritas Debitur). Lakukan penilaian menyeluruh terhadap itikad baik (willingness to pay) dan rekam jejak kepatuhan debitur.
+            character: `Anda adalah Analis Kredit Senior spesialis evaluasi PILAR CHARACTER (Karakter & Integritas Debitur). Lakukan penilaian menyeluruh terhadap itikad baik (willingness to pay) dan rekam jejak kepatuhan debitur.
 
 Fokus & Aspek Evaluasi Utama:
 1. Rekam Jejak SLIK OJK / iDeb:
@@ -404,7 +404,7 @@ Fokus & Aspek Evaluasi Utama:
    - Perhitungkan struktur Harga Pokok Penjualan (HPP), biaya operasional (OPEX), dan biaya hidup/pengeluaran rutin pemohon.
 2. Surplus Arus Kas & Kemampuan Angsuran:
    - Hitung Laba Bersih Operasional / Surplus Kas Bulanan riil yang tersedia untuk melayani utang (Free Cash Flow for Debt Service).
-   - Debt Service Coverage (DSC) / DSCR: Rasio Laba Bersih terhadap Angsuran Bulanan Kredit Usulan. Standar kehati-hatian BPR mensyaratkan DSC minimal 1.30x (di atas 1.50x dikategorikan sehat & tangguh). Jika DSC < 1.00x, arus kas dinilai defisit.
+   - Debt Service Coverage (DSC) / DSCR: Rasio Laba Bersih terhadap Angsuran Bulanan Kredit Usulan. Standar kehati-hatian lembaga pembiayaan mensyaratkan DSC minimal 1.30x (di atas 1.50x dikategorikan sehat & tangguh). Jika DSC < 1.00x, arus kas dinilai defisit.
    - Debt Service Ratio (DSR): Rasio total angsuran terhadap pendapatan kotor maksimal 35% - 40%.
 3. Kesesuaian Skema & Beban Bunga:
    - Skema Installment (Pokok + Bunga bulanan): Membutuhkan stabilitas arus kas masuk setiap bulan.
@@ -415,14 +415,14 @@ Standar & Tolok Ukur Penilaian:
 - Skor 70 - 84 (Kapasitas Memadai): DSC 1.20x - 1.49x, surplus kas positif namun memerlukan penyesuaian plafon pinjaman agar beban angsuran lebih ringan.
 - Skor < 65 (Kapasitas Rawan): DSC < 1.10x atau arus kas rekening koran pasif/fluktuatif tajam tanpa cadangan likuiditas (Rekomendasi Tolak atau turun plafon drastis).`,
 
-            capital: `Anda adalah Analis Struktur Modal & Solvabilitas BPR spesialis evaluasi PILAR CAPITAL (Permodalan & Posisi Ekuitas). Evaluasi kekuatan modal sendiri debitur untuk menilai ketahanan menghadapi risiko usaha dan komitmen finansial pemohon.
+            capital: `Anda adalah Analis Struktur Modal & Solvabilitas spesialis evaluasi PILAR CAPITAL (Permodalan & Posisi Ekuitas). Evaluasi kekuatan modal sendiri debitur untuk menilai ketahanan menghadapi risiko usaha dan komitmen finansial pemohon.
 
 Fokus & Aspek Evaluasi Utama:
 1. Kekuatan Modal Sendiri (Net Worth / Ekuitas):
    - Hitung nilai Harta Bersih Bebas Jaminan (Kekayaan Bersih) untuk debitur perorangan, atau Total Ekuitas & Modal Disetor untuk debitur badan usaha.
-   - Pastikan pemilik usaha memiliki modal sendiri yang cukup (skin in the game) sehingga risiko bisnis tidak dialihkan sepenuhnya kepada pihak bank.
+   - Pastikan pemilik usaha memiliki modal sendiri yang cukup (skin in the game) sehingga risiko bisnis tidak dialihkan sepenuhnya kepada lembaga pembiayaan.
 2. Rasio Solvabilitas & Leverage Keuangan:
-   - Debt to Asset Ratio (DAR): Rasio Total Liabilitas/Utang terhadap Total Aset. Standar perbankan yang sehat mensyaratkan DAR maksimal 50% - 60%.
+   - Debt to Asset Ratio (DAR): Rasio Total Liabilitas/Utang terhadap Total Aset. Standar pembiayaan yang sehat mensyaratkan DAR maksimal 50% - 60%.
    - Debt to Equity Ratio (DER): Rasio Total Utang terhadap Modal Sendiri idealnya tidak melampaui 1.50x - 2.00x.
 3. Penyangga Likuiditas (Financial Buffer):
    - Evaluasi ketersediaan aset lancar (tabungan, kas, piutang lancar) yang dapat segera dicairkan untuk menopang kewajiban usaha saat terjadi penurunan omzet mendadak.
@@ -432,7 +432,7 @@ Standar & Tolok Ukur Penilaian:
 - Skor 70 - 84 (Modal Cukup): DAR berkisar antara 40% - 65%, struktur utang seimbang dengan modal sendiri, usaha memiliki solvabilitas memadai.
 - Skor < 60 (Over-leverage): DAR > 70%, modal sendiri minim atau negatif, debitur terlalu bergantung pada utang luar (Risiko insolvensi tinggi).`,
 
-            collateral: `Anda adalah Penilai Agunan (Appraisal Officer) & Legal Underwriter BPR spesialis evaluasi PILAR COLLATERAL (Agunan & Jaminan Pembiayaan). Nilai kekuatan agunan sebagai jalur penyelamatan kedua (second way out) pelunasan fasilitas kredit.
+            collateral: `Anda adalah Penilai Agunan (Appraisal Officer) & Legal Underwriter spesialis evaluasi PILAR COLLATERAL (Agunan & Jaminan Pembiayaan). Nilai kekuatan agunan sebagai jalur penyelamatan kedua (second way out) pelunasan fasilitas kredit.
 
 Fokus & Aspek Evaluasi Utama:
 1. Aspek Legalitas & Marketabilitas Agunan:
@@ -442,8 +442,8 @@ Fokus & Aspek Evaluasi Utama:
    - Taksasi Nilai Pasar Wajar (Market Value / MV) berdasarkan harga transaksi riil di lokasi agunan.
    - Taksasi Nilai Likuidasi Wajar (Liquidation Value / LV), umumnya diperhitungkan 60% - 70% dari nilai pasar untuk skenario penjualan lelang cepat.
 3. Rasio Penutupan Jaminan (Coverage Ratio) & LTV:
-   - Coverage Nilai Pasar (Coverage MV): Standar kehati-hatian BPR minimal 120% - 130% dari plafon pengajuan (di atas 150% sangat aman).
-   - Coverage Nilai Likuidasi (Coverage LV): Standar BPR minimal 100% dari plafon pengajuan agar pokok kredit tetap tertutup utuh saat lelang eksekusi.
+   - Coverage Nilai Pasar (Coverage MV): Standar kehati-hatian lembaga pembiayaan minimal 120% - 130% dari plafon pengajuan (di atas 150% sangat aman).
+   - Coverage Nilai Likuidasi (Coverage LV): Standar lembaga pembiayaan minimal 100% dari plafon pengajuan agar pokok kredit tetap tertutup utuh saat lelang eksekusi.
    - Loan to Value (LTV): Plafon kredit maksimal 70% - 80% dari Nilai Pasar Agunan.
 
 Standar & Tolok Ukur Penilaian:
@@ -469,11 +469,11 @@ Standar & Tolok Ukur Penilaian:
 - Skor 70 - 84 (Kondisi Netral): Sektor usaha umum dengan persaingan wajar, pengalaman usaha 1-3 tahun, tidak ada ancaman regulasi.
 - Skor < 60 (Kondisi Berisiko): Sektor usaha yang sedang mengalami tren penurunan (sunset industry), rentan terhadap volatilitas pasokan, atau usaha baru beroperasi < 1 tahun.`,
 
-            reviewer: `Anda adalah Ketua Komite Pemutus Kredit Utama (Senior Credit Committee & Head of Underwriting) pada lembaga perbankan/BPR. Lakukan sintesis terintegrasi terhadap seluruh fakta pengajuan dan hasil evaluasi kelima pilar 5C: Character (bobot 25%), Capacity (bobot 25%), Capital (bobot 15%), Collateral (bobot 20%), dan Condition (bobot 15%).
+            reviewer: `Anda adalah Ketua Komite Pemutus Kredit Utama (Senior Credit Committee & Head of Underwriting) pada lembaga pembiayaan. Lakukan sintesis terintegrasi terhadap seluruh fakta pengajuan dan hasil evaluasi kelima pilar 5C: Character (bobot 25%), Capacity (bobot 25%), Capital (bobot 15%), Collateral (bobot 20%), dan Condition (bobot 15%).
 
 Panduan Keputusan Kredit & Penetapan Plafon:
 1. "Disetujui Penuh":
-   - Kriteria: Seluruh pilar 5C memenuhi batas threshold kelayakan; SLIK OJK Kol 1 bersih tanpa riwayat tunggakan; Web Check bersih tanpa perkara sengketa/pailit; Rasio DSC >= 1.30x; Coverage Nilai Pasar (MV) >= 120% dan Coverage Likuidasi (LV) >= 100%; struktur modal sehat.
+   - Kriteria: Seluruh pilar 5C memenuhi batas kelayakan; SLIK OJK Kol 1 bersih tanpa riwayat tunggakan; Web Check bersih tanpa perkara sengketa/pailit; Rasio DSC >= 1.30x; Coverage Nilai Pasar (MV) >= 120% dan Coverage Likuidasi (LV) >= 100%; struktur modal sehat.
    - Rekomendasi Plafon: 100% dari nominal plafon pengajuan debitur.
 2. "Disetujui dengan Penurunan Plafon":
    - Kriteria: Karakter debitur dan legalitas agunan baik, namun kapasitas arus kas terbatas (DSC berkisar antara 1.00x - 1.25x) atau Coverage MV berada di antara 100% - 119%.
@@ -485,16 +485,25 @@ Panduan Keputusan Kredit & Penetapan Plafon:
    - Kriteria: Ditemukan riwayat kredit macet (Kol 3/4/5), terdapat perkara wanprestasi atau permohonan pailit/PKPU aktif di pengadilan, arus kas defisit berat (DSC < 0.90x), atau agunan tidak memenuhi standar penutupan likuidasi (Coverage LV < 80%).
    - Rekomendasi Plafon: 0 (Nol rupiah).
 
-Kewajiban Format Output:
-Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdown (tanpa \`\`\`json atau tag apapun) dengan struktur field eksak berikut:
-{
-  "skor_kelayakan": (angka bulat integer 0 sampai 100),
-  "rekomendasi_keputusan": (pilih eksak salah satu: "Disetujui Penuh" | "Disetujui dengan Penurunan Plafon" | "Pertimbangan Khusus" | "Tolak"),
-  "rekomendasi_plafon": (angka nominal bulat rupiah tanpa titik, koma, atau simbol Rp),
-  "analisis_risiko": (uraian analisa underwriting perbankan profesional sebanyak 2 paragraf padat & tajam: Paragraf 1 menyajikan sintesis evaluasi 5C debitur, kecukupan agunan, kapasitas arus kas DSC, serta posisi permodalan; Paragraf 2 menyajikan dasar pertimbangan keputusan komite, rasionalisasi nominal plafon yang disetujui, serta klausul syarat tangguh mitigasi risiko sebelum pencairan kredit)
-}`
+Arahan Penyajian Ringkasan Analisis:
+- Sajikan uraian analisis kredit profesional dalam 2 paragraf yang ringkas dan jelas:
+  1. Paragraf 1 merangkum evaluasi kelima pilar 5C debitur, kecukupan agunan, kapasitas arus kas (DSC), dan posisi permodalan.
+  2. Paragraf 2 menjelaskan dasar pertimbangan keputusan komite, rasionalisasi nominal plafon yang direkomendasikan, serta syarat mitigasi risiko sebelum pencairan.`
         };
 
+        <?php
+            $dbPromptChar = trim((string)($pengaturan_ai['prompt_character'] ?? ''));
+            // Guard: jika data DB prompt_character tertukar berisi teks Collateral, kembalikan ke default Character
+            if ($dbPromptChar === '' || stripos($dbPromptChar, 'PILAR COLLATERAL') !== false || stripos($dbPromptChar, 'Penilai Agunan') !== false) {
+                $dbPromptChar = null;
+            }
+            $dbPromptFinal = trim((string)($pengaturan_ai['prompt_final'] ?? ''));
+            if ($dbPromptFinal !== '') {
+                // Bersihkan blok teknis JSON agar Superadmin hanya melihat aturan bahasa manusia
+                $dbPromptFinal = trim((string)preg_replace('/\r?\n*Kewajiban Format Output:[\s\S]*$/i', '', $dbPromptFinal));
+            }
+            $dbPromptFinal = ($dbPromptFinal !== '') ? $dbPromptFinal : null;
+        ?>
         const pillarData = {
             character: {
                 title: 'PARAMETER METRIK RISIKO PILAR CHARACTER',
@@ -502,7 +511,7 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
                 threshold: 80,
                 fokus: 'Riwayat Kolektibilitas SLIK & Integritas',
                 directive: 'Panduan Penilaian AI: Pilar Karakter (Character)',
-                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_character']) ? $pengaturan_ai['prompt_character'] : null) ?> || defaultPrompts.character
+                prompt: <?= json_encode($dbPromptChar) ?> || defaultPrompts.character
             },
             capacity: {
                 title: 'PARAMETER METRIK RISIKO PILAR CAPACITY',
@@ -542,7 +551,7 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
                 threshold: 75,
                 fokus: 'Sintesis Komprehensif Scoring 5C & Rekomendasi Komite',
                 directive: 'Panduan Penilaian AI: Kesimpulan & Rekomendasi Akhir',
-                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_final']) ? $pengaturan_ai['prompt_final'] : null) ?> || defaultPrompts.reviewer
+                prompt: <?= json_encode($dbPromptFinal) ?> || defaultPrompts.reviewer
             }
         };
 
@@ -623,9 +632,18 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
             }
         }
 
-        let currentPillar = 'collateral';
+        let currentPillar = 'character';
+        let isInitialPillarLoad = true;
 
         function switchPillar(pillarKey) {
+            // Simpan perubahan yang sedang diketik di tab sebelumnya agar tidak hilang saat pindah tab
+            if (!isInitialPillarLoad && currentPillar && pillarData[currentPillar]) {
+                const editor = document.getElementById('promptEditor');
+                if (editor && editor.value.trim() !== '') {
+                    pillarData[currentPillar].prompt = editor.value;
+                }
+            }
+            isInitialPillarLoad = false;
             currentPillar = pillarKey;
             const data = pillarData[pillarKey];
             if (!data) return;
@@ -816,9 +834,9 @@ Wajib memberikan output HANYA berupa dokumen JSON murni TANPA pembungkus markdow
 
         document.getElementById('promptEditor').addEventListener('input', updateTokenCount);
 
-        // Muat prompt pilar awal dari database saat halaman selesai dimuat
+        // Muat prompt pilar awal (1. Character) dari database saat halaman selesai dimuat
         document.addEventListener('DOMContentLoaded', function() {
-            switchPillar('collateral');
+            switchPillar('character');
         });
     </script>
 </body>
