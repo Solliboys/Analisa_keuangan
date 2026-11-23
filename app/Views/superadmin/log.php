@@ -23,18 +23,40 @@
     <!-- MAIN CONTENT CONTAINER -->
     <main class="ml-0 md:ml-64 min-h-screen flex flex-col min-w-0 overflow-x-hidden transition-all duration-300">
         
-        <!-- TOPBAR DESKTOP DENGAN BREADCRUMB -->
-        <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30 px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <!-- Hamburger Mobile Toggle -->
-                <button type="button" onclick="toggleSidebar()" class="md:hidden p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <!-- Mobile Header Bar Responsif -->
+        <header class="md:hidden bg-white border-b border-slate-200 px-3.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sticky top-0 z-20 w-full min-w-0">
+            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <button type="button" onclick="toggleSidebar()" class="p-1.5 sm:p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 shrink-0 cursor-pointer" aria-label="Toggle Sidebar">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
                 </button>
+                <div class="flex items-center gap-2 min-w-0 flex-1">
+                    <?php 
+                        $cfgHeader = !empty($pengaturan_sistem) ? $pengaturan_sistem : (\Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? []);
+                        $appHeaderLogo = !empty($cfgHeader['logo_aplikasi']) ? $cfgHeader['logo_aplikasi'] : '';
+                        $appHeaderName = !empty($cfgHeader['nama_aplikasi']) ? $cfgHeader['nama_aplikasi'] : 'OTW Kredit';
+                    ?>
+                    <?php if (!empty($appHeaderLogo)): ?>
+                        <img src="<?= base_url($appHeaderLogo) ?>" class="w-6 h-6 object-contain rounded shrink-0" alt="Logo">
+                    <?php endif; ?>
+                    <span class="font-bold text-slate-900 text-xs sm:text-sm truncate whitespace-nowrap min-w-0 block"><?= esc($appHeaderName) ?></span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="<?= base_url('auth/logout') ?>" class="text-xs text-rose-600 font-semibold px-2.5 py-1.5 rounded-lg bg-rose-50 border border-rose-200 hover:bg-rose-100 transition shrink-0 whitespace-nowrap">
+                    Logout
+                </a>
+            </div>
+        </header>
 
+        <!-- TOPBAR DESKTOP DENGAN BREADCRUMB -->
+        <div class="hidden md:flex bg-white border-b border-slate-200/80 sticky top-0 z-20 px-6 lg:px-8 py-3.5 items-center justify-between w-full">
+            <div class="flex items-center gap-3">
                 <!-- Breadcrumb Pill -->
                 <div class="flex items-center gap-2 text-xs">
-                    <span class="font-bold text-slate-400 tracking-wider uppercase text-[10px] hidden sm:inline"><?= esc(strtoupper($jabatan ?? 'Super Administrator')) ?></span>
-                    <span class="text-slate-300 hidden sm:inline">/</span>
+                    <span class="font-bold text-slate-400 tracking-wider uppercase text-[10px]"><?= esc(strtoupper($jabatan ?? 'Super Administrator')) ?></span>
+                    <span class="text-slate-300">/</span>
                     <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-700 font-bold text-[11px]">
                         <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
                         <span>Log Aktivitas Sistem</span>
@@ -45,11 +67,10 @@
             <div class="flex items-center gap-2 shrink-0">
                 <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200 whitespace-nowrap">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    <span class="hidden sm:inline">Audit Engine Online</span>
-                    <span class="sm:hidden">Online</span>
+                    <span>Audit Engine Online</span>
                 </span>
             </div>
-        </header>
+        </div>
 
         <!-- CONTENT AREA (FULL WIDTH) -->
         <div class="p-4 sm:p-6 lg:p-8 flex-1 space-y-6 w-full">
