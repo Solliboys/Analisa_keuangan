@@ -126,13 +126,11 @@
                         <span class="text-slate-400 font-normal">(15%)</span>
                     </button>
 
-                    <!-- Tab 4: Collateral (ACTIVE by default) -->
-                    <button type="button" onclick="switchPillar('collateral')" id="tab-collateral" class="pillar-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-white text-blue-700 shadow-2xs border border-blue-200 transition">
-                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
+                    <!-- Tab 4: Collateral -->
+                    <button type="button" onclick="switchPillar('collateral')" id="tab-collateral" class="pillar-tab flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition">
+                        <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">✓</span>
                         <span>4. Collateral</span>
-                        <span class="px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700 text-[11px] font-bold">20%</span>
+                        <span class="text-slate-400 font-normal">(20%)</span>
                     </button>
 
                     <!-- Tab 5: Condition -->
@@ -195,7 +193,7 @@
                             <input type="number" id="inputThreshold" value="75" class="w-full pl-3.5 pr-14 py-2.5 text-sm font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition shadow-2xs" />
                             <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs font-semibold text-slate-400">/ 100</span>
                         </div>
-                        <p class="text-[11px] text-slate-400">Batas minimum kelayakan jaminan kredit</p>
+                        <p class="text-[11px] text-slate-400">Batas minimum kelayakan skor pilar</p>
                     </div>
 
                 </div>
@@ -663,9 +661,9 @@ Arahan Penyajian Ringkasan Analisis:
         let currentPillar = 'character';
         let isInitialPillarLoad = true;
 
-        function switchPillar(pillarKey) {
-            // Simpan perubahan yang sedang diketik di tab sebelumnya agar tidak hilang saat pindah tab
-            if (!isInitialPillarLoad && currentPillar && pillarData[currentPillar]) {
+        function switchPillar(pillarKey, skipSaveCurrent = false) {
+            // Simpan perubahan yang sedang diketik hanya jika benar-benar pindah ke tab lain
+            if (!isInitialPillarLoad && !skipSaveCurrent && pillarKey !== currentPillar && currentPillar && pillarData[currentPillar]) {
                 const editor = document.getElementById('promptEditor');
                 if (editor && editor.value.trim() !== '') {
                     pillarData[currentPillar].prompt = editor.value;
@@ -758,7 +756,7 @@ Arahan Penyajian Ringkasan Analisis:
                     if (defaultPrompts[currentPillar]) {
                         pillarData[currentPillar].prompt = defaultPrompts[currentPillar];
                     }
-                    switchPillar(currentPillar);
+                    switchPillar(currentPillar, true);
                     Swal.fire({
                         icon: 'success',
                         title: 'Tereset',
