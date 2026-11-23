@@ -236,10 +236,9 @@
 
         <!-- Center Navigation Desktop -->
         <nav class="hidden md:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-full border border-slate-200/70 shadow-inner">
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#fitur">Fitur</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#alur-kerja">Alur Kerja</a>
+            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#fitur">Fitur &amp; Keunggulan</a>
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#simulasi">Kalkulator</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#komparasi">Keunggulan</a>
+            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#alur-kerja">Alur Kerja</a>
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#faq">FAQ</a>
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#kontak">Kontak</a>
         </nav>
@@ -260,10 +259,9 @@
     <!-- Mobile Navigation Drawer -->
     <div id="mobileMenu" class="hidden md:hidden bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 py-3 shadow-xl transition-all">
         <nav class="flex flex-col space-y-1">
-            <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#fitur" onclick="toggleMobileMenu(false)">Fitur</a>
-            <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#alur-kerja" onclick="toggleMobileMenu(false)">Alur Kerja</a>
+            <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#fitur" onclick="toggleMobileMenu(false)">Fitur &amp; Keunggulan</a>
             <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#simulasi" onclick="toggleMobileMenu(false)">Kalkulator</a>
-            <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#komparasi" onclick="toggleMobileMenu(false)">Keunggulan</a>
+            <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#alur-kerja" onclick="toggleMobileMenu(false)">Alur Kerja</a>
             <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#faq" onclick="toggleMobileMenu(false)">FAQ</a>
             <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#kontak" onclick="toggleMobileMenu(false)">Kontak</a>
             <div class="pt-2 mt-1 border-t border-slate-100">
@@ -553,17 +551,17 @@
         </div>
     </section>
 
-    <!-- SECTION: BENTO GRID OF CORE FEATURES -->
+    <!-- SECTION: FITUR & KEUNGGULAN (UNIFIED) -->
     <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 relative scroll-mt-20 sm:scroll-mt-24" id="fitur">
         <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2.5 sm:mb-3">
-                <span>Fitur Unggulan</span>
+                <span>Fitur &amp; Keunggulan</span>
             </div>
             <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                Evaluasi 5C Presisi &amp; Otomatis
+                Evaluasi 5C Presisi: <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 bg-clip-text text-transparent">Manual vs Engine AI</span>
             </h2>
-            <p class="text-slate-500 text-xs sm:text-sm mt-2 sm:mt-2.5">
-                Analisis risiko komprehensif dalam hitungan detik.
+            <p class="text-slate-500 text-xs sm:text-sm mt-2 sm:mt-2.5 leading-relaxed">
+                Analisis risiko komprehensif dalam hitungan detik. Tingkatkan efisiensi analisa kredit hingga 95% dengan audit trail kepatuhan lengkap.
             </p>
         </div>
         <!-- Bento Cards Grid (3 Kolom Utama Sesuai Sistem Aktual) -->
@@ -646,6 +644,92 @@
                         <div class="text-left">
                             <span class="text-xs font-bold text-slate-800 block">Laporan Analisis Kredit</span>
                             <span class="text-[10px] sm:text-[11px] text-slate-400">Siap Cetak &amp; Disahkan Komite</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bagian Komparasi Terintegrasi: Manual vs Engine AI -->
+        <div class="mt-6 sm:mt-10 bg-gradient-to-b from-slate-50 to-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-8 lg:p-10 shadow-card scroll-mt-20 sm:scroll-mt-24" id="komparasi">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
+                <!-- Left Copy -->
+                <div class="lg:col-span-5 space-y-3 sm:space-y-4 text-left">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100/70 text-blue-700 text-xs font-bold uppercase tracking-wider">
+                        <span>Standar Komparasi</span>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                        Mengapa Beralih ke <span class="text-blue-600">Engine AI</span>?
+                    </h3>
+                    <p class="text-slate-500 text-xs sm:text-sm leading-relaxed">
+                        Tinggalkan analisa manual berhari-hari. Dapatkan efisiensi 95% dengan audit trail kepatuhan lengkap.
+                    </p>
+                    <div class="pt-1">
+                        <a class="inline-flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-slate-950 text-white font-bold text-xs sm:text-sm hover:bg-blue-600 transition-colors shadow-sm cursor-pointer" href="<?= base_url('auth') ?>">
+                            <span>Daftar Akses</span>
+                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- Right Table Comparison -->
+                <div class="lg:col-span-7 bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-sm overflow-x-auto">
+                    <div class="grid grid-cols-12 bg-slate-50/80 p-2.5 sm:p-4 border-b border-slate-200 font-bold text-[10px] sm:text-xs text-slate-600 w-full min-w-0">
+                        <div class="col-span-6 uppercase">Parameter</div>
+                        <div class="col-span-3 text-center text-slate-400 uppercase">Manual</div>
+                        <div class="col-span-3 text-center text-blue-600 uppercase font-extrabold">Engine AI</div>
+                    </div>
+                    <div class="divide-y divide-slate-100 text-xs sm:text-sm">
+                        <!-- Row 1 -->
+                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
+                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Durasi Analisis</div>
+                            <div class="col-span-3 text-center text-[10px] sm:text-xs text-slate-400">3 - 5 Hari</div>
+                            <div class="col-span-3 text-center font-extrabold text-blue-600 text-[10px] sm:text-xs bg-blue-50/80 py-1 px-1 rounded-full">&lt; 10 Menit</div>
+                        </div>
+                        <!-- Row 2 -->
+                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
+                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Scoring 5C Otomatis</div>
+                            <div class="col-span-3 flex justify-center text-slate-300">
+                                <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
+                            </div>
+                            <div class="col-span-3 flex justify-center text-blue-600">
+                                <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[12px] sm:text-[14px]">check</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Row 3 -->
+                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
+                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Integrasi SLIK OJK</div>
+                            <div class="col-span-3 flex justify-center text-slate-300">
+                                <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
+                            </div>
+                            <div class="col-span-3 flex justify-center text-blue-600">
+                                <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[12px] sm:text-[14px]">check</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Row 4 -->
+                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
+                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Laporan PDF 1-Klik</div>
+                            <div class="col-span-3 flex justify-center text-slate-300">
+                                <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
+                            </div>
+                            <div class="col-span-3 flex justify-center text-blue-600">
+                                <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[12px] sm:text-[14px]">check</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Row 5 -->
+                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
+                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Persetujuan Komite 4-Eyes</div>
+                            <div class="col-span-3 flex justify-center text-slate-400 text-[10px] sm:text-xs">Manual Email</div>
+                            <div class="col-span-3 flex justify-center text-blue-600">
+                                <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[12px] sm:text-[14px]">check</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -836,94 +920,6 @@
         </div>
     </section>
 
-    <!-- SECTION: COMPARISON BENCHMARK -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 scroll-mt-20 sm:scroll-mt-24" id="komparasi">
-        <div class="bg-gradient-to-b from-slate-50 to-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-8 lg:p-12 shadow-card">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 items-center">
-                <!-- Left Copy -->
-                <div class="lg:col-span-5 space-y-3 sm:space-y-4">
-                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100/70 text-blue-700 text-xs font-bold uppercase tracking-wider">
-                        <span>Keunggulan</span>
-                    </div>
-                    <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                        Manual vs <span class="text-blue-600">Engine AI</span>
-                    </h2>
-                    <p class="text-slate-500 text-xs sm:text-sm leading-relaxed">
-                        Tingkatkan efisiensi analisa kredit hingga 95% dengan audit trail kepatuhan lengkap.
-                    </p>
-                    <div class="pt-1 sm:pt-3">
-                        <a class="inline-flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-slate-950 text-white font-bold text-xs sm:text-sm hover:bg-blue-600 transition-colors shadow-sm cursor-pointer" href="<?= base_url('auth') ?>">
-                            <span>Daftar Akses</span>
-                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-                        </a>
-                    </div>
-                </div>
-                <!-- Right Table Comparison -->
-                <div class="lg:col-span-7 bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-sm overflow-x-auto">
-                    <div class="grid grid-cols-12 bg-slate-50/80 p-2.5 sm:p-4 border-b border-slate-200 font-bold text-[10px] sm:text-xs text-slate-600 w-full min-w-0">
-                        <div class="col-span-6 uppercase">Parameter</div>
-                        <div class="col-span-3 text-center text-slate-400 uppercase">Manual</div>
-                        <div class="col-span-3 text-center text-blue-600 uppercase font-extrabold">Engine AI</div>
-                    </div>
-                    <div class="divide-y divide-slate-100 text-xs sm:text-sm">
-                        <!-- Row 1 -->
-                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
-                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Durasi Analisis</div>
-                            <div class="col-span-3 text-center text-[10px] sm:text-xs text-slate-400">3 - 5 Hari</div>
-                            <div class="col-span-3 text-center font-extrabold text-blue-600 text-[10px] sm:text-xs bg-blue-50/80 py-1 px-1 rounded-full">&lt; 10 Menit</div>
-                        </div>
-                        <!-- Row 2 -->
-                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
-                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Scoring 5C Otomatis</div>
-                            <div class="col-span-3 flex justify-center text-slate-300">
-                                <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
-                            </div>
-                            <div class="col-span-3 flex justify-center text-blue-600">
-                                <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-[12px] sm:text-[14px]">check</span>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Row 3 -->
-                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
-                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Integrasi SLIK OJK</div>
-                            <div class="col-span-3 flex justify-center text-slate-300">
-                                <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
-                            </div>
-                            <div class="col-span-3 flex justify-center text-blue-600">
-                                <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-[12px] sm:text-[14px]">check</span>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Row 4 -->
-                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
-                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Laporan PDF 1-Klik</div>
-                            <div class="col-span-3 flex justify-center text-slate-300">
-                                <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
-                            </div>
-                            <div class="col-span-3 flex justify-center text-blue-600">
-                                <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-[12px] sm:text-[14px]">check</span>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Row 5 -->
-                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
-                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Persetujuan Komite 4-Eyes</div>
-                            <div class="col-span-3 flex justify-center text-slate-400 text-[10px] sm:text-xs">Manual Email</div>
-                            <div class="col-span-3 flex justify-center text-blue-600">
-                                <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-[12px] sm:text-[14px]">check</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- SECTION: CURATED QUESTIONS (FAQ) -->
     <section class="max-w-4xl mx-auto px-4 sm:px-8 py-10 sm:py-16 scroll-mt-20 sm:scroll-mt-24" id="faq">
         <div class="text-center mb-6 sm:mb-10">
@@ -1036,10 +1032,9 @@
             <div class="lg:col-span-2 space-y-2.5 sm:space-y-3">
                 <h4 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Navigasi</h4>
                 <ul class="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-slate-500">
-                    <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Fitur Utama</a></li>
+                    <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Fitur &amp; Keunggulan</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#alur-kerja">Alur Analisis</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="<?= base_url('simulasi') ?>">Sandbox Kalkulasi</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#komparasi">Perbandingan</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#faq">FAQ</a></li>
                 </ul>
             </div>
