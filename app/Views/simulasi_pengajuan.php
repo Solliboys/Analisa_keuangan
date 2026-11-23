@@ -85,93 +85,93 @@
 
     <!-- Top Navigation Bar -->
     <header class="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 no-print">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3">
             
             <!-- Left Branding & Breadcrumb -->
-            <div class="flex items-center gap-3 min-w-0">
-                <a href="<?= base_url('/') ?>" class="flex items-center gap-2.5 group shrink-0">
-                    <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWeb) ?>" class="h-8 w-8 object-contain transition-transform group-hover:scale-105">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <a href="<?= base_url('/') ?>" class="flex items-center gap-2 sm:gap-2.5 group shrink-0">
+                    <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWeb) ?>" class="h-7 w-7 sm:h-8 sm:w-8 object-contain transition-transform group-hover:scale-105">
                     <div class="flex flex-col">
-                        <span class="text-sm font-extrabold text-slate-900 tracking-tight leading-tight"><?= esc($namaWeb) ?></span>
-                        <span class="text-[10px] font-semibold text-blue-600 uppercase tracking-wider hidden sm:inline">Simulasi Pengajuan</span>
+                        <span class="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight leading-tight whitespace-nowrap"><?= esc($namaWeb) ?></span>
+                        <span class="text-[9px] sm:text-[10px] font-semibold text-blue-600 uppercase tracking-wider hidden sm:inline">Simulasi Pengajuan</span>
                     </div>
                 </a>
                 <span class="text-slate-300 hidden sm:inline">/</span>
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/70 text-[11px] font-semibold">
+                <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/70 text-[11px] font-semibold">
                     <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
                     <span>Sandbox Interaktif</span>
                 </span>
             </div>
 
             <!-- Right Actions -->
-            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                <a href="<?= base_url('/') ?>" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition">
+            <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+                <a href="<?= base_url('/') ?>" class="inline-flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition" title="Kembali ke Beranda">
                     <span class="material-symbols-outlined text-[16px]">arrow_back</span>
                     <span class="hidden sm:inline">Beranda</span>
                 </a>
-                <button type="button" onclick="isiContohSimulasi()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-blue-200 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-xs font-semibold transition cursor-pointer">
+                <button type="button" onclick="isiContohSimulasi()" class="inline-flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 hover:border-blue-200 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-xs font-semibold transition cursor-pointer" title="Isi data contoh otomatis">
                     <span class="material-symbols-outlined text-[16px] text-blue-600">magic_button</span>
                     <span class="hidden sm:inline">Isi Contoh</span>
                 </button>
-                <button type="button" onclick="resetSimulasi()" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold transition cursor-pointer">
+                <button type="button" onclick="resetSimulasi()" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold transition cursor-pointer" title="Reset formulir">
                     <span class="material-symbols-outlined text-[16px]">refresh</span>
                     <span>Reset</span>
                 </button>
-                <a href="<?= $portalUrl ?>" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 hover:shadow-blue-500/40 transition">
+                <a href="<?= $portalUrl ?>" class="inline-flex items-center gap-1 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs hover:shadow-sm transition">
                     <span>Login</span>
-                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                    <span class="material-symbols-outlined text-[15px] sm:text-[16px]">arrow_forward</span>
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- Mobile Live Strip (Sticky Under Header) -->
-    <div class="lg:hidden bg-white/95 backdrop-blur border-b border-slate-200/80 px-4 py-2.5 no-print sticky top-16 z-30 shadow-xs">
-        <div class="flex items-center justify-between text-[11px] font-medium text-slate-500 mb-2">
-            <span class="flex items-center gap-1">
-                <span class="material-symbols-outlined text-[14px] text-blue-600">tune</span>
-                <span>Ringkasan Langsung</span>
+    <!-- Mobile Live Strip (Sleek Compact Under Header) -->
+    <div class="lg:hidden bg-white/95 backdrop-blur border-b border-slate-200/80 px-3 py-2 no-print sticky top-14 z-30 shadow-xs">
+        <div class="flex items-center justify-between text-[10px] font-medium text-slate-500 mb-1.5">
+            <span class="flex items-center gap-1 font-semibold text-slate-700">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                <span>Live Estimasi</span>
             </span>
-            <span class="font-bold text-slate-900 tabular-nums">Langkah <span id="simStepNumMobile">1</span> dari 5</span>
+            <span class="font-bold text-slate-900 tabular-nums">Langkah <span id="simStepNumMobile">1</span>/5</span>
         </div>
         <div class="grid grid-cols-3 divide-x divide-slate-200/80 border border-slate-200/80 rounded-xl bg-slate-50/80 text-center tabular-nums">
-            <div class="py-2 px-1">
-                <div class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Angsuran / bln</div>
+            <div class="py-1 px-1">
+                <div class="text-[8px] font-semibold text-slate-500 uppercase tracking-wider">Angsuran / bln</div>
                 <div id="mob_angs" class="text-xs font-extrabold text-slate-950 truncate mt-0.5">Rp 0</div>
             </div>
-            <div class="py-2 px-1">
-                <div class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Skor 5C</div>
+            <div class="py-1 px-1">
+                <div class="text-[8px] font-semibold text-slate-500 uppercase tracking-wider">Skor 5C</div>
                 <div id="mob_skor" class="text-xs font-extrabold text-blue-700 mt-0.5">85,6</div>
             </div>
-            <div class="py-2 px-1">
-                <div class="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">DSCR</div>
+            <div class="py-1 px-1">
+                <div class="text-[8px] font-semibold text-slate-500 uppercase tracking-wider">DSCR</div>
                 <div id="mob_dscr" class="text-xs font-extrabold text-emerald-700 mt-0.5">2,97x</div>
             </div>
         </div>
     </div>
 
     <!-- MAIN WORKBENCH -->
-    <main class="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 min-w-0 relative z-10">
+    <main class="w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1 min-w-0 relative z-10">
         
         <!-- TOP HORIZONTAL STEPPER (DI TENGAH) -->
-        <div class="mb-8 no-print text-center flex flex-col items-center justify-center">
+        <div class="mb-5 sm:mb-8 no-print text-center flex flex-col items-center justify-center">
             <!-- Progress Sub-bar Centered -->
-            <div class="inline-flex items-center justify-center gap-2 text-xs text-slate-500 mb-2.5 px-3.5 py-1 rounded-full bg-white border border-slate-200/80 shadow-xs">
+            <div class="inline-flex items-center justify-center gap-2 text-xs text-slate-500 mb-2 px-3 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-white border border-slate-200/80 shadow-xs">
                 <span class="font-bold text-slate-900">Alur Simulasi Kredit</span>
                 <span class="text-slate-300">&bull;</span>
                 <span class="text-slate-600">Langkah <span id="simStepNum" class="font-bold text-blue-600">1</span> dari 5</span>
             </div>
 
             <!-- Horizontal Progress Track Centered -->
-            <div class="h-1.5 w-full max-w-xl mx-auto bg-slate-200/80 rounded-full overflow-hidden mb-4">
+            <div class="h-1.5 w-full max-w-xl mx-auto bg-slate-200/80 rounded-full overflow-hidden mb-3 sm:mb-4">
                 <div id="simProgressBar" class="h-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-300 rounded-full" style="width: 20%;"></div>
             </div>
 
-            <!-- Stepper Navigation Pills Centered -->
-            <div class="flex items-center justify-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-1 max-w-full">
+            <!-- Stepper Navigation Pills Centered (Scrollable on Mobile) -->
+            <div class="w-full flex items-center justify-start sm:justify-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-1.5 max-w-full px-1">
                 <?php foreach ($simSteps as $n => $st): ?>
                     <button type="button" onclick="goSimTab(<?= $n ?>)" id="sim-step-btn-<?= $n ?>"
-                            class="group shrink-0 inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-left transition-all cursor-pointer <?= $n === 1 ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/25' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50' ?>">
+                            class="group shrink-0 inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer <?= $n === 1 ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/25' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50' ?>">
                         <span id="sim-step-num-<?= $n ?>" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold tabular-nums <?= $n === 1 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200' ?>">
                             <?= $st['num'] ?>
                         </span>
@@ -190,22 +190,22 @@
                 <!-- STEP 1: APLIKASI KREDIT -->
                 <div id="sim-tab-1" class="sim-tab-panel active bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
                     <!-- Card Header -->
-                    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-white to-slate-50/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[22px]">payments</span>
+                    <div class="px-4 py-3.5 sm:px-6 sm:py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-white to-slate-50/50 gap-2">
+                        <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[20px] sm:text-[22px]">payments</span>
                             </div>
-                            <div>
-                                <h1 class="text-base font-extrabold text-slate-900 tracking-tight">Parameter Aplikasi Kredit</h1>
-                                <p class="text-xs text-slate-500 mt-0.5">Tentukan nilai plafon pinjaman, jangka waktu (tenor), suku bunga, dan metode angsuran.</p>
+                            <div class="min-w-0">
+                                <h1 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight truncate sm:whitespace-normal">Parameter Aplikasi Kredit</h1>
+                                <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5 line-clamp-1 sm:line-clamp-none">Tentukan nilai plafon pinjaman, jangka waktu (tenor), suku bunga, dan metode angsuran.</p>
                             </div>
                         </div>
-                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 tabular-nums">01 / 05</span>
+                        <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2 sm:px-2.5 py-1 rounded-lg border border-blue-100 tabular-nums shrink-0">01 / 05</span>
                     </div>
 
                     <!-- Card Body -->
-                    <div class="p-6 space-y-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                             <!-- Tipe Pemohon -->
                             <div>
                                 <label for="s_tipe" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tipe Pemohon</label>
@@ -233,11 +233,11 @@
                                 </div>
                                 <!-- Plafon Quick Chips -->
                                 <div class="flex flex-wrap items-center gap-1.5 mt-2.5">
-                                    <button type="button" onclick="setPlafonPreset(100000000)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-[11px] font-semibold text-slate-600 transition cursor-pointer">100 Jt</button>
-                                    <button type="button" onclick="setPlafonPreset(250000000)" class="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-[11px] font-semibold transition cursor-pointer border border-blue-200/60">250 Jt</button>
-                                    <button type="button" onclick="setPlafonPreset(500000000)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-[11px] font-semibold text-slate-600 transition cursor-pointer">500 Jt</button>
-                                    <button type="button" onclick="setPlafonPreset(1000000000)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-[11px] font-semibold text-slate-600 transition cursor-pointer">1 Miliar</button>
-                                    <button type="button" onclick="setPlafonPreset(2500000000)" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-[11px] font-semibold text-slate-600 transition cursor-pointer">2,5 Miliar</button>
+                                    <button type="button" onclick="setPlafonPreset(100000000)" class="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-xs font-semibold text-slate-600 transition cursor-pointer">100 Jt</button>
+                                    <button type="button" onclick="setPlafonPreset(250000000)" class="px-2.5 py-1.5 sm:py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold transition cursor-pointer border border-blue-200/60">250 Jt</button>
+                                    <button type="button" onclick="setPlafonPreset(500000000)" class="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-xs font-semibold text-slate-600 transition cursor-pointer">500 Jt</button>
+                                    <button type="button" onclick="setPlafonPreset(1000000000)" class="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-xs font-semibold text-slate-600 transition cursor-pointer">1 Miliar</button>
+                                    <button type="button" onclick="setPlafonPreset(2500000000)" class="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-xs font-semibold text-slate-600 transition cursor-pointer">2,5 Miliar</button>
                                 </div>
                             </div>
 
@@ -249,10 +249,10 @@
                                     <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 select-none">Bulan</span>
                                 </div>
                                 <div class="flex items-center gap-1.5 mt-2">
-                                    <button type="button" onclick="setTenorPreset(12)" class="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-[10px] font-semibold text-slate-600 transition cursor-pointer">12 bln</button>
-                                    <button type="button" onclick="setTenorPreset(24)" class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-semibold transition cursor-pointer border border-blue-200/60">24 bln</button>
-                                    <button type="button" onclick="setTenorPreset(36)" class="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-[10px] font-semibold text-slate-600 transition cursor-pointer">36 bln</button>
-                                    <button type="button" onclick="setTenorPreset(60)" class="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-[10px] font-semibold text-slate-600 transition cursor-pointer">60 bln</button>
+                                    <button type="button" onclick="setTenorPreset(12)" class="flex-1 sm:flex-initial px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-center text-[11px] font-semibold text-slate-600 transition cursor-pointer">12 bln</button>
+                                    <button type="button" onclick="setTenorPreset(24)" class="flex-1 sm:flex-initial px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-center text-[11px] font-semibold transition cursor-pointer border border-blue-200/60">24 bln</button>
+                                    <button type="button" onclick="setTenorPreset(36)" class="flex-1 sm:flex-initial px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-center text-[11px] font-semibold text-slate-600 transition cursor-pointer">36 bln</button>
+                                    <button type="button" onclick="setTenorPreset(60)" class="flex-1 sm:flex-initial px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-center text-[11px] font-semibold text-slate-600 transition cursor-pointer">60 bln</button>
                                 </div>
                             </div>
 
@@ -295,8 +295,8 @@
                         </div>
 
                         <!-- Perbandingan Skema Output Strip -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                            <div class="p-4 rounded-xl border border-blue-200/80 bg-blue-50/50 relative overflow-hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1 sm:pt-2">
+                            <div class="p-3.5 sm:p-4 rounded-xl border border-blue-200/80 bg-blue-50/50 relative overflow-hidden">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-xs font-bold text-blue-900">Installment (Pokok + Bunga)</span>
                                     <span class="text-[10px] font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full">Standar</span>
@@ -305,7 +305,7 @@
                                 <div class="text-[11px] text-slate-500 mt-1">Angsuran tetap pokok dan bunga bulanan.</div>
                             </div>
 
-                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70 relative overflow-hidden">
+                            <div class="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70 relative overflow-hidden">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-xs font-bold text-slate-800">Balloon Payment (Bunga Saja)</span>
                                     <span class="text-[10px] font-bold text-slate-600 bg-slate-200/80 px-2 py-0.5 rounded-full">Khusus</span>
@@ -319,21 +319,21 @@
 
                 <!-- STEP 2: PROFIL & USAHA -->
                 <div id="sim-tab-2" class="sim-tab-panel bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-white to-slate-50/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[22px]">storefront</span>
+                    <div class="px-4 py-3.5 sm:px-6 sm:py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-white to-slate-50/50">
+                        <div class="flex items-center gap-2.5 sm:gap-3">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[20px] sm:text-[22px]">storefront</span>
                             </div>
                             <div>
-                                <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Profil Debitur &amp; Usaha</h2>
-                                <p class="text-xs text-slate-500 mt-0.5">Parameter profil usaha untuk pembobotan aspek Character &amp; Condition.</p>
+                                <h2 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">Profil Debitur &amp; Usaha</h2>
+                                <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Parameter profil usaha untuk pembobotan aspek Character &amp; Condition.</p>
                             </div>
                         </div>
-                        <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100 tabular-nums">02 / 05</span>
+                        <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 sm:px-2.5 py-1 rounded-lg border border-indigo-100 tabular-nums shrink-0">02 / 05</span>
                     </div>
 
-                    <div class="p-6 space-y-5">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="p-4 sm:p-6 space-y-4 sm:space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                             <div>
                                 <label for="s_usaha" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nama Usaha / Perusahaan</label>
                                 <input type="text" id="s_usaha" value="UD Sumber Rejeki" oninput="hitungSemuaSimulasi()" class="fin-input">
@@ -372,21 +372,21 @@
 
                 <!-- STEP 3: AGUNAN & LTV -->
                 <div id="sim-tab-3" class="sim-tab-panel bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-white to-slate-50/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[22px]">home_work</span>
+                    <div class="px-4 py-3.5 sm:px-6 sm:py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-white to-slate-50/50">
+                        <div class="flex items-center gap-2.5 sm:gap-3">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[20px] sm:text-[22px]">home_work</span>
                             </div>
                             <div>
-                                <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Penilaian Agunan &amp; LTV</h2>
-                                <p class="text-xs text-slate-500 mt-0.5">Estimasi nilai likuidasi, rasio Loan-to-Value (LTV), dan rasio coverage jaminan.</p>
+                                <h2 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">Penilaian Agunan &amp; LTV</h2>
+                                <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Estimasi nilai likuidasi, rasio Loan-to-Value (LTV), dan rasio coverage jaminan.</p>
                             </div>
                         </div>
-                        <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 tabular-nums">03 / 05</span>
+                        <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 sm:px-2.5 py-1 rounded-lg border border-emerald-100 tabular-nums shrink-0">03 / 05</span>
                     </div>
 
-                    <div class="p-6 space-y-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
                             <div>
                                 <label for="s_agunan_jenis" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Jenis Agunan</label>
                                 <select id="s_agunan_jenis" onchange="hitungSemuaSimulasi()" class="fin-input">
@@ -415,22 +415,22 @@
                         </div>
 
                         <!-- Agunan Metrics Grid -->
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-1">
+                            <div class="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70">
                                 <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nilai Likuidasi (LV)</div>
-                                <div id="out_t3_lv" class="text-lg font-extrabold text-slate-900 mt-1 tabular-nums">Rp 0</div>
+                                <div id="out_t3_lv" class="text-base sm:text-lg font-extrabold text-slate-900 mt-1 tabular-nums">Rp 0</div>
                                 <div class="text-[11px] text-slate-500 mt-0.5">Nilai taksasi aman jaminan.</div>
                             </div>
 
-                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70">
+                            <div class="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70">
                                 <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Rasio LTV (Plafon/MV)</div>
-                                <div id="out_t3_ltv" class="text-lg font-extrabold text-slate-900 mt-1 tabular-nums">0%</div>
+                                <div id="out_t3_ltv" class="text-base sm:text-lg font-extrabold text-slate-900 mt-1 tabular-nums">0%</div>
                                 <div class="text-[11px] text-emerald-600 font-semibold mt-0.5">Maks. 70-80% dari pasar.</div>
                             </div>
 
-                            <div class="p-4 rounded-xl border border-blue-200/80 bg-blue-50/50">
+                            <div class="p-3.5 sm:p-4 rounded-xl border border-blue-200/80 bg-blue-50/50">
                                 <div class="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Coverage Likuidasi</div>
-                                <div id="out_t3_cov" class="text-lg font-extrabold text-blue-700 mt-1 tabular-nums">0%</div>
+                                <div id="out_t3_cov" class="text-base sm:text-lg font-extrabold text-blue-700 mt-1 tabular-nums">0%</div>
                                 <div class="text-[11px] text-blue-600 font-semibold mt-0.5">Min. 100% plafon tercakup.</div>
                             </div>
                         </div>
@@ -439,21 +439,21 @@
 
                 <!-- STEP 4: ARUS KAS BULANAN -->
                 <div id="sim-tab-4" class="sim-tab-panel bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-white to-slate-50/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-[22px]">account_balance_wallet</span>
+                    <div class="px-4 py-3.5 sm:px-6 sm:py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-white to-slate-50/50">
+                        <div class="flex items-center gap-2.5 sm:gap-3">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                <span class="material-symbols-outlined text-[20px] sm:text-[22px]">account_balance_wallet</span>
                             </div>
                             <div>
-                                <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Arus Kas Bulanan &amp; Kemampuan Bayar</h2>
-                                <p class="text-xs text-slate-500 mt-0.5">Analisis pendapatan, modal kulakan, biaya hidup, dan kewajiban angsuran berjalan.</p>
+                                <h2 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">Arus Kas Bulanan &amp; Kemampuan Bayar</h2>
+                                <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Analisis pendapatan, modal kulakan, biaya hidup, dan kewajiban angsuran berjalan.</p>
                             </div>
                         </div>
-                        <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-100 tabular-nums">04 / 05</span>
+                        <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2 sm:px-2.5 py-1 rounded-lg border border-amber-100 tabular-nums shrink-0">04 / 05</span>
                     </div>
 
-                    <div class="p-6 space-y-6">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                             <div>
                                 <label for="s_omzet" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Omzet / Pendapatan Bulanan</label>
                                 <div class="relative">
@@ -488,16 +488,16 @@
                         </div>
 
                         <!-- Cashflow Strip -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/70">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
+                            <div class="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70">
                                 <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Laba Kotor (Gross Profit)</div>
-                                <div id="out_t4_gross" class="text-lg font-extrabold text-slate-900 mt-1 tabular-nums">Rp 0</div>
+                                <div id="out_t4_gross" class="text-base sm:text-lg font-extrabold text-slate-900 mt-1 tabular-nums">Rp 0</div>
                                 <div class="text-[11px] text-slate-500 mt-0.5">Omzet dikurangi modal pokok kulakan.</div>
                             </div>
 
-                            <div class="p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/50">
+                            <div class="p-3.5 sm:p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/50">
                                 <div class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Net Cashflow (Surplus Bersih)</div>
-                                <div id="out_t4_net" class="text-lg font-extrabold text-emerald-700 mt-1 tabular-nums">Rp 0</div>
+                                <div id="out_t4_net" class="text-base sm:text-lg font-extrabold text-emerald-700 mt-1 tabular-nums">Rp 0</div>
                                 <div class="text-[11px] text-emerald-600 font-semibold mt-0.5">Sisa kas riil untuk membayar angsuran.</div>
                             </div>
                         </div>
@@ -507,53 +507,53 @@
                 <!-- STEP 5: MEMO ANALISA KREDIT (HASIL LENGKAP) -->
                 <div id="sim-tab-5" class="sim-tab-panel bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
                     <!-- Header with Actions -->
-                    <div class="px-6 py-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-white via-blue-50/30 to-slate-50/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shadow-blue-500/25">
-                                <span class="material-symbols-outlined text-[22px]">verified</span>
+                    <div class="px-4 py-3.5 sm:px-6 sm:py-5 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-gradient-to-r from-white via-blue-50/30 to-slate-50/50">
+                        <div class="flex items-center gap-2.5 sm:gap-3">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shadow-blue-500/25 shrink-0">
+                                <span class="material-symbols-outlined text-[20px] sm:text-[22px]">verified</span>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <h2 class="text-base font-extrabold text-slate-900 tracking-tight">Memo Analisa Kredit (Simulasi)</h2>
-                                    <span id="out_t5_badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Layak Disetujui</span>
+                                    <h2 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">Memo Analisa Kredit (Simulasi)</h2>
+                                    <span id="out_t5_badge" class="inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Layak Disetujui</span>
                                 </div>
-                                <p id="out_t5_identitas" class="text-xs text-slate-500 mt-0.5">Budi Santoso — UD Sumber Rejeki</p>
+                                <p id="out_t5_identitas" class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Budi Santoso — UD Sumber Rejeki</p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 no-print">
-                            <button type="button" onclick="window.print()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition cursor-pointer">
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end no-print">
+                            <button type="button" onclick="window.print()" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition cursor-pointer">
                                 <span class="material-symbols-outlined text-[16px]">print</span>
                                 <span>Cetak PDF</span>
                             </button>
-                            <a href="<?= $portalUrl ?>" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition">
+                            <a href="<?= $portalUrl ?>" class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition">
                                 <span>Ajukan di Portal</span>
                                 <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                             </a>
                         </div>
                     </div>
 
-                    <div class="p-6 space-y-6">
+                    <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
                         <!-- Key Metrics Ledger (4 Cards) -->
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 tabular-nums">
-                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
-                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Skor 5C</div>
-                                <div id="out_t5_skor" class="text-2xl font-extrabold text-blue-700 mt-1">85,6</div>
-                                <div class="text-[11px] text-slate-400 mt-0.5">dari skala 100</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 tabular-nums">
+                            <div class="p-3 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                                <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Skor 5C</div>
+                                <div id="out_t5_skor" class="text-xl sm:text-2xl font-extrabold text-blue-700 mt-0.5 sm:mt-1">85,6</div>
+                                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">dari skala 100</div>
                             </div>
-                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
-                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">DSCR</div>
-                                <div id="out_t5_dscr" class="text-2xl font-extrabold text-emerald-700 mt-1">2,97x</div>
-                                <div class="text-[11px] text-slate-400 mt-0.5">Standar min. 1,30x</div>
+                            <div class="p-3 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                                <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">DSCR</div>
+                                <div id="out_t5_dscr" class="text-xl sm:text-2xl font-extrabold text-emerald-700 mt-0.5 sm:mt-1">2,97x</div>
+                                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Standar min. 1,30x</div>
                             </div>
-                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
-                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">DSR</div>
-                                <div id="out_t5_dsr" class="text-2xl font-extrabold text-slate-900 mt-1">9,8%</div>
-                                <div class="text-[11px] text-slate-400 mt-0.5">Rasio beban omzet</div>
+                            <div class="p-3 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                                <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">DSR</div>
+                                <div id="out_t5_dsr" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5 sm:mt-1">9,8%</div>
+                                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Rasio beban omzet</div>
                             </div>
-                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
-                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Coverage LV</div>
-                                <div id="out_t5_cov" class="text-2xl font-extrabold text-slate-900 mt-1">182,0%</div>
-                                <div class="text-[11px] text-slate-400 mt-0.5">Standar min. 100%</div>
+                            <div class="p-3 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/60">
+                                <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Coverage LV</div>
+                                <div id="out_t5_cov" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5 sm:mt-1">182,0%</div>
+                                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Standar min. 100%</div>
                             </div>
                         </div>
 
@@ -563,15 +563,15 @@
                                 <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Pembobotan Analisis Prinsip 5C</h3>
                                 <span class="text-xs text-slate-500">Bobot Total 100%</span>
                             </div>
-                            <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                                <table class="w-full text-xs text-left tabular-nums">
+                            <div class="border border-slate-200 rounded-xl overflow-x-auto no-scrollbar shadow-xs">
+                                <table class="w-full text-xs text-left tabular-nums min-w-[420px] sm:min-w-full">
                                     <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                                         <tr>
-                                            <th class="px-4 py-3">Pilar 5C</th>
-                                            <th class="px-4 py-3 text-right">Bobot</th>
-                                            <th class="px-4 py-3 text-right">Skor Riil</th>
-                                            <th class="px-4 py-3 w-44 hidden sm:table-cell">Distribusi</th>
-                                            <th class="px-4 py-3 text-right">Kontribusi</th>
+                                            <th class="px-3 sm:px-4 py-2.5 sm:py-3">Pilar 5C</th>
+                                            <th class="px-3 sm:px-4 py-2.5 sm:py-3 text-right">Bobot</th>
+                                            <th class="px-3 sm:px-4 py-2.5 sm:py-3 text-right">Skor Riil</th>
+                                            <th class="px-3 sm:px-4 py-2.5 sm:py-3 w-44 hidden sm:table-cell">Distribusi</th>
+                                            <th class="px-3 sm:px-4 py-2.5 sm:py-3 text-right">Kontribusi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="out_t5_5c_rows" class="divide-y divide-slate-100 text-slate-700 bg-white">
@@ -582,9 +582,9 @@
                         </div>
 
                         <!-- Facility Terms & Disbursement Slip -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 tabular-nums">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5 tabular-nums">
                             <!-- Ringkasan Fasilitas -->
-                            <div class="border border-slate-200 rounded-xl p-5 space-y-3 bg-slate-50/50">
+                            <div class="border border-slate-200 rounded-xl p-4 sm:p-5 space-y-3 bg-slate-50/50">
                                 <div class="flex items-center gap-2 pb-2.5 border-b border-slate-200/80">
                                     <span class="material-symbols-outlined text-[18px] text-blue-600">tune</span>
                                     <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Ringkasan Struktur Fasilitas</h3>
@@ -645,8 +645,8 @@
                 </div>
 
                 <!-- BOTTOM WORKBENCH STEP BUTTONS -->
-                <div class="flex items-center justify-between gap-3 pt-2 no-print">
-                    <button type="button" id="btnSimPrev" onclick="navSimTab(-1)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                <div class="flex items-center justify-between gap-2.5 sm:gap-3 pt-2 no-print">
+                    <button type="button" id="btnSimPrev" onclick="navSimTab(-1)" class="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                         <span class="material-symbols-outlined text-[16px]">west</span>
                         <span>Sebelumnya</span>
                     </button>
@@ -656,7 +656,7 @@
                             <span>Lihat Hasil Analisa</span>
                             <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                         </button>
-                        <button type="button" id="btnSimNext" onclick="navSimTab(1)" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer">
+                        <button type="button" id="btnSimNext" onclick="navSimTab(1)" class="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer">
                             <span>Langkah Berikutnya</span>
                             <span class="material-symbols-outlined text-[16px]">east</span>
                         </button>
@@ -666,54 +666,54 @@
                 <!-- KEPUTUSAN LANGSUNG & RINGKASAN ESTIMASI (DI AKHIR) -->
                 <div class="w-full bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden no-print mt-3">
                     <!-- Header -->
-                    <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50/80 via-white to-blue-50/30">
-                        <div class="flex items-center gap-2.5">
+                    <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50/80 via-white to-blue-50/30">
+                        <div class="flex items-center gap-2 sm:gap-2.5">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Keputusan Langsung &amp; Ringkasan Estimasi</span>
+                            <span class="text-[11px] sm:text-xs font-extrabold text-slate-900 uppercase tracking-wider">Keputusan Langsung &amp; Ringkasan</span>
                         </div>
-                        <span id="rail_status" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span id="rail_status" class="inline-flex items-center px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             Layak Disetujui
                         </span>
                     </div>
 
                     <!-- Main Grid -->
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+                    <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-5 items-center">
                         <!-- Angsuran Bulanan -->
-                        <div class="md:col-span-5 p-5 rounded-xl bg-blue-50/50 border border-blue-100 text-left">
-                            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">Estimasi Angsuran Bulanan</div>
-                            <div id="rail_angs" class="text-3xl font-extrabold text-blue-600 tracking-tight mt-1 tabular-nums">Rp 0</div>
-                            <div class="flex items-center justify-between text-xs text-slate-600 mt-3 pt-3 border-t border-blue-200/60">
+                        <div class="md:col-span-5 p-4 sm:p-5 rounded-xl bg-blue-50/50 border border-blue-100 text-left">
+                            <div class="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Estimasi Angsuran Bulanan</div>
+                            <div id="rail_angs" class="text-2xl sm:text-3xl font-extrabold text-blue-600 tracking-tight mt-1 tabular-nums">Rp 0</div>
+                            <div class="flex items-center justify-between text-[11px] sm:text-xs text-slate-600 mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-blue-200/60">
                                 <span>Plafon: <strong id="rail_plafon" class="text-slate-900 tabular-nums">Rp 0</strong></span>
-                                <span>Net Cashflow: <strong id="rail_net" class="text-slate-900 tabular-nums">Rp 0</strong></span>
+                                <span>Net CF: <strong id="rail_net" class="text-slate-900 tabular-nums">Rp 0</strong></span>
                             </div>
                         </div>
 
                         <!-- 3 KPIs Bar -->
-                        <div class="md:col-span-4 grid grid-cols-3 divide-x divide-slate-100 border border-slate-200 rounded-xl bg-slate-50/60 text-center tabular-nums p-2">
-                            <div class="py-2.5 px-1">
-                                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Skor 5C</div>
-                                <div id="rail_skor" class="text-lg font-extrabold text-blue-700 mt-0.5">85,6</div>
+                        <div class="md:col-span-4 grid grid-cols-3 divide-x divide-slate-100 border border-slate-200 rounded-xl bg-slate-50/60 text-center tabular-nums p-1.5 sm:p-2">
+                            <div class="py-2 sm:py-2.5 px-1">
+                                <div class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider">Skor 5C</div>
+                                <div id="rail_skor" class="text-base sm:text-lg font-extrabold text-blue-700 mt-0.5">85,6</div>
                                 <div class="text-[9px] text-slate-400 mt-0.5">dari 100</div>
                             </div>
-                            <div class="py-2.5 px-1">
-                                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">DSCR</div>
-                                <div id="rail_dscr" class="text-lg font-extrabold text-emerald-700 mt-0.5">2,97x</div>
+                            <div class="py-2 sm:py-2.5 px-1">
+                                <div class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider">DSCR</div>
+                                <div id="rail_dscr" class="text-base sm:text-lg font-extrabold text-emerald-700 mt-0.5">2,97x</div>
                                 <div class="text-[9px] text-slate-400 mt-0.5">Min 1,3x</div>
                             </div>
-                            <div class="py-2.5 px-1">
-                                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cov. LV</div>
-                                <div id="rail_cov" class="text-lg font-extrabold text-slate-900 mt-0.5">182%</div>
+                            <div class="py-2 sm:py-2.5 px-1">
+                                <div class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cov. LV</div>
+                                <div id="rail_cov" class="text-base sm:text-lg font-extrabold text-slate-900 mt-0.5">182%</div>
                                 <div class="text-[9px] text-slate-400 mt-0.5">Min 100%</div>
                             </div>
                         </div>
 
                         <!-- CTA & Net Cair -->
-                        <div class="md:col-span-3 flex flex-col justify-center space-y-2.5">
+                        <div class="md:col-span-3 flex flex-col justify-center space-y-2 sm:space-y-2.5">
                             <div class="flex items-center justify-between text-xs px-1">
                                 <span class="text-slate-500 font-medium">Dana Cair Bersih:</span>
                                 <strong id="rail_cair" class="text-emerald-700 font-extrabold text-sm tabular-nums">Rp 0</strong>
                             </div>
-                            <button type="button" onclick="goSimTab(5)" class="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs cursor-pointer">
+                            <button type="button" onclick="goSimTab(5)" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs cursor-pointer">
                                 <span>Buka Memo Lengkap</span>
                                 <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                             </button>
@@ -721,9 +721,9 @@
                     </div>
 
                     <!-- Trust Note -->
-                    <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500">
+                    <div class="px-4 py-2.5 sm:px-6 sm:py-3 bg-slate-50 border-t border-slate-100 flex items-center gap-2 text-[10px] sm:text-[11px] text-slate-500">
                         <span class="material-symbols-outlined text-[16px] text-blue-600 shrink-0">verified_user</span>
-                        <span>Semua perhitungan menggunakan formula standar perbankan nasional untuk mitigasi risiko kredit yang akurat dan terpercaya.</span>
+                        <span>Semua perhitungan menggunakan formula standar industri keuangan nasional untuk mitigasi risiko kredit yang akurat dan terpercaya.</span>
                     </div>
                 </div>
 
@@ -762,11 +762,11 @@
 
                 if (btn) {
                     if (i === n) {
-                        btn.className = 'group shrink-0 inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/25';
+                        btn.className = 'group shrink-0 inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/25';
                     } else if (i < n) {
-                        btn.className = 'group shrink-0 inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-emerald-50/70 border-emerald-200 text-emerald-800 hover:bg-emerald-100/70';
+                        btn.className = 'group shrink-0 inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-emerald-50/70 border-emerald-200 text-emerald-800 hover:bg-emerald-100/70';
                     } else {
-                        btn.className = 'group shrink-0 inline-flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50';
+                        btn.className = 'group shrink-0 inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50';
                     }
                 }
 
@@ -789,6 +789,11 @@
             const progressBar = document.getElementById('simProgressBar');
             if (progressBar) {
                 progressBar.style.width = ((n / totalSimTabs) * 100) + '%';
+            }
+
+            const activeBtn = document.getElementById('sim-step-btn-' + n);
+            if (activeBtn) {
+                activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
 
             const btnPrev = document.getElementById('btnSimPrev');
@@ -970,24 +975,24 @@
                     const kontribusi = (row.val * row.bobot / 100).toFixed(2).replace('.', ',');
                     return `
                         <tr class="hover:bg-slate-50/70 transition">
-                            <td class="px-4 py-3 font-semibold text-slate-900">${row.label}</td>
-                            <td class="px-4 py-3 text-right text-slate-500 font-medium">${row.bobot}%</td>
-                            <td class="px-4 py-3 text-right font-extrabold text-slate-900">${row.val}</td>
-                            <td class="px-4 py-3 hidden sm:table-cell">
+                            <td class="px-3 sm:px-4 py-2.5 sm:py-3 font-semibold text-slate-900">${row.label}</td>
+                            <td class="px-3 sm:px-4 py-2.5 sm:py-3 text-right text-slate-500 font-medium">${row.bobot}%</td>
+                            <td class="px-3 sm:px-4 py-2.5 sm:py-3 text-right font-extrabold text-slate-900">${row.val}</td>
+                            <td class="px-3 sm:px-4 py-2.5 sm:py-3 hidden sm:table-cell">
                                 <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                                     <div class="h-full ${row.color} rounded-full" style="width:${row.val}%"></div>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-right font-extrabold text-blue-700">${kontribusi}</td>
+                            <td class="px-3 sm:px-4 py-2.5 sm:py-3 text-right font-extrabold text-blue-700">${kontribusi}</td>
                         </tr>
                     `;
                 }).join('') + `
                     <tr class="bg-slate-50/90 font-extrabold text-slate-950 border-t border-slate-200">
-                        <td class="px-4 py-3">Total Skor Kelayakan</td>
-                        <td class="px-4 py-3 text-right">100%</td>
-                        <td class="px-4 py-3 text-right">—</td>
-                        <td class="px-4 py-3 hidden sm:table-cell"></td>
-                        <td class="px-4 py-3 text-right text-blue-700 text-sm">${skorTotal.toFixed(2).replace('.', ',')}</td>
+                        <td class="px-3 sm:px-4 py-2.5 sm:py-3">Total Skor Kelayakan</td>
+                        <td class="px-3 sm:px-4 py-2.5 sm:py-3 text-right">100%</td>
+                        <td class="px-3 sm:px-4 py-2.5 sm:py-3 text-right">—</td>
+                        <td class="px-3 sm:px-4 py-2.5 sm:py-3 hidden sm:table-cell"></td>
+                        <td class="px-3 sm:px-4 py-2.5 sm:py-3 text-right text-blue-700 text-sm">${skorTotal.toFixed(2).replace('.', ',')}</td>
                     </tr>
                 `;
             }
