@@ -292,7 +292,7 @@
                             </div>
                             <div>
                                 <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Alur Verifikasi SLIK OJK</h2>
-                                <p class="text-[11px] text-slate-400">Pemisahan peran pengusul kredit dan petugas verifikator SLIK</p>
+                                <p class="text-[11px] text-slate-400">Pemisahan tugas verifikator SLIK</p>
                             </div>
                         </div>
                         <span id="badgeStatusSlikSetting" class="text-[11px] font-bold px-2.5 py-1 rounded-md border <?= $isPetugasSlikAktif === 1 ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-slate-600 bg-slate-100 border-slate-200' ?>">
@@ -300,28 +300,19 @@
                         </span>
                     </div>
 
-                    <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
-                        <div class="max-w-2xl space-y-1">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold text-slate-900">Peran Petugas SLIK Terpisah</span>
-                                <span id="labelModeSlik" class="text-[10px] font-bold px-2 py-0.5 rounded-full <?= $isPetugasSlikAktif === 1 ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-700' ?>">
-                                    <?= $isPetugasSlikAktif === 1 ? 'Mode Standar (SOP Ketat)' : 'Mode Fleksibel' ?>
-                                </span>
-                            </div>
-                            <p id="deskripsiSlikSetting" class="text-xs text-slate-600 leading-relaxed">
+                    <div class="flex items-center justify-between gap-4 p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
+                        <div class="min-w-0">
+                            <span class="text-xs font-bold text-slate-900 block">Pemisahan Petugas SLIK</span>
+                            <p id="deskripsiSlikSetting" class="text-[11px] text-slate-500 mt-0.5">
                                 <?= $isPetugasSlikAktif === 1 
-                                    ? '<b>Petugas SLIK Aktif:</b> Input hasil SLIK di Tab 6 hanya dapat dilakukan oleh Petugas SLIK khusus. Pengusul tetap dapat melanjutkan pengisian tab lainnya.' 
-                                    : '<b>Petugas SLIK Nonaktif:</b> Pengusul dapat langsung menginput hasil dan mengunggah berkas SLIK sendiri di Tab 6.' 
+                                    ? 'Hasil SLIK diinput khusus oleh Petugas SLIK.' 
+                                    : 'Pengusul dapat langsung menginput hasil SLIK.' 
                                 ?>
                             </p>
-                            <div class="flex items-center gap-1.5 pt-1 text-[11px] text-slate-400">
-                                <span class="w-1.5 h-1.5 rounded-full <?= $isPetugasSlikAktif === 1 ? 'bg-emerald-500' : 'bg-amber-500' ?>"></span>
-                                <span id="hintSlikSetting"><?= $isPetugasSlikAktif === 1 ? 'Pengusul dibatasi hanya membuat permohonan dan melihat hasil.' : 'Pengusul memiliki akses penuh mengisi formulir SLIK.' ?></span>
-                            </div>
                         </div>
 
                         <!-- Toggle Switch Button -->
-                        <div class="shrink-0 flex flex-col items-end gap-1.5">
+                        <div class="shrink-0 flex flex-col items-end gap-1">
                             <input type="hidden" name="petugas_slik_aktif" id="inputPetugasSlikAktif" value="<?= $isPetugasSlikAktif ?>">
                             <button type="button" 
                                     id="btnTogglePetugasSlik" 
@@ -335,7 +326,7 @@
                                 </span>
                             </button>
                             <span id="toggleTextPetugasSlik" class="text-[10px] font-bold text-slate-600">
-                                <?= $isPetugasSlikAktif === 1 ? 'Status: AKTIF' : 'Status: NONAKTIF' ?>
+                                <?= $isPetugasSlikAktif === 1 ? 'AKTIF' : 'NONAKTIF' ?>
                             </span>
                         </div>
                     </div>
@@ -598,9 +589,7 @@
             const knob = document.getElementById('toggleKnobPetugasSlik');
             const badge = document.getElementById('badgeStatusSlikSetting');
             const text = document.getElementById('toggleTextPetugasSlik');
-            const labelMode = document.getElementById('labelModeSlik');
             const desc = document.getElementById('deskripsiSlikSetting');
-            const hint = document.getElementById('hintSlikSetting');
             const input = document.getElementById('inputPetugasSlikAktif');
 
             if (input) input.value = isAktif ? '1' : '0';
@@ -617,16 +606,9 @@
                     badge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md border text-emerald-700 bg-emerald-50 border-emerald-200';
                     badge.innerText = '🟢 Petugas SLIK Aktif';
                 }
-                if (text) text.innerText = 'Status: AKTIF';
-                if (labelMode) {
-                    labelMode.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700';
-                    labelMode.innerText = 'Mode Standar (SOP Ketat)';
-                }
+                if (text) text.innerText = 'AKTIF';
                 if (desc) {
-                    desc.innerHTML = '<b>Petugas SLIK Aktif:</b> Input hasil SLIK di Tab 6 hanya dapat dilakukan oleh Petugas SLIK khusus. Pengusul tetap dapat melanjutkan pengisian tab lainnya.';
-                }
-                if (hint) {
-                    hint.innerText = 'Pengusul dibatasi hanya membuat permohonan dan melihat hasil.';
+                    desc.innerText = 'Hasil SLIK diinput khusus oleh Petugas SLIK.';
                 }
             } else {
                 if (btn) {
@@ -640,16 +622,9 @@
                     badge.className = 'text-[11px] font-bold px-2.5 py-1 rounded-md border text-slate-600 bg-slate-100 border-slate-200';
                     badge.innerText = '⚪ Petugas SLIK Nonaktif';
                 }
-                if (text) text.innerText = 'Status: NONAKTIF';
-                if (labelMode) {
-                    labelMode.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700';
-                    labelMode.innerText = 'Mode Fleksibel';
-                }
+                if (text) text.innerText = 'NONAKTIF';
                 if (desc) {
-                    desc.innerHTML = '<b>Petugas SLIK Nonaktif:</b> Pengusul dapat langsung menginput hasil dan mengunggah berkas SLIK sendiri di Tab 6.';
-                }
-                if (hint) {
-                    hint.innerText = 'Pengusul memiliki akses penuh mengisi formulir SLIK.';
+                    desc.innerText = 'Pengusul dapat langsung menginput hasil SLIK.';
                 }
             }
         }
