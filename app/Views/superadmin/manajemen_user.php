@@ -617,13 +617,25 @@
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                         Kata Sandi (Password) <span class="text-rose-500">*</span>
                     </label>
-                    <input type="password" 
-                           name="password" 
-                           id="newUserPassword" 
-                           required 
-                           minlength="6" 
-                           placeholder="Minimal 6 karakter..." 
-                           class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs outline-none" />
+                    <div class="relative">
+                        <input type="password" 
+                               name="password" 
+                               id="newUserPassword" 
+                               required 
+                               minlength="6" 
+                               placeholder="Minimal 6 karakter..." 
+                               class="w-full text-xs font-semibold text-slate-800 border border-slate-200 rounded-xl pl-3.5 pr-10 py-2.5 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition shadow-2xs outline-none" />
+                        <button type="button" 
+                                onclick="toggleTambahUserPassword()" 
+                                class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer transition"
+                                title="Lihat/Sembunyikan Kata Sandi"
+                                aria-label="Toggle password visibility">
+                            <svg id="eyeIconTambahUser" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                    </div>
                     <span class="text-[11px] text-slate-400 mt-1 block">Password akan di-hash secara aman menggunakan algoritma bcrypt.</span>
                 </div>
 
@@ -840,12 +852,32 @@
             filterUsers();
         }
 
+        function toggleTambahUserPassword() {
+            const passwordInput = document.getElementById('newUserPassword');
+            const eyeIcon = document.getElementById('eyeIconTambahUser');
+            if (!passwordInput || !eyeIcon) return;
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>`;
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>`;
+            }
+        }
+
         function openTambahUserModal() {
             document.getElementById('tambahUserModal').classList.remove('hidden');
         }
 
         function closeTambahUserModal() {
             document.getElementById('tambahUserModal').classList.add('hidden');
+            const passwordInput = document.getElementById('newUserPassword');
+            const eyeIcon = document.getElementById('eyeIconTambahUser');
+            if (passwordInput) passwordInput.type = 'password';
+            if (eyeIcon) {
+                eyeIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>`;
+            }
         }
 
         function previewFotoUser(input) {
