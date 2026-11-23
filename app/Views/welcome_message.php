@@ -279,7 +279,7 @@
 <main class="relative z-10 pt-16 sm:pt-32 overflow-x-hidden w-full max-w-full">
     <!-- HERO SECTION WITH INSPIRATION GRAPHICS & FLOATING METRIC CARDS -->
     <section class="max-w-7xl mx-auto px-4 sm:px-8 pt-2 sm:pt-6 pb-10 sm:pb-20 text-center flex flex-col items-center relative overflow-hidden w-full">
-        <!-- Top Pill Tag (Teks model AI dihapus sesuai instruksi) -->
+        <!-- Top Pill Tag -->
         <div class="inline-flex items-center justify-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-blue-50/80 border border-blue-200/80 text-blue-700 shadow-2xs mb-2.5 sm:mb-6 cursor-default mx-auto max-w-full">
             <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-600 animate-pulse shrink-0"></span>
             <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-center">Engine AI 5C &bull; Autonomous Underwriting</span>
@@ -290,20 +290,20 @@
             Ubah Analisis Kredit Manual Menjadi <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 bg-clip-text text-transparent">Presisi &amp; Otomatis</span>
         </h1>
 
-        <!-- Subheadline -->
+        <!-- Subheadline (Ringkas & Padat) -->
         <p class="text-xs sm:text-base text-slate-500 max-w-xl leading-relaxed mb-4 sm:mb-6 px-1 sm:px-0 text-center mx-auto">
-            Otomasi penyusunan <span class="text-slate-800 font-semibold">Laporan Analisis Kelayakan Kredit</span> dan scoring 5C dalam hitungan detik. Terintegrasi SLIK OJK real-time untuk <?= esc($namaLembagaBersih) ?> dan Lembaga Keuangan.
+            Scoring 5C instan dan analisis SLIK OJK real-time untuk keputusan kredit yang cepat dan presisi.
         </p>
 
-        <!-- CTA Buttons (Stacked Full-Width on Mobile, Row on Desktop) -->
+        <!-- CTA Buttons -->
         <div class="relative z-20 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3.5 mb-5 sm:mb-8 w-full sm:w-auto px-4 sm:px-0 max-w-xs sm:max-w-none mx-auto">
             <a class="w-full sm:w-auto px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-base transition-all duration-200 shadow-md shadow-blue-500/25 hover:shadow-blue-500/40 flex items-center justify-center gap-2 group cursor-pointer text-center" href="<?= base_url('simulasi') ?>">
-                <span>Uji Coba Sandbox Sekarang</span>
+                <span>Uji Coba Simulasi</span>
                 <span class="material-symbols-outlined text-[16px] sm:text-[18px] group-hover:translate-x-1 transition-transform">bolt</span>
             </a>
             <a class="w-full sm:w-auto px-5 sm:px-6 py-2 sm:py-3 rounded-full bg-white text-slate-700 hover:text-blue-600 border border-slate-200/90 hover:border-slate-300 font-semibold text-xs sm:text-base transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer text-center" href="#alur-kerja">
                 <span class="material-symbols-outlined text-[18px] sm:text-[20px] text-slate-400">play_circle</span>
-                <span>Lihat Cara Kerja</span>
+                <span>Alur Kerja</span>
             </a>
         </div>
 
@@ -554,27 +554,27 @@
     </section>
 
     <!-- SECTION: BENTO GRID OF CORE FEATURES -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-12 sm:py-20 relative" id="fitur">
-        <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-3 sm:mb-4">
-                <span>Fitur Unggulan Sistem</span>
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 relative" id="fitur">
+        <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2.5 sm:mb-3">
+                <span>Fitur Unggulan</span>
             </div>
-            <h2 class="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                Solusi Lengkap Evaluasi 5C &amp; <br class="hidden sm:block"/>Otomasi Analisis Kredit Perorangan &amp; Usaha
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                Evaluasi 5C Presisi &amp; Otomatis
             </h2>
-            <p class="text-slate-500 text-sm sm:text-base lg:text-lg mt-3 sm:mt-4">
-                Sistem terpadu untuk percepatan proses kredit tanpa mengorbankan ketelitian tata kelola risiko kehati-hatian perbankan.
+            <p class="text-slate-500 text-xs sm:text-sm mt-2 sm:mt-2.5">
+                Analisis risiko komprehensif dalam hitungan detik.
             </p>
         </div>
         <!-- Bento Cards Grid (3 Kolom Utama Sesuai Sistem Aktual) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             <!-- Card 1: SLIK OJK & Verifikasi Yuridis -->
-            <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
+            <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
                 <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Pilar 01 • Character &amp; Legal</div>
-                    <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 mb-2">Verifikasi SLIK OJK &amp; Cek Hukum MA</h3>
-                    <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mb-5 sm:mb-6">
-                        Pemeriksaan riwayat debitur otomatis, penguraian baki debet antar bank, deteksi tunggakan Kol 1–5, serta integrasi direktori putusan hukum MA / SIPP peradilan.
+                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1.5">Pilar 01 • Character &amp; Legal</div>
+                    <h3 class="text-base sm:text-lg font-extrabold text-slate-900 mb-1.5">Verifikasi SLIK OJK &amp; Cek Hukum MA</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Cek riwayat baki debet, status kolektibilitas, dan perkara hukum debitur.
                     </p>
                 </div>
                 <div class="bg-slate-50 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex flex-col gap-2.5 sm:gap-3">
@@ -596,12 +596,12 @@
             </div>
 
             <!-- Card 2: Financial Ratio & Rekening Koran -->
-            <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
+            <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
                 <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Pilar 02 • Capacity &amp; Cashflow</div>
-                    <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 mb-2">Analisis Rekening Koran &amp; DSCR</h3>
-                    <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mb-5 sm:mb-6">
-                        Kalkulasi instan kemampuan angsuran, mutasi kas 3-6 bulan terakhir, debt service coverage ratio (DSCR), DSR, dan daya tahan modal kerja.
+                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1.5">Pilar 02 • Capacity &amp; Cashflow</div>
+                    <h3 class="text-base sm:text-lg font-extrabold text-slate-900 mb-1.5">Analisis Rekening Koran &amp; DSCR</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Kalkulasi otomatis rasio DSCR, DSR, dan mutasi kas debitur.
                     </p>
                 </div>
                 <div class="bg-slate-50 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex flex-col gap-2.5 sm:gap-3">
@@ -626,12 +626,12 @@
             </div>
 
             <!-- Card 3: Agunan & Ekspor Laporan Komite -->
-            <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
+            <div class="bg-white/80 backdrop-blur border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col justify-between shadow-card hover:shadow-xl hover:border-blue-300 transition-all">
                 <div>
-                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-2">Pilar 03 • Collateral &amp; Output</div>
-                    <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 mb-2">Taksasi Agunan &amp; Laporan PDF</h3>
-                    <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mb-5 sm:mb-6">
-                        Penilaian rasio penutupan agunan (SHM, SHGB, BPKB), nilai likuidasi, batas aman LTV, serta ekspor dokumen laporan analisa kredit resmi untuk sidang komite.
+                    <div class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1.5">Pilar 03 • Collateral &amp; Output</div>
+                    <h3 class="text-base sm:text-lg font-extrabold text-slate-900 mb-1.5">Taksasi Agunan &amp; Laporan PDF</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Penilaian likuidasi agunan, LTV, dan cetak laporan PDF komite.
                     </p>
                 </div>
                 <div class="bg-slate-50 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex flex-col gap-2.5 sm:gap-3">
@@ -654,17 +654,17 @@
     </section>
 
     <!-- SECTION: INTERACTIVE CALCULATOR -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-12 sm:py-20 bg-slate-50/70 rounded-2xl sm:rounded-3xl border border-slate-200/80 my-6 sm:my-10" id="simulasi">
-        <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider mb-3 sm:mb-4 shadow-sm">
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 bg-slate-50/70 rounded-2xl sm:rounded-3xl border border-slate-200/80 my-4 sm:my-8" id="simulasi">
+        <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider mb-2.5 sm:mb-3 shadow-sm">
                 <span class="material-symbols-outlined text-[16px] text-blue-600">tune</span>
                 <span>Simulasi Interaktif</span>
             </div>
-            <h2 class="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                Kalkulator Sensitivitas Plafon &amp; Kelayakan
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                Kalkulator Simulasi Kredit
             </h2>
-            <p class="text-slate-500 text-sm sm:text-base lg:text-lg mt-2 sm:mt-3">
-                Geser nilai pengajuan untuk melihat simulasi rekomendasi komite kredit dan perkiraan angsuran secara real-time.
+            <p class="text-slate-500 text-xs sm:text-sm mt-2">
+                Estimasi angsuran dan coverage agunan secara instan.
             </p>
         </div>
         <!-- Calculator Box -->
@@ -712,7 +712,7 @@
                 <!-- Right Column: Projection Card -->
                 <div class="lg:col-span-6 bg-slate-50/90 rounded-xl sm:rounded-2xl border border-slate-200/90 p-4 sm:p-6 flex flex-col justify-between space-y-4 sm:space-y-5">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                        <span class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Hasil Proyeksi Real-time</span>
+                        <span class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Hasil Proyeksi</span>
                         <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] sm:text-xs" id="sim-status-chip">● DISARANKAN APPROVAL</span>
                     </div>
                     <!-- Metric Highlights -->
@@ -733,15 +733,15 @@
                         <div class="flex items-start gap-2 sm:gap-2.5">
                             <span class="material-symbols-outlined text-blue-600 text-[18px] sm:text-[20px] shrink-0 mt-0.5">insights</span>
                             <p class="text-xs text-slate-600 leading-relaxed" id="sim-summary">
-                                Kapasitas agunan memadai dengan coverage ratio 150.0% (LTV 66.7%). Struktur angsuran berada dalam ambang batas toleransi arus kas debitur. Disarankan untuk masuk ke tahapan komite kredit.
+                                Agunan dan angsuran debitur berada dalam batas aman. Siap diajukan ke komite kredit.
                             </p>
                         </div>
                     </div>
                     <!-- CTA link -->
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2">
-                        <span class="text-xs text-slate-500 text-center sm:text-left">Ingin verifikasi SLIK OJK komprehensif?</span>
+                        <span class="text-xs text-slate-500 text-center sm:text-left">Butuh analisa lengkap?</span>
                         <a class="px-4 py-2 rounded-full bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-colors shadow-sm text-center cursor-pointer" href="<?= base_url('simulasi') ?>">
-                            Buka Portal →
+                            Buka Simulasi →
                         </a>
                     </div>
                 </div>
@@ -750,85 +750,85 @@
     </section>
 
     <!-- SECTION: 4-STEP PROCESS (SESUAI ALUR KERJA SISTEM AKTUAL) -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-12 sm:py-20" id="alur-kerja">
-        <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-3 sm:mb-4">
-                <span>Alur Kerja Praktis</span>
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16" id="alur-kerja">
+        <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2.5 sm:mb-3">
+                <span>Alur Kerja</span>
             </div>
-            <h2 class="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                4 Tahap Analisis Kredit Berjenjang
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                Alur Analisis 4 Tahap
             </h2>
-            <p class="text-slate-500 text-sm sm:text-base lg:text-lg mt-2 sm:mt-3">
-                Proses terstruktur dari inisiasi pengusul, verifikasi SLIK OJK, inferensi AI 5C, hingga keputusan final komite.
+            <p class="text-slate-500 text-xs sm:text-sm mt-2">
+                Dari input data hingga keputusan akhir komite.
             </p>
         </div>
         <!-- Step Cards Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <!-- Step 01 -->
-            <div class="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-card hover:shadow-xl transition-all flex flex-col justify-between">
+            <div class="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-card hover:shadow-xl transition-all flex flex-col justify-between">
                 <div>
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-base sm:text-lg text-slate-900 mb-4 sm:mb-6">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-base sm:text-lg text-slate-900 mb-3 sm:mb-5">
                         01
                     </div>
                     <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Perorangan &amp; Usaha</div>
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-1.5 sm:mb-2">Input Berkas &amp; Agunan</h3>
-                    <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mb-4 sm:mb-6">
-                        Staff Pengusul mengunggah identitas calon debitur, profil usaha, mutasi rekening bank, dan data fisik agunan.
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-1.5">Input Berkas &amp; Agunan</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Input data pemohon, profil usaha, keuangan, dan jaminan.
                     </p>
                 </div>
-                <div class="pt-3 sm:pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
+                <div class="pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
                     <span class="material-symbols-outlined text-[16px]">check_circle</span>
                     <span>Pengusul Kredit</span>
                 </div>
             </div>
             <!-- Step 02 -->
-            <div class="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-card hover:shadow-xl transition-all flex flex-col justify-between">
+            <div class="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-card hover:shadow-xl transition-all flex flex-col justify-between">
                 <div>
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-base sm:text-lg text-slate-900 mb-4 sm:mb-6">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-base sm:text-lg text-slate-900 mb-3 sm:mb-5">
                         02
                     </div>
                     <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pemeriksaan iDeb</div>
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-1.5 sm:mb-2">Verifikasi SLIK OJK</h3>
-                    <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mb-4 sm:mb-6">
-                        Petugas SLIK memeriksa riwayat fasilitas pinjaman aktif, baki debet antar bank, serta catatan kolektibilitas historis.
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-1.5">Verifikasi SLIK OJK</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Verifikasi fasilitas aktif dan riwayat kolektibilitas debitur.
                     </p>
                 </div>
-                <div class="pt-3 sm:pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
+                <div class="pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
                     <span class="material-symbols-outlined text-[16px]">check_circle</span>
                     <span>iDeb SLIK OJK</span>
                 </div>
             </div>
             <!-- Step 03 -->
-            <div class="bg-gradient-to-b from-blue-50/50 to-white border-2 border-blue-500/80 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-card hover:shadow-lg transition-all flex flex-col justify-between relative overflow-hidden">
+            <div class="bg-gradient-to-b from-blue-50/50 to-white border-2 border-blue-500/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-card hover:shadow-lg transition-all flex flex-col justify-between relative overflow-hidden">
                 <div class="absolute -top-6 -right-6 w-20 h-20 bg-blue-200/40 rounded-full blur-xl"></div>
                 <div>
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-base sm:text-lg shadow-md shadow-blue-500/30 mb-4 sm:mb-6">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-blue-600 text-white flex items-center justify-center font-extrabold text-base sm:text-lg shadow-md shadow-blue-500/30 mb-3 sm:mb-5">
                         03
                     </div>
                     <div class="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider mb-1">AI 5C Core Engine</div>
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-1.5 sm:mb-2">Scoring &amp; Review Independen</h3>
-                    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4 sm:mb-6">
-                        Senior Reviewer memvalidasi rekomendasi AI: Character, Capacity, Capital, Collateral, Condition, serta penetapan Grade A–D.
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-1.5">Scoring &amp; Review Independen</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                        Scoring otomatis prinsip 5C dan penetapan grade kelayakan.
                     </p>
                 </div>
-                <div class="pt-3 sm:pt-4 border-t border-blue-100 flex items-center gap-2 text-xs font-bold text-blue-700">
+                <div class="pt-3 border-t border-blue-100 flex items-center gap-2 text-xs font-bold text-blue-700">
                     <span class="material-symbols-outlined text-[16px]">verified</span>
                     <span>Senior Reviewer AI</span>
                 </div>
             </div>
             <!-- Step 04 -->
-            <div class="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-card hover:shadow-xl transition-all flex flex-col justify-between">
+            <div class="bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-card hover:shadow-xl transition-all flex flex-col justify-between">
                 <div>
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-base sm:text-lg text-slate-900 mb-4 sm:mb-6">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-100 flex items-center justify-center font-extrabold text-base sm:text-lg text-slate-900 mb-3 sm:mb-5">
                         04
                     </div>
                     <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Sidang Komite Kredit</div>
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-1.5 sm:mb-2">Keputusan CEO &amp; Laporan</h3>
-                    <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mb-4 sm:mb-6">
-                        Komite Kredit/CEO menerbitkan keputusan persetujuan akhir dan mencetak lembar laporan analisa fasilitas resmi.
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 mb-1.5">Keputusan CEO &amp; Laporan</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                        Persetujuan akhir komite kredit dan penerbitan laporan resmi.
                     </p>
                 </div>
-                <div class="pt-3 sm:pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
+                <div class="pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-blue-600">
                     <span class="material-symbols-outlined text-[16px]">check_circle</span>
                     <span>Laporan Resmi &amp; PDF</span>
                 </div>
@@ -837,23 +837,23 @@
     </section>
 
     <!-- SECTION: COMPARISON BENCHMARK -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-12 sm:py-20" id="komparasi">
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16" id="komparasi">
         <div class="bg-gradient-to-b from-slate-50 to-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-5 sm:p-10 lg:p-12 shadow-card">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-10 items-center">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 items-center">
                 <!-- Left Copy -->
                 <div class="lg:col-span-5 space-y-3 sm:space-y-4">
                     <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100/70 text-blue-700 text-xs font-bold uppercase tracking-wider">
-                        <span>Keunggulan Kompetitif</span>
+                        <span>Keunggulan</span>
                     </div>
                     <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                        Mengapa Lembaga Pembiayaan Beralih ke <br class="hidden sm:block"/><span class="text-blue-600"><?= esc($namaWebBersih) ?></span>
+                        Manual vs <span class="text-blue-600">Engine AI</span>
                     </h2>
-                    <p class="text-slate-500 text-xs sm:text-sm lg:text-base leading-relaxed">
-                        Tinggalkan proses analisis manual berhari-hari yang rentan salah rumus. Dapatkan efisiensi 95% dengan audit trail kepatuhan lengkap.
+                    <p class="text-slate-500 text-xs sm:text-sm leading-relaxed">
+                        Tingkatkan efisiensi analisa kredit hingga 95% dengan audit trail kepatuhan lengkap.
                     </p>
-                    <div class="pt-2 sm:pt-4">
-                        <a class="inline-flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-3 rounded-full bg-slate-950 text-white font-bold text-xs sm:text-sm hover:bg-blue-600 transition-colors shadow-sm cursor-pointer" href="<?= base_url('auth') ?>">
-                            <span>Daftar Akses Institusi</span>
+                    <div class="pt-1 sm:pt-3">
+                        <a class="inline-flex items-center justify-center w-full sm:w-auto gap-2 px-6 py-2.5 sm:py-3 rounded-full bg-slate-950 text-white font-bold text-xs sm:text-sm hover:bg-blue-600 transition-colors shadow-sm cursor-pointer" href="<?= base_url('auth') ?>">
+                            <span>Daftar Akses</span>
                             <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                         </a>
                     </div>
@@ -861,14 +861,14 @@
                 <!-- Right Table Comparison -->
                 <div class="lg:col-span-7 bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-sm overflow-x-auto">
                     <div class="grid grid-cols-12 bg-slate-50/80 p-3 sm:p-4 border-b border-slate-200 font-bold text-[10px] sm:text-xs text-slate-600 min-w-[320px]">
-                        <div class="col-span-6 uppercase">Parameter Evaluasi</div>
+                        <div class="col-span-6 uppercase">Parameter</div>
                         <div class="col-span-3 text-center text-slate-400 uppercase">Manual</div>
                         <div class="col-span-3 text-center text-blue-600 uppercase font-extrabold">Engine AI</div>
                     </div>
                     <div class="divide-y divide-slate-100 text-xs sm:text-sm">
                         <!-- Row 1 -->
                         <div class="grid grid-cols-12 p-3 sm:p-4 items-center min-w-[320px]">
-                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Durasi Analisis Kredit</div>
+                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Durasi Analisis</div>
                             <div class="col-span-3 text-center text-[10px] sm:text-xs text-slate-400">3 - 5 Hari</div>
                             <div class="col-span-3 text-center font-extrabold text-blue-600 text-[10px] sm:text-xs bg-blue-50/80 py-1 px-1 rounded-full">&lt; 10 Menit</div>
                         </div>
@@ -886,7 +886,7 @@
                         </div>
                         <!-- Row 3 -->
                         <div class="grid grid-cols-12 p-3 sm:p-4 items-center min-w-[320px]">
-                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Integrasi SLIK OJK Real-time</div>
+                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Integrasi SLIK OJK</div>
                             <div class="col-span-3 flex justify-center text-slate-300">
                                 <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
                             </div>
@@ -898,7 +898,7 @@
                         </div>
                         <!-- Row 4 -->
                         <div class="grid grid-cols-12 p-3 sm:p-4 items-center min-w-[320px]">
-                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Penerbitan Laporan PDF 1-Klik</div>
+                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Laporan PDF 1-Klik</div>
                             <div class="col-span-3 flex justify-center text-slate-300">
                                 <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
                             </div>
@@ -910,7 +910,7 @@
                         </div>
                         <!-- Row 5 -->
                         <div class="grid grid-cols-12 p-3 sm:p-4 items-center min-w-[320px]">
-                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Four-Eyes Approval Hierarchy</div>
+                            <div class="col-span-6 font-semibold text-slate-800 pr-1">Persetujuan Komite 4-Eyes</div>
                             <div class="col-span-3 flex justify-center text-slate-400 text-[10px] sm:text-xs">Manual Email</div>
                             <div class="col-span-3 flex justify-center text-blue-600">
                                 <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-blue-500 text-white flex items-center justify-center">
@@ -925,9 +925,9 @@
     </section>
 
     <!-- SECTION: CURATED QUESTIONS (FAQ) -->
-    <section class="max-w-4xl mx-auto px-4 sm:px-8 py-12 sm:py-20" id="faq">
-        <div class="text-center mb-8 sm:mb-12">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2.5 sm:mb-3">
+    <section class="max-w-4xl mx-auto px-4 sm:px-8 py-10 sm:py-16" id="faq">
+        <div class="text-center mb-6 sm:mb-10">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2.5">
                 <span>FAQ</span>
             </div>
             <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Pertanyaan yang Sering Diajukan</h2>
@@ -938,17 +938,17 @@
                     <span>Bagaimana verifikasi data SLIK OJK berjalan di <?= esc($namaWebBersih) ?>?</span>
                     <span class="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform shrink-0">expand_more</span>
                 </summary>
-                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100">
-                    Engine memverifikasi data iDeb SLIK OJK yang diinputkan oleh Pengusul atau Petugas SLIK, lalu menguraikan baki debet aktif, beban angsuran perbankan lain, dan status kolektibilitas historis untuk mitigasi risiko.
+                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mt-2.5 pt-2.5 border-t border-slate-100">
+                    Sistem langsung memetakan baki debet aktif, angsuran perbankan lain, dan riwayat kolektibilitas debitur untuk mitigasi risiko.
                 </p>
             </details>
             <details class="group bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 p-4 sm:p-5 cursor-pointer">
                 <summary class="flex items-center justify-between font-bold text-slate-800 text-sm sm:text-base gap-2">
-                    <span>Apakah format dokumen laporan analisis kredit sesuai dengan standar audit regulator?</span>
+                    <span>Apakah format dokumen laporan sesuai standar audit?</span>
                     <span class="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform shrink-0">expand_more</span>
                 </summary>
-                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100">
-                    Ya, format laporan evaluasi dan memorandum fasilitas kredit disusun sesuai standar kehati-hatian industri keuangan, mencakup analisis 5C, mitigasi risiko, kalkulasi DSCR, LTV, dan kolom notulensi persetujuan komite berjenjang (four-eyes principle).
+                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mt-2.5 pt-2.5 border-t border-slate-100">
+                    Ya, mencakup analisis 5C, rasio DSCR/LTV, mitigasi risiko, dan lembar persetujuan berjenjang komite (four-eyes principle).
                 </p>
             </details>
             <details class="group bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 p-4 sm:p-5 cursor-pointer">
@@ -956,40 +956,40 @@
                     <span>Apakah data calon debitur dijamin kerahasiaannya?</span>
                     <span class="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform shrink-0">expand_more</span>
                 </summary>
-                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-slate-100">
-                    Seluruh data dienkripsi dengan standar perbankan AES-256 dan TLS 1.3. <?= esc($namaWebBersih) ?> beroperasi dengan kontrol kepatuhan standar keamanan data serta regulasi perlindungan data pribadi.
+                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed mt-2.5 pt-2.5 border-t border-slate-100">
+                    Seluruh data diamankan dengan enkripsi standar perbankan AES-256 dan protokol TLS 1.3 sesuai regulasi perlindungan data.
                 </p>
             </details>
         </div>
     </section>
 
     <!-- SECTION: HIGH-CONVERSION CTA BANNER -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16">
-        <div class="relative bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-600 rounded-2xl sm:rounded-3xl p-6 sm:p-12 lg:p-16 text-center text-white overflow-hidden shadow-float">
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-14">
+        <div class="relative bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-600 rounded-2xl sm:rounded-3xl p-6 sm:p-10 lg:p-14 text-center text-white overflow-hidden shadow-float">
             <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-white/15 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="relative z-10 max-w-3xl mx-auto space-y-4 sm:space-y-6">
-                <div class="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-100 border border-white/20">
+            <div class="relative z-10 max-w-2xl mx-auto space-y-3 sm:space-y-5">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-100 border border-white/20">
                     <span class="material-symbols-outlined text-[15px] sm:text-[16px]">bolt</span>
-                    <span>Mulai Transformasi Kredit Hari Ini</span>
+                    <span>Mulai Sekarang</span>
                 </div>
-                <h2 class="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-                    Tingkatkan Kecepatan Underwriting Kredit Institusi Anda Sekarang
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
+                    Siap Mempercepat Analisis Kredit?
                 </h2>
-                <p class="text-blue-100 text-xs sm:text-base lg:text-lg max-w-xl mx-auto leading-relaxed">
-                    Bergabung bersama <?= esc($namaLembagaBersih) ?> yang telah memodernisasi evaluasi 5C dan penerbitan laporan analisis kelayakan pembiayaan secara terstandar.
+                <p class="text-blue-100 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+                    Modernisasi evaluasi 5C dan penerbitan laporan kelayakan kredit institusi Anda.
                 </p>
-                <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-                    <a class="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-sm sm:text-base transition-all shadow-md hover:scale-105 cursor-pointer text-center" href="<?= base_url('simulasi') ?>">
-                        Buka Portal Sistem
+                <div class="pt-1 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-4">
+                    <a class="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-xs sm:text-sm transition-all shadow-md hover:scale-105 cursor-pointer text-center" href="<?= base_url('simulasi') ?>">
+                        Uji Coba Simulasi
                     </a>
-                    <a class="w-full sm:w-auto px-6 sm:px-7 py-3.5 sm:py-4 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-sm sm:text-base transition-colors border border-white/20 cursor-pointer text-center" href="#kontak">
-                        Jadwalkan Demo Institusi
+                    <a class="w-full sm:w-auto px-6 sm:px-7 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs sm:text-sm transition-colors border border-white/20 cursor-pointer text-center" href="#kontak">
+                        Hubungi Kami
                     </a>
                 </div>
-                <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-6 pt-2 sm:pt-4 text-[11px] sm:text-xs font-semibold text-blue-100/90">
-                    <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] sm:text-[16px]">verified_user</span> OJK Compliant Standard</span>
-                    <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] sm:text-[16px]">lock</span> Bank-Grade AES-256</span>
-                    <span class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[15px] sm:text-[16px]">speed</span> 95% Waktu Lebih Hemat</span>
+                <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-6 pt-2 text-[10px] sm:text-xs font-semibold text-blue-100/90">
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">verified_user</span> Standar OJK</span>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">lock</span> AES-256</span>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">speed</span> Hemat 95% Waktu</span>
                 </div>
             </div>
         </div>
@@ -1013,11 +1013,11 @@
                     <span class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight"><?= esc($namaWebBersih) ?><span class="text-blue-600">.</span></span>
                 </div>
                 <p class="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-sm">
-                    Platform AI 5C Credit Engine &amp; Autonomous Underwriting resmi milik <span class="font-bold text-slate-700"><?= esc($namaLembagaBersih) ?></span> untuk percepatan evaluasi kelayakan fasilitas pembiayaan.
+                    Platform analisis kelayakan kredit dan scoring 5C terstandar untuk <?= esc($namaLembagaBersih) ?>.
                 </p>
-                <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 pt-1 sm:pt-2">
-                    <span class="material-symbols-outlined text-[16px] sm:text-[18px] text-blue-600">verified</span>
-                    <span>Standar Kepatuhan OJK &amp; Bersertifikasi Keamanan Data</span>
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 pt-1">
+                    <span class="material-symbols-outlined text-[16px] text-blue-600">verified</span>
+                    <span>Standar Kepatuhan OJK</span>
                 </div>
             </div>
 
@@ -1157,11 +1157,11 @@
             ltvSubtext.className = 'text-[11px] text-emerald-600 font-semibold';
           }
           if (simSummary) {
-            simSummary.textContent = 'Kapasitas agunan memadai dengan coverage ' + covPercent.toFixed(1) + '% (LTV ' + ltvPercent.toFixed(1) + '%). Struktur angsuran berada dalam ambang batas toleransi arus kas debitur. Disarankan untuk masuk ke tahapan komite kredit.';
+            simSummary.textContent = 'Agunan dan angsuran aman (Coverage ' + covPercent.toFixed(1) + '%). Layak diproses ke komite kredit.';
           }
         } else if (simulatedScore >= 70) {
           if (simStatusChip) {
-            simStatusChip.textContent = '● BUTUH VERIFIKASI TAMBAHAN';
+            simStatusChip.textContent = '● BUTUH VERIFIKASI';
             simStatusChip.className = 'px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-xs';
           }
           if (ltvSubtext) {
@@ -1169,7 +1169,7 @@
             ltvSubtext.className = 'text-[11px] text-amber-700 font-semibold';
           }
           if (simSummary) {
-            simSummary.textContent = 'Rasio pembiayaan memenuhi ambang batas dasar dengan coverage ' + covPercent.toFixed(1) + '%. Disarankan pengecekan mutasi rekening 6 bulan terakhir serta konfirmasi legalitas sertifikat agunan.';
+            simSummary.textContent = 'Coverage ' + covPercent.toFixed(1) + '%. Perlu verifikasi mutasi rekening dan legalitas agunan.';
           }
         } else {
           if (simStatusChip) {
@@ -1181,7 +1181,7 @@
             ltvSubtext.className = 'text-[11px] text-red-600 font-semibold';
           }
           if (simSummary) {
-            simSummary.textContent = 'Plafon pinjaman melebihi ambang batas toleransi nilai likuidasi agunan (Coverage hanya ' + covPercent.toFixed(1) + '%). Diperlukan agunan tambahan atau pengurangan plafon pengajuan.';
+            simSummary.textContent = 'Coverage hanya ' + covPercent.toFixed(1) + '%. Disarankan menambah agunan atau kurangi plafon.';
           }
         }
       }
