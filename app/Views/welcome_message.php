@@ -220,7 +220,7 @@
 <header class="fixed top-0 inset-x-0 z-50 bg-white/85 backdrop-blur-md border-b border-slate-100 transition-all">
     <div class="max-w-7xl mx-auto h-16 sm:h-20 px-3.5 sm:px-8 flex items-center justify-between">
         <!-- Logo & Dynamic Brand Identity -->
-        <a class="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0 pr-1 sm:pr-0" href="<?= base_url() ?>">
+        <a class="flex items-center gap-2 sm:gap-3 group shrink min-w-0 pr-1 sm:pr-0" href="<?= base_url() ?>">
             <?php if (!empty($logoWeb)): ?>
                 <img src="<?= base_url($logoWeb) ?>" alt="<?= esc($namaWebBersih) ?>" class="h-8 sm:h-10 w-auto max-w-[120px] sm:max-w-[150px] object-contain rounded-lg sm:rounded-xl shadow-2xs group-hover:scale-105 transition-transform shrink-0">
             <?php else: ?>
@@ -229,7 +229,7 @@
                 </div>
             <?php endif; ?>
             <div class="flex flex-col text-left min-w-0">
-                <span class="text-xs sm:text-[17px] font-extrabold tracking-tight text-slate-900 leading-tight whitespace-nowrap"><?= esc($namaWebBersih) ?><span class="text-blue-600">.</span></span>
+                <span class="text-xs sm:text-[17px] font-extrabold tracking-tight text-slate-900 leading-tight truncate max-w-[150px] sm:max-w-none"><?= esc($namaWebBersih) ?><span class="text-blue-600">.</span></span>
                 <span class="hidden sm:block text-[9px] sm:text-[11px] font-semibold tracking-wider text-slate-400 uppercase truncate max-w-[160px] sm:max-w-none"><?= esc($sloganWebBersih) ?></span>
             </div>
         </a>
@@ -554,7 +554,7 @@
     </section>
 
     <!-- SECTION: BENTO GRID OF CORE FEATURES -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 relative" id="fitur">
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 relative scroll-mt-20 sm:scroll-mt-24" id="fitur">
         <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2.5 sm:mb-3">
                 <span>Fitur Unggulan</span>
@@ -654,7 +654,7 @@
     </section>
 
     <!-- SECTION: INTERACTIVE CALCULATOR -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 bg-slate-50/70 rounded-2xl sm:rounded-3xl border border-slate-200/80 my-4 sm:my-8" id="simulasi">
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 bg-slate-50/70 rounded-2xl sm:rounded-3xl border border-slate-200/80 my-4 sm:my-8 scroll-mt-20 sm:scroll-mt-24" id="simulasi">
         <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider mb-2.5 sm:mb-3 shadow-sm">
                 <span class="material-symbols-outlined text-[16px] text-blue-600">tune</span>
@@ -750,7 +750,7 @@
     </section>
 
     <!-- SECTION: 4-STEP PROCESS (SESUAI ALUR KERJA SISTEM AKTUAL) -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16" id="alur-kerja">
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 scroll-mt-20 sm:scroll-mt-24" id="alur-kerja">
         <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2.5 sm:mb-3">
                 <span>Alur Kerja</span>
@@ -837,8 +837,8 @@
     </section>
 
     <!-- SECTION: COMPARISON BENCHMARK -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16" id="komparasi">
-        <div class="bg-gradient-to-b from-slate-50 to-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-5 sm:p-10 lg:p-12 shadow-card">
+    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 scroll-mt-20 sm:scroll-mt-24" id="komparasi">
+        <div class="bg-gradient-to-b from-slate-50 to-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-8 lg:p-12 shadow-card">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-10 items-center">
                 <!-- Left Copy -->
                 <div class="lg:col-span-5 space-y-3 sm:space-y-4">
@@ -860,20 +860,20 @@
                 </div>
                 <!-- Right Table Comparison -->
                 <div class="lg:col-span-7 bg-white rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-sm overflow-x-auto">
-                    <div class="grid grid-cols-12 bg-slate-50/80 p-3 sm:p-4 border-b border-slate-200 font-bold text-[10px] sm:text-xs text-slate-600 min-w-[320px]">
+                    <div class="grid grid-cols-12 bg-slate-50/80 p-2.5 sm:p-4 border-b border-slate-200 font-bold text-[10px] sm:text-xs text-slate-600 w-full min-w-0">
                         <div class="col-span-6 uppercase">Parameter</div>
                         <div class="col-span-3 text-center text-slate-400 uppercase">Manual</div>
                         <div class="col-span-3 text-center text-blue-600 uppercase font-extrabold">Engine AI</div>
                     </div>
                     <div class="divide-y divide-slate-100 text-xs sm:text-sm">
                         <!-- Row 1 -->
-                        <div class="grid grid-cols-12 p-3 sm:p-4 items-center min-w-[320px]">
+                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
                             <div class="col-span-6 font-semibold text-slate-800 pr-1">Durasi Analisis</div>
                             <div class="col-span-3 text-center text-[10px] sm:text-xs text-slate-400">3 - 5 Hari</div>
                             <div class="col-span-3 text-center font-extrabold text-blue-600 text-[10px] sm:text-xs bg-blue-50/80 py-1 px-1 rounded-full">&lt; 10 Menit</div>
                         </div>
                         <!-- Row 2 -->
-                        <div class="grid grid-cols-12 p-3 sm:p-4 items-center min-w-[320px]">
+                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
                             <div class="col-span-6 font-semibold text-slate-800 pr-1">Scoring 5C Otomatis</div>
                             <div class="col-span-3 flex justify-center text-slate-300">
                                 <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
@@ -885,7 +885,7 @@
                             </div>
                         </div>
                         <!-- Row 3 -->
-                        <div class="grid grid-cols-12 p-3 sm:p-4 items-center min-w-[320px]">
+                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
                             <div class="col-span-6 font-semibold text-slate-800 pr-1">Integrasi SLIK OJK</div>
                             <div class="col-span-3 flex justify-center text-slate-300">
                                 <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
@@ -897,7 +897,7 @@
                             </div>
                         </div>
                         <!-- Row 4 -->
-                        <div class="grid grid-cols-12 p-3 sm:p-4 items-center min-w-[320px]">
+                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
                             <div class="col-span-6 font-semibold text-slate-800 pr-1">Laporan PDF 1-Klik</div>
                             <div class="col-span-3 flex justify-center text-slate-300">
                                 <span class="material-symbols-outlined text-[16px] sm:text-[18px]">close</span>
@@ -909,7 +909,7 @@
                             </div>
                         </div>
                         <!-- Row 5 -->
-                        <div class="grid grid-cols-12 p-3 sm:p-4 items-center min-w-[320px]">
+                        <div class="grid grid-cols-12 p-2.5 sm:p-4 items-center w-full min-w-0">
                             <div class="col-span-6 font-semibold text-slate-800 pr-1">Persetujuan Komite 4-Eyes</div>
                             <div class="col-span-3 flex justify-center text-slate-400 text-[10px] sm:text-xs">Manual Email</div>
                             <div class="col-span-3 flex justify-center text-blue-600">
@@ -925,7 +925,7 @@
     </section>
 
     <!-- SECTION: CURATED QUESTIONS (FAQ) -->
-    <section class="max-w-4xl mx-auto px-4 sm:px-8 py-10 sm:py-16" id="faq">
+    <section class="max-w-4xl mx-auto px-4 sm:px-8 py-10 sm:py-16 scroll-mt-20 sm:scroll-mt-24" id="faq">
         <div class="text-center mb-6 sm:mb-10">
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-2.5">
                 <span>FAQ</span>
@@ -997,7 +997,7 @@
 </main>
 
 <!-- FOOTER (DINAMIS DARI PENGATURAN SISTEM) -->
-<footer class="relative z-10 bg-slate-50 border-t border-slate-200/80 mt-8 sm:mt-12" id="kontak">
+<footer class="relative z-10 bg-slate-50 border-t border-slate-200/80 mt-8 sm:mt-12 scroll-mt-20 sm:scroll-mt-24" id="kontak">
     <div class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 sm:gap-10">
             <!-- Brand Info Dinamis -->
@@ -1096,6 +1096,18 @@
         }
     }
 
+    // Auto-close mobile menu on ESC key or clicking outside
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') toggleMobileMenu(false);
+    });
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('mobileMenu');
+        const toggleBtn = e.target.closest('button[onclick*="toggleMobileMenu"]');
+        if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target) && !toggleBtn) {
+            toggleMobileMenu(false);
+        }
+    });
+
     (function initCreditSimulator() {
       const plafonSlider = document.getElementById('plafon-slider');
       const agunanSlider = document.getElementById('agunan-slider');
@@ -1150,11 +1162,11 @@
         if (simulatedScore >= 85) {
           if (simStatusChip) {
             simStatusChip.textContent = '● DISARANKAN APPROVAL';
-            simStatusChip.className = 'px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs';
+            simStatusChip.className = 'px-2.5 sm:px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] sm:text-xs';
           }
           if (ltvSubtext) {
             ltvSubtext.textContent = 'LTV: ' + ltvPercent.toFixed(1) + '% (Sangat Aman)';
-            ltvSubtext.className = 'text-[11px] text-emerald-600 font-semibold';
+            ltvSubtext.className = 'text-[10px] sm:text-[11px] text-emerald-600 font-semibold';
           }
           if (simSummary) {
             simSummary.textContent = 'Agunan dan angsuran aman (Coverage ' + covPercent.toFixed(1) + '%). Layak diproses ke komite kredit.';
@@ -1162,11 +1174,11 @@
         } else if (simulatedScore >= 70) {
           if (simStatusChip) {
             simStatusChip.textContent = '● BUTUH VERIFIKASI';
-            simStatusChip.className = 'px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-xs';
+            simStatusChip.className = 'px-2.5 sm:px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px] sm:text-xs';
           }
           if (ltvSubtext) {
             ltvSubtext.textContent = 'LTV: ' + ltvPercent.toFixed(1) + '% (Standar)';
-            ltvSubtext.className = 'text-[11px] text-amber-700 font-semibold';
+            ltvSubtext.className = 'text-[10px] sm:text-[11px] text-amber-700 font-semibold';
           }
           if (simSummary) {
             simSummary.textContent = 'Coverage ' + covPercent.toFixed(1) + '%. Perlu verifikasi mutasi rekening dan legalitas agunan.';
@@ -1174,11 +1186,11 @@
         } else {
           if (simStatusChip) {
             simStatusChip.textContent = '● PERTIMBANGKAN ULANG';
-            simStatusChip.className = 'px-3 py-1 rounded-full bg-red-100 text-red-800 font-bold text-xs';
+            simStatusChip.className = 'px-2.5 sm:px-3 py-1 rounded-full bg-red-100 text-red-800 font-bold text-[10px] sm:text-xs';
           }
           if (ltvSubtext) {
             ltvSubtext.textContent = 'LTV: ' + ltvPercent.toFixed(1) + '% (Risiko Tinggi)';
-            ltvSubtext.className = 'text-[11px] text-red-600 font-semibold';
+            ltvSubtext.className = 'text-[10px] sm:text-[11px] text-red-600 font-semibold';
           }
           if (simSummary) {
             simSummary.textContent = 'Coverage hanya ' + covPercent.toFixed(1) + '%. Disarankan menambah agunan atau kurangi plafon.';
@@ -1194,9 +1206,9 @@
       tenorButtons.forEach(btn => {
         btn.addEventListener('click', function() {
           tenorButtons.forEach(b => {
-            b.className = 'tenor-btn py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:border-slate-300 transition-all cursor-pointer';
+            b.className = 'tenor-btn py-2 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 text-slate-600 font-bold text-xs sm:text-sm hover:border-slate-300 transition-all cursor-pointer';
           });
-          this.className = 'tenor-btn py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-sm transition-all cursor-pointer';
+          this.className = 'tenor-btn py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer';
           currentTenor = parseInt(this.getAttribute('data-tenor'), 10) || 24;
           calculateMetrics();
         });
