@@ -24,6 +24,18 @@
 
     $statKreditCount   = !empty($total_kredit) && $total_kredit > 0 ? number_format($total_kredit, 0, ',', '.') . '+' : '61.000+';
     $statPlafonTotal   = !empty($total_plafon) && $total_plafon > 0 ? 'Rp ' . number_format($total_plafon / 1000000000, 1, ',', '.') . ' Miliar' : 'Rp 48.5 Miliar';
+
+    // WhatsApp Redirect Link Generator
+    $teleponClean = preg_replace('/[^0-9]/', '', $teleponWeb);
+    if (str_starts_with($teleponClean, '0')) {
+        $waNumber = '62' . substr($teleponClean, 1);
+    } elseif (str_starts_with($teleponClean, '62')) {
+        $waNumber = $teleponClean;
+    } else {
+        $waNumber = '62' . $teleponClean;
+    }
+    $waPesan = urlencode('Halo ' . $namaLembagaBersih . ', saya ingin konsultasi mengenai sistem analisis kelayakan kredit.');
+    $waUrl   = 'https://wa.me/' . $waNumber . '?text=' . $waPesan;
 ?>
 <!DOCTYPE html>
 <html class="scroll-smooth overflow-x-hidden w-full max-w-full" lang="id">
@@ -42,165 +54,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
     <link rel="shortcut icon" type="image/png" href="<?= !empty($logoWeb) ? base_url($logoWeb) : base_url('favicon.ico') ?>">
 
-    <!-- TAILWIND LOKAL (Instan & Responsif Sejak Frame Pertama) -->
+    <!-- TAILWIND LOKAL & ASSETS EKSTERNAL (Tersinkron & Terpisah Bersih) -->
     <script src="<?= base_url('libs/tailwind/tailwind.min.js') ?>"></script>
-    <script id="tailwind-config">
-        tailwind.config = {
-          darkMode: "class",
-          theme: {
-            extend: {
-              colors: {
-                brand: {
-                  50: '#eff6ff',
-                  100: '#dbeafe',
-                  200: '#bfdbfe',
-                  300: '#93c5fd',
-                  400: '#60a5fa',
-                  500: '#3b82f6',
-                  600: '#2563eb',
-                  700: '#1d4ed8',
-                  800: '#1e40af',
-                  900: '#1e3a8a',
-                },
-                slate: {
-                  50: '#f8fafc',
-                  100: '#f1f5f9',
-                  200: '#e2e8f0',
-                  300: '#cbd5e1',
-                  400: '#94a3b8',
-                  500: '#64748b',
-                  600: '#475569',
-                  700: '#334155',
-                  800: '#1e293b',
-                  900: '#0f172a',
-                }
-              },
-              borderRadius: {
-                '2xl': '1rem',
-                '3xl': '1.5rem',
-                '4xl': '2rem',
-              },
-              boxShadow: {
-                'subtle': '0 2px 10px rgba(0, 0, 0, 0.03), 0 10px 30px rgba(0, 0, 0, 0.04)',
-                'card': '0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02)',
-                'float': '0 20px 40px -15px rgba(37, 99, 235, 0.12)',
-                'blue-glow': '0 10px 25px -5px rgba(37, 99, 235, 0.25)',
-              }
-            }
-          }
-        };
-    </script>
-
-    <style>
-        @layer base {
-          html, body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #fafcff;
-            color: #0f172a;
-            margin: 0;
-            padding: 0;
-            -webkit-font-smoothing: antialiased;
-          }
-        }
-        ::-webkit-scrollbar { display: none; }
-
-        .material-symbols-outlined {
-            font-family: 'Material Symbols Outlined', sans-serif;
-            font-weight: normal;
-            font-style: normal;
-            font-size: 20px;
-            line-height: 1;
-            letter-spacing: normal;
-            text-transform: none;
-            display: inline-block;
-            white-space: nowrap;
-            word-wrap: normal;
-            direction: ltr;
-            -webkit-font-feature-settings: 'liga';
-            -webkit-font-smoothing: antialiased;
-            vertical-align: middle;
-        }
-
-        @keyframes floatSlow {
-          0%, 100% {
-            transform: translateY(0px) rotate(0deg);
-          }
-          50% {
-            transform: translateY(-8px) rotate(0.4deg);
-          }
-        }
-
-        @keyframes floatMedium {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-11px);
-          }
-        }
-
-        @keyframes floatSlight {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-6px);
-          }
-        }
-
-        @keyframes pulseGlow {
-          0%, 100% {
-            opacity: 0.6;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.85;
-            transform: scale(1.04);
-          }
-        }
-
-        .animate-float-slow {
-          animation: floatSlow 6s ease-in-out infinite;
-        }
-        .animate-float-medium {
-          animation: floatMedium 5s ease-in-out infinite 0.7s;
-        }
-        .animate-float-slight {
-          animation: floatSlight 7s ease-in-out infinite 1.4s;
-        }
-        .animate-pulse-glow {
-          animation: pulseGlow 8s ease-in-out infinite alternate;
-        }
-
-        .glass-card {
-          background: rgba(255, 255, 255, 0.92);
-          backdrop-filter: blur(16px);
-          -webkit-backdrop-filter: blur(16px);
-          border: 1px solid rgba(226, 232, 240, 0.9);
-          box-shadow: 0 10px 30px -5px rgba(27, 43, 85, 0.07), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
-        }
-
-        .glass-card:hover {
-          box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.14), 0 8px 16px -4px rgba(0, 0, 0, 0.04);
-          border-color: rgba(147, 197, 253, 0.8);
-        }
-
-        /* Fallback utility styles jika script eksternal lambat */
-        .bg-brand-600 { background-color: #2563eb; }
-        .bg-brand-700 { background-color: #1d4ed8; }
-        .text-brand-600 { color: #2563eb; }
-        .border-brand-300 { border-color: #93c5fd; }
-        .border-brand-500 { border-color: #3b82f6; }
-
-        summary::-webkit-details-marker { display: none; }
-        summary { list-style: none; }
-
-        html, body {
-            overflow-x: hidden !important;
-            max-width: 100vw !important;
-            width: 100% !important;
-        }
-    </style>
+    <script src="<?= base_url('js/landing.js?v=' . (@filemtime(FCPATH . 'js/landing.js') ?: 1)) ?>"></script>
+    <link rel="stylesheet" href="<?= base_url('css/landing.css?v=' . (@filemtime(FCPATH . 'css/landing.css') ?: 1)) ?>">
 </head>
 <body class="bg-[#fafcff] text-slate-900 antialiased overflow-x-hidden w-full max-w-full selection:bg-brand-500/10 selection:text-brand-600">
 
@@ -880,8 +737,9 @@
                     <a class="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-full bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-xs sm:text-sm transition-all shadow-md hover:scale-105 cursor-pointer text-center" href="<?= base_url('simulasi') ?>">
                         Uji Coba Simulasi
                     </a>
-                    <a class="w-full sm:w-auto px-6 sm:px-7 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs sm:text-sm transition-colors border border-white/20 cursor-pointer text-center" href="#kontak">
-                        Hubungi Kami
+                    <a class="w-full sm:w-auto px-6 sm:px-7 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs sm:text-sm transition-colors border border-white/20 cursor-pointer text-center inline-flex items-center justify-center gap-1.5" href="<?= esc($waUrl) ?>" target="_blank" rel="noopener noreferrer">
+                        <span class="material-symbols-outlined text-[16px]">chat</span>
+                        <span>Hubungi Kami</span>
                     </a>
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-6 pt-2 text-[10px] sm:text-xs font-semibold text-blue-100/90">
@@ -957,7 +815,10 @@
                     </div>
                     <div class="flex items-center gap-2 text-slate-600">
                         <span class="material-symbols-outlined text-[15px] sm:text-[16px] text-blue-600 shrink-0">call</span>
-                        <span class="font-medium"><?= esc($teleponWeb) ?></span>
+                        <a href="<?= esc($waUrl) ?>" target="_blank" rel="noopener noreferrer" class="font-medium hover:text-blue-600 transition-colors inline-flex items-center gap-1.5" title="Hubungi via WhatsApp">
+                            <span><?= esc($teleponWeb) ?></span>
+                            <span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">WA</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -974,36 +835,5 @@
     </div>
 </footer>
 
-<!-- MOBILE NAV SCRIPT -->
-<script>
-    // Toggle Mobile Navigation Menu
-    function toggleMobileMenu(force) {
-        const menu = document.getElementById('mobileMenu');
-        const icon = document.getElementById('mobileMenuIcon');
-        if (!menu) return;
-        const isCurrentlyHidden = menu.classList.contains('hidden');
-        const shouldShow = typeof force === 'boolean' ? force : isCurrentlyHidden;
-
-        if (shouldShow) {
-            menu.classList.remove('hidden');
-            if (icon) icon.textContent = 'close';
-        } else {
-            menu.classList.add('hidden');
-            if (icon) icon.textContent = 'menu';
-        }
-    }
-
-    // Auto-close mobile menu on ESC key or clicking outside
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') toggleMobileMenu(false);
-    });
-    document.addEventListener('click', function(e) {
-        const menu = document.getElementById('mobileMenu');
-        const toggleBtn = e.target.closest('button[onclick*="toggleMobileMenu"]');
-        if (menu && !menu.classList.contains('hidden') && !menu.contains(e.target) && !toggleBtn) {
-            toggleMobileMenu(false);
-        }
-    });
-</script>
 </body>
 </html>
