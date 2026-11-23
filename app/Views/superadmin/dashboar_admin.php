@@ -42,14 +42,14 @@
     <div class="md:pl-64 flex flex-col min-h-screen w-full min-w-0 overflow-x-hidden">
 
         <!-- Mobile Header Bar Responsif -->
-        <header class="md:hidden bg-white border-b border-slate-200 px-3.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sticky top-0 z-20 w-full min-w-0">
-            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+        <header class="md:hidden bg-white border-b border-slate-200 px-3.5 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-4 sm:gap-6 sticky top-0 z-20 w-full min-w-0">
+            <div class="flex items-center gap-2.5 min-w-0 flex-1 mr-2 sm:mr-3">
                 <button type="button" onclick="toggleSidebar()" class="p-1.5 sm:p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 shrink-0 cursor-pointer" aria-label="Toggle Sidebar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
                 </button>
-                <div class="flex items-center gap-2 min-w-0 flex-1">
+                <div class="flex items-center gap-2 min-w-0 flex-1 pr-1.5 sm:pr-2">
                     <?php 
                         $cfgHeader = !empty($pengaturan_sistem) ? $pengaturan_sistem : (\Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? []);
                         $appHeaderLogo = !empty($cfgHeader['logo_aplikasi']) ? $cfgHeader['logo_aplikasi'] : '';
@@ -61,7 +61,7 @@
                     <span class="font-bold text-slate-900 text-xs sm:text-sm truncate whitespace-nowrap min-w-0 block"><?= esc($appHeaderName) ?></span>
                 </div>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center shrink-0">
                 <a href="<?= base_url('auth/logout') ?>" class="text-xs text-rose-600 font-semibold px-2.5 py-1.5 rounded-lg bg-rose-50 border border-rose-200 hover:bg-rose-100 transition shrink-0 whitespace-nowrap">
                     Logout
                 </a>
