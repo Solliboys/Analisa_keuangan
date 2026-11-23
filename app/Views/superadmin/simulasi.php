@@ -294,13 +294,13 @@
                     </table>
                 </div>
 
-                <!-- Table Footer & Counter -->
-                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-slate-100 text-xs text-slate-500">
-                    <div>
-                        Menampilkan <span class="font-bold text-slate-800" id="showingCount"><?= count($daftar_kredit ?? []) ?></span> berkas pengajuan kredit
+                <!-- Table Footer & Paginasi (Awal 10 Per Halaman) -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t border-slate-100 text-xs text-slate-500 bg-slate-50/50">
+                    <div class="tabular-nums text-center sm:text-left">
+                        Menampilkan <span class="font-bold text-slate-800" id="showingCount">1 - <?= min(10, count($daftar_kredit ?? [])) ?></span> dari <span class="font-bold text-slate-800" id="totalCount"><?= count($daftar_kredit ?? []) ?></span> berkas pengajuan kredit
                     </div>
-                    <div class="text-[11px] text-slate-400">
-                        Sinkron real-time dengan basis data CAM
+                    <div class="inline-flex items-center gap-1 flex-wrap justify-center sm:justify-end" id="simulasiPaginationControls">
+                        <!-- Tombol paginasi dirender via JS -->
                     </div>
                 </div>
             </div>
@@ -554,15 +554,16 @@
 
     <!-- Client-side Interactive Scripts -->
     <script>
+        let currentPage = 1;
+        const perPage = 10;
+
         function filterTable() {
             const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
             const tenorVal = document.getElementById('tenorFilter').value;
             const statusVal = document.getElementById('statusFilter').value.toLowerCase();
-            const rows = document.querySelectorAll('#tableBody tr.data-row');
+            const rows = Array.from(document.querySelectorAll('#tableBody tr.data-row'));
             
-            let visibleCount = 0;
-
-            rows.forEach(row => {
+            const filteredRows = rows.filter(row => {
                 const nomor = row.getAttribute('data-nomor') || '';
                 const nama = row.getAttribute('data-nama') || '';
                 const usaha = row.getAttribute('data-usaha') || '';
@@ -573,35 +574,117 @@
                 let matchTenor = (!tenorVal) || (tenor === tenorVal);
                 let matchStatus = (!statusVal) || (status.includes(statusVal));
 
-                if (matchSearch && matchTenor && matchStatus) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
+                return matchSearch && matchTenor && matchStatus;
             });
 
-            document.getElementById('showingCount').innerText = visibleCount;
+            // Sembunyikan semua baris terlebih dahulu
+            rows.forEach(r => r.style.display = 'none');
+
+            const total = filteredRows.length;
+            const totalPages = Math.ceil(total / perPage) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * perPage;
+            const endIndex = Math.min(startIndex + perPage, total);
+
+            for (let i = startIndex; i < endIndex; i++) {
+                filteredRows[i].style.display = '';
+            }
+
+            // Update Counter
+            const countEl = document.getElementById('showingCount');
+            const totalEl = document.getElementById('totalCount');
+            if (countEl) {
+                countEl.innerText = total === 0 ? '0' : `${startIndex + 1} - ${endIndex}`;
+            }
+            if (totalEl) {
+                totalEl.innerText = total;
+            }
+
+            // Empty state row
+            let emptyFilterRow = document.getElementById('emptyFilterRow');
+            if (total === 0) {
+                if (!emptyFilterRow) {
+                    emptyFilterRow = document.createElement('tr');
+                    emptyFilterRow.id = 'emptyFilterRow';
+                    emptyFilterRow.innerHTML = '<td colspan="8" class="text-center py-12 text-slate-400"><p class="font-medium text-slate-600">Tidak ada berkas pengajuan kredit yang sesuai dengan kriteria filter.</p></td>';
+                    document.getElementById('tableBody').appendChild(emptyFilterRow);
+                }
+                emptyFilterRow.style.display = '';
+            } else if (emptyFilterRow) {
+                emptyFilterRow.style.display = 'none';
+            }
+
+            renderPaginationControls(totalPages);
+        }
+
+        function renderPaginationControls(totalPages) {
+            const container = document.getElementById('simulasiPaginationControls');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Tombol Prev
+            const prevBtn = document.createElement('button');
+            prevBtn.type = 'button';
+            prevBtn.innerText = 'Sebelumnya';
+            prevBtn.disabled = (currentPage === 1);
+            prevBtn.className = `px-2.5 py-1 text-xs rounded-md border border-slate-200 font-semibold transition ${currentPage === 1 ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shadow-2xs'}`;
+            prevBtn.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    filterTable();
+                    document.getElementById('simulasiTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+            container.appendChild(prevBtn);
+
+            // Tombol Halaman
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.type = 'button';
+                    pageBtn.innerText = i;
+                    pageBtn.className = `min-w-[28px] h-7 px-1.5 text-xs rounded-md font-bold transition ${i === currentPage ? 'bg-blue-600 text-white shadow-2xs' : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 cursor-pointer'}`;
+                    pageBtn.onclick = () => {
+                        currentPage = i;
+                        filterTable();
+                        document.getElementById('simulasiTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    };
+                    container.appendChild(pageBtn);
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    const dots = document.createElement('span');
+                    dots.className = 'px-1 text-slate-400 font-bold';
+                    dots.innerText = '...';
+                    container.appendChild(dots);
+                }
+            }
+
+            // Tombol Next
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.innerText = 'Selanjutnya';
+            nextBtn.disabled = (currentPage === totalPages);
+            nextBtn.className = `px-2.5 py-1 text-xs rounded-md border border-slate-200 font-semibold transition ${currentPage === totalPages ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shadow-2xs'}`;
+            nextBtn.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    filterTable();
+                    document.getElementById('simulasiTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+            container.appendChild(nextBtn);
         }
 
         function updateRowCount() {
-            const visibleRows = document.querySelectorAll('#tableBody tr.data-row:not([style*="display: none"])');
-            document.getElementById('showingCount').innerText = visibleRows.length;
-            
-            const totalRows = document.querySelectorAll('#tableBody tr.data-row');
-            if (totalRows.length === 0) {
-                document.getElementById('tableBody').innerHTML = `
-                    <tr id="emptyRow">
-                        <td colspan="8" class="text-center py-12 text-slate-400">
-                            <div class="w-12 h-12 mx-auto mb-3 text-slate-300">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            </div>
-                            <p class="font-medium text-slate-600">Semua berkas simulasi kredit telah dihapus.</p>
-                        </td>
-                    </tr>
-                `;
-            }
+            filterTable();
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            filterTable();
+        });
 
         function viewDetailKredit(data) {
             const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);

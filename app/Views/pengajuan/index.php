@@ -431,6 +431,16 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Bar Paginasi Pengajuan (Default 10 per halaman) -->
+            <div id="pengajuanPaginationBar" class="px-5 py-3.5 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <div id="pengajuanPaginationInfo" class="tabular-nums text-center sm:text-left">
+                    Menampilkan <span id="pengajuanInfoShowingStart" class="font-bold text-slate-800">1</span> &minus; <span id="pengajuanInfoShowingEnd" class="font-bold text-slate-800"><?= min(10, count($daftar_kredit ?? [])) ?></span> dari <span id="pengajuanInfoTotalCount" class="font-bold text-slate-800"><?= count($daftar_kredit ?? []) ?></span> pengajuan
+                </div>
+                <div class="inline-flex items-center gap-1 flex-wrap justify-center sm:justify-end" id="pengajuanPaginationControls">
+                    <!-- Tombol paginasi pengajuan via JS -->
+                </div>
+            </div>
         </div>
 
     </main>
@@ -443,7 +453,10 @@
     </footer>
 
         <script>
-        // Logika Filter Terpadu: Rentang Waktu, Tipe Debitur, & Pencarian Kata Kunci
+        let pengajuanCurrentPage = 1;
+        const pengajuanPerPage = 10;
+
+        // Logika Filter Terpadu: Rentang Waktu, Tipe Debitur, & Pencarian Kata Kunci dengan Paginasi
         function filterTabelPengajuan() {
             const rentang = document.getElementById('filterRentangWaktu')?.value || 'semua';
             const customBox = document.getElementById('customDateRangeBox');
@@ -502,10 +515,9 @@
             const selectedTipe = filterSelect ? filterSelect.value : 'semua';
             const searchInput = document.getElementById('searchInput');
             const term = (searchInput?.value || '').toLowerCase().trim();
-            const rows = document.querySelectorAll('#tabelPengajuan tbody tr[data-tanggal]');
-            let visibleCount = 0;
+            const rows = Array.from(document.querySelectorAll('#tabelPengajuan tbody tr[data-tanggal]'));
 
-            rows.forEach(row => {
+            const filtered = rows.filter(row => {
                 const rowDate = row.getAttribute('data-tanggal');
                 const rowTipe = row.getAttribute('data-jenis-debitur') || '';
                 const rowText = row.innerText.toLowerCase();
@@ -517,19 +529,101 @@
                 const matchTipe = (selectedTipe === 'semua' || rowTipe === selectedTipe);
                 const matchSearch = (!term || rowText.includes(term));
 
-                if (matchDate && matchTipe && matchSearch) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
+                return matchDate && matchTipe && matchSearch;
             });
+
+            // Sembunyikan semua baris terlebih dahulu
+            rows.forEach(r => r.style.display = 'none');
+
+            const total = filtered.length;
+            const totalPages = Math.ceil(total / pengajuanPerPage) || 1;
+            if (pengajuanCurrentPage > totalPages) pengajuanCurrentPage = totalPages;
+            if (pengajuanCurrentPage < 1) pengajuanCurrentPage = 1;
+
+            const startIndex = (pengajuanCurrentPage - 1) * pengajuanPerPage;
+            const endIndex = Math.min(startIndex + pengajuanPerPage, total);
+
+            for (let i = startIndex; i < endIndex; i++) {
+                filtered[i].style.display = '';
+            }
 
             const countDisplay = document.getElementById('countDisplay');
             if (countDisplay) {
-                countDisplay.innerText = visibleCount;
+                countDisplay.innerText = total === 0 ? '0' : `${startIndex + 1} - ${endIndex} dari ${total}`;
             }
+
+            const infoStart = document.getElementById('pengajuanInfoShowingStart');
+            const infoEnd = document.getElementById('pengajuanInfoShowingEnd');
+            const infoTotal = document.getElementById('pengajuanInfoTotalCount');
+            if (infoStart) infoStart.innerText = total === 0 ? '0' : (startIndex + 1);
+            if (infoEnd) infoEnd.innerText = endIndex;
+            if (infoTotal) infoTotal.innerText = total;
+
+            renderPengajuanPaginationControls(totalPages);
         }
+
+        function renderPengajuanPaginationControls(totalPages) {
+            const container = document.getElementById('pengajuanPaginationControls');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Tombol Prev
+            const prevBtn = document.createElement('button');
+            prevBtn.type = 'button';
+            prevBtn.innerText = 'Sebelumnya';
+            prevBtn.disabled = (pengajuanCurrentPage === 1);
+            prevBtn.className = `px-2.5 py-1 text-xs rounded-md border border-slate-200 font-semibold transition ${pengajuanCurrentPage === 1 ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shadow-2xs'}`;
+            prevBtn.onclick = () => {
+                if (pengajuanCurrentPage > 1) {
+                    pengajuanCurrentPage--;
+                    filterTabelPengajuan();
+                    document.getElementById('tabelPengajuan')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+            container.appendChild(prevBtn);
+
+            // Tombol Halaman
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= pengajuanCurrentPage - 1 && i <= pengajuanCurrentPage + 1)) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.type = 'button';
+                    pageBtn.innerText = i;
+                    pageBtn.className = `min-w-[28px] h-7 px-1.5 text-xs rounded-md font-bold transition ${i === pengajuanCurrentPage ? 'bg-blue-600 text-white shadow-2xs' : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 cursor-pointer'}`;
+                    pageBtn.onclick = () => {
+                        pengajuanCurrentPage = i;
+                        filterTabelPengajuan();
+                        document.getElementById('tabelPengajuan')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    };
+                    container.appendChild(pageBtn);
+                } else if (i === pengajuanCurrentPage - 2 || i === pengajuanCurrentPage + 2) {
+                    const dots = document.createElement('span');
+                    dots.className = 'px-1 text-slate-400 font-bold';
+                    dots.innerText = '...';
+                    container.appendChild(dots);
+                }
+            }
+
+            // Tombol Next
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.innerText = 'Selanjutnya';
+            nextBtn.disabled = (pengajuanCurrentPage === totalPages);
+            nextBtn.className = `px-2.5 py-1 text-xs rounded-md border border-slate-200 font-semibold transition ${pengajuanCurrentPage === totalPages ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shadow-2xs'}`;
+            nextBtn.onclick = () => {
+                if (pengajuanCurrentPage < totalPages) {
+                    pengajuanCurrentPage++;
+                    filterTabelPengajuan();
+                    document.getElementById('tabelPengajuan')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+            container.appendChild(nextBtn);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            filterTabelPengajuan();
+        });
 
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
