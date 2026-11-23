@@ -99,3 +99,47 @@ main table thead th {
 main table tbody tr:hover {
     background-color: rgba(239, 246, 255, 0.45);
 }
+
+/* ========================================================
+   UNIVERSAL MOBILE RESPONSIVENESS LAYER (< 640px)
+   Applies across SLIK, Reviewer, CEO, Superadmin, Pengajuan, Profil
+   ======================================================== */
+@media (max-width: 639px) {
+    html, body {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
+
+    /* Prevent card headers (title + badge/button) from colliding or overflowing */
+    main .flex.items-center.justify-between.border-b,
+    main .flex.justify-between.items-center.border-b {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Never squish square icon/avatar boxes inside flex rows */
+    main .w-7.h-7,
+    main .w-8.h-8,
+    main .w-9.h-9,
+    main .w-10.h-10,
+    main .w-11.h-11,
+    main .w-12.h-12,
+    header .w-8.h-8,
+    header .w-9.h-9,
+    header .w-10.h-10 {
+        flex-shrink: 0 !important;
+    }
+
+    /* Reset wide min-w controls on mobile (except tables) so nothing forces horizontal scroll */
+    main div[class*="min-w-["],
+    main select[class*="min-w-["] {
+        min-width: 0 !important;
+    }
+
+    /* Keep horizontal scroll strictly inside table wrappers */
+    main .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+}
+
