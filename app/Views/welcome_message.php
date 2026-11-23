@@ -237,7 +237,6 @@
         <!-- Center Navigation Desktop -->
         <nav class="hidden md:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-full border border-slate-200/70 shadow-inner">
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#fitur">Fitur &amp; Keunggulan</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#simulasi">Kalkulator</a>
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#alur-kerja">Alur Kerja</a>
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#faq">FAQ</a>
             <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#kontak">Kontak</a>
@@ -260,7 +259,6 @@
     <div id="mobileMenu" class="hidden md:hidden bg-white/95 backdrop-blur-xl border-b border-slate-200 px-4 py-3 shadow-xl transition-all">
         <nav class="flex flex-col space-y-1">
             <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#fitur" onclick="toggleMobileMenu(false)">Fitur &amp; Keunggulan</a>
-            <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#simulasi" onclick="toggleMobileMenu(false)">Kalkulator</a>
             <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#alur-kerja" onclick="toggleMobileMenu(false)">Alur Kerja</a>
             <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#faq" onclick="toggleMobileMenu(false)">FAQ</a>
             <a class="px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" href="#kontak" onclick="toggleMobileMenu(false)">Kontak</a>
@@ -737,102 +735,6 @@
         </div>
     </section>
 
-    <!-- SECTION: INTERACTIVE CALCULATOR -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 bg-slate-50/70 rounded-2xl sm:rounded-3xl border border-slate-200/80 my-4 sm:my-8 scroll-mt-20 sm:scroll-mt-24" id="simulasi">
-        <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
-            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider mb-2.5 sm:mb-3 shadow-sm">
-                <span class="material-symbols-outlined text-[16px] text-blue-600">tune</span>
-                <span>Simulasi Interaktif</span>
-            </div>
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                Kalkulator Simulasi Kredit
-            </h2>
-            <p class="text-slate-500 text-xs sm:text-sm mt-2">
-                Estimasi angsuran dan coverage agunan secara instan.
-            </p>
-        </div>
-        <!-- Calculator Box -->
-        <div class="max-w-5xl mx-auto bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-card p-4 sm:p-8 lg:p-10">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
-                <!-- Left Column: Inputs -->
-                <div class="lg:col-span-6 space-y-5 sm:space-y-6">
-                    <!-- Plafon Range -->
-                    <div>
-                        <div class="flex justify-between items-center mb-1.5 sm:mb-2">
-                            <label class="text-xs sm:text-sm font-bold text-slate-800" for="plafon-slider">Plafon Pinjaman</label>
-                            <span class="text-base sm:text-lg font-black text-blue-600" id="plafon-display">Rp 250.000.000</span>
-                        </div>
-                        <input class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600" id="plafon-slider" max="1000000000" min="50000000" step="25000000" type="range" value="250000000"/>
-                        <div class="flex justify-between text-[10px] sm:text-[11px] text-slate-400 font-semibold mt-1">
-                            <span>Rp 50 Jt</span>
-                            <span>Rp 500 Jt</span>
-                            <span>Rp 1 Miliar</span>
-                        </div>
-                    </div>
-                    <!-- Tenor Selection Buttons -->
-                    <div>
-                        <label class="text-xs sm:text-sm font-bold text-slate-800 block mb-1.5 sm:mb-2">Jangka Waktu (Tenor)</label>
-                        <div class="grid grid-cols-4 gap-1.5 sm:gap-2">
-                            <button class="tenor-btn py-2 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 text-slate-600 font-bold text-xs sm:text-sm hover:border-slate-300 transition-all cursor-pointer" data-tenor="12" type="button">12 Bln</button>
-                            <button class="tenor-btn py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer" data-tenor="24" type="button">24 Bln</button>
-                            <button class="tenor-btn py-2 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 text-slate-600 font-bold text-xs sm:text-sm hover:border-slate-300 transition-all cursor-pointer" data-tenor="36" type="button">36 Bln</button>
-                            <button class="tenor-btn py-2 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 text-slate-600 font-bold text-xs sm:text-sm hover:border-slate-300 transition-all cursor-pointer" data-tenor="48" type="button">48 Bln</button>
-                        </div>
-                    </div>
-                    <!-- Nilai Agunan Range -->
-                    <div>
-                        <div class="flex justify-between items-center mb-1.5 sm:mb-2">
-                            <label class="text-xs sm:text-sm font-bold text-slate-800" for="agunan-slider">Nilai Likuidasi Agunan</label>
-                            <span class="text-base sm:text-lg font-black text-slate-900" id="agunan-display">Rp 375.000.000</span>
-                        </div>
-                        <input class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600" id="agunan-slider" max="1500000000" min="100000000" step="25000000" type="range" value="375000000"/>
-                        <div class="flex justify-between text-[10px] sm:text-[11px] text-slate-400 font-semibold mt-1">
-                            <span>Rp 100 Jt</span>
-                            <span>Rp 750 Jt</span>
-                            <span>Rp 1.5 Miliar</span>
-                        </div>
-                    </div>
-                </div>
-                <!-- Right Column: Projection Card -->
-                <div class="lg:col-span-6 bg-slate-50/90 rounded-xl sm:rounded-2xl border border-slate-200/90 p-4 sm:p-6 flex flex-col justify-between space-y-4 sm:space-y-5">
-                    <div class="flex items-center justify-between pb-3 border-b border-slate-200">
-                        <span class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">Hasil Proyeksi</span>
-                        <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] sm:text-xs" id="sim-status-chip">● DISARANKAN APPROVAL</span>
-                    </div>
-                    <!-- Metric Highlights -->
-                    <div class="grid grid-cols-2 gap-2.5 sm:gap-4">
-                        <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 shadow-sm">
-                            <span class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase block truncate">Est. Angsuran / Bln</span>
-                            <span class="text-sm sm:text-lg font-black text-slate-900 mt-1 block truncate" id="angsuran-display">Rp 16.666.667</span>
-                            <span class="text-[10px] sm:text-[11px] text-slate-500 block truncate">Bunga 2.5% Flat/bln</span>
-                        </div>
-                        <div class="bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 shadow-sm">
-                            <span class="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase block truncate">Coverage Agunan</span>
-                            <span class="text-sm sm:text-lg font-black text-blue-600 mt-1 block truncate" id="ltv-display">150.0%</span>
-                            <span class="text-[10px] sm:text-[11px] text-blue-600 font-semibold block truncate" id="ltv-subtext">LTV: 66.7% (Aman)</span>
-                        </div>
-                    </div>
-                    <!-- Summary text box -->
-                    <div class="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80">
-                        <div class="flex items-start gap-2 sm:gap-2.5">
-                            <span class="material-symbols-outlined text-blue-600 text-[18px] sm:text-[20px] shrink-0 mt-0.5">insights</span>
-                            <p class="text-xs text-slate-600 leading-relaxed" id="sim-summary">
-                                Agunan dan angsuran debitur berada dalam batas aman. Siap diajukan ke komite kredit.
-                            </p>
-                        </div>
-                    </div>
-                    <!-- CTA link -->
-                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-2">
-                        <span class="text-xs text-slate-500 text-center sm:text-left">Butuh analisa lengkap?</span>
-                        <a class="px-4 py-2 rounded-full bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition-colors shadow-sm text-center cursor-pointer" href="<?= base_url('simulasi') ?>">
-                            Buka Simulasi →
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- SECTION: 4-STEP PROCESS (SESUAI ALUR KERJA SISTEM AKTUAL) -->
     <section class="max-w-7xl mx-auto px-4 sm:px-8 py-10 sm:py-16 scroll-mt-20 sm:scroll-mt-24" id="alur-kerja">
         <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
@@ -1023,7 +925,7 @@
                 <ul class="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-slate-500">
                     <li><a class="hover:text-blue-600 transition-colors" href="#fitur">SLIK OJK Intelligence</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#fitur">Scoring 5C Matrix</a></li>
-                    <li><a class="hover:text-blue-600 transition-colors" href="#simulasi">Kalkulator DSCR &amp; LTV</a></li>
+                    <li><a class="hover:text-blue-600 transition-colors" href="<?= base_url('simulasi') ?>">Sandbox Simulasi</a></li>
                     <li><a class="hover:text-blue-600 transition-colors" href="#alur-kerja">Laporan Analisis PDF</a></li>
                 </ul>
             </div>
@@ -1072,7 +974,7 @@
     </div>
 </footer>
 
-<!-- CLIENT-SIDE SIMULATOR & MOBILE NAV SCRIPT -->
+<!-- MOBILE NAV SCRIPT -->
 <script>
     // Toggle Mobile Navigation Menu
     function toggleMobileMenu(force) {
@@ -1102,115 +1004,6 @@
             toggleMobileMenu(false);
         }
     });
-
-    (function initCreditSimulator() {
-      const plafonSlider = document.getElementById('plafon-slider');
-      const agunanSlider = document.getElementById('agunan-slider');
-      const plafonDisplay = document.getElementById('plafon-display');
-      const agunanDisplay = document.getElementById('agunan-display');
-      const angsuranDisplay = document.getElementById('angsuran-display');
-      const ltvDisplay = document.getElementById('ltv-display');
-      const ltvSubtext = document.getElementById('ltv-subtext');
-      const simStatusChip = document.getElementById('sim-status-chip');
-      const simSummary = document.getElementById('sim-summary');
-      const tenorButtons = document.querySelectorAll('.tenor-btn');
-
-      let currentTenor = 24;
-
-      function formatRupiah(num) {
-        return 'Rp ' + Number(num).toLocaleString('id-ID');
-      }
-
-      function calculateMetrics() {
-        if (!plafonSlider || !agunanSlider) return;
-
-        const plafon = parseFloat(plafonSlider.value) || 250000000;
-        const agunan = parseFloat(agunanSlider.value) || 375000000;
-        const tenor = currentTenor || 24;
-        const monthlyRate = 0.025; // 2.5% per month
-
-        // Format Displays
-        if (plafonDisplay) plafonDisplay.textContent = formatRupiah(plafon);
-        if (agunanDisplay) agunanDisplay.textContent = formatRupiah(agunan);
-
-        // Angsuran: Pokok bulanan + Bunga flat
-        const pokokBulanan = plafon / tenor;
-        const bungaBulanan = plafon * monthlyRate;
-        const totalAngsuran = Math.round(pokokBulanan + bungaBulanan);
-        if (angsuranDisplay) angsuranDisplay.textContent = formatRupiah(totalAngsuran);
-
-        // Coverage Agunan: (Agunan / Plafon) * 100
-        const covPercent = (agunan / plafon) * 100;
-        // LTV: (Plafon / Agunan) * 100
-        const ltvPercent = agunan > 0 ? (plafon / agunan) * 100 : 100;
-
-        if (ltvDisplay) ltvDisplay.textContent = covPercent.toFixed(1) + '%';
-
-        let simulatedScore = 80;
-        if (covPercent >= 150) simulatedScore += 10;
-        else if (covPercent >= 120) simulatedScore += 5;
-        else if (covPercent < 100) simulatedScore -= 15;
-
-        if (tenor <= 24) simulatedScore += 3;
-        else if (tenor > 36) simulatedScore -= 4;
-
-        if (simulatedScore >= 85) {
-          if (simStatusChip) {
-            simStatusChip.textContent = '● DISARANKAN APPROVAL';
-            simStatusChip.className = 'px-2.5 sm:px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] sm:text-xs';
-          }
-          if (ltvSubtext) {
-            ltvSubtext.textContent = 'LTV: ' + ltvPercent.toFixed(1) + '% (Sangat Aman)';
-            ltvSubtext.className = 'text-[10px] sm:text-[11px] text-emerald-600 font-semibold';
-          }
-          if (simSummary) {
-            simSummary.textContent = 'Agunan dan angsuran aman (Coverage ' + covPercent.toFixed(1) + '%). Layak diproses ke komite kredit.';
-          }
-        } else if (simulatedScore >= 70) {
-          if (simStatusChip) {
-            simStatusChip.textContent = '● BUTUH VERIFIKASI';
-            simStatusChip.className = 'px-2.5 sm:px-3 py-1 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px] sm:text-xs';
-          }
-          if (ltvSubtext) {
-            ltvSubtext.textContent = 'LTV: ' + ltvPercent.toFixed(1) + '% (Standar)';
-            ltvSubtext.className = 'text-[10px] sm:text-[11px] text-amber-700 font-semibold';
-          }
-          if (simSummary) {
-            simSummary.textContent = 'Coverage ' + covPercent.toFixed(1) + '%. Perlu verifikasi mutasi rekening dan legalitas agunan.';
-          }
-        } else {
-          if (simStatusChip) {
-            simStatusChip.textContent = '● PERTIMBANGKAN ULANG';
-            simStatusChip.className = 'px-2.5 sm:px-3 py-1 rounded-full bg-red-100 text-red-800 font-bold text-[10px] sm:text-xs';
-          }
-          if (ltvSubtext) {
-            ltvSubtext.textContent = 'LTV: ' + ltvPercent.toFixed(1) + '% (Risiko Tinggi)';
-            ltvSubtext.className = 'text-[10px] sm:text-[11px] text-red-600 font-semibold';
-          }
-          if (simSummary) {
-            simSummary.textContent = 'Coverage hanya ' + covPercent.toFixed(1) + '%. Disarankan menambah agunan atau kurangi plafon.';
-          }
-        }
-      }
-
-      if (plafonSlider && agunanSlider) {
-        plafonSlider.addEventListener('input', calculateMetrics);
-        agunanSlider.addEventListener('input', calculateMetrics);
-      }
-
-      tenorButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-          tenorButtons.forEach(b => {
-            b.className = 'tenor-btn py-2 sm:py-2.5 rounded-lg sm:rounded-xl border border-slate-200 text-slate-600 font-bold text-xs sm:text-sm hover:border-slate-300 transition-all cursor-pointer';
-          });
-          this.className = 'tenor-btn py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer';
-          currentTenor = parseInt(this.getAttribute('data-tenor'), 10) || 24;
-          calculateMetrics();
-        });
-      });
-
-      calculateMetrics();
-    })();
 </script>
 </body>
 </html>
