@@ -234,12 +234,12 @@
             </div>
         </a>
 
-        <!-- Center Navigation Desktop -->
-        <nav class="hidden md:flex items-center gap-1 bg-slate-100/80 p-1.5 rounded-full border border-slate-200/70 shadow-inner">
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#fitur">Fitur &amp; Keunggulan</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#alur-kerja">Alur Kerja</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#faq">FAQ</a>
-            <a class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 rounded-full hover:bg-white transition-all" href="#kontak">Kontak</a>
+        <!-- Center Navigation Desktop (Tanpa Kotak Abu-abu) -->
+        <nav class="hidden md:flex items-center gap-6 lg:gap-8">
+            <a class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors" href="#fitur">Fitur &amp; Keunggulan</a>
+            <a class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors" href="#alur-kerja">Alur Kerja</a>
+            <a class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors" href="#faq">FAQ</a>
+            <a class="text-sm font-semibold text-slate-600 hover:text-blue-600 transition-colors" href="#kontak">Kontak</a>
         </nav>
 
         <!-- Right Header Actions (Login & Mobile Hamburger) -->
