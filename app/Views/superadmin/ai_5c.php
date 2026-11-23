@@ -506,6 +506,10 @@ Arahan Penyajian Ringkasan Analisis:
                 if (preg_match('/(was\s+here|hacked|pwned|defaced|<script|0[x×][a-z0-9]+)/iu', $txt)) {
                     return null;
                 }
+                // Upgrade placeholder 1-kalimat bawaan seeder lama ke prompt standar lengkap
+                if (preg_match('/^(Analisis (karakter|kapasitas|permodalan|jaminan|prospek ekonomi) debitur berdasarkan|Berikan ringkasan rekomendasi keputusan akhir kredit)/i', $txt) && mb_strlen($txt) < 150) {
+                    return null;
+                }
                 // Pastikan prompt tidak tertukar antar pilar 5C
                 $wrongMarkers = [
                     'character'  => ['PILAR COLLATERAL', 'Penilai Agunan', 'PILAR CAPACITY', 'PILAR CAPITAL', 'PILAR CONDITION'],
@@ -520,6 +524,9 @@ Arahan Penyajian Ringkasan Analisis:
                         return null;
                     }
                 }
+                // Bersihkan istilah lama BPR agar konsisten dengan branding OTW Approved
+                $txt = preg_replace('/lembaga\s+perbankan\s*\/\s*BPR/i', 'lembaga pembiayaan', $txt);
+                $txt = preg_replace('/\bBPR\b/i', 'lembaga pembiayaan', $txt);
                 if ($pillar === 'reviewer') {
                     // Bersihkan blok teknis JSON agar Superadmin hanya melihat aturan bahasa manusia
                     $txt = trim((string)preg_replace('/\r?\n*Kewajiban Format Output:[\s\S]*$/i', '', $txt));

@@ -27,6 +27,9 @@ class GeminiAiService
             if (preg_match('/(was\s+here|hacked|pwned|defaced|<script|0[x×][a-z0-9]+)/iu', $txt)) {
                 return $fallback;
             }
+            if (preg_match('/^(Analisis (karakter|kapasitas|permodalan|jaminan|prospek ekonomi) debitur berdasarkan|Berikan ringkasan rekomendasi keputusan akhir kredit)/i', $txt) && mb_strlen($txt) < 150) {
+                return $fallback;
+            }
             $wrongMarkers = [
                 'character'  => ['PILAR COLLATERAL', 'Penilai Agunan', 'PILAR CAPACITY', 'PILAR CAPITAL', 'PILAR CONDITION'],
                 'capacity'   => ['PILAR CHARACTER', 'PILAR COLLATERAL', 'Penilai Agunan', 'PILAR CAPITAL', 'PILAR CONDITION'],
