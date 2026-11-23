@@ -46,6 +46,7 @@ if ($jam >= 4 && $jam < 11) {
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
 
     <style>
+        html { color-scheme: light; }
         body {
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: #ffffff;
@@ -362,11 +363,11 @@ if ($jam >= 4 && $jam < 11) {
                         <div class="space-y-2.5">
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-700 mb-1">Username</label>
-                                <input id="reset_username" type="text" value="${curUser.replace(/"/g, '&quot;')}" placeholder="Contoh: pengusul" class="w-full h-9 px-3 border border-slate-300 rounded-md text-xs text-slate-900 focus:border-blue-700 focus:outline-none">
+                                <input id="reset_username" type="text" value="${curUser.replace(/"/g, '&quot;')}" placeholder="Contoh: pengusul" class="auth-input" style="background-color:#ffffff;color:#0f172a;">
                             </div>
                             <div>
                                 <label class="block text-[11px] font-semibold text-slate-700 mb-1">Email Terdaftar</label>
-                                <input id="reset_email" type="email" placeholder="email@instansi.id" class="w-full h-9 px-3 border border-slate-300 rounded-md text-xs text-slate-900 focus:border-blue-700 focus:outline-none">
+                                <input id="reset_email" type="email" placeholder="email@instansi.id" class="auth-input" style="background-color:#ffffff;color:#0f172a;">
                             </div>
                         </div>
                         <div class="text-[11px] text-slate-400 pt-1">

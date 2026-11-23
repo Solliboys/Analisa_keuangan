@@ -492,17 +492,45 @@ Arahan Penyajian Ringkasan Analisis:
         };
 
         <?php
-            $dbPromptChar = trim((string)($pengaturan_ai['prompt_character'] ?? ''));
-            // Guard: jika data DB prompt_character tertukar berisi teks Collateral, kembalikan ke default Character
-            if ($dbPromptChar === '' || stripos($dbPromptChar, 'PILAR COLLATERAL') !== false || stripos($dbPromptChar, 'Penilai Agunan') !== false) {
-                $dbPromptChar = null;
-            }
-            $dbPromptFinal = trim((string)($pengaturan_ai['prompt_final'] ?? ''));
-            if ($dbPromptFinal !== '') {
-                // Bersihkan blok teknis JSON agar Superadmin hanya melihat aturan bahasa manusia
-                $dbPromptFinal = trim((string)preg_replace('/\r?\n*Kewajiban Format Output:[\s\S]*$/i', '', $dbPromptFinal));
-            }
-            $dbPromptFinal = ($dbPromptFinal !== '') ? $dbPromptFinal : null;
+            $sanitizeDbPrompt = static function ($raw, string $pillar): ?string {
+                $txt = trim((string)($raw ?? ''));
+                if ($txt === '' || mb_strlen($txt) < 40) {
+                    return null;
+                }
+                // Tolak teks sampah/deface/uji coba (mis. "0xP4J∆R WAS HERE", script, dsb.)
+                if (preg_match('/(was\s+here|hacked|pwned|defaced|<script|0[x×][a-z0-9]+)/iu', $txt)) {
+                    return null;
+                }
+                // Pastikan prompt tidak tertukar antar pilar 5C
+                $wrongMarkers = [
+                    'character'  => ['PILAR COLLATERAL', 'Penilai Agunan', 'PILAR CAPACITY', 'PILAR CAPITAL', 'PILAR CONDITION'],
+                    'capacity'   => ['PILAR CHARACTER', 'PILAR COLLATERAL', 'Penilai Agunan', 'PILAR CAPITAL', 'PILAR CONDITION'],
+                    'capital'    => ['PILAR CHARACTER', 'PILAR COLLATERAL', 'Penilai Agunan', 'PILAR CAPACITY', 'PILAR CONDITION'],
+                    'collateral' => ['PILAR CHARACTER', 'PILAR CAPACITY', 'PILAR CAPITAL', 'PILAR CONDITION'],
+                    'condition'  => ['PILAR CHARACTER', 'PILAR COLLATERAL', 'Penilai Agunan', 'PILAR CAPACITY', 'PILAR CAPITAL'],
+                    'reviewer'   => ['PILAR CHARACTER', 'PILAR COLLATERAL', 'PILAR CAPACITY', 'PILAR CAPITAL', 'PILAR CONDITION'],
+                ];
+                foreach ($wrongMarkers[$pillar] ?? [] as $bad) {
+                    if (stripos($txt, $bad) !== false) {
+                        return null;
+                    }
+                }
+                if ($pillar === 'reviewer') {
+                    // Bersihkan blok teknis JSON agar Superadmin hanya melihat aturan bahasa manusia
+                    $txt = trim((string)preg_replace('/\r?\n*Kewajiban Format Output:[\s\S]*$/i', '', $txt));
+                    if (mb_strlen($txt) < 40) {
+                        return null;
+                    }
+                }
+                return $txt;
+            };
+
+            $dbPromptChar  = $sanitizeDbPrompt($pengaturan_ai['prompt_character'] ?? '', 'character');
+            $dbPromptCap   = $sanitizeDbPrompt($pengaturan_ai['prompt_capacity'] ?? '', 'capacity');
+            $dbPromptCapt  = $sanitizeDbPrompt($pengaturan_ai['prompt_capital'] ?? '', 'capital');
+            $dbPromptColl  = $sanitizeDbPrompt($pengaturan_ai['prompt_collateral'] ?? '', 'collateral');
+            $dbPromptCond  = $sanitizeDbPrompt($pengaturan_ai['prompt_condition'] ?? '', 'condition');
+            $dbPromptFinal = $sanitizeDbPrompt($pengaturan_ai['prompt_final'] ?? '', 'reviewer');
         ?>
         const pillarData = {
             character: {
@@ -519,7 +547,7 @@ Arahan Penyajian Ringkasan Analisis:
                 threshold: 75,
                 fokus: 'Kemampuan Arus Kas & Debt Service Ratio (DSR)',
                 directive: 'Panduan Penilaian AI: Pilar Kapasitas (Capacity)',
-                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_capacity']) ? $pengaturan_ai['prompt_capacity'] : null) ?> || defaultPrompts.capacity
+                prompt: <?= json_encode($dbPromptCap) ?> || defaultPrompts.capacity
             },
             capital: {
                 title: 'PARAMETER METRIK RISIKO PILAR CAPITAL',
@@ -527,7 +555,7 @@ Arahan Penyajian Ringkasan Analisis:
                 threshold: 70,
                 fokus: 'Struktur Modal Bersih & Solvabilitas Usaha',
                 directive: 'Panduan Penilaian AI: Pilar Permodalan (Capital)',
-                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_capital']) ? $pengaturan_ai['prompt_capital'] : null) ?> || defaultPrompts.capital
+                prompt: <?= json_encode($dbPromptCapt) ?> || defaultPrompts.capital
             },
             collateral: {
                 title: 'PARAMETER METRIK RISIKO PILAR AGUNAN',
@@ -535,7 +563,7 @@ Arahan Penyajian Ringkasan Analisis:
                 threshold: 75,
                 fokus: 'Legalitas & Nilai Likuidasi Jaminan',
                 directive: 'Panduan Penilaian AI: Pilar Agunan (Collateral)',
-                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_collateral']) ? $pengaturan_ai['prompt_collateral'] : null) ?> || defaultPrompts.collateral
+                prompt: <?= json_encode($dbPromptColl) ?> || defaultPrompts.collateral
             },
             condition: {
                 title: 'PARAMETER METRIK RISIKO PILAR CONDITION',
@@ -543,7 +571,7 @@ Arahan Penyajian Ringkasan Analisis:
                 threshold: 65,
                 fokus: 'Prospek Industri & Kondisi Makro Ekonomi',
                 directive: 'Panduan Penilaian AI: Pilar Kondisi Usaha (Condition)',
-                prompt: <?= json_encode(!empty($pengaturan_ai['prompt_condition']) ? $pengaturan_ai['prompt_condition'] : null) ?> || defaultPrompts.condition
+                prompt: <?= json_encode($dbPromptCond) ?> || defaultPrompts.condition
             },
             reviewer: {
                 title: 'PARAMETER PIPELINE INTEGRASI REVIEWER',
