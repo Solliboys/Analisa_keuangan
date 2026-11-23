@@ -688,79 +688,95 @@
                 </div>
 
                 <!-- BOTTOM WORKBENCH STEP BUTTONS -->
-                <div class="flex items-center justify-between gap-2.5 sm:gap-3 pt-2 no-print">
-                    <button type="button" id="btnSimPrev" onclick="navSimTab(-1)" class="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
-                        <span class="material-symbols-outlined text-[16px]">west</span>
-                        <span>Sebelumnya</span>
-                    </button>
-                    
-                    <div class="flex items-center gap-2">
-                        <button type="button" id="btnSimDirectMemo" onclick="goSimTab(5)" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:border-blue-300 bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold transition cursor-pointer">
-                            <span class="material-symbols-outlined text-[16px]">verified</span>
-                            <span>Lihat Hasil Analisa</span>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3 pt-2 no-print">
+                    <!-- Left / Mobile Full Row (50/50 Split on Mobile) -->
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <button type="button" id="btnSimPrev" onclick="navSimTab(-1)" class="w-1/2 sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 py-2.5 sm:py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs sm:text-sm font-bold text-slate-700 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs whitespace-nowrap">
+                            <span class="material-symbols-outlined text-[16px]">west</span>
+                            <span>Sebelumnya</span>
                         </button>
-                        <button type="button" id="btnSimNext" onclick="navSimTab(1)" class="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer">
-                            <span>Langkah Berikutnya</span>
+                        
+                        <!-- Mobile Next / Submit Button (Takes other half of row) -->
+                        <button type="button" id="btnSimNextMob" onclick="navSimTab(1)" class="w-1/2 sm:hidden inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer whitespace-nowrap">
+                            <span>Berikutnya</span>
                             <span class="material-symbols-outlined text-[16px]">east</span>
                         </button>
-                        <a href="<?= $portalUrl ?>" id="btnSimPortalCta" class="hidden inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer">
-                            <span>Ajukan di Portal</span>
+                        <a href="<?= $portalUrl ?>" id="btnSimPortalCtaMob" class="hidden w-1/2 sm:hidden inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer whitespace-nowrap">
+                            <span>Ajukan</span>
                             <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </a>
+                    </div>
+                    
+                    <!-- Desktop Actions -->
+                    <div class="hidden sm:flex items-center gap-2">
+                        <button type="button" id="btnSimDirectMemo" onclick="goSimTab(5)" class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:border-blue-300 bg-white hover:bg-blue-50 text-blue-700 text-xs sm:text-sm font-bold transition cursor-pointer whitespace-nowrap shadow-xs">
+                            <span class="material-symbols-outlined text-[18px]">verified</span>
+                            <span>Lihat Hasil Analisa</span>
+                        </button>
+                        <button type="button" id="btnSimNext" onclick="navSimTab(1)" class="inline-flex items-center gap-1.5 sm:gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer whitespace-nowrap">
+                            <span>Langkah Berikutnya</span>
+                            <span class="material-symbols-outlined text-[18px]">east</span>
+                        </button>
+                        <a href="<?= $portalUrl ?>" id="btnSimPortalCta" class="hidden inline-flex items-center gap-1.5 sm:gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer whitespace-nowrap">
+                            <span>Ajukan di Portal</span>
+                            <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
                         </a>
                     </div>
                 </div>
 
                 <!-- KEPUTUSAN LANGSUNG & RINGKASAN ESTIMASI (DI AKHIR) -->
-                <div class="w-full bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden no-print mt-3">
+                <div class="w-full bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden no-print mt-3 sm:mt-4">
                     <!-- Header -->
-                    <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50/80 via-white to-blue-50/30">
-                        <div class="flex items-center gap-2 sm:gap-2.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span class="text-[11px] sm:text-xs font-extrabold text-slate-900 uppercase tracking-wider">Keputusan Langsung &amp; Ringkasan Estimasi</span>
+                    <div class="px-3.5 py-2.5 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between gap-2 bg-gradient-to-r from-slate-50/80 via-white to-blue-50/30">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                            <span class="text-xs sm:text-sm font-extrabold text-slate-900 tracking-tight truncate">
+                                <span class="hidden sm:inline">Keputusan Langsung &amp; </span>Ringkasan Estimasi
+                            </span>
                         </div>
-                        <span id="rail_status" class="inline-flex items-center px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span id="rail_status" class="shrink-0 inline-flex items-center px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                             Layak Disetujui
                         </span>
                     </div>
 
                     <!-- Main Grid -->
-                    <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-5 items-center">
+                    <div class="p-3.5 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-5 items-center">
                         <!-- Angsuran Bulanan -->
-                        <div class="md:col-span-5 p-4 sm:p-5 rounded-xl bg-blue-50/50 border border-blue-100 text-left">
-                            <div class="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Estimasi Angsuran Bulanan</div>
-                            <div id="rail_angs" class="text-2xl sm:text-3xl font-extrabold text-blue-600 tracking-tight mt-1 tabular-nums">Rp 0</div>
-                            <div class="flex items-center justify-between text-[11px] sm:text-xs text-slate-600 mt-2.5 sm:mt-3 pt-2.5 sm:pt-3 border-t border-blue-200/60">
+                        <div class="md:col-span-5 p-3.5 sm:p-5 rounded-xl bg-blue-50/60 border border-blue-100/90 text-left">
+                            <div class="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">Estimasi Angsuran Bulanan</div>
+                            <div id="rail_angs" class="text-xl sm:text-3xl font-extrabold text-blue-600 tracking-tight mt-0.5 sm:mt-1 tabular-nums">Rp 0</div>
+                            <div class="flex items-center justify-between text-[11px] sm:text-xs text-slate-600 mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-blue-200/60">
                                 <span>Plafon: <strong id="rail_plafon" class="text-slate-900 tabular-nums">Rp 0</strong></span>
                                 <span>Net CF: <strong id="rail_net" class="text-slate-900 tabular-nums">Rp 0</strong></span>
                             </div>
                         </div>
 
                         <!-- 3 KPIs Bar -->
-                        <div class="md:col-span-4 grid grid-cols-3 divide-x divide-slate-100 border border-slate-200 rounded-xl bg-slate-50/60 text-center tabular-nums p-1.5 sm:p-2">
-                            <div class="py-2 sm:py-2.5 px-1">
+                        <div class="md:col-span-4 grid grid-cols-3 divide-x divide-slate-200/80 border border-slate-200/80 rounded-xl bg-slate-50/80 text-center tabular-nums p-1.5 sm:p-2">
+                            <div class="py-1.5 sm:py-2.5 px-1">
                                 <div class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider">Skor 5C</div>
-                                <div id="rail_skor" class="text-base sm:text-lg font-extrabold text-blue-700 mt-0.5">85,6</div>
+                                <div id="rail_skor" class="text-sm sm:text-lg font-extrabold text-blue-700 mt-0.5">85,6</div>
                                 <div class="text-[9px] text-slate-400 mt-0.5">dari 100</div>
                             </div>
-                            <div class="py-2 sm:py-2.5 px-1">
+                            <div class="py-1.5 sm:py-2.5 px-1">
                                 <div class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider">DSCR</div>
-                                <div id="rail_dscr" class="text-base sm:text-lg font-extrabold text-emerald-700 mt-0.5">2,97x</div>
+                                <div id="rail_dscr" class="text-sm sm:text-lg font-extrabold text-emerald-700 mt-0.5">2,97x</div>
                                 <div class="text-[9px] text-slate-400 mt-0.5">Min 1,3x</div>
                             </div>
-                            <div class="py-2 sm:py-2.5 px-1">
+                            <div class="py-1.5 sm:py-2.5 px-1">
                                 <div class="text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cov. LV</div>
-                                <div id="rail_cov" class="text-base sm:text-lg font-extrabold text-slate-900 mt-0.5">182%</div>
+                                <div id="rail_cov" class="text-sm sm:text-lg font-extrabold text-slate-900 mt-0.5">182%</div>
                                 <div class="text-[9px] text-slate-400 mt-0.5">Min 100%</div>
                             </div>
                         </div>
 
                         <!-- CTA & Net Cair -->
                         <div class="md:col-span-3 flex flex-col justify-center space-y-2 sm:space-y-2.5">
-                            <div class="flex items-center justify-between text-xs px-1">
-                                <span class="text-slate-500 font-medium">Dana Cair Bersih:</span>
-                                <strong id="rail_cair" class="text-emerald-700 font-extrabold text-sm tabular-nums">Rp 0</strong>
+                            <div class="flex items-center justify-between text-xs px-0.5">
+                                <span class="text-slate-500 font-medium text-[11px] sm:text-xs">Dana Cair Bersih:</span>
+                                <strong id="rail_cair" class="text-emerald-700 font-extrabold text-xs sm:text-sm tabular-nums">Rp 0</strong>
                             </div>
-                            <button type="button" id="btnRailCta" onclick="handleRailCta()" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs cursor-pointer">
+                            <button type="button" id="btnRailCta" onclick="handleRailCta()" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl bg-slate-900 hover:bg-blue-600 active:scale-[0.99] text-white text-xs sm:text-sm font-bold transition shadow-xs cursor-pointer">
                                 <span id="btnRailCtaText">Buka Memo Lengkap</span>
                                 <span id="btnRailCtaIcon" class="material-symbols-outlined text-[16px]">arrow_forward</span>
                             </button>
@@ -768,9 +784,9 @@
                     </div>
 
                     <!-- Trust Note -->
-                    <div class="px-4 py-2.5 sm:px-6 sm:py-3 bg-slate-50 border-t border-slate-100 flex items-center gap-2 text-[10px] sm:text-[11px] text-slate-500">
+                    <div class="px-3.5 py-2 sm:px-6 sm:py-3 bg-slate-50 border-t border-slate-100 flex items-center gap-2 text-[10px] sm:text-[11px] text-slate-500">
                         <span class="material-symbols-outlined text-[16px] text-blue-600 shrink-0">verified_user</span>
-                        <span>Semua perhitungan menggunakan formula standar industri keuangan nasional untuk mitigasi risiko kredit yang akurat dan terpercaya.</span>
+                        <span>Semua perhitungan menggunakan formula standar industri keuangan untuk mitigasi risiko kredit akurat.</span>
                     </div>
                 </div>
 
@@ -848,24 +864,34 @@
                 btnPrev.disabled = (n === 1);
             }
 
+            const isLast = (n === totalSimTabs);
+
             const btnNext = document.getElementById('btnSimNext');
+            const btnNextMob = document.getElementById('btnSimNextMob');
             if (btnNext) {
-                btnNext.style.display = (n === totalSimTabs) ? 'none' : 'inline-flex';
+                btnNext.style.display = isLast ? 'none' : 'inline-flex';
+            }
+            if (btnNextMob) {
+                btnNextMob.style.display = isLast ? 'none' : 'inline-flex';
             }
 
             const btnDirect = document.getElementById('btnSimDirectMemo');
             if (btnDirect) {
-                btnDirect.style.display = (n === totalSimTabs) ? 'none' : 'inline-flex';
+                btnDirect.style.display = isLast ? 'none' : 'inline-flex';
             }
 
             const btnPortal = document.getElementById('btnSimPortalCta');
+            const btnPortalMob = document.getElementById('btnSimPortalCtaMob');
             if (btnPortal) {
-                btnPortal.style.display = (n === totalSimTabs) ? 'inline-flex' : 'none';
+                btnPortal.style.display = isLast ? 'inline-flex' : 'none';
+            }
+            if (btnPortalMob) {
+                btnPortalMob.style.display = isLast ? 'inline-flex' : 'none';
             }
 
             const railText = document.getElementById('btnRailCtaText');
             if (railText) {
-                railText.innerText = (n === totalSimTabs) ? 'Ajukan Sekarang di Portal' : 'Buka Memo Lengkap';
+                railText.innerText = isLast ? 'Ajukan Sekarang di Portal' : 'Buka Memo Lengkap';
             }
 
             hitungSemuaSimulasi();
