@@ -796,7 +796,7 @@
         let currentSimTab = 1;
         const totalSimTabs = 5;
 
-        function goSimTab(n) {
+        function goSimTab(n, shouldScroll = true) {
             if (n < 1 || n > totalSimTabs) return;
             currentSimTab = n;
 
@@ -869,7 +869,9 @@
             }
 
             hitungSemuaSimulasi();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (shouldScroll) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
 
         function navSimTab(delta) {
@@ -1128,9 +1130,6 @@
             const dscr = totAngs > 0 ? (netCf / totAngs) : 0;
             const dsr  = omzet > 0 ? (totAngs / omzet) * 100 : 0;
 
-            const kol  = parseInt(document.getElementById('s_kol')?.value || 1, 10);
-            const lama = parseInt(document.getElementById('s_lama')?.value || 0, 10);
-
             const sChar = kol === 1 ? 88 : (kol === 2 ? 70 : (kol === 3 ? 52 : 30));
             const sCap  = dscr >= 2.0 ? 90 : (dscr >= 1.3 ? 80 : (dscr >= 1.0 ? 65 : 42));
             const sCpt  = netCf > 0 ? (omzet > 0 && (netCf / omzet) >= 0.2 ? 84 : 74) : 45;
@@ -1321,7 +1320,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            goSimTab(1);
+            goSimTab(1, false);
         });
     </script>
 </body>
