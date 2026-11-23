@@ -507,7 +507,7 @@ Arahan Penyajian Ringkasan Analisis:
                     return null;
                 }
                 // Upgrade placeholder 1-kalimat bawaan seeder lama ke prompt standar lengkap
-                if (preg_match('/^(Analisis (karakter|kapasitas|permodalan|jaminan|prospek ekonomi) debitur berdasarkan|Berikan ringkasan rekomendasi keputusan akhir kredit)/i', $txt) && mb_strlen($txt) < 150) {
+                if (preg_match('/^(Analisis (karakter|kapasitas|permodalan|jaminan|prospek ekonomi) debitur\b|Berikan ringkasan rekomendasi keputusan akhir kredit)/i', $txt) && mb_strlen($txt) < 150) {
                     return null;
                 }
                 // Pastikan prompt tidak tertukar antar pilar 5C
