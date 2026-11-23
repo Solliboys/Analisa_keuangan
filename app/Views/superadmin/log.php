@@ -182,11 +182,11 @@
             </div>
 
             <!-- TABEL AKTIVITAS LOG SISTEM -->
-            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden" id="logTableCard">
                 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                     <div>
                         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">
-                            Daftar Catatan Audit Trail (<?= count($logs ?? []) ?> Catatan Ditampilkan)
+                            Daftar Catatan Audit Trail (<span id="logHeaderCount"><?= number_format(count($logs ?? []), 0, ',', '.') ?> Catatan</span>)
                         </h2>
                         <p class="text-[11px] text-slate-400 mt-0.5">Tabel bersifat permanen &amp; hanya baca untuk keamanan audit sistem</p>
                     </div>
@@ -205,7 +205,7 @@
                                 <th class="py-3.5 px-4 text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 text-xs">
+                        <tbody id="logTableBody" class="divide-y divide-slate-100 text-xs">
                             <?php if (empty($logs)): ?>
                                 <tr>
                                     <td colspan="7" class="py-12 text-center text-slate-400">
@@ -245,7 +245,7 @@
                                             $statusBadge = 'bg-blue-50 text-blue-700 border-blue-200';
                                         }
                                     ?>
-                                    <tr class="hover:bg-slate-50/70 transition-colors">
+                                    <tr class="log-row hover:bg-slate-50/70 transition-colors">
                                         
                                         <!-- Waktu -->
                                         <td class="py-3.5 px-4 font-mono-code text-[11px] text-slate-600 whitespace-nowrap">
@@ -316,6 +316,16 @@
                             <?php endif; ?>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Bar Paginasi Responsif Log (Awal 10 Per Halaman) -->
+                <div id="logPaginationBar" class="px-5 py-3.5 border-t border-slate-100 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                    <div id="logPaginationInfo" class="tabular-nums text-center sm:text-left">
+                        Menampilkan <span id="logInfoShowingStart" class="font-bold text-slate-800">1</span> &minus; <span id="logInfoShowingEnd" class="font-bold text-slate-800"><?= min(10, count($logs ?? [])) ?></span> dari <span id="logInfoTotalCount" class="font-bold text-slate-800"><?= number_format(count($logs ?? []), 0, ',', '.') ?></span> catatan audit
+                    </div>
+                    <div class="inline-flex items-center gap-1 flex-wrap justify-center sm:justify-end" id="logPaginationControls">
+                        <!-- Tombol paginasi log dirender via JS -->
+                    </div>
                 </div>
 
                 <!-- Footer Informasi Audit -->
@@ -671,6 +681,112 @@
             if (e.target === modal) {
                 tutupModalDetailLog();
             }
+        });
+
+        // ==============================================================
+        // LOG AUDIT TRAIL PAGINATION (Default 10 item per halaman)
+        // ==============================================================
+        let logCurrentPage = 1;
+        const logPerPage = 10;
+
+        function renderLogPagination() {
+            const rows = Array.from(document.querySelectorAll('#logTableBody tr.log-row'));
+            const total = rows.length;
+            const paginationBar = document.getElementById('logPaginationBar');
+            
+            if (total === 0) {
+                if (paginationBar) paginationBar.style.display = 'none';
+                return;
+            }
+            if (paginationBar) paginationBar.style.display = '';
+
+            const totalPages = Math.ceil(total / logPerPage) || 1;
+            if (logCurrentPage > totalPages) logCurrentPage = totalPages;
+            if (logCurrentPage < 1) logCurrentPage = 1;
+
+            const startIndex = (logCurrentPage - 1) * logPerPage;
+            const endIndex = Math.min(startIndex + logPerPage, total);
+
+            rows.forEach((row, idx) => {
+                if (idx >= startIndex && idx < endIndex) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update Info Footer
+            const infoStart = document.getElementById('logInfoShowingStart');
+            const infoEnd = document.getElementById('logInfoShowingEnd');
+            const infoTotal = document.getElementById('logInfoTotalCount');
+            if (infoStart) infoStart.innerText = (startIndex + 1).toLocaleString('id-ID');
+            if (infoEnd) infoEnd.innerText = endIndex.toLocaleString('id-ID');
+            if (infoTotal) infoTotal.innerText = total.toLocaleString('id-ID');
+
+            renderLogPaginationControls(totalPages);
+        }
+
+        function renderLogPaginationControls(totalPages) {
+            const container = document.getElementById('logPaginationControls');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Tombol Prev
+            const prevBtn = document.createElement('button');
+            prevBtn.type = 'button';
+            prevBtn.innerText = 'Sebelumnya';
+            prevBtn.disabled = (logCurrentPage === 1);
+            prevBtn.className = `px-2.5 py-1 text-xs rounded-md border border-slate-200 font-semibold transition ${logCurrentPage === 1 ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shadow-2xs'}`;
+            prevBtn.onclick = () => {
+                if (logCurrentPage > 1) {
+                    logCurrentPage--;
+                    renderLogPagination();
+                    document.getElementById('logTableCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+            container.appendChild(prevBtn);
+
+            // Tombol Halaman (dengan ellipsis cerdas)
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= logCurrentPage - 1 && i <= logCurrentPage + 1)) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.type = 'button';
+                    pageBtn.innerText = i;
+                    pageBtn.className = `min-w-[28px] h-7 px-1.5 text-xs rounded-md font-bold transition ${i === logCurrentPage ? 'bg-blue-600 text-white shadow-2xs' : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 cursor-pointer'}`;
+                    pageBtn.onclick = () => {
+                        logCurrentPage = i;
+                        renderLogPagination();
+                        document.getElementById('logTableCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    };
+                    container.appendChild(pageBtn);
+                } else if (i === logCurrentPage - 2 || i === logCurrentPage + 2) {
+                    const dots = document.createElement('span');
+                    dots.className = 'px-1 text-slate-400 font-bold';
+                    dots.innerText = '...';
+                    container.appendChild(dots);
+                }
+            }
+
+            // Tombol Next
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.innerText = 'Selanjutnya';
+            nextBtn.disabled = (logCurrentPage === totalPages);
+            nextBtn.className = `px-2.5 py-1 text-xs rounded-md border border-slate-200 font-semibold transition ${logCurrentPage === totalPages ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shadow-2xs'}`;
+            nextBtn.onclick = () => {
+                if (logCurrentPage < totalPages) {
+                    logCurrentPage++;
+                    renderLogPagination();
+                    document.getElementById('logTableCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+            container.appendChild(nextBtn);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderLogPagination();
         });
     </script>
 </body>

@@ -470,13 +470,19 @@
                     </table>
                 </div>
 
-                <!-- Footer Summary Info -->
-                <div class="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 w-full">
-                    <div>
-                        Menampilkan <span class="font-bold text-slate-800" id="userShowingCount"><?= $cntTotal ?></span> pengguna terdaftar
+                <!-- Footer Summary Info & Paginasi (Awal 10 Per Halaman) -->
+                <div class="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3 w-full">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-center sm:text-left">
+                        <div>
+                            Menampilkan <span class="font-bold text-slate-800" id="userShowingCount">1 - <?= min(10, $cntTotal) ?></span> dari <span class="font-bold text-slate-800" id="userTotalCount"><?= $cntTotal ?></span> pengguna terdaftar
+                        </div>
+                        <span class="text-slate-300 hidden sm:inline">&bull;</span>
+                        <div class="text-slate-400">
+                            Status akun: <span class="text-emerald-600 font-semibold" id="countLabelAktif"><?= $cntAktif ?> Aktif</span> &bull; <span class="text-rose-500 font-semibold" id="countLabelNonaktif"><?= $cntNonaktif ?> Tidak Aktif</span>
+                        </div>
                     </div>
-                    <div class="text-slate-400">
-                        Status akun: <span class="text-emerald-600 font-semibold" id="countLabelAktif"><?= $cntAktif ?> Aktif</span> &bull; <span class="text-rose-500 font-semibold" id="countLabelNonaktif"><?= $cntNonaktif ?> Tidak Aktif</span>
+                    <div class="inline-flex items-center gap-1 flex-wrap justify-center sm:justify-end" id="userPaginationControls">
+                        <!-- Tombol paginasi pengguna dirender via JS -->
                     </div>
                 </div>
 
@@ -700,49 +706,137 @@
             if (labelNonaktif) labelNonaktif.innerText = counts.nonaktif + ' Tidak Aktif';
         }
 
+        let userCurrentPage = 1;
+        const userPerPage = 10;
+
         // Re-Index Nomor Urut di Tabel
         function reindexRows() {
-            const rows = document.querySelectorAll('#userTableBody tr.user-row');
-            let num = 1;
-            rows.forEach(r => {
-                const noCell = r.querySelector('.col-no');
-                if (noCell) {
-                    noCell.innerText = num++;
-                }
-            });
-            const countEl = document.getElementById('userShowingCount');
-            if (countEl) countEl.innerText = rows.length;
+            filterUsers();
         }
 
-        // Filter & Search Pengguna
+        // Filter & Search Pengguna dengan Paginasi (Default 10 per halaman)
         function filterUsers() {
             const searchVal = document.getElementById('searchUserInput').value.toLowerCase().trim();
             const statusVal = document.getElementById('statusFilter').value;
-            const rows = document.querySelectorAll('#userTableBody tr.user-row');
+            const rows = Array.from(document.querySelectorAll('#userTableBody tr.user-row'));
 
-            let visibleCount = 0;
-
-            rows.forEach(row => {
+            const filteredRows = rows.filter(row => {
                 const textContent = row.innerText.toLowerCase();
                 const status = row.getAttribute('data-status');
 
                 let matchSearch = !searchVal || textContent.includes(searchVal);
                 let matchStatus = !statusVal || (status === statusVal);
 
-                if (matchSearch && matchStatus) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
+                return matchSearch && matchStatus;
             });
 
-            document.getElementById('userShowingCount').innerText = visibleCount;
+            // Sembunyikan semua baris terlebih dahulu
+            rows.forEach(r => r.style.display = 'none');
+
+            const total = filteredRows.length;
+            const totalPages = Math.ceil(total / userPerPage) || 1;
+            if (userCurrentPage > totalPages) userCurrentPage = totalPages;
+            if (userCurrentPage < 1) userCurrentPage = 1;
+
+            const startIndex = (userCurrentPage - 1) * userPerPage;
+            const endIndex = Math.min(startIndex + userPerPage, total);
+
+            for (let i = startIndex; i < endIndex; i++) {
+                filteredRows[i].style.display = '';
+                const noCell = filteredRows[i].querySelector('.col-no');
+                if (noCell) {
+                    noCell.innerText = (i + 1);
+                }
+            }
+
+            // Update Info Counter
+            const countEl = document.getElementById('userShowingCount');
+            const totalEl = document.getElementById('userTotalCount');
+            if (countEl) {
+                countEl.innerText = total === 0 ? '0' : `${startIndex + 1} - ${endIndex}`;
+            }
+            if (totalEl) {
+                totalEl.innerText = total;
+            }
+
+            // Pesan kosong jika pencarian tidak cocok
+            let emptyFilterRow = document.getElementById('emptyFilterRow');
+            if (total === 0) {
+                if (!emptyFilterRow) {
+                    emptyFilterRow = document.createElement('tr');
+                    emptyFilterRow.id = 'emptyFilterRow';
+                    emptyFilterRow.innerHTML = '<td colspan="7" class="py-8 text-center text-slate-400 text-sm">Tidak ditemukan pengguna yang sesuai dengan pencarian.</td>';
+                    document.getElementById('userTableBody').appendChild(emptyFilterRow);
+                }
+                emptyFilterRow.style.display = '';
+            } else if (emptyFilterRow) {
+                emptyFilterRow.style.display = 'none';
+            }
+
+            renderUserPaginationControls(totalPages);
+        }
+
+        // Render Tombol Paginasi Pengguna
+        function renderUserPaginationControls(totalPages) {
+            const container = document.getElementById('userPaginationControls');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Tombol Prev
+            const prevBtn = document.createElement('button');
+            prevBtn.type = 'button';
+            prevBtn.innerText = 'Sebelumnya';
+            prevBtn.disabled = (userCurrentPage === 1);
+            prevBtn.className = `px-2.5 py-1 text-xs rounded-md border border-slate-200 font-semibold transition ${userCurrentPage === 1 ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shadow-2xs'}`;
+            prevBtn.onclick = () => {
+                if (userCurrentPage > 1) {
+                    userCurrentPage--;
+                    filterUsers();
+                }
+            };
+            container.appendChild(prevBtn);
+
+            // Tombol Nomor Halaman
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= userCurrentPage - 1 && i <= userCurrentPage + 1)) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.type = 'button';
+                    pageBtn.innerText = i;
+                    pageBtn.className = `min-w-[28px] h-7 px-1.5 text-xs rounded-md font-bold transition ${i === userCurrentPage ? 'bg-blue-600 text-white shadow-2xs' : 'bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 cursor-pointer'}`;
+                    pageBtn.onclick = () => {
+                        userCurrentPage = i;
+                        filterUsers();
+                    };
+                    container.appendChild(pageBtn);
+                } else if (i === userCurrentPage - 2 || i === userCurrentPage + 2) {
+                    const dots = document.createElement('span');
+                    dots.className = 'px-1 text-slate-400 font-bold';
+                    dots.innerText = '...';
+                    container.appendChild(dots);
+                }
+            }
+
+            // Tombol Next
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.innerText = 'Selanjutnya';
+            nextBtn.disabled = (userCurrentPage === totalPages);
+            nextBtn.className = `px-2.5 py-1 text-xs rounded-md border border-slate-200 font-semibold transition ${userCurrentPage === totalPages ? 'opacity-40 cursor-not-allowed bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700 cursor-pointer shadow-2xs'}`;
+            nextBtn.onclick = () => {
+                if (userCurrentPage < totalPages) {
+                    userCurrentPage++;
+                    filterUsers();
+                }
+            };
+            container.appendChild(nextBtn);
         }
 
         function refreshUserFilter() {
             document.getElementById('searchUserInput').value = '';
             document.getElementById('statusFilter').value = '';
+            userCurrentPage = 1;
             filterUsers();
         }
 
@@ -1184,6 +1278,10 @@
         function closeUserDetailModal() {
             document.getElementById('userDetailModal').classList.add('hidden');
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            filterUsers();
+        });
     </script>
 </body>
 </html>
