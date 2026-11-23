@@ -149,17 +149,26 @@
     <?php 
     $isModalView = !empty($_GET['modal']) || isset($_GET['preview']) || isset($_GET['popup']);
     if (!$isModalView): 
+        $roleCetak = strtolower(session()->get('jabatan') ?? '');
+        $backUrlCetak = (strpos($roleCetak, 'review') !== false)
+            ? base_url('reviewer/review/' . $kredit['kredit_id'])
+            : ((strpos($roleCetak, 'ceo') !== false || strpos($roleCetak, 'direk') !== false || $roleCetak === 'superadmin')
+                ? base_url('dashboard')
+                : base_url('pengajuan/edit/' . $kredit['kredit_id']));
     ?>
     <!-- Top Action Toolbar (No-Print) -->
-    <div id="topActionToolbar" class="max-w-4xl mx-auto mb-6 flex items-center justify-between no-print no-print-toolbar">
-        <a href="<?= base_url('pengajuan/edit/' . $kredit['kredit_id']) ?>" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition flex items-center gap-1.5 shadow-sm">
-            &larr; Kembali ke Form
+    <div id="topActionToolbar" class="max-w-4xl mx-auto mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2 no-print no-print-toolbar">
+        <a href="<?= $backUrlCetak ?>" class="px-3.5 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-md hover:bg-slate-50 transition inline-flex items-center gap-1.5">
+            &larr; Kembali
         </a>
-        <div class="flex items-center gap-3">
-            <span class="text-xs text-slate-500 hidden sm:inline">Format Dokumen Hasil Evaluasi Sesuai Standar Komite (result.pdf)</span>
-            <button onclick="window.print()" class="px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-xl shadow transition flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Cetak / Simpan PDF
+        <div class="flex items-center gap-2">
+            <a href="<?= base_url('pengajuan/unduh-laporan-pdf/' . $kredit['kredit_id']) ?>" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold rounded-md transition inline-flex items-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span>Unduh PDF</span>
+            </a>
+            <button type="button" onclick="window.print()" class="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold rounded-md transition inline-flex items-center gap-1.5 cursor-pointer">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <span>Cetak</span>
             </button>
         </div>
     </div>
