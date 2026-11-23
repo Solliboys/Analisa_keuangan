@@ -61,6 +61,12 @@
         .fin-input-prefix { padding-left: 42px; }
         .fin-input-suffix { padding-right: 48px; }
 
+        @media (max-width: 640px) {
+            .fin-input, input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+
         /* Hide scrollbars for smooth pill scrolling */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -153,7 +159,7 @@
     <!-- MAIN WORKBENCH -->
     <main class="w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1 min-w-0 relative z-10">
         
-        <!-- TOP HORIZONTAL STEPPER (DI TENGAH) -->
+        <!-- TOP HORIZONTAL STEPPER -->
         <div class="mb-5 sm:mb-8 no-print text-center flex flex-col items-center justify-center">
             <!-- Progress Sub-bar Centered -->
             <div class="inline-flex items-center justify-center gap-2 text-xs text-slate-500 mb-2 px-3 py-0.5 sm:px-3.5 sm:py-1 rounded-full bg-white border border-slate-200/80 shadow-xs">
@@ -167,17 +173,17 @@
                 <div id="simProgressBar" class="h-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-300 rounded-full" style="width: 20%;"></div>
             </div>
 
-            <!-- Stepper Navigation Pills Centered (Scrollable on Mobile) -->
-            <div class="w-full flex items-center justify-start sm:justify-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-1.5 max-w-full px-1">
+            <!-- Stepper Navigation Pills (Swipeable on Mobile, 5 Equal Columns on Desktop) -->
+            <div class="w-full flex sm:grid sm:grid-cols-5 items-center gap-2 sm:gap-2.5 overflow-x-auto sm:overflow-visible no-scrollbar pb-1.5 sm:pb-0 max-w-full px-1">
                 <?php foreach ($simSteps as $n => $st): ?>
                     <button type="button" onclick="goSimTab(<?= $n ?>)" id="sim-step-btn-<?= $n ?>"
-                            class="group shrink-0 inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer <?= $n === 1 ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/25' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50' ?>">
+                            class="w-auto sm:w-full group shrink-0 sm:shrink inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer <?= $n === 1 ? 'bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/25' : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50' ?>">
                         <span id="sim-step-num-<?= $n ?>" class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold tabular-nums <?= $n === 1 ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200' ?>">
                             <?= $st['num'] ?>
                         </span>
-                        <div class="text-left">
-                            <div class="text-xs font-bold leading-tight"><?= $st['title'] ?></div>
-                            <div class="text-[10px] opacity-80 leading-tight hidden sm:block"><?= $st['sub'] ?></div>
+                        <div class="text-left min-w-0">
+                            <div class="text-xs font-bold leading-tight truncate"><?= $st['title'] ?></div>
+                            <div class="text-[10px] opacity-80 leading-tight hidden sm:block truncate"><?= $st['sub'] ?></div>
                         </div>
                     </button>
                 <?php endforeach; ?>
@@ -233,11 +239,11 @@
                                 </div>
                                 <!-- Plafon Quick Chips -->
                                 <div class="flex flex-wrap items-center gap-1.5 mt-2.5">
-                                    <button type="button" onclick="setPlafonPreset(100000000)" class="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-xs font-semibold text-slate-600 transition cursor-pointer">100 Jt</button>
-                                    <button type="button" onclick="setPlafonPreset(250000000)" class="px-2.5 py-1.5 sm:py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold transition cursor-pointer border border-blue-200/60">250 Jt</button>
-                                    <button type="button" onclick="setPlafonPreset(500000000)" class="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-xs font-semibold text-slate-600 transition cursor-pointer">500 Jt</button>
-                                    <button type="button" onclick="setPlafonPreset(1000000000)" class="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-xs font-semibold text-slate-600 transition cursor-pointer">1 Miliar</button>
-                                    <button type="button" onclick="setPlafonPreset(2500000000)" class="px-2.5 py-1.5 sm:py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-xs font-semibold text-slate-600 transition cursor-pointer">2,5 Miliar</button>
+                                    <button type="button" data-val="100000000" onclick="setPlafonPreset(100000000)" class="chip-plafon px-2.5 py-1.5 sm:py-1 rounded-lg text-xs font-semibold transition cursor-pointer border bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border-transparent">100 Jt</button>
+                                    <button type="button" data-val="250000000" onclick="setPlafonPreset(250000000)" class="chip-plafon px-2.5 py-1.5 sm:py-1 rounded-lg text-xs font-bold transition cursor-pointer border bg-blue-50 text-blue-700 border-blue-200/80 shadow-xs">250 Jt</button>
+                                    <button type="button" data-val="500000000" onclick="setPlafonPreset(500000000)" class="chip-plafon px-2.5 py-1.5 sm:py-1 rounded-lg text-xs font-semibold transition cursor-pointer border bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border-transparent">500 Jt</button>
+                                    <button type="button" data-val="1000000000" onclick="setPlafonPreset(1000000000)" class="chip-plafon px-2.5 py-1.5 sm:py-1 rounded-lg text-xs font-semibold transition cursor-pointer border bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border-transparent">1 Miliar</button>
+                                    <button type="button" data-val="2500000000" onclick="setPlafonPreset(2500000000)" class="chip-plafon px-2.5 py-1.5 sm:py-1 rounded-lg text-xs font-semibold transition cursor-pointer border bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border-transparent">2,5 Miliar</button>
                                 </div>
                             </div>
 
@@ -249,10 +255,10 @@
                                     <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 select-none">Bulan</span>
                                 </div>
                                 <div class="flex items-center gap-1.5 mt-2">
-                                    <button type="button" onclick="setTenorPreset(12)" class="flex-1 sm:flex-initial px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-center text-[11px] font-semibold text-slate-600 transition cursor-pointer">12 bln</button>
-                                    <button type="button" onclick="setTenorPreset(24)" class="flex-1 sm:flex-initial px-2 py-1 rounded-md bg-blue-50 text-blue-700 text-center text-[11px] font-semibold transition cursor-pointer border border-blue-200/60">24 bln</button>
-                                    <button type="button" onclick="setTenorPreset(36)" class="flex-1 sm:flex-initial px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-center text-[11px] font-semibold text-slate-600 transition cursor-pointer">36 bln</button>
-                                    <button type="button" onclick="setTenorPreset(60)" class="flex-1 sm:flex-initial px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-center text-[11px] font-semibold text-slate-600 transition cursor-pointer">60 bln</button>
+                                    <button type="button" data-val="12" onclick="setTenorPreset(12)" class="chip-tenor flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-semibold transition cursor-pointer border bg-slate-100 hover:bg-slate-200 text-slate-600 border-transparent">12 bln</button>
+                                    <button type="button" data-val="24" onclick="setTenorPreset(24)" class="chip-tenor flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-bold transition cursor-pointer border bg-blue-50 text-blue-700 border-blue-200/80 shadow-xs">24 bln</button>
+                                    <button type="button" data-val="36" onclick="setTenorPreset(36)" class="chip-tenor flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-semibold transition cursor-pointer border bg-slate-100 hover:bg-slate-200 text-slate-600 border-transparent">36 bln</button>
+                                    <button type="button" data-val="60" onclick="setTenorPreset(60)" class="chip-tenor flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-semibold transition cursor-pointer border bg-slate-100 hover:bg-slate-200 text-slate-600 border-transparent">60 bln</button>
                                 </div>
                             </div>
 
@@ -294,24 +300,30 @@
                             </div>
                         </div>
 
-                        <!-- Perbandingan Skema Output Strip -->
+                        <!-- Perbandingan Skema Output Strip (Interactive Clickable) -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1 sm:pt-2">
-                            <div class="p-3.5 sm:p-4 rounded-xl border border-blue-200/80 bg-blue-50/50 relative overflow-hidden">
+                            <div id="card_skema_inst" onclick="setSkemaOption('Installment')" class="p-3.5 sm:p-4 rounded-xl border border-blue-500 bg-blue-50/60 ring-2 ring-blue-500/20 shadow-xs transition-all cursor-pointer relative overflow-hidden">
                                 <div class="flex items-center justify-between mb-1">
-                                    <span class="text-xs font-bold text-blue-900">Installment (Pokok + Bunga)</span>
-                                    <span class="text-[10px] font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full">Standar</span>
+                                    <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                        <span id="icon_skema_inst" class="material-symbols-outlined text-[16px] text-blue-600">radio_button_checked</span>
+                                        <span>Installment (Pokok + Bunga)</span>
+                                    </span>
+                                    <span id="badge_skema_inst" class="text-[10px] font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full">Standar</span>
                                 </div>
                                 <div id="out_t1_inst" class="text-xl font-extrabold text-blue-700 tabular-nums">Rp 0</div>
-                                <div class="text-[11px] text-slate-500 mt-1">Angsuran tetap pokok dan bunga bulanan.</div>
+                                <div class="text-[11px] text-slate-500 mt-1">Angsuran tetap pokok dan bunga bulanan secara teratur.</div>
                             </div>
 
-                            <div class="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70 relative overflow-hidden">
+                            <div id="card_skema_ball" onclick="setSkemaOption('Balloon Payment')" class="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100/70 transition-all cursor-pointer relative overflow-hidden opacity-80">
                                 <div class="flex items-center justify-between mb-1">
-                                    <span class="text-xs font-bold text-slate-800">Balloon Payment (Bunga Saja)</span>
-                                    <span class="text-[10px] font-bold text-slate-600 bg-slate-200/80 px-2 py-0.5 rounded-full">Khusus</span>
+                                    <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                        <span id="icon_skema_ball" class="material-symbols-outlined text-[16px] text-slate-400">radio_button_unchecked</span>
+                                        <span>Balloon Payment (Bunga Saja)</span>
+                                    </span>
+                                    <span id="badge_skema_ball" class="text-[10px] font-bold text-slate-500 bg-slate-200/80 px-2 py-0.5 rounded-full">Khusus</span>
                                 </div>
                                 <div id="out_t1_balloon" class="text-xl font-extrabold text-slate-900 tabular-nums">Rp 0</div>
-                                <div class="text-[11px] text-slate-500 mt-1">Hanya bayar bunga, pokok dilunasi di akhir tenor.</div>
+                                <div class="text-[11px] text-slate-500 mt-1">Hanya bayar bunga bulanan, pokok dilunasi di akhir tenor.</div>
                             </div>
                         </div>
                     </div>
@@ -345,21 +357,37 @@
                             </div>
 
                             <div>
-                                <label for="s_lama" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Lama Usaha Berjalan</label>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label for="s_lama" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Lama Usaha Berjalan</label>
+                                    <span class="text-[11px] font-semibold text-slate-500">Pilihan:</span>
+                                </div>
                                 <div class="relative">
                                     <input type="number" id="s_lama" value="7" min="0" max="60" oninput="hitungSemuaSimulasi()" class="fin-input fin-input-suffix tabular-nums">
                                     <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 select-none">Tahun</span>
                                 </div>
+                                <div class="flex items-center gap-1.5 mt-2">
+                                    <button type="button" data-val="2" onclick="setLamaPreset(2)" class="chip-lama flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-semibold transition cursor-pointer border bg-slate-100 hover:bg-slate-200 text-slate-600 border-transparent">2 Th</button>
+                                    <button type="button" data-val="5" onclick="setLamaPreset(5)" class="chip-lama flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-semibold transition cursor-pointer border bg-slate-100 hover:bg-slate-200 text-slate-600 border-transparent">5 Th</button>
+                                    <button type="button" data-val="7" onclick="setLamaPreset(7)" class="chip-lama flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-bold transition cursor-pointer border bg-indigo-50 text-indigo-700 border-indigo-200/80 shadow-xs">7 Th</button>
+                                    <button type="button" data-val="10" onclick="setLamaPreset(10)" class="chip-lama flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-semibold transition cursor-pointer border bg-slate-100 hover:bg-slate-200 text-slate-600 border-transparent">10+ Th</button>
+                                </div>
                             </div>
 
                             <div>
-                                <label for="s_kol" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Kolektibilitas SLIK (Simulasi)</label>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label for="s_kol" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Kolektibilitas SLIK (Simulasi)</label>
+                                    <span id="badge_kol_status" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Kol 1 · Lancar</span>
+                                </div>
                                 <select id="s_kol" onchange="hitungSemuaSimulasi()" class="fin-input">
                                     <option value="1" selected>Kol 1 — Lancar (Tanpa Tunggakan)</option>
                                     <option value="2">Kol 2 — DPK (Tunggakan 1-90 Hari)</option>
                                     <option value="3">Kol 3 — Kurang Lancar (91-120 Hari)</option>
                                     <option value="5">Kol 5 — Macet (&gt; 180 Hari)</option>
                                 </select>
+                                <div class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px] text-slate-400">info</span>
+                                    <span>Mempengaruhi pembobotan pilar <em>Character</em> (bobot 20%).</span>
+                                </div>
                             </div>
 
                             <div class="sm:col-span-2">
@@ -417,21 +445,30 @@
                         <!-- Agunan Metrics Grid -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-1">
                             <div class="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70">
-                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nilai Likuidasi (LV)</div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Nilai Likuidasi (LV)</span>
+                                    <span class="material-symbols-outlined text-[16px] text-slate-400">real_estate_agent</span>
+                                </div>
                                 <div id="out_t3_lv" class="text-base sm:text-lg font-extrabold text-slate-900 mt-1 tabular-nums">Rp 0</div>
                                 <div class="text-[11px] text-slate-500 mt-0.5">Nilai taksasi aman jaminan.</div>
                             </div>
 
-                            <div class="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70">
-                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Rasio LTV (Plafon/MV)</div>
+                            <div id="card_t3_ltv" class="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Rasio LTV (Plafon/MV)</span>
+                                    <span id="badge_t3_ltv" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Aman</span>
+                                </div>
                                 <div id="out_t3_ltv" class="text-base sm:text-lg font-extrabold text-slate-900 mt-1 tabular-nums">0%</div>
-                                <div class="text-[11px] text-emerald-600 font-semibold mt-0.5">Maks. 70-80% dari pasar.</div>
+                                <div id="sub_t3_ltv" class="text-[11px] text-emerald-600 font-semibold mt-0.5">Maks. 70-80% dari pasar.</div>
                             </div>
 
-                            <div class="p-3.5 sm:p-4 rounded-xl border border-blue-200/80 bg-blue-50/50">
-                                <div class="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Coverage Likuidasi</div>
+                            <div id="card_t3_cov" class="p-3.5 sm:p-4 rounded-xl border border-blue-200/80 bg-blue-50/50">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Coverage Likuidasi</span>
+                                    <span id="badge_t3_cov" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100/80 text-blue-700 border border-blue-200">Memadai</span>
+                                </div>
                                 <div id="out_t3_cov" class="text-base sm:text-lg font-extrabold text-blue-700 mt-1 tabular-nums">0%</div>
-                                <div class="text-[11px] text-blue-600 font-semibold mt-0.5">Min. 100% plafon tercakup.</div>
+                                <div id="sub_t3_cov" class="text-[11px] text-blue-600 font-semibold mt-0.5">Min. 100% plafon tercakup.</div>
                             </div>
                         </div>
                     </div>
@@ -490,15 +527,21 @@
                         <!-- Cashflow Strip -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
                             <div class="p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70">
-                                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Laba Kotor (Gross Profit)</div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Laba Kotor (Gross Profit)</span>
+                                    <span class="material-symbols-outlined text-[16px] text-slate-400">trending_up</span>
+                                </div>
                                 <div id="out_t4_gross" class="text-base sm:text-lg font-extrabold text-slate-900 mt-1 tabular-nums">Rp 0</div>
                                 <div class="text-[11px] text-slate-500 mt-0.5">Omzet dikurangi modal pokok kulakan.</div>
                             </div>
 
-                            <div class="p-3.5 sm:p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/50">
-                                <div class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Net Cashflow (Surplus Bersih)</div>
+                            <div id="card_t4_net" class="p-3.5 sm:p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/50">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Net Cashflow (Surplus Bersih)</span>
+                                    <span id="badge_t4_net" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">Surplus</span>
+                                </div>
                                 <div id="out_t4_net" class="text-base sm:text-lg font-extrabold text-emerald-700 mt-1 tabular-nums">Rp 0</div>
-                                <div class="text-[11px] text-emerald-600 font-semibold mt-0.5">Sisa kas riil untuk membayar angsuran.</div>
+                                <div id="sub_t4_net" class="text-[11px] text-emerald-600 font-semibold mt-0.5">Sisa kas riil untuk membayar angsuran.</div>
                             </div>
                         </div>
                     </div>
@@ -538,22 +581,22 @@
                             <div class="p-3 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/60">
                                 <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Skor 5C</div>
                                 <div id="out_t5_skor" class="text-xl sm:text-2xl font-extrabold text-blue-700 mt-0.5 sm:mt-1">85,6</div>
-                                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">dari skala 100</div>
+                                <div id="sub_t5_skor" class="text-[10px] sm:text-[11px] text-blue-600 font-semibold mt-0.5">Grade A (Sangat Layak)</div>
                             </div>
                             <div class="p-3 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/60">
                                 <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">DSCR</div>
                                 <div id="out_t5_dscr" class="text-xl sm:text-2xl font-extrabold text-emerald-700 mt-0.5 sm:mt-1">2,97x</div>
-                                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Standar min. 1,30x</div>
+                                <div id="sub_t5_dscr" class="text-[10px] sm:text-[11px] text-emerald-600 font-semibold mt-0.5">Kapasitas Sehat (≥ 1,3x)</div>
                             </div>
                             <div class="p-3 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/60">
                                 <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">DSR</div>
                                 <div id="out_t5_dsr" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5 sm:mt-1">9,8%</div>
-                                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Rasio beban omzet</div>
+                                <div id="sub_t5_dsr" class="text-[10px] sm:text-[11px] text-slate-500 font-semibold mt-0.5">Beban Ringan (≤ 35%)</div>
                             </div>
                             <div class="p-3 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/60">
                                 <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">Coverage LV</div>
                                 <div id="out_t5_cov" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-0.5 sm:mt-1">182,0%</div>
-                                <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Standar min. 100%</div>
+                                <div id="sub_t5_cov" class="text-[10px] sm:text-[11px] text-slate-500 font-semibold mt-0.5">Agunan Kuat (≥ 100%)</div>
                             </div>
                         </div>
 
@@ -564,14 +607,14 @@
                                 <span class="text-xs text-slate-500">Bobot Total 100%</span>
                             </div>
                             <div class="border border-slate-200 rounded-xl overflow-x-auto no-scrollbar shadow-xs">
-                                <table class="w-full text-xs text-left tabular-nums min-w-[420px] sm:min-w-full">
+                                <table class="w-full text-xs text-left tabular-nums">
                                     <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                                         <tr>
-                                            <th class="px-3 sm:px-4 py-2.5 sm:py-3">Pilar 5C</th>
-                                            <th class="px-3 sm:px-4 py-2.5 sm:py-3 text-right">Bobot</th>
-                                            <th class="px-3 sm:px-4 py-2.5 sm:py-3 text-right">Skor Riil</th>
-                                            <th class="px-3 sm:px-4 py-2.5 sm:py-3 w-44 hidden sm:table-cell">Distribusi</th>
-                                            <th class="px-3 sm:px-4 py-2.5 sm:py-3 text-right">Kontribusi</th>
+                                            <th class="px-2.5 sm:px-4 py-2 sm:py-3">Pilar 5C</th>
+                                            <th class="px-2.5 sm:px-4 py-2 sm:py-3 text-right">Bobot</th>
+                                            <th class="px-2.5 sm:px-4 py-2 sm:py-3 text-right">Skor Riil</th>
+                                            <th class="px-2.5 sm:px-4 py-2 sm:py-3 w-44 hidden sm:table-cell">Distribusi</th>
+                                            <th class="px-2.5 sm:px-4 py-2 sm:py-3 text-right">Kontribusi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="out_t5_5c_rows" class="divide-y divide-slate-100 text-slate-700 bg-white">
@@ -652,14 +695,18 @@
                     </button>
                     
                     <div class="flex items-center gap-2">
-                        <button type="button" onclick="goSimTab(5)" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:border-blue-300 bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold transition cursor-pointer">
+                        <button type="button" id="btnSimDirectMemo" onclick="goSimTab(5)" class="hidden sm:inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 hover:border-blue-300 bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold transition cursor-pointer">
+                            <span class="material-symbols-outlined text-[16px]">verified</span>
                             <span>Lihat Hasil Analisa</span>
-                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
                         </button>
                         <button type="button" id="btnSimNext" onclick="navSimTab(1)" class="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer">
                             <span>Langkah Berikutnya</span>
                             <span class="material-symbols-outlined text-[16px]">east</span>
                         </button>
+                        <a href="<?= $portalUrl ?>" id="btnSimPortalCta" class="hidden inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition cursor-pointer">
+                            <span>Ajukan di Portal</span>
+                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                        </a>
                     </div>
                 </div>
 
@@ -669,7 +716,7 @@
                     <div class="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50/80 via-white to-blue-50/30">
                         <div class="flex items-center gap-2 sm:gap-2.5">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span class="text-[11px] sm:text-xs font-extrabold text-slate-900 uppercase tracking-wider">Keputusan Langsung &amp; Ringkasan</span>
+                            <span class="text-[11px] sm:text-xs font-extrabold text-slate-900 uppercase tracking-wider">Keputusan Langsung &amp; Ringkasan Estimasi</span>
                         </div>
                         <span id="rail_status" class="inline-flex items-center px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             Layak Disetujui
@@ -713,9 +760,9 @@
                                 <span class="text-slate-500 font-medium">Dana Cair Bersih:</span>
                                 <strong id="rail_cair" class="text-emerald-700 font-extrabold text-sm tabular-nums">Rp 0</strong>
                             </div>
-                            <button type="button" onclick="goSimTab(5)" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs cursor-pointer">
-                                <span>Buka Memo Lengkap</span>
-                                <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                            <button type="button" id="btnRailCta" onclick="handleRailCta()" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-3 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs cursor-pointer">
+                                <span id="btnRailCtaText">Buka Memo Lengkap</span>
+                                <span id="btnRailCtaIcon" class="material-symbols-outlined text-[16px]">arrow_forward</span>
                             </button>
                         </div>
                     </div>
@@ -762,11 +809,11 @@
 
                 if (btn) {
                     if (i === n) {
-                        btn.className = 'group shrink-0 inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/25';
+                        btn.className = 'w-auto sm:w-full group shrink-0 sm:shrink inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-blue-600 border-blue-600 text-white shadow-sm shadow-blue-500/25';
                     } else if (i < n) {
-                        btn.className = 'group shrink-0 inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-emerald-50/70 border-emerald-200 text-emerald-800 hover:bg-emerald-100/70';
+                        btn.className = 'w-auto sm:w-full group shrink-0 sm:shrink inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-emerald-50/70 border-emerald-200 text-emerald-800 hover:bg-emerald-100/70';
                     } else {
-                        btn.className = 'group shrink-0 inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50';
+                        btn.className = 'w-auto sm:w-full group shrink-0 sm:shrink inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3 py-2 sm:py-2.5 rounded-xl border text-left transition-all cursor-pointer bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50';
                     }
                 }
 
@@ -806,12 +853,51 @@
                 btnNext.style.display = (n === totalSimTabs) ? 'none' : 'inline-flex';
             }
 
+            const btnDirect = document.getElementById('btnSimDirectMemo');
+            if (btnDirect) {
+                btnDirect.style.display = (n === totalSimTabs) ? 'none' : 'inline-flex';
+            }
+
+            const btnPortal = document.getElementById('btnSimPortalCta');
+            if (btnPortal) {
+                btnPortal.style.display = (n === totalSimTabs) ? 'inline-flex' : 'none';
+            }
+
+            const railText = document.getElementById('btnRailCtaText');
+            if (railText) {
+                railText.innerText = (n === totalSimTabs) ? 'Ajukan Sekarang di Portal' : 'Buka Memo Lengkap';
+            }
+
             hitungSemuaSimulasi();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function navSimTab(delta) {
             goSimTab(currentSimTab + delta);
+        }
+
+        function handleRailCta() {
+            if (currentSimTab === totalSimTabs) {
+                window.location.href = '<?= $portalUrl ?>';
+            } else {
+                goSimTab(totalSimTabs);
+            }
+        }
+
+        function setSkemaOption(val) {
+            const el = document.getElementById('s_skema');
+            if (el) {
+                el.value = val;
+                hitungSemuaSimulasi();
+            }
+        }
+
+        function setLamaPreset(val) {
+            const el = document.getElementById('s_lama');
+            if (el) {
+                el.value = val;
+                hitungSemuaSimulasi();
+            }
         }
 
         function pNum(val) {
@@ -853,7 +939,83 @@
             const skema    = document.getElementById('s_skema')?.value || 'Installment';
             const tujuan   = document.getElementById('s_tujuan')?.value || 'Modal Kerja';
             const agunan   = document.getElementById('s_agunan_jenis')?.value || 'SHM';
+            const kol      = parseInt(document.getElementById('s_kol')?.value || 1, 10);
+            const lama     = parseInt(document.getElementById('s_lama')?.value || 0, 10);
 
+            // Dynamic quick chips highlights
+            document.querySelectorAll('.chip-plafon').forEach(btn => {
+                const v = parseInt(btn.getAttribute('data-val'), 10);
+                if (v === plafon) {
+                    btn.className = 'chip-plafon px-2.5 py-1.5 sm:py-1 rounded-lg text-xs font-bold transition cursor-pointer border bg-blue-50 text-blue-700 border-blue-200/80 shadow-xs';
+                } else {
+                    btn.className = 'chip-plafon px-2.5 py-1.5 sm:py-1 rounded-lg text-xs font-semibold transition cursor-pointer border bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border-transparent';
+                }
+            });
+
+            document.querySelectorAll('.chip-tenor').forEach(btn => {
+                const v = parseInt(btn.getAttribute('data-val'), 10);
+                if (v === tenor) {
+                    btn.className = 'chip-tenor flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-bold transition cursor-pointer border bg-blue-50 text-blue-700 border-blue-200/80 shadow-xs';
+                } else {
+                    btn.className = 'chip-tenor flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-semibold transition cursor-pointer border bg-slate-100 hover:bg-slate-200 text-slate-600 border-transparent';
+                }
+            });
+
+            document.querySelectorAll('.chip-lama').forEach(btn => {
+                const v = parseInt(btn.getAttribute('data-val'), 10);
+                if (v === lama) {
+                    btn.className = 'chip-lama flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-bold transition cursor-pointer border bg-indigo-50 text-indigo-700 border-indigo-200/80 shadow-xs';
+                } else {
+                    btn.className = 'chip-lama flex-1 sm:flex-initial px-2 py-1 rounded-md text-center text-[11px] font-semibold transition cursor-pointer border bg-slate-100 hover:bg-slate-200 text-slate-600 border-transparent';
+                }
+            });
+
+            // Interactive Skema Cards Styling
+            const isInst = (skema === 'Installment');
+            const cardInst = document.getElementById('card_skema_inst');
+            const cardBall = document.getElementById('card_skema_ball');
+            const iconInst = document.getElementById('icon_skema_inst');
+            const iconBall = document.getElementById('icon_skema_ball');
+            const badgeInst = document.getElementById('badge_skema_inst');
+            const badgeBall = document.getElementById('badge_skema_ball');
+
+            if (cardInst && cardBall) {
+                if (isInst) {
+                    cardInst.className = 'p-3.5 sm:p-4 rounded-xl border border-blue-500 bg-blue-50/60 ring-2 ring-blue-500/20 shadow-xs transition-all cursor-pointer relative overflow-hidden';
+                    cardBall.className = 'p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100/70 transition-all cursor-pointer relative overflow-hidden opacity-80';
+                    if (iconInst) { iconInst.innerText = 'radio_button_checked'; iconInst.className = 'material-symbols-outlined text-[16px] text-blue-600'; }
+                    if (iconBall) { iconBall.innerText = 'radio_button_unchecked'; iconBall.className = 'material-symbols-outlined text-[16px] text-slate-400'; }
+                    if (badgeInst) badgeInst.className = 'text-[10px] font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full';
+                    if (badgeBall) badgeBall.className = 'text-[10px] font-bold text-slate-500 bg-slate-200/80 px-2 py-0.5 rounded-full';
+                } else {
+                    cardInst.className = 'p-3.5 sm:p-4 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-100/70 transition-all cursor-pointer relative overflow-hidden opacity-80';
+                    cardBall.className = 'p-3.5 sm:p-4 rounded-xl border border-indigo-500 bg-indigo-50/60 ring-2 ring-indigo-500/20 shadow-xs transition-all cursor-pointer relative overflow-hidden';
+                    if (iconInst) { iconInst.innerText = 'radio_button_unchecked'; iconInst.className = 'material-symbols-outlined text-[16px] text-slate-400'; }
+                    if (iconBall) { iconBall.innerText = 'radio_button_checked'; iconBall.className = 'material-symbols-outlined text-[16px] text-indigo-600'; }
+                    if (badgeInst) badgeInst.className = 'text-[10px] font-bold text-slate-500 bg-slate-200/80 px-2 py-0.5 rounded-full';
+                    if (badgeBall) badgeBall.className = 'text-[10px] font-bold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-full';
+                }
+            }
+
+            // Kolektibilitas SLIK Badge Update
+            const badgeKol = document.getElementById('badge_kol_status');
+            if (badgeKol) {
+                if (kol === 1) {
+                    badgeKol.innerText = 'Kol 1 · Lancar';
+                    badgeKol.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+                } else if (kol === 2) {
+                    badgeKol.innerText = 'Kol 2 · DPK (1-90 hr)';
+                    badgeKol.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200';
+                } else if (kol === 3) {
+                    badgeKol.innerText = 'Kol 3 · Kurang Lancar';
+                    badgeKol.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200';
+                } else {
+                    badgeKol.innerText = 'Kol 5 · Macet';
+                    badgeKol.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300';
+                }
+            }
+
+            // Angsuran calculation
             const r = (bungaThn / 100) / 12;
             const balloon = Math.round(plafon * r);
             let installment = 0;
@@ -869,7 +1031,7 @@
             if (elInst) elInst.innerText = fmtRp(installment);
             if (elBall) elBall.innerText = fmtRp(balloon);
 
-            // Agunan & LTV
+            // Agunan & LTV Calculations
             const mv    = pNum(document.getElementById('s_mv')?.value);
             const lvPct = Math.min(100, Math.max(0, parseFloat(document.getElementById('s_lv_pct')?.value || 70)));
             const lv    = Math.round(mv * (lvPct / 100));
@@ -883,6 +1045,49 @@
             if (elLtv) elLtv.innerText = ltv.toFixed(1).replace('.', ',') + '%';
             if (elCov) elCov.innerText = covLv.toFixed(1).replace('.', ',') + '%';
 
+            // Agunan Feedback Badges
+            const badgeLtv = document.getElementById('badge_t3_ltv');
+            const subLtv   = document.getElementById('sub_t3_ltv');
+            if (badgeLtv && subLtv) {
+                if (ltv <= 70) {
+                    badgeLtv.innerText = 'Aman';
+                    badgeLtv.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+                    subLtv.innerText   = 'Rasio LTV rendah & aman (≤ 70%).';
+                    subLtv.className   = 'text-[11px] text-emerald-600 font-semibold mt-0.5';
+                } else if (ltv <= 80) {
+                    badgeLtv.innerText = 'Batas Maks';
+                    badgeLtv.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200';
+                    subLtv.innerText   = 'Mendekati ambang batas aman (71-80%).';
+                    subLtv.className   = 'text-[11px] text-amber-600 font-semibold mt-0.5';
+                } else {
+                    badgeLtv.innerText = 'Tinggi';
+                    badgeLtv.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200';
+                    subLtv.innerText   = 'Melebihi batas aman perbankan (> 80%).';
+                    subLtv.className   = 'text-[11px] text-rose-600 font-semibold mt-0.5';
+                }
+            }
+
+            const badgeCov = document.getElementById('badge_t3_cov');
+            const subCov   = document.getElementById('sub_t3_cov');
+            if (badgeCov && subCov) {
+                if (covLv >= 120) {
+                    badgeCov.innerText = 'Kuat';
+                    badgeCov.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+                    subCov.innerText   = 'Coverage likuidasi sangat memadai (≥ 120%).';
+                    subCov.className   = 'text-[11px] text-emerald-600 font-semibold mt-0.5';
+                } else if (covLv >= 100) {
+                    badgeCov.innerText = 'Cukup';
+                    badgeCov.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-200';
+                    subCov.innerText   = 'Plafon 100% tercakup likuidasi jaminan.';
+                    subCov.className   = 'text-[11px] text-blue-600 font-semibold mt-0.5';
+                } else {
+                    badgeCov.innerText = 'Kurang';
+                    badgeCov.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200';
+                    subCov.innerText   = 'Likuidasi jaminan belum menutupi plafon.';
+                    subCov.className   = 'text-[11px] text-rose-600 font-semibold mt-0.5';
+                }
+            }
+
             // Arus Kas Bulanan
             const omzet       = pNum(document.getElementById('s_omzet')?.value);
             const hpp         = pNum(document.getElementById('s_hpp')?.value);
@@ -895,6 +1100,28 @@
             const elNet   = document.getElementById('out_t4_net');
             if (elGross) elGross.innerText = fmtRp(gross);
             if (elNet)   elNet.innerText   = fmtRp(netCf);
+
+            // Cashflow Status Feedback
+            const cardNet  = document.getElementById('card_t4_net');
+            const badgeNet = document.getElementById('badge_t4_net');
+            const subNet   = document.getElementById('sub_t4_net');
+            if (cardNet && badgeNet && subNet && elNet) {
+                if (netCf > 0) {
+                    cardNet.className = 'p-3.5 sm:p-4 rounded-xl border border-emerald-200/80 bg-emerald-50/50';
+                    badgeNet.innerText = 'Surplus';
+                    badgeNet.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200';
+                    elNet.className = 'text-base sm:text-lg font-extrabold text-emerald-700 mt-1 tabular-nums';
+                    subNet.innerText = 'Surplus kas bulanan tersedia untuk mencicil.';
+                    subNet.className = 'text-[11px] text-emerald-600 font-semibold mt-0.5';
+                } else {
+                    cardNet.className = 'p-3.5 sm:p-4 rounded-xl border border-rose-200 bg-rose-50/60';
+                    badgeNet.innerText = 'Defisit';
+                    badgeNet.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200';
+                    elNet.className = 'text-base sm:text-lg font-extrabold text-rose-700 mt-1 tabular-nums';
+                    subNet.innerText = 'Arus kas minus! Pengeluaran melebihi pemasukan.';
+                    subNet.className = 'text-[11px] text-rose-600 font-semibold mt-0.5';
+                }
+            }
 
             // Rasio Finansial & Scoring 5C
             const totAngs = angsDipilih + cicilanLain;
@@ -925,6 +1152,15 @@
             if (elT5Dscr) elT5Dscr.innerText = dscr.toFixed(2).replace('.', ',') + 'x';
             if (elT5Dsr)  elT5Dsr.innerText  = dsr.toFixed(1).replace('.', ',') + '%';
             if (elT5Cov)  elT5Cov.innerText  = covLv.toFixed(1).replace('.', ',') + '%';
+
+            const subT5Skor = document.getElementById('sub_t5_skor');
+            const subT5Dscr = document.getElementById('sub_t5_dscr');
+            const subT5Dsr  = document.getElementById('sub_t5_dsr');
+            const subT5Cov  = document.getElementById('sub_t5_cov');
+            if (subT5Skor) subT5Skor.innerText = (skorTotal >= 78) ? 'Grade A (Sangat Layak)' : ((skorTotal >= 60) ? 'Grade B (Layak Bersyarat)' : 'Grade C (Risiko Tinggi)');
+            if (subT5Dscr) subT5Dscr.innerText = (dscr >= 1.3) ? 'Kapasitas Sehat (≥ 1,3x)' : 'Kapasitas Kritis (< 1,3x)';
+            if (subT5Dsr)  subT5Dsr.innerText  = (dsr <= 35) ? 'Beban Ringan (≤ 35%)' : 'Beban Tinggi (> 35%)';
+            if (subT5Cov)  subT5Cov.innerText  = (covLv >= 100) ? 'Agunan Kuat (≥ 100%)' : 'Agunan Kurang (< 100%)';
 
             const elT5Skema  = document.getElementById('out_t5_skema');
             const elT5Term   = document.getElementById('out_t5_term');
