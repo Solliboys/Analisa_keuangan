@@ -1347,7 +1347,7 @@ PANDUAN EKSTRAKSI WAJIB:
 2. FORMAT ANGKA RUPIAH: Perhatikan pemisah ribuan dan desimal pada rekening koran Indonesia (contoh: '1.500.000,00' atau '1,500,000.00' berarti 1500000 rupiah, JANGAN ikutkan 2 digit sen di belakang desimal sebagai ribuan!). Semua field angka (saldo_awal, total_mutasi_kredit, total_mutasi_debit, saldo_akhir, kredit, debit, saldo) WAJIB berupa ANGKA INTEGER MURNI tanpa titik, koma, atau 'Rp'.
 3. TOTAL MUTASI: Jika dokumen menampilkan baris ringkasan resmi (Total Mutasi Kredit / CR, Total Mutasi Debit / DB, Saldo Awal, Saldo Akhir), WAJIB gunakan angka ringkasan resmi tersebut. Jika tidak ada baris ringkasan, hitung penjumlahan eksak seluruh transaksi kredit (uang masuk) dan seluruh transaksi debit (uang keluar) di seluruh halaman dokumen.
 4. JUMLAH BULAN: Hitung jumlah bulan berdasarkan rentang periode mutasi pada dokumen (misal 1 bulan = 1, Jan-Mar = 3). Minimal 1.
-5. DAFTAR TRANSAKSI: Jika transaksi sangat banyak (lebih dari 40 baris), tetap hitung total_mutasi_kredit dan total_mutasi_debit dari SELURUH transaksi di dokumen, dan masukkan maksimal 40 transaksi utama ke array 'transaksi' agar JSON tidak terpotong.
+5. DAFTAR TRANSAKSI: Jika transaksi sangat banyak (lebih dari 25 baris), tetap hitung total_mutasi_kredit dan total_mutasi_debit dari SELURUH transaksi di dokumen, dan masukkan maksimal 25 transaksi utama ke array 'transaksi' agar respon cepat dan JSON tidak terpotong.
 6. Kembalikan HANYA JSON murni tanpa markdown, tanpa ```json, tanpa penjelasan apapun.";
 
             $configuredModel = trim((string)($settings['model_ai'] ?? ''));
@@ -1453,6 +1453,34 @@ PANDUAN EKSTRAKSI WAJIB:
                     ? rtrim($configuredEndpoint, '/')
                     : 'https://generativelanguage.googleapis.com/v1beta/models';
 
+                // FAST-PATH: Untuk PDF e-Statement yang memiliki teks (BCA, Mandiri, BRI, BNI, dll.),
+                // kirim teks hasil ekstraksi lokal dulu agar Gemini memproses dalam 2-4 detik tanpa timeout!
+                $geminiParts = null;
+                if ($mimeType === 'application/pdf') {
+                    $localPdfText = $this->ekstrakTeksPdfLokal($filePath);
+                    if (mb_strlen($localPdfText) >= 80) {
+                        if (mb_strlen($localPdfText) > 55000) {
+                            $localPdfText = mb_substr($localPdfText, 0, 55000);
+                        }
+                        $geminiParts = [
+                            ['text' => $prompt . "\n\nBERIKUT ISI TEKS DOKUMEN REKENING KORAN PDF YANG DIUNGGAH:\n" . $localPdfText]
+                        ];
+                    }
+                }
+                if ($geminiParts === null) {
+                    $geminiParts = [
+                        [
+                            'inline_data' => [
+                                'mime_type' => $mimeType,
+                                'data'      => $fileData
+                            ]
+                        ],
+                        [
+                            'text' => $prompt
+                        ]
+                    ];
+                }
+
                 $candidateModels = array_values(array_unique(array_filter([
                     'gemini-flash-lite-latest',
                     'gemini-2.5-flash-lite',
@@ -1464,17 +1492,7 @@ PANDUAN EKSTRAKSI WAJIB:
                 $payload = [
                     'contents' => [
                         [
-                            'parts' => [
-                                [
-                                    'inline_data' => [
-                                        'mime_type' => $mimeType,
-                                        'data'      => $fileData
-                                    ]
-                                ],
-                                [
-                                    'text' => $prompt
-                                ]
-                            ]
+                            'parts' => $geminiParts
                         ]
                     ],
                     'generationConfig' => [
@@ -1488,21 +1506,21 @@ PANDUAN EKSTRAKSI WAJIB:
                 $usedModel = '';
                 $lastError = '';
                 $startTime = microtime(true);
-                $maxTotalSec = 26.0;
+                $maxTotalSec = 48.0;
 
                 if (!empty($apiKey)) {
-                    // Coba seluruh model secara berurutan; jika kena 503 cepat (<1 dtk), langsung lanjut model berikutnya tanpa kena 504
                     $attempts = array_merge($candidateModels, ['gemini-flash-lite-latest']);
                     foreach ($attempts as $modIdx => $mod) {
                         $elapsed = microtime(true) - $startTime;
                         $remaining = $maxTotalSec - $elapsed;
-                        if ($remaining < 4.0) {
+                        if ($remaining < 6.0) {
                             break;
                         }
                         if ($modIdx === count($candidateModels)) {
-                            usleep(800000); // jeda 0.8 dtk sebelum retry terakhir jika semua sempat 503
+                            usleep(800000);
                         }
-                        $reqTimeout = (int)min(14, max(4, floor($remaining)));
+                        // Beri waktu cukup (28 dtk untuk percobaan pertama, 18 dtk berikutnya) agar PDF besar/scan tidak terpotong di tengah jalan
+                        $reqTimeout = (int)min($modIdx === 0 ? 28 : 18, max(6, floor($remaining)));
 
                         $endpoint = $baseGemini . '/' . urlencode($mod) . ':generateContent?key=' . urlencode(trim($apiKey));
                         $ch = curl_init($endpoint);
@@ -1512,7 +1530,7 @@ PANDUAN EKSTRAKSI WAJIB:
                         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
                         curl_setopt($ch, CURLOPT_TIMEOUT, $reqTimeout);
 
                         $response  = curl_exec($ch);
