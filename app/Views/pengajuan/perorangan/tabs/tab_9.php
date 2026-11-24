@@ -118,10 +118,22 @@
         $plafonBaru = (float)($kredit['plafon_pengajuan'] ?? 50000000);
         $tenorBulanBaru = (int)($kredit['tenor_bulan'] ?? 12);
         if ($tenorBulanBaru <= 0) $tenorBulanBaru = 12;
-        $bungaBulanPersen = (float)($kredit['bunga_per_bulan'] ?? 1.25);
-        $angsuranPokokBaru = ($plafonBaru > 0) ? round($plafonBaru / $tenorBulanBaru) : 0;
-        $angsuranBungaBaru = ($plafonBaru > 0) ? round($plafonBaru * ($bungaBulanPersen / 100)) : 0;
-        $estimasiAngsuranBaru = $angsuranPokokBaru + $angsuranBungaBaru;
+        $bungaTahunPersenPR = (float)($kredit['bunga_per_tahun'] ?? 0);
+        $bungaBulanPersen = ($bungaTahunPersenPR > 0) ? ($bungaTahunPersenPR / 12) : (float)($kredit['bunga_per_bulan'] ?? 1.25);
+        $metodeBungaPR = strtoupper($kredit['perhitungan_bunga'] ?? 'ANUITAS');
+        $skemaBayarPR = strtolower(($kredit['skema_pembayaran'] ?? '') . ' ' . ($kredit['skema_kredit'] ?? ''));
+        $rateBlnPR = $bungaBulanPersen / 100;
+        if (strpos($skemaBayarPR, 'balloon') !== false) {
+            $estimasiAngsuranBaru = ($plafonBaru > 0) ? round($plafonBaru * $rateBlnPR) : 0;
+        } elseif ($metodeBungaPR === 'ANUITAS' && $plafonBaru > 0 && $tenorBulanBaru > 0) {
+            $estimasiAngsuranBaru = ($rateBlnPR > 0)
+                ? round($plafonBaru * ($rateBlnPR / (1 - pow(1 + $rateBlnPR, -$tenorBulanBaru))))
+                : round($plafonBaru / $tenorBulanBaru);
+        } else {
+            $angsuranPokokBaru = ($plafonBaru > 0) ? ($plafonBaru / $tenorBulanBaru) : 0;
+            $angsuranBungaBaru = ($plafonBaru > 0) ? ($plafonBaru * $rateBlnPR) : 0;
+            $estimasiAngsuranBaru = round($angsuranPokokBaru + $angsuranBungaBaru);
+        }
 
         // Data Harta & Utang untuk fallback kompatibilitas laporan
         $rawDetailHarta = $keuangan['detail_harta_json'] ?? '';

@@ -1103,9 +1103,9 @@ function hitungKalkulasiAngsuran() {
     const fieldInst = document.getElementById('angsuran_installment');
     if (fieldInst) fieldInst.value = formatRupiahString(angsuranInstallment);
 
-    // Default angsuran dipilih jika masih kosong
+    // Selalu sinkronkan angsuran_dipilih sesuai skema pembayaran aktif setiap kali plafon/tenor/bunga/skema berubah
     const fieldPilih = document.getElementById('angsuran_dipilih');
-    if (fieldPilih && (!fieldPilih.value || fieldPilih.value === '0')) {
+    if (fieldPilih) {
         const skema = document.getElementById('skema_pembayaran')?.value || 'Balloon Payment';
         fieldPilih.value = formatRupiahString(skema === 'Balloon Payment' ? angsuranBalloon : angsuranInstallment);
     }
@@ -1814,30 +1814,78 @@ function handleOcrFileSelected(input) {
     }
 }
 
-async function ekstrakTeksPdfDiBrowser(file) {
+async function kompresGambarDiBrowser(file) {
+    return new Promise((resolve) => {
+        try {
+            if (!file || !/^image\/(jpeg|jpg|png|webp)$/i.test(file.type || '') || file.size <= 850 * 1024) {
+                resolve(file);
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const maxDim = 1750;
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > maxDim || h > maxDim) {
+                        const r = Math.min(maxDim / w, maxDim / h);
+                        w = Math.round(w * r);
+                        h = Math.round(h * r);
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.drawImage(img, 0, 0, w, h);
+                    canvas.toBlob((blob) => {
+                        if (blob && blob.size < file.size) {
+                            const newName = (file.name || 'rekening_koran.jpg').replace(/\.[^.]+$/, '') + '.jpg';
+                            resolve(new File([blob], newName, { type: 'image/jpeg' }));
+                        } else {
+                            resolve(file);
+                        }
+                    }, 'image/jpeg', 0.82);
+                };
+                img.onerror = () => resolve(file);
+                img.src = ev.target.result;
+            };
+            reader.onerror = () => resolve(file);
+            reader.readAsDataURL(file);
+        } catch (e) {
+            resolve(file);
+        }
+    });
+}
+
+async function ekstrakKontenPdfDiBrowser(file) {
+    const result = { text: '', images: [] };
     try {
-        if (!window.pdfjsLib || !file) return '';
+        if (!window.pdfjsLib || !file) return result;
         const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
-        if (!isPdf) return '';
+        if (!isPdf) return result;
 
         const arrayBuffer = await file.arrayBuffer();
         const loadingTask = window.pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
         const pdf = await loadingTask.promise;
         const totalPages = pdf.numPages || 0;
-        if (totalPages === 0) return '';
+        if (totalPages === 0) return result;
 
-        // Ambil halaman awal (ringkasan & transaksi awal) + halaman akhir (saldo penutup/total)
-        // Untuk PDF besar (mis. 110 halaman Kopra Mandiri), cukup halaman 1-4 & 2 halaman terakhir
+        // Ambil hingga 12 halaman penuh, atau halaman 1-6 + 4 halaman terakhir untuk PDF besar (mis. 110 halaman Kopra Mandiri)
         const pageNums = [];
-        if (totalPages <= 6) {
+        if (totalPages <= 12) {
             for (let p = 1; p <= totalPages; p++) pageNums.push(p);
         } else {
-            [1, 2, 3, 4, totalPages - 1, totalPages].forEach(p => {
+            [1, 2, 3, 4, 5, 6, totalPages - 3, totalPages - 2, totalPages - 1, totalPages].forEach(p => {
                 if (p >= 1 && p <= totalPages && !pageNums.includes(p)) pageNums.push(p);
             });
         }
 
         const parts = [`[PDF Info: Total ${totalPages} halaman]`];
+        let rawCharCount = 0;
+
         for (const pNum of pageNums) {
             const page = await pdf.getPage(pNum);
             const content = await page.getTextContent();
@@ -1847,6 +1895,7 @@ async function ekstrakTeksPdfDiBrowser(file) {
             for (const item of (content.items || [])) {
                 const str = (item.str || '').trim();
                 if (!str) continue;
+                rawCharCount += str.length;
                 const y = item.transform ? Math.round(item.transform[5] / 4) : null;
                 if (curY !== null && y !== null && Math.abs(y - curY) >= 2) {
                     if (curLine.length) lines.push(curLine.join(' '));
@@ -1857,25 +1906,62 @@ async function ekstrakTeksPdfDiBrowser(file) {
                 curY = y;
             }
             if (curLine.length) lines.push(curLine.join(' '));
-            parts.push(`--- HALAMAN ${pNum} DARI ${totalPages} ---\n` + lines.join('\n'));
+            if (lines.length > 0) {
+                parts.push(`--- HALAMAN ${pNum} DARI ${totalPages} ---\n` + lines.join('\n'));
+            }
         }
 
-        let joined = parts.join('\n\n').trim();
-        if (joined.length > 24000) {
-            joined = joined.slice(0, 16000) + '\n...\n' + joined.slice(-8000);
+        if (rawCharCount >= 40) {
+            let joined = parts.join('\n\n').trim();
+            if (joined.length > 24000) {
+                joined = joined.slice(0, 16000) + '\n...\n' + joined.slice(-8000);
+            }
+            result.text = joined;
+            return result;
         }
-        return joined;
+
+        // JALUR PDF HASIL SCAN / GAMBAR (rawCharCount < 40):
+        // Render maksimal 4 halaman kunci ke canvas JPEG ringan (~110 KB/hal) agar AI Vision membaca cepat tanpa timeout 504 / 7002ms!
+        const imgPageNums = [];
+        if (totalPages <= 4) {
+            for (let p = 1; p <= totalPages; p++) imgPageNums.push(p);
+        } else {
+            [1, 2, 3, totalPages].forEach(p => {
+                if (!imgPageNums.includes(p)) imgPageNums.push(p);
+            });
+        }
+
+        for (const pNum of imgPageNums) {
+            const page = await pdf.getPage(pNum);
+            const baseVp = page.getViewport({ scale: 1.0 });
+            const maxDim = 1350;
+            const scale = Math.min(2.0, maxDim / Math.max(baseVp.width || 800, baseVp.height || 1000));
+            const vp = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(vp.width);
+            canvas.height = Math.round(vp.height);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport: vp }).promise;
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+            if (dataUrl && dataUrl.length > 300) {
+                result.images.push(dataUrl);
+            }
+        }
+
+        return result;
     } catch (e) {
         console.warn('PDF.js client extraction skipped:', e);
-        return '';
+        return result;
     }
 }
 
 async function prosesOcrRekeningKoran() {
     const fileInput = document.getElementById('inputOcrRekeningFile');
-    const file = fileInput?.files?.[0];
+    const rawFile = fileInput?.files?.[0];
 
-    if (!file) {
+    if (!rawFile) {
         if (typeof showToast === 'function') {
             showToast('Silakan pilih berkas rekening koran (PDF / Gambar) terlebih dahulu!', 'warning');
         } else if (typeof Swal !== 'undefined') {
@@ -1905,19 +1991,30 @@ async function prosesOcrRekeningKoran() {
     const kid = document.getElementById('kredit_id')?.value || (window.KREDIT_ID_VAL || '');
     const baseUrl = (typeof getBaseUrl === 'function') ? getBaseUrl() : (window.BASE_URL || '');
 
-    // Ekstrak teks PDF langsung di browser via PDF.js agar PDF 100+ halaman & terenkripsi langsung terbaca dalam < 2 detik
-    const preExtractedText = await ekstrakTeksPdfDiBrowser(file);
+    // Kompres foto besar di browser & ekstrak teks/canvas PDF via PDF.js agar bebas Failed to fetch / 504 Timeout
+    const file = await kompresGambarDiBrowser(rawFile);
+    const pdfExtracted = await ekstrakKontenPdfDiBrowser(file);
+    const hasPreExtracted = (pdfExtracted.text && pdfExtracted.text.length >= 40) || (Array.isArray(pdfExtracted.images) && pdfExtracted.images.length > 0);
+    const isLargeFile = file.size > (1.8 * 1024 * 1024);
 
     const formData = new FormData();
-    formData.append('file_rekening', file);
-    if (preExtractedText && preExtractedText.length >= 40) {
-        formData.append('extracted_pdf_text', preExtractedText);
+    formData.append('file_name_hint', file.name || 'rekening_koran.pdf');
+    // Jika berkas PDF besar (> 1.8 MB) dan konten teks/gambar sudah berhasil diekstrak di browser,
+    // kirim hanya hasil ekstraksi ringan (~20-350 KB) ke AI agar tidak pernah kena limit upload Nginx (Failed to fetch) atau timeout 504!
+    if (!isLargeFile || !hasPreExtracted) {
+        formData.append('file_rekening', file);
+    }
+    if (pdfExtracted.text && pdfExtracted.text.length >= 40) {
+        formData.append('extracted_pdf_text', pdfExtracted.text);
+    }
+    if (Array.isArray(pdfExtracted.images) && pdfExtracted.images.length > 0) {
+        formData.append('extracted_pdf_images', JSON.stringify(pdfExtracted.images));
     }
     if (kid) formData.append('kredit_id', kid);
 
     // Animasi teks langkah
     const timerStep = setTimeout(() => {
-        if (loadingTitle) loadingTitle.innerText = 'Gemini AI Menganalisis Mutasi Transaksi...';
+        if (loadingTitle) loadingTitle.innerText = 'AI Menganalisis Mutasi Transaksi...';
         if (loadingSub) loadingSub.innerText = 'Mendeteksi arus kas masuk (kredit), arus kas keluar (debit), serta saldo...';
     }, 2500);
 
@@ -1937,7 +2034,7 @@ async function prosesOcrRekeningKoran() {
         } catch (parseErr) {
             console.error('Non-JSON response:', resText);
             if (response.status === 413) {
-                throw new Error('Ukuran berkas terlalu besar. Maksimal 20MB.');
+                throw new Error('Ukuran berkas terlalu besar untuk diunggah langsung.');
             } else if (response.status === 401 || response.status === 403) {
                 throw new Error('Sesi Anda telah berakhir. Silakan login kembali.');
             } else {
@@ -1946,6 +2043,29 @@ async function prosesOcrRekeningKoran() {
         }
 
         if (resJson.status && resJson.data) {
+            // Jika berkas PDF besar tadi dilewati pada tahap AI fast-path, unggah lampirannya di latar belakang (opsional, maksimal 10MB)
+            if (isLargeFile && hasPreExtracted && !resJson.file_path && file.size <= 10 * 1024 * 1024) {
+                try {
+                    const bgFd = new FormData();
+                    bgFd.append('file_rekening', file);
+                    if (kid) bgFd.append('kredit_id', kid);
+                    const bgRes = await fetch(baseUrl + '/pengajuan/upload-file-rekening-saja', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: bgFd
+                    });
+                    if (bgRes.ok) {
+                        const bgJson = await bgRes.json();
+                        if (bgJson && bgJson.status && bgJson.file_path) {
+                            resJson.file_path = bgJson.file_path;
+                            resJson.file_url = bgJson.file_url || '';
+                        }
+                    }
+                } catch (bgErr) {
+                    console.warn('Background PDF attachment skipped:', bgErr);
+                }
+            }
+
             currentOcrRekeningData = resJson.data;
             currentOcrRekeningFile = {
                 path: resJson.file_path || '',
@@ -2299,17 +2419,17 @@ window.terapkanHasilOcrKeFormulir = terapkanHasilOcrKeFormulir;
 // Kalkulasi Laba Rugi (RK & Wawancara)
 function hitungLabaRugi() {
     // Track 1: RK
-    // ── Pendapatan Pokok: pakai daftarPendapatan (dinamis) jika tersedia ──
+    // ── Pendapatan Pokok: jika form memakai container dinamis, selalu gunakan total dari daftarPendapatan (termasuk saat 0) ──
+    const hasPendapatanDinamis = Boolean(document.getElementById('containerPendapatanDinamis'));
     let totalPendapatanDinamis = 0;
     if (Array.isArray(daftarPendapatan) && daftarPendapatan.length > 0) {
         daftarPendapatan.forEach(item => {
             totalPendapatanDinamis += parseNominal(item.nominal || 0);
         });
     }
-    // Fallback ke hidden input lama jika daftarPendapatan kosong
-    const pRK = totalPendapatanDinamis > 0
+    const pRK = hasPendapatanDinamis
         ? totalPendapatanDinamis
-        : parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
+        : (totalPendapatanDinamis > 0 ? totalPendapatanDinamis : parseNominal(document.getElementById('pendapatan_rk')?.value || 0));
 
     // Sync input pendapatan_rk
     const pEl = document.getElementById('pendapatan_rk');
@@ -2379,13 +2499,14 @@ function hitungLabaRugi() {
         if (nomHppRK > pRK && pRK > 0) {
             showToast('⚠️ HPP (Rp ' + nomHppRK.toLocaleString('id-ID') + ') melebihi Omzet. Laba Kotor akan negatif!', 'error');
         }
-        grossRK = Math.max(0, pRK - nomHppRK);
+        // Laba Kotor riil (bisa negatif jika HPP > Omzet agar Laba Bersih akurat)
+        grossRK = pRK - nomHppRK;
     } else {
         // Perorangan
         if (isAdaHpp) {
             hppPctRK = parsePersen(document.getElementById('hpp_persen_rk')?.value || 0);
             nomHppRK = Math.round(pRK * (hppPctRK / 100));
-            grossRK = Math.max(0, pRK - nomHppRK);
+            grossRK = pRK - nomHppRK;
         } else {
             const inputHppPct = document.getElementById('hpp_persen_rk');
             const inputNomHpp = document.getElementById('nomHppRKInput');
@@ -2446,6 +2567,9 @@ function hitungLabaRugi() {
     const nettRK = isBhManual ? (grossRK - nomBhRK - nomBlRK) : (grossRK - nomBlRK);
     const is3Kotak = isBU || Boolean(document.getElementById('containerHppOnlyDinamis'));
     const totalCashflow = is3Kotak ? nettRK : surplusPR;
+    // Simpan nilai eksak untuk dipakai langsung oleh hitungRasioDSC() tanpa dobel hitung persentase
+    window._lastExactNettRK = nettRK;
+    window._lastExactTotalCashflow = totalCashflow;
 
     if (document.getElementById('nomHppRK')) document.getElementById('nomHppRK').innerText = formatRupiahString(nomHppRK);
     const inputNomHpp = document.getElementById('nomHppRKInput');
@@ -2483,14 +2607,14 @@ function hitungLabaRugi() {
 
     // Track 2: IV
     const pIV = parseNominal(document.getElementById('pendapatan_iv')?.value || 0);
-    const hppPctIV = parsePersen(document.getElementById('hpp_persen_iv')?.value || 60);
+    const hppPctIV = parsePersen(document.getElementById('hpp_persen_iv')?.value || 0);
     const nomHppIV = Math.round(pIV * (hppPctIV / 100));
     const grossIV = pIV - nomHppIV;
 
-    const bhPctIV = parsePersen(document.getElementById('biaya_hidup_persen_iv')?.value || 10);
+    const bhPctIV = parsePersen(document.getElementById('biaya_hidup_persen_iv')?.value || 0);
     const nomBhIV = Math.round(pIV * (bhPctIV / 100));
 
-    const blPctIV = parsePersen(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
+    const blPctIV = parsePersen(document.getElementById('beban_lainnya_persen_iv')?.value || 0);
     const nomBlIV = Math.round(pIV * (blPctIV / 100));
 
     const nettIV = grossIV - nomBhIV - nomBlIV;
@@ -3683,27 +3807,30 @@ document.addEventListener('keydown', function(e) {
 function hitungRasioDSC() {
     const angsuran = parseNominal(document.getElementById('angsuran_dipilih')?.value || 0);
 
-    // Nett RK
-    const pRK = parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
-    const hppPctRK = parsePersen(document.getElementById('hpp_persen_rk')?.value || 60);
-    const bhPctRK = parsePersen(document.getElementById('biaya_hidup_persen_rk')?.value || 10);
-    const blPctRK = parsePersen(document.getElementById('beban_lainnya_persen_rk')?.value || 10);
-    const nettRK = pRK - (pRK * (hppPctRK / 100)) - (pRK * (bhPctRK / 100)) - (pRK * (blPctRK / 100));
-
-    // Tambahan pendapatan lain jika aktif
-    const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
-    const pLainRK = isAdaLain ? parseNominal(document.getElementById('pendapatan_lain_rk')?.value || 0) : 0;
-    const totalNettRK = nettRK + pLainRK;
+    // Gunakan nilai eksak dari hitungLabaRugi() agar tidak pernah dobel hitung biaya_hidup + beban_lain atau kena default 60%
+    let totalNettRK = 0;
+    if (typeof window._lastExactTotalCashflow === 'number' && !isNaN(window._lastExactTotalCashflow)) {
+        totalNettRK = window._lastExactTotalCashflow;
+    } else {
+        const pRK = parseNominal(document.getElementById('pendapatan_rk')?.value || 0);
+        const nomHpp = parseNominal(document.getElementById('nomHppRKInput')?.value || 0);
+        const inputBh = document.getElementById('biaya_hidup_nominal_rk');
+        const nomBh = (inputBh && inputBh.type !== 'hidden') ? parseNominal(inputBh.value || 0) : 0;
+        const nomBl = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
+        const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
+        const pLainRK = isAdaLain ? parseNominal(document.getElementById('pendapatan_lain_rk')?.value || 0) : 0;
+        totalNettRK = (pRK - nomHpp - nomBh - nomBl) + pLainRK;
+    }
 
     // Nett IV
     const pIV = parseNominal(document.getElementById('pendapatan_iv')?.value || 0);
-    const hppPctIV = parsePersen(document.getElementById('hpp_persen_iv')?.value || 60);
-    const bhPctIV = parsePersen(document.getElementById('biaya_hidup_persen_iv')?.value || 10);
-    const blPctIV = parsePersen(document.getElementById('beban_lainnya_persen_iv')?.value || 10);
+    const hppPctIV = parsePersen(document.getElementById('hpp_persen_iv')?.value || 0);
+    const bhPctIV = parsePersen(document.getElementById('biaya_hidup_persen_iv')?.value || 0);
+    const blPctIV = parsePersen(document.getElementById('beban_lainnya_persen_iv')?.value || 0);
     const nettIV = pIV - (pIV * (hppPctIV / 100)) - (pIV * (bhPctIV / 100)) - (pIV * (blPctIV / 100));
 
-    const dscRK = angsuran > 0 ? (totalNettRK / angsuran).toFixed(2) : 0;
-    const dscIV = angsuran > 0 ? (nettIV / angsuran).toFixed(2) : 0;
+    const dscRK = angsuran > 0 ? (totalNettRK / angsuran).toFixed(2) : '0.00';
+    const dscIV = angsuran > 0 ? (nettIV / angsuran).toFixed(2) : '0.00';
 
     const elRK = document.getElementById('labelRasioDSCRK');
     if (elRK) elRK.innerText = dscRK + 'x';
@@ -4737,7 +4864,8 @@ function formatRupiah(input) {
 }
 
 function formatRupiahString(num) {
-    return 'Rp ' + (parseInt(num, 10) || 0).toLocaleString('id-ID');
+    const n = Math.round(Number(num) || 0);
+    return (n < 0 ? '- Rp ' : 'Rp ') + Math.abs(n).toLocaleString('id-ID');
 }
 
 function parseNominal(val) {

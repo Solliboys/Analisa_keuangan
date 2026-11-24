@@ -1263,10 +1263,21 @@ class GeminiAiService
     /**
      * Ekstraksi cerdas dokumen Rekening Koran (PDF / Gambar) menggunakan provider AI terpusat
      */
-    public function ekstrakRekeningKoran(string $filePath, string $clientMime = '', string $preExtractedText = ''): array
+    public function ekstrakRekeningKoran(string $filePath, string $clientMime = '', string $preExtractedText = '', array $preExtractedImages = []): array
     {
         try {
-            if (!file_exists($filePath)) {
+            $cleanPreText = trim($preExtractedText);
+            $cleanPreImages = [];
+            foreach ($preExtractedImages as $imgItem) {
+                if (!is_string($imgItem)) continue;
+                $b64 = preg_replace('/^data:image\/[a-zA-Z0-9.+-]+;base64,/i', '', trim($imgItem));
+                if (strlen($b64) > 200) {
+                    $cleanPreImages[] = $b64;
+                }
+            }
+            $hasDiskFile = ($filePath !== '' && file_exists($filePath));
+
+            if (!$hasDiskFile && mb_strlen($cleanPreText) < 40 && empty($cleanPreImages)) {
                 return [
                     'status'  => false,
                     'message' => 'Berkas rekening koran tidak ditemukan di server.'
@@ -1277,47 +1288,58 @@ class GeminiAiService
             $apiKey = $settings['api_key'] ?? (getenv('GEMINI_API_KEY') ?: '');
 
             // Deteksi MIME type secara aman tanpa crash jika fileinfo tidak tersedia
-            $mimeType = 'application/octet-stream';
-            if (preg_match('/\.pdf$/i', $filePath)) {
-                $mimeType = 'application/pdf';
-            } elseif (preg_match('/\.(jpg|jpeg)$/i', $filePath)) {
-                $mimeType = 'image/jpeg';
-            } elseif (preg_match('/\.png$/i', $filePath)) {
-                $mimeType = 'image/png';
-            } elseif (preg_match('/\.webp$/i', $filePath)) {
-                $mimeType = 'image/webp';
+            $mimeType = 'application/pdf';
+            if ($hasDiskFile) {
+                if (preg_match('/\.pdf$/i', $filePath)) {
+                    $mimeType = 'application/pdf';
+                } elseif (preg_match('/\.(jpg|jpeg)$/i', $filePath)) {
+                    $mimeType = 'image/jpeg';
+                } elseif (preg_match('/\.png$/i', $filePath)) {
+                    $mimeType = 'image/png';
+                } elseif (preg_match('/\.webp$/i', $filePath)) {
+                    $mimeType = 'image/webp';
+                } elseif (!empty($clientMime)) {
+                    $mimeType = $clientMime;
+                } elseif (function_exists('mime_content_type')) {
+                    $mimeType = @mime_content_type($filePath) ?: 'application/octet-stream';
+                }
             } elseif (!empty($clientMime)) {
                 $mimeType = $clientMime;
-            } elseif (function_exists('mime_content_type')) {
-                $mimeType = @mime_content_type($filePath) ?: 'application/octet-stream';
             }
 
-            $binaryData = file_get_contents($filePath);
-            // Optimasi otomatis: jika berkas gambar berukuran besar (> 800KB), kompresi & resize agar transmisi super cepat
-            if (strpos($mimeType, 'image/') === 0 && function_exists('imagecreatefromstring') && strlen($binaryData) > 800000) {
-                try {
-                    $img = @imagecreatefromstring($binaryData);
-                    if ($img !== false) {
-                        $width  = imagesx($img);
-                        $height = imagesy($img);
-                        $maxDim = 1800;
-                        if ($width > $maxDim || $height > $maxDim) {
-                            $ratio    = min($maxDim / $width, $maxDim / $height);
-                            $newW     = (int)round($width * $ratio);
-                            $newH     = (int)round($height * $ratio);
-                            $resized  = imagecreatetruecolor($newW, $newH);
-                            imagecopyresampled($resized, $img, 0, 0, 0, 0, $newW, $newH, $width, $height);
-                            ob_start();
-                            imagejpeg($resized, null, 82);
-                            $binaryData = ob_get_clean();
-                            imagedestroy($resized);
-                            $mimeType = 'image/jpeg';
-                        }
-                        imagedestroy($img);
+            $fileData = '';
+            if ($hasDiskFile) {
+                // Hanya baca biner penuh bila benar-benar dibutuhkan (hindari konsumsi memori pada PDF raksasa yang sudah punya teks/canvas)
+                $needBinary = (mb_strlen($cleanPreText) < 40 && empty($cleanPreImages));
+                if ($needBinary) {
+                    $binaryData = file_get_contents($filePath);
+                    // Optimasi otomatis: jika berkas gambar berukuran besar (> 700KB), kompresi & resize agar transmisi super cepat
+                    if (strpos($mimeType, 'image/') === 0 && function_exists('imagecreatefromstring') && strlen($binaryData) > 700000) {
+                        try {
+                            $img = @imagecreatefromstring($binaryData);
+                            if ($img !== false) {
+                                $width  = imagesx($img);
+                                $height = imagesy($img);
+                                $maxDim = 1650;
+                                if ($width > $maxDim || $height > $maxDim) {
+                                    $ratio    = min($maxDim / $width, $maxDim / $height);
+                                    $newW     = (int)round($width * $ratio);
+                                    $newH     = (int)round($height * $ratio);
+                                    $resized  = imagecreatetruecolor($newW, $newH);
+                                    imagecopyresampled($resized, $img, 0, 0, 0, 0, $newW, $newH, $width, $height);
+                                    ob_start();
+                                    imagejpeg($resized, null, 80);
+                                    $binaryData = ob_get_clean();
+                                    imagedestroy($resized);
+                                    $mimeType = 'image/jpeg';
+                                }
+                                imagedestroy($img);
+                            }
+                        } catch (\Throwable $e) {}
                     }
-                } catch (\Throwable $e) {}
+                    $fileData = base64_encode($binaryData);
+                }
             }
-            $fileData = base64_encode($binaryData);
 
             $prompt = "Anda adalah Senior Bank Statement / Rekening Koran Parser dan Financial Analyst yang sangat presisi.
 Tugas Anda adalah membaca dokumen mutasi bank / rekening koran yang dilampirkan PERSIS sesuai isi dokumen asli (JANGAN mengarang atau mengasumsikan angka yang tidak ada di dokumen) dan mengekstraknya ke format JSON berikut:
@@ -1357,9 +1379,8 @@ PANDUAN EKSTRAKSI WAJIB:
             $extractedData = null;
             $usedModel = '';
             $lastError = '';
-            $cleanPreText = trim($preExtractedText);
 
-            if ($provider === 'deepseek' || $provider === 'anthropic' || ($provider === 'openai_compatible' && $mimeType === 'application/pdf')) {
+            if ($provider === 'deepseek' || $provider === 'anthropic' || ($provider === 'openai_compatible' && $mimeType === 'application/pdf' && empty($cleanPreImages))) {
                 if ($mimeType !== 'application/pdf') {
                     return [
                         'status'  => false,
@@ -1367,7 +1388,7 @@ PANDUAN EKSTRAKSI WAJIB:
                     ];
                 }
 
-                $pdfText = (mb_strlen($cleanPreText) >= 40) ? $cleanPreText : $this->ekstrakTeksPdfLokal($filePath);
+                $pdfText = (mb_strlen($cleanPreText) >= 40) ? $cleanPreText : ($hasDiskFile ? $this->ekstrakTeksPdfLokal($filePath) : '');
                 if (mb_strlen($pdfText) < 40) {
                     return [
                         'status'  => false,
@@ -1402,18 +1423,23 @@ PANDUAN EKSTRAKSI WAJIB:
                 if (stripos($oaUrl, '/chat/completions') === false) {
                     $oaUrl .= '/chat/completions';
                 }
+                $oaContent = [['type' => 'text', 'text' => $prompt]];
+                if (!empty($cleanPreImages)) {
+                    foreach (array_slice($cleanPreImages, 0, 4) as $b64Img) {
+                        $oaContent[] = ['type' => 'image_url', 'image_url' => ['url' => 'data:image/jpeg;base64,' . $b64Img]];
+                    }
+                } elseif ($fileData !== '') {
+                    $oaContent[] = ['type' => 'image_url', 'image_url' => ['url' => 'data:' . $mimeType . ';base64,' . $fileData]];
+                }
                 $oaPayload = [
                     'model' => ($configuredModel && $configuredModel !== 'custom') ? $configuredModel : 'gpt-4o-mini',
                     'response_format' => ['type' => 'json_object'],
-                    'max_tokens' => 4096,
+                    'max_tokens' => 3072,
                     'temperature' => 0.0,
                     'messages' => [
                         [
                             'role' => 'user',
-                            'content' => [
-                                ['type' => 'text', 'text' => $prompt],
-                                ['type' => 'image_url', 'image_url' => ['url' => 'data:' . $mimeType . ';base64,' . $fileData]]
-                            ]
+                            'content' => $oaContent
                         ]
                     ]
                 ];
@@ -1424,8 +1450,8 @@ PANDUAN EKSTRAKSI WAJIB:
                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Authorization: Bearer ' . trim($apiKey)]);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 35);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 24);
                 $oaResp = curl_exec($ch);
                 $oaCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 $oaErr  = curl_error($ch);
@@ -1454,14 +1480,13 @@ PANDUAN EKSTRAKSI WAJIB:
                     ? rtrim($configuredEndpoint, '/')
                     : 'https://generativelanguage.googleapis.com/v1beta/models';
 
-                // FAST-PATH: Prioritaskan teks pra-ekstraksi PDF.js dari browser (mendukung PDF 100+ halaman & terenkripsi seperti Kopra Mandiri),
-                // lalu fallback ke ekstraksi teks lokal PHP sebelum mengirim biner PDF utuh ke Gemini Vision!
+                // FAST-PATH 1: Prioritaskan teks pra-ekstraksi PDF.js dari browser / ekstraksi lokal PHP
+                // FAST-PATH 2: Jika PDF hasil scan (tanpa teks), gunakan gambar JPEG halaman yang dirender PDF.js di browser
+                // Kedua jalur ini mencegah pengiriman biner PDF raksasa ke Gemini yang memicu timeout 7002ms / Nginx 504!
                 $geminiParts = null;
                 if ($mimeType === 'application/pdf') {
-                    $localPdfText = (mb_strlen($cleanPreText) >= 60) ? $cleanPreText : $this->ekstrakTeksPdfLokal($filePath);
-                    $isReadableStatement = mb_strlen($localPdfText) >= 60
-                        && preg_match('/\d{1,3}[.,]\d{3}/', $localPdfText)
-                        && preg_match('/(saldo|kredit|debit|mutasi|bank|rekening|tanggal|balance|credit|transfer|trx|statement|opening|closing)/i', $localPdfText);
+                    $localPdfText = (mb_strlen($cleanPreText) >= 40) ? $cleanPreText : ($hasDiskFile ? $this->ekstrakTeksPdfLokal($filePath) : '');
+                    $isReadableStatement = mb_strlen($localPdfText) >= 40 && preg_match('/\d{3,}/', $localPdfText);
                     if ($isReadableStatement) {
                         if (mb_strlen($localPdfText) > 24000) {
                             $localPdfText = mb_substr($localPdfText, 0, 16000) . "\n...\n" . mb_substr($localPdfText, -8000);
@@ -1471,7 +1496,19 @@ PANDUAN EKSTRAKSI WAJIB:
                         ];
                     }
                 }
-                if ($geminiParts === null) {
+                if ($geminiParts === null && !empty($cleanPreImages)) {
+                    $geminiParts = [];
+                    foreach (array_slice($cleanPreImages, 0, 4) as $b64Img) {
+                        $geminiParts[] = [
+                            'inline_data' => [
+                                'mime_type' => 'image/jpeg',
+                                'data'      => $b64Img
+                            ]
+                        ];
+                    }
+                    $geminiParts[] = ['text' => $prompt];
+                }
+                if ($geminiParts === null && $fileData !== '') {
                     $geminiParts = [
                         [
                             'inline_data' => [
@@ -1482,6 +1519,12 @@ PANDUAN EKSTRAKSI WAJIB:
                         [
                             'text' => $prompt
                         ]
+                    ];
+                }
+                if ($geminiParts === null) {
+                    return [
+                        'status'  => false,
+                        'message' => 'Tidak ditemukan teks maupun gambar yang dapat dibaca dari berkas rekening koran.'
                     ];
                 }
 
@@ -1508,20 +1551,20 @@ PANDUAN EKSTRAKSI WAJIB:
                 $usedModel = '';
                 $lastError = '';
                 $startTime = microtime(true);
-                $maxTotalSec = 23.0; // Wajib di bawah timeout Nginx 30 detik agar tidak pernah 504
+                $maxTotalSec = 25.0; // Aman di bawah timeout Nginx 30 detik agar tidak pernah 504
 
                 if (!empty($apiKey)) {
                     $attempts = [$candidateModels[0], $candidateModels[1], $candidateModels[0]];
                     foreach ($attempts as $modIdx => $mod) {
                         $elapsed = microtime(true) - $startTime;
                         $remaining = $maxTotalSec - $elapsed;
-                        if ($remaining < 4.0) {
+                        if ($remaining < 5.0) {
                             break;
                         }
                         if ($modIdx === 2) {
-                            usleep(500000);
+                            usleep(400000);
                         }
-                        $reqTimeout = (int)min($modIdx === 0 ? 18 : 10, max(4, floor($remaining)));
+                        $reqTimeout = (int)min($modIdx === 0 ? 12 : 18, max(5, floor($remaining)));
 
                         $endpoint = $baseGemini . '/' . urlencode($mod) . ':generateContent?key=' . urlencode(trim($apiKey));
                         $ch = curl_init($endpoint);

@@ -2162,6 +2162,7 @@ class Pengajuan extends BaseController
 
     /**
      * Upload berkas Rekening Koran (PDF / Gambar) dan ekstraksi otomatis dengan Gemini AI
+     * Mendukung mode fast-path (teks/canvas PDF.js tanpa biner penuh bila PDF berukuran besar)
      */
     public function uploadOcrRekening()
     {
@@ -2170,33 +2171,120 @@ class Pengajuan extends BaseController
                 return $this->response->setJSON(['status' => false, 'message' => 'Sesi login telah berakhir, silakan refresh halaman untuk login kembali.']);
             }
 
-            $file = $this->request->getFile('file_rekening');
-            if (!$file || !$file->isValid()) {
+            $preExtractedText   = trim((string)($this->request->getPost('extracted_pdf_text') ?? ''));
+            $rawExtractedImages = trim((string)($this->request->getPost('extracted_pdf_images') ?? ''));
+            $preExtractedImages = [];
+            if ($rawExtractedImages !== '') {
+                $decImgs = json_decode($rawExtractedImages, true);
+                if (is_array($decImgs)) {
+                    $preExtractedImages = $decImgs;
+                }
+            }
+            $hasPreContent = (mb_strlen($preExtractedText) >= 40) || !empty($preExtractedImages);
+
+            $file       = $this->request->getFile('file_rekening');
+            $hasValidFile = ($file && $file->isValid() && !$file->hasMoved());
+
+            if (!$hasValidFile && !$hasPreContent) {
                 return $this->response->setJSON([
                     'status'  => false,
                     'message' => 'Berkas rekening koran tidak valid atau gagal diunggah: ' . ($file ? $file->getErrorString() : 'File kosong')
                 ]);
             }
 
-            $ext = strtolower($file->getExtension() ?: pathinfo($file->getClientName(), PATHINFO_EXTENSION));
-            $allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
-            if (!in_array($ext, $allowedExt)) {
-                return $this->response->setJSON([
-                    'status'  => false,
-                    'message' => 'Format berkas "' . htmlspecialchars($ext) . '" tidak didukung. Harap unggah berkas PDF atau gambar (JPG/PNG/WebP).'
-                ]);
+            $filePath   = '';
+            $fullPath   = '';
+            $clientName = trim((string)($this->request->getPost('file_name_hint') ?? 'rekening_koran.pdf'));
+            $clientMime = 'application/pdf';
+
+            if ($hasValidFile) {
+                $clientName = $file->getClientName();
+                $clientMime = $file->getClientMimeType();
+                $ext = strtolower($file->getExtension() ?: pathinfo($clientName, PATHINFO_EXTENSION));
+                $allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
+                if (!in_array($ext, $allowedExt)) {
+                    return $this->response->setJSON([
+                        'status'  => false,
+                        'message' => 'Format berkas "' . htmlspecialchars($ext) . '" tidak didukung. Harap unggah berkas PDF atau gambar (JPG/PNG/WebP).'
+                    ]);
+                }
+
+                $targetDir = FCPATH . 'uploads/rekening_koran';
+                if (!is_dir($targetDir)) {
+                    @mkdir($targetDir, 0777, true);
+                }
+
+                $newName = $file->getRandomName();
+                try {
+                    $file->move($targetDir, $newName);
+                    $filePath = 'uploads/rekening_koran/' . $newName;
+                    $fullPath = $targetDir . '/' . $newName;
+                } catch (\Throwable $moveErr) {
+                    $targetDir = WRITEPATH . 'uploads/rekening_koran';
+                    if (!is_dir($targetDir)) {
+                        @mkdir($targetDir, 0777, true);
+                    }
+                    $file->move($targetDir, $newName);
+                    $filePath = 'writable/uploads/rekening_koran/' . $newName;
+                    $fullPath = $targetDir . '/' . $newName;
+                }
+
+                $kreditId = $this->request->getPost('kredit_id');
+                if ($kreditId && $filePath !== '') {
+                    try {
+                        $cols = $this->kreditModel->db->getFieldNames('kredit');
+                        if (is_array($cols) && in_array('berkas_rekening_koran', $cols)) {
+                            $this->kreditModel->update($kreditId, ['berkas_rekening_koran' => $filePath]);
+                        }
+                    } catch (\Throwable $e) {}
+                }
             }
 
+            // Panggil AI Service untuk mengekstrak data (mendukung teks & canvas gambar PDF.js untuk PDF scan/100+ halaman/terenkripsi)
+            $aiService = new \App\Services\GeminiAiService();
+            $res = $aiService->ekstrakRekeningKoran($fullPath, $clientMime, $preExtractedText, $preExtractedImages);
+
+            return $this->response->setJSON([
+                'status'    => $res['status'] ?? true,
+                'message'   => $res['message'] ?? 'Ekstraksi rekening koran berhasil',
+                'file_path' => $filePath,
+                'file_name' => $clientName,
+                'file_url'  => $filePath !== '' ? base_url($filePath) : '',
+                'data'      => $res['data'] ?? []
+            ]);
+        } catch (\Throwable $err) {
+            return $this->response->setJSON([
+                'status'  => false,
+                'message' => 'Gagal memproses berkas rekening koran: ' . $err->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Simpan lampiran berkas Rekening Koran secara terpisah di latar belakang (untuk berkas PDF besar)
+     */
+    public function uploadFileRekeningSaja()
+    {
+        try {
+            if (!session()->get('logged_in')) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Unauthorized']);
+            }
+            $file = $this->request->getFile('file_rekening');
+            if (!$file || !$file->isValid() || $file->hasMoved()) {
+                return $this->response->setJSON(['status' => false, 'message' => 'File tidak tersedia']);
+            }
+            $ext = strtolower($file->getExtension() ?: pathinfo($file->getClientName(), PATHINFO_EXTENSION));
+            if (!in_array($ext, ['pdf', 'jpg', 'jpeg', 'png', 'webp'])) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Format tidak didukung']);
+            }
             $targetDir = FCPATH . 'uploads/rekening_koran';
             if (!is_dir($targetDir)) {
                 @mkdir($targetDir, 0777, true);
             }
-
             $newName = $file->getRandomName();
             try {
                 $file->move($targetDir, $newName);
                 $filePath = 'uploads/rekening_koran/' . $newName;
-                $fullPath = $targetDir . '/' . $newName;
             } catch (\Throwable $moveErr) {
                 $targetDir = WRITEPATH . 'uploads/rekening_koran';
                 if (!is_dir($targetDir)) {
@@ -2204,9 +2292,7 @@ class Pengajuan extends BaseController
                 }
                 $file->move($targetDir, $newName);
                 $filePath = 'writable/uploads/rekening_koran/' . $newName;
-                $fullPath = $targetDir . '/' . $newName;
             }
-
             $kreditId = $this->request->getPost('kredit_id');
             if ($kreditId) {
                 try {
@@ -2216,25 +2302,14 @@ class Pengajuan extends BaseController
                     }
                 } catch (\Throwable $e) {}
             }
-
-            // Panggil AI Service untuk mengekstrak data (mendukung teks pra-ekstraksi PDF.js untuk PDF 100+ halaman & terenkripsi)
-            $preExtractedText = trim((string)($this->request->getPost('extracted_pdf_text') ?? ''));
-            $aiService = new \App\Services\GeminiAiService();
-            $res = $aiService->ekstrakRekeningKoran($fullPath, $file->getClientMimeType(), $preExtractedText);
-
             return $this->response->setJSON([
-                'status'    => $res['status'] ?? true,
-                'message'   => $res['message'] ?? 'Ekstraksi rekening koran berhasil',
+                'status'    => true,
                 'file_path' => $filePath,
                 'file_name' => $file->getClientName(),
                 'file_url'  => base_url($filePath),
-                'data'      => $res['data'] ?? []
             ]);
-        } catch (\Throwable $err) {
-            return $this->response->setJSON([
-                'status'  => false,
-                'message' => 'Gagal memproses berkas rekening koran: ' . $err->getMessage()
-            ]);
+        } catch (\Throwable $e) {
+            return $this->response->setJSON(['status' => false, 'message' => $e->getMessage()]);
         }
     }
 
@@ -2695,23 +2770,27 @@ class Pengajuan extends BaseController
         $mergedInput = array_merge($keuangan, $input);
         $mergedInput['daftar_karyawan'] = $kredit['daftar_karyawan'] ?? '[]';
 
-        // Penarikan otomatis Bayar Pokok Pinjaman ke Bank, Utang Bank & Beban Bunga dari SLIK (Tahap 5)
+        // Penarikan otomatis Bayar Pokok Pinjaman ke Bank, Utang Bank & Beban Bunga Bulanan dari SLIK (Tahap 5)
+        // Seluruh angka disamakan ke basis 1 bulan (sinkron dengan Pendapatan, HPP & Beban Bulanan di Tab 9)
         $dataSlik = $this->slikModel->where('kredit_id', $kreditId)->where('deleted_at', null)->findAll();
-        $totAngsuranTahun = 0;
-        $totOutstanding   = 0;
+        $totPokokBulan  = 0;
+        $totBungaBulan  = 0;
+        $totOutstanding = 0;
         foreach ($dataSlik as $sl) {
             $angsuran = (float)($sl['angsuran'] ?? 0);
             $out      = (float)($sl['outstanding'] ?? 0);
             $totOutstanding += $out;
+            $bungaBln = ($out > 0) ? round(($out * 0.11) / 12) : 0;
+            $totBungaBulan += $bungaBln;
             if ($angsuran > 0) {
-                $totAngsuranTahun += ($angsuran * 12);
+                $totPokokBulan += max(0, round($angsuran - $bungaBln));
             } elseif ($out > 0) {
-                $totAngsuranTahun += ($out * 0.20);
+                $totPokokBulan += round($out / 36);
             }
         }
         if (empty($mergedInput['input_pembayaran_pokok']) || (float)$mergedInput['input_pembayaran_pokok'] <= 0) {
-            if ($totAngsuranTahun > 0) {
-                $mergedInput['input_pembayaran_pokok'] = $totAngsuranTahun;
+            if ($totPokokBulan > 0) {
+                $mergedInput['input_pembayaran_pokok'] = $totPokokBulan;
             }
         }
         if (empty($mergedInput['neraca_utang_bank_panjang']) && empty($mergedInput['neraca_utang_bank_lancar'])) {
@@ -2719,10 +2798,10 @@ class Pengajuan extends BaseController
                 $mergedInput['neraca_utang_bank_panjang'] = $totOutstanding;
             }
         }
-        // Penarikan otomatis Biaya Bunga Pinjaman Bank (Laba Rugi) dari SLIK (estimasi 11% / tahun dari baki debet)
+        // Penarikan otomatis Biaya Bunga Pinjaman Bank Bulanan (Laba Rugi) dari SLIK
         if (empty($mergedInput['input_beban_bunga']) || (float)$mergedInput['input_beban_bunga'] <= 0) {
-            if ($totOutstanding > 0) {
-                $mergedInput['input_beban_bunga'] = round($totOutstanding * 0.11);
+            if ($totBungaBulan > 0) {
+                $mergedInput['input_beban_bunga'] = $totBungaBulan;
             }
         }
 
@@ -2921,21 +3000,6 @@ class Pengajuan extends BaseController
             }
         }
 
-        if ($totMutasiKredit > 0 && $totMutasiDebit > 0) {
-            $totalOpEst      = (float)($calcInput['biaya_hidup_nominal_rk'] ?? 25000000);
-            $bebanLainEst    = (float)($calcInput['beban_lainnya_nominal_rk'] ?? 0);
-            $totalBebanOpEst = ($totalOpEst > 0 ? $totalOpEst : 25000000) + $bebanLainEst;
-            $hppMurniEst     = max(0, $totMutasiDebit - $totalBebanOpEst);
-            $ratioHpp        = ($totMutasiKredit > 0 && $hppMurniEst > 0) ? round(($hppMurniEst / $totMutasiKredit) * 100, 1) : 78;
-            if ($ratioHpp > 82 || $ratioHpp <= 0) {
-                $ratioHpp = 78;
-            }
-            if (empty($calcInput['hpp_persen_rk']) || (float)$calcInput['hpp_persen_rk'] == 60 || (float)$calcInput['hpp_persen_rk'] >= 90) {
-                $calcInput['hpp_persen_rk'] = $ratioHpp;
-                $calcInput['hpp_persen']    = $ratioHpp;
-            }
-        }
-
         // Jika utang bank di neraca kosong, ambil dari baki debet outstanding SLIK OJK (Tahap 5)
         if (empty($calcInput['neraca_utang_bank_panjang']) && empty($calcInput['neraca_utang_bank_lancar'])) {
             $totSlik = 0;
@@ -2947,31 +3011,30 @@ class Pengajuan extends BaseController
             }
         }
 
-        // Jika pembayaran pokok pinjaman bank di arus kas kosong, tarik dari SLIK Tahap 5 (akumulasi 1 tahun)
-        if (empty($calcInput['input_pembayaran_pokok']) || (float)$calcInput['input_pembayaran_pokok'] <= 0) {
-            $totAngsuranTahun = 0;
-            foreach ($dataSlik as $sl) {
-                $angsuran = (float)($sl['angsuran'] ?? 0);
-                $out      = (float)($sl['outstanding'] ?? 0);
-                if ($angsuran > 0) {
-                    $totAngsuranTahun += ($angsuran * 12);
-                } elseif ($out > 0) {
-                    $totAngsuranTahun += ($out * 0.20);
-                }
-            }
-            if ($totAngsuranTahun > 0) {
-                $calcInput['input_pembayaran_pokok'] = $totAngsuranTahun;
+        // Hitung pokok & bunga bulanan dari SLIK Tahap 5 (sinkron basis 1 bulan dengan Laba Rugi Tab 9)
+        $totPokokBulanAktual = 0;
+        $totBungaBulanAktual = 0;
+        foreach ($dataSlik as $sl) {
+            $angsuran = (float)($sl['angsuran'] ?? 0);
+            $out      = (float)($sl['outstanding'] ?? 0);
+            $bungaBln = ($out > 0) ? round(($out * 0.11) / 12) : 0;
+            $totBungaBulanAktual += $bungaBln;
+            if ($angsuran > 0) {
+                $totPokokBulanAktual += max(0, round($angsuran - $bungaBln));
+            } elseif ($out > 0) {
+                $totPokokBulanAktual += round($out / 36);
             }
         }
 
-        // Jika beban bunga pinjaman bank di laba rugi kosong, tarik dari SLIK (estimasi 11% / tahun dari baki debet)
-        if (empty($calcInput['input_beban_bunga']) || (float)$calcInput['input_beban_bunga'] <= 0) {
-            $totOutstandingSlik = 0;
-            foreach ($dataSlik as $sl) {
-                $totOutstandingSlik += (float)($sl['outstanding'] ?? 0);
+        if (empty($calcInput['input_pembayaran_pokok']) || (float)$calcInput['input_pembayaran_pokok'] <= 0) {
+            if ($totPokokBulanAktual > 0) {
+                $calcInput['input_pembayaran_pokok'] = $totPokokBulanAktual;
             }
-            if ($totOutstandingSlik > 0) {
-                $calcInput['input_beban_bunga'] = round($totOutstandingSlik * 0.11);
+        }
+
+        if (empty($calcInput['input_beban_bunga']) || (float)$calcInput['input_beban_bunga'] <= 0) {
+            if ($totBungaBulanAktual > 0) {
+                $calcInput['input_beban_bunga'] = $totBungaBulanAktual;
             }
         }
 

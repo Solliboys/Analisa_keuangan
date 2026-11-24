@@ -92,12 +92,12 @@ class LaporanKeuanganService
         if ($hppNom > 0 && $pendapatan > 0) {
             $hppPct = round(($hppNom / $pendapatan) * 100, 2);
         } else {
-            $hppPct = (float)($input['hpp_persen'] ?? $input['hpp_persen_rk'] ?? 78);
+            $hppPct = (float)($input['hpp_persen'] ?? $input['hpp_persen_rk'] ?? 0);
             if ($hppNom == 0 && $pendapatan > 0 && $hppPct > 0) {
                 $hppNom = round($pendapatan * ($hppPct / 100), 2);
             }
         }
-        $labaKotor = max(0, $pendapatan - $hppNom);
+        $labaKotor = $pendapatan - $hppNom;
 
         // Beban Operasional Pokok Usaha
         $bebanOperasional = $this->cleanNumber($input['beban_operasional'] ?? $input['biaya_hidup_nominal_rk'] ?? 0);
@@ -125,11 +125,11 @@ class LaporanKeuanganService
             }
             if ($sumDetail > 0) {
                 $bebanLainnya = $sumDetail;
-                // Jika bebanOperasional sama persis dengan bebanLainnya (hasil sinkronisasi form hidden), hindari dobel hitung
-                if ($bebanOperasional == $bebanLainnya) {
-                    $bebanOperasional = 0;
-                }
             }
+        }
+        // Jika bebanOperasional sama persis dengan bebanLainnya (hasil sinkronisasi form hidden), hindari dobel hitung
+        if ($bebanOperasional > 0 && $bebanOperasional == $bebanLainnya) {
+            $bebanOperasional = 0;
         }
 
         // Beban Gaji Karyawan (jika ada daftar_karyawan atau beban_gaji terpisah)
@@ -446,6 +446,24 @@ class LaporanKeuanganService
         $pendapatanLain   = $this->cleanNumber($input['pendapatan_lain'] ?? $input['pendapatan_lain_rk'] ?? 0);
         $totalPenghasilan = $penghasilanUtama + $pendapatanLain;
 
+        // HPP (jika perorangan wiraswasta menginput rincian HPP di Tab 9)
+        $hppNom = $this->cleanNumber($input['hpp'] ?? $input['hpp_nominal_rk'] ?? 0);
+        if (!empty($input['detail_hpp_rk'])) {
+            $parsedHppPr = is_array($input['detail_hpp_rk']) ? $input['detail_hpp_rk'] : json_decode($input['detail_hpp_rk'], true);
+            if (is_array($parsedHppPr)) {
+                $sumHppPr = 0;
+                foreach ($parsedHppPr as $ih) {
+                    if (strtolower($ih['kategori'] ?? 'hpp') !== 'aset') {
+                        $sumHppPr += $this->cleanNumber($ih['nominal'] ?? 0);
+                    }
+                }
+                if ($sumHppPr > 0) {
+                    $hppNom = $sumHppPr;
+                }
+            }
+        }
+        $labaKotor = $totalPenghasilan - $hppNom;
+
         // Pengeluaran kebutuhan hidup / rumah tangga
         $pengeluaranHidup = $this->cleanNumber($input['input_pengeluaran_hidup'] ?? $input['pengeluaran_rumah_tangga'] ?? $input['beban_operasional'] ?? $input['biaya_hidup_nominal_rk'] ?? $input['biaya_hidup_nominal_iv'] ?? 0);
 
@@ -458,12 +476,18 @@ class LaporanKeuanganService
                 : json_decode($input['detail_beban_lainnya_rk'], true);
             if (is_array($rawDetailB)) {
                 $detailBeban = $rawDetailB;
-                if ($bebanLainnya == 0) {
-                    foreach ($rawDetailB as $db) {
-                        $bebanLainnya += $this->cleanNumber($db['nominal'] ?? 0);
-                    }
+                $sumDetailB = 0;
+                foreach ($rawDetailB as $db) {
+                    $sumDetailB += $this->cleanNumber($db['nominal'] ?? 0);
+                }
+                if ($sumDetailB > 0) {
+                    $bebanLainnya = $sumDetailB;
                 }
             }
+        }
+        // Hindari dobel hitung jika biaya_hidup_nominal_rk (hidden) tersinkron identik dengan beban_lainnya_nominal_rk
+        if ($pengeluaranHidup > 0 && $bebanLainnya > 0 && $pengeluaranHidup == $bebanLainnya) {
+            $pengeluaranHidup = 0;
         }
 
         // Cicilan berjalan / pinjaman
@@ -472,28 +496,28 @@ class LaporanKeuanganService
         // Pajak jika ada
         $pajakNom = isset($input['pajak']) && $input['pajak'] !== '' ? $this->cleanNumber($input['pajak']) : 0;
 
-        // Total pengeluaran rutin
+        // Total pengeluaran rutin (termasuk HPP bila wiraswasta)
         $totalPengeluaran = $pengeluaranHidup + $bebanLainnya;
 
         // Surplus / Laba Bersih
-        $surplus = $totalPenghasilan - $totalPengeluaran - $cicilanBerjalan - $pajakNom;
+        $surplus = $labaKotor - $totalPengeluaran - $cicilanBerjalan - $pajakNom;
 
         $labaRugi = [
             'pendapatan'         => $penghasilanUtama,
             'pendapatan_lain'    => $pendapatanLain,
             'total_penghasilan'  => $totalPenghasilan,
             'detail_pendapatan'  => $detailPendapatan,
-            'hpp'                => 0,
-            'laba_kotor'         => $totalPenghasilan,
+            'hpp'                => $hppNom,
+            'laba_kotor'         => $labaKotor,
             'beban_operasional'  => $pengeluaranHidup,
             'beban_gaji'         => 0,
             'beban_lainnya'      => $bebanLainnya,
             'detail_beban'       => $detailBeban,
-            'total_pengeluaran'  => $totalPengeluaran,
+            'total_pengeluaran'  => $totalPengeluaran + $hppNom,
             'beban_penyusutan'   => 0,
             'beban_bunga'        => $cicilanBerjalan,
-            'laba_operasional'   => $totalPenghasilan - $totalPengeluaran,
-            'laba_sebelum_pajak' => $totalPenghasilan - $totalPengeluaran - $cicilanBerjalan,
+            'laba_operasional'   => $labaKotor - $totalPengeluaran,
+            'laba_sebelum_pajak' => $labaKotor - $totalPengeluaran - $cicilanBerjalan,
             'pajak'              => $pajakNom,
             'laba_bersih'        => $surplus,
         ];
@@ -503,7 +527,7 @@ class LaporanKeuanganService
         $prive        = $this->cleanNumber($input['prive_dividen'] ?? $input['input_prive_dividen'] ?? 0);
 
         $arusMasuk  = $totalPenghasilan;
-        $arusKeluar = $totalPengeluaran + $cicilanBerjalan + $pajakNom + $prive;
+        $arusKeluar = $hppNom + $totalPengeluaran + $cicilanBerjalan + $pajakNom + $prive;
         $kasBersih  = $arusMasuk - $arusKeluar;
         $kasAkhir   = $saldoAwalKas + $kasBersih;
 

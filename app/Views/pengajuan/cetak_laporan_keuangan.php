@@ -2,7 +2,7 @@
 $namaDebitur = $kredit['nama_debitur'] ?? 'PT Sumber Makmur Sejahtera';
 $noApp       = $kredit['nomor_aplikasi'] ?? 'NC-2024-AK8921';
 $tahun       = date('Y');
-$refDokumen  = 'REF: CAM-KONS/' . $tahun . '/' . (strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $noApp), -6)) ?: 'BU-8921');
+$refDokumen  = 'REF: OAP-KONS/' . $tahun . '/' . (strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $noApp), -6)) ?: 'BU-8921');
 
 $lr = $hasil['laba_rugi'] ?? [];
 $ak = $hasil['arus_kas'] ?? [];
@@ -18,6 +18,9 @@ $totalHalaman = $isKonsolidasi ? 3 : 1;
 function rpFmt($val) {
     if ($val === null || $val === '') return 'Rp 0';
     $num = (float)$val;
+    if ($num < 0) {
+        return '(Rp ' . number_format(abs($num), 0, ',', '.') . ')';
+    }
     return 'Rp ' . number_format($num, 0, ',', '.');
 }
 function rpFmtParen($val) {

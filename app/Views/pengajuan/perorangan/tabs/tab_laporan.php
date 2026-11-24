@@ -19,20 +19,25 @@ $tahunPeriode       = date('Y');
 $plafonBaru         = (float)($kredit['plafon_pengajuan'] ?? 50000000);
 $tenorBulanBaru     = (int)($kredit['tenor_bulan'] ?? 12);
 if ($tenorBulanBaru <= 0) $tenorBulanBaru = 12;
-$bungaBulanPersen   = (float)($kredit['bunga_per_bulan'] ?? 1.25);
+$bungaTahunPersenAwal = (float)($kredit['bunga_per_tahun'] ?? 0);
+$bungaBulanPersen   = ($bungaTahunPersenAwal > 0)
+    ? round($bungaTahunPersenAwal / 12, 2)
+    : (float)($kredit['bunga_per_bulan'] ?? 1.25);
+$rateBulanExact     = ($bungaTahunPersenAwal > 0)
+    ? (($bungaTahunPersenAwal / 12) / 100)
+    : ($bungaBulanPersen / 100);
 $metodeBungaBaru    = strtoupper($kredit['perhitungan_bunga'] ?? 'ANUITAS');
-$skemaKreditBaru    = strtolower($kredit['skema_kredit'] ?? 'installment');
-$rateBulanBaru      = $bungaBulanPersen / 100;
+$skemaKreditBaru    = strtolower(($kredit['skema_pembayaran'] ?? '') . ' ' . ($kredit['skema_kredit'] ?? 'installment'));
 if (strpos($skemaKreditBaru, 'balloon') !== false) {
-    $estimasiAngsuranBaru = ($plafonBaru > 0) ? round($plafonBaru * $rateBulanBaru) : 0;
+    $estimasiAngsuranBaru = ($plafonBaru > 0) ? round($plafonBaru * $rateBulanExact) : 0;
 } elseif ($metodeBungaBaru === 'ANUITAS' && $plafonBaru > 0 && $tenorBulanBaru > 0) {
-    $estimasiAngsuranBaru = ($rateBulanBaru > 0)
-        ? round($plafonBaru * ($rateBulanBaru / (1 - pow(1 + $rateBulanBaru, -$tenorBulanBaru))))
+    $estimasiAngsuranBaru = ($rateBulanExact > 0)
+        ? round($plafonBaru * ($rateBulanExact / (1 - pow(1 + $rateBulanExact, -$tenorBulanBaru))))
         : round($plafonBaru / $tenorBulanBaru);
 } else {
-    $angsuranPokokBaru  = ($plafonBaru > 0) ? round($plafonBaru / $tenorBulanBaru) : 0;
-    $angsuranBungaBaru  = ($plafonBaru > 0) ? round($plafonBaru * $rateBulanBaru) : 0;
-    $estimasiAngsuranBaru = $angsuranPokokBaru + $angsuranBungaBaru;
+    $angsuranPokokBaru  = ($plafonBaru > 0) ? ($plafonBaru / $tenorBulanBaru) : 0;
+    $angsuranBungaBaru  = ($plafonBaru > 0) ? ($plafonBaru * $rateBulanExact) : 0;
+    $estimasiAngsuranBaru = round($angsuranPokokBaru + $angsuranBungaBaru);
 }
 
 // =============================================================================
@@ -850,7 +855,7 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                                 <td class="py-1.5 px-3 font-semibold text-slate-700" id="doc_label_beban">
                                     <?= $kategoriDebiturAwal === 'usaha' ? '(-) Total Biaya Operasional & Rumah Tangga' : '(-) Total Pengeluaran & Biaya Hidup' ?>
                                 </td>
-                                <td class="py-1.5 px-3 text-right font-bold text-rose-600" id="doc_beban">(Rp <?= number_format($totalBebanAwal, 0, ',', '.') ?>)</td>
+                                <td class="py-1.5 px-3 text-right font-bold text-rose-600" id="doc_beban">(Rp <?= number_format($totalPengeluaranAwal, 0, ',', '.') ?>)</td>
                             </tr>
                             <tr class="bg-emerald-50 font-bold text-emerald-950">
                                 <td class="py-2 px-3 uppercase">= Sisa Penghasilan Bersih / Surplus Bulanan</td>
@@ -1039,18 +1044,31 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
 <script>
 let activeKategoriDebitur = '<?= $kategoriDebiturAwal ?>';
 
-// Format Angka ke Rupiah String
+// Format Angka ke Rupiah String (mendukung nilai negatif dengan rapi)
 function fNomLap(num) {
     const val = Math.round(Number(num) || 0);
+    if (val < 0) {
+        return '- Rp ' + Math.abs(val).toLocaleString('id-ID');
+    }
     return 'Rp ' + val.toLocaleString('id-ID');
 }
 
-// Parse Rupiah String ke Numeric
+// Parse Rupiah String / Float DB String ke Numeric secara presisi (anti bug desimal .00 -> 100x)
 function pNomLap(val) {
     if (val === null || val === undefined) return 0;
-    if (typeof val === 'number') return isNaN(val) ? 0 : val;
-    const clean = String(val).replace(/[^0-9]/g, '');
-    return clean ? parseInt(clean, 10) : 0;
+    if (typeof val === 'number') return isNaN(val) ? 0 : Math.round(val);
+    let s = String(val).trim();
+    if (s === '' || s === '-') return 0;
+    if (/^-?\d+\.\d{1,4}$/.test(s)) {
+        return Math.round(parseFloat(s)) || 0;
+    }
+    if (/,\d{1,2}$/.test(s)) {
+        s = s.split(',')[0];
+    }
+    const isNeg = s.startsWith('-');
+    const clean = s.replace(/[^0-9]/g, '');
+    const parsed = clean ? parseInt(clean, 10) : 0;
+    return isNeg ? -parsed : parsed;
 }
 
 // Ganti Kategori Debitur (Punya Usaha vs Punya Gaji)
@@ -1262,15 +1280,24 @@ function sinkronkanLaporanKeuangan() {
     const totUtangLuar = subUtangDinamis + outSlik;
     const totAngsBerjalan = subAngsDinamis + angsSlik;
 
-    // 7. Fasilitas Kredit Baru yang Diajukan (Sinkron dengan Metode Bunga Tab 1: ANUITAS / FLAT / EFEKTIF)
+    // 7. Fasilitas Kredit Baru yang Diajukan (Sinkron 100% dengan Metode Bunga & Skema Pembayaran Tab 1)
     const plafonBaru = pNomLap(document.getElementById('plafon_pengajuan')?.value) || <?= $plafonBaru ?>;
     const tenorBaru = parseInt(document.getElementById('tenor_bulan')?.value, 10) || <?= $tenorBulanBaru ?>;
-    const bungaBaru = parseFloat(document.getElementById('bunga_per_bulan')?.value) || <?= $bungaBulanPersen ?>;
+    const bungaTahunInputVal = parseFloat(document.getElementById('bunga_per_tahun')?.value || 0);
+    const bungaBaru = bungaTahunInputVal > 0
+        ? Math.round((bungaTahunInputVal / 12) * 100) / 100
+        : (parseFloat(document.getElementById('bunga_per_bulan')?.value) || <?= $bungaBulanPersen ?>);
     const metodeBungaLap = (document.getElementById('perhitungan_bunga')?.value || '<?= $metodeBungaBaru ?>').toUpperCase();
-    const skemaKreditLap = (document.getElementById('skema_kredit')?.value || '<?= $skemaKreditBaru ?>').toLowerCase();
-    const rateBulanLap = bungaBaru / 100;
+    const skemaKreditLap = (
+        (document.getElementById('skema_pembayaran')?.value || '') + ' ' +
+        (document.getElementById('skema_kredit')?.value || '<?= $skemaKreditBaru ?>')
+    ).toLowerCase();
+    const rateBulanLap = bungaTahunInputVal > 0 ? ((bungaTahunInputVal / 12) / 100) : (bungaBaru / 100);
     let estimasiAngsBaru = 0;
-    if (plafonBaru > 0 && tenorBaru > 0) {
+    const angsDipilihTab1 = pNomLap(document.getElementById('angsuran_dipilih')?.value || 0);
+    if (angsDipilihTab1 > 0) {
+        estimasiAngsBaru = angsDipilihTab1;
+    } else if (plafonBaru > 0 && tenorBaru > 0) {
         if (skemaKreditLap.includes('balloon')) {
             estimasiAngsBaru = Math.round(plafonBaru * rateBulanLap);
         } else if (metodeBungaLap === 'ANUITAS') {

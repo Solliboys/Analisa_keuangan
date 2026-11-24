@@ -404,10 +404,10 @@
     </div>
 </div>
 
-<!-- Self-hosted PDF.js untuk ekstraksi cepat PDF Rekening Koran multi-halaman & terenkripsi di browser -->
-<script src="<?= base_url('libs/pdfjs/pdf.min.js') ?>"></script>
+<!-- Self-hosted PDF.js untuk ekstraksi cepat PDF Rekening Koran multi-halaman, hasil scan & terenkripsi di browser -->
+<script src="<?= base_url('libs/pdfjs/pdf.min.js?v=3.11.174') ?>"></script>
 <script>
     if (window.pdfjsLib) {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = '<?= base_url('libs/pdfjs/pdf.worker.min.js') ?>';
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = '<?= base_url('libs/pdfjs/pdf.worker.min.js?v=3.11.174') ?>';
     }
 </script>

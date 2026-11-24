@@ -1472,7 +1472,7 @@ function isiDataLaporanBU(data) {
     }
 
     setT('bu_ak_cicilan', rpFmtParen(ak.cicilan_pokok));
-    setT('bu_ak_kas_pendanaan', rpFmtParen(Math.abs(ak.kas_pendanaan)));
+    setT('bu_ak_kas_pendanaan', rpFmt(ak.kas_pendanaan));
     setT('bu_ak_kenaikan_bersih', rpFmt(ak.kenaikan_bersih_kas));
     setT('bu_ak_saldo_awal', rpFmt(ak.saldo_awal_kas));
     setT('bu_ak_kas_akhir', rpFmt(ak.kas_akhir));
@@ -1810,11 +1810,13 @@ function hitungDataLaporanDariDOM() {
     };
 
     const omzetBulan = pF(document.querySelector('[name="pendapatan_rk"]')?.value || document.getElementById('pendapatan_rk')?.value);
-    const pendapatan = omzetBulan > 0 ? (omzetBulan * 12) : 0;
+    const pendapatan = omzetBulan > 0 ? omzetBulan : 0;
 
     let hppPersen = pPct(document.querySelector('[name="hpp_persen_rk"]')?.value || document.getElementById('hpp_persen_rk')?.value);
     let hppNomBulan = pF(document.querySelector('[name="hpp_nominal_rk"]')?.value || document.getElementById('nomHppRKInput')?.value);
     let detailHppDOM = [];
+    let detailAsetDOM = [];
+    let sumAsetKotak3DOM = 0;
     const rawDetailHppDOM = document.querySelector('[name="detail_hpp_rk"]')?.value || document.getElementById('detail_hpp_rk')?.value;
     if (rawDetailHppDOM && rawDetailHppDOM !== '[]') {
         try {
@@ -1823,19 +1825,22 @@ function hitungDataLaporanDariDOM() {
                 let sumHpp = 0;
                 arrHpp.forEach(it => {
                     const k = (it.kategori || 'hpp').toLowerCase();
-                    if (k !== 'aset') {
+                    if (k === 'aset') {
+                        detailAsetDOM.push(it);
+                        sumAsetKotak3DOM += pF(it.nominal);
+                    } else {
                         detailHppDOM.push(it);
                         sumHpp += pF(it.nominal);
                     }
                 });
-                if (sumHpp > 0) hppNomBulan = sumHpp;
+                if (sumHpp > 0 || detailHppDOM.length > 0) hppNomBulan = sumHpp;
             }
         } catch(e) {}
     }
     if (hppNomBulan === 0 && hppPersen > 0) {
-        hppNomBulan = omzetBulan * (hppPersen / 100);
+        hppNomBulan = Math.round(omzetBulan * (hppPersen / 100));
     }
-    const hpp = hppNomBulan * 12;
+    const hpp = hppNomBulan;
     const labaKotor = pendapatan - hpp;
 
     let detailPendapatanDOM = [];
@@ -1866,9 +1871,9 @@ function hitungDataLaporanDariDOM() {
     if (bebanOpBulan > 0 && bebanOpBulan === bebanLainBulan) {
         bebanOpBulan = 0; // Hindari dobel hitung
     }
-    const bebanOp = bebanOpBulan * 12;
-    const bebanGaji = bebanGajiBulan * 12;
-    const bebanLain = bebanLainBulan * 12;
+    const bebanOp = bebanOpBulan;
+    const bebanGaji = bebanGajiBulan;
+    const bebanLain = bebanLainBulan;
 
     const penyusutan = pF(document.querySelector('[name="beban_depresiasi"]')?.value) || 0;
     const labaOperasional = labaKotor - bebanOp - bebanGaji - bebanLain - penyusutan;
@@ -1876,19 +1881,34 @@ function hitungDataLaporanDariDOM() {
     const bebanBunga = pF(document.querySelector('[name="input_beban_bunga"]')?.value) || 0;
     const labaBersih = labaOperasional - bebanBunga;
 
-    // Neraca
-    let kasBank = pF(document.querySelector('[name="neraca_awal_kas"]')?.value) || 0;
-    if (kasBank === 0) {
+    // Saldo Awal Kas & Pembelian Aset (sinkron 100% dengan LaporanKeuanganService)
+    let saldoAwalKas = pF(document.querySelector('[name="neraca_awal_kas"]')?.value) || 0;
+    if (saldoAwalKas === 0) {
         document.querySelectorAll('.rek-saldo-awal').forEach(el => {
-            kasBank += pF(el.value);
+            saldoAwalKas += pF(el.value);
         });
     }
+    const saldoAwalAsetTetap = pF(document.querySelector('[name="neraca_awal_aset_tetap"]')?.value) || 0;
+    let pembelianAsetTetap = pF(document.querySelector('[name="input_capex"]')?.value) || pF(document.getElementById('total_aset_hpp_rk')?.value) || sumAsetKotak3DOM;
+
+    // Arus Kas
+    const cicilanPokok = pF(document.querySelector('[name="input_pembayaran_pokok"]')?.value) || 0;
+    const kasOperasional = labaBersih + penyusutan;
+    const kasInvestasi = -pembelianAsetTetap;
+    const kasPendanaan = -cicilanPokok;
+    const kenaikanBersihKas = kasOperasional + kasInvestasi + kasPendanaan;
+    const kasAkhir = saldoAwalKas + kenaikanBersihKas;
+
+    // Neraca (identitas akuntansi seimbang: Kas Neraca = Kas Akhir Arus Kas)
+    const kasBank = kasAkhir;
     const piutang = pF(document.querySelector('[name="input_piutang_akhir"]')?.value) || 0;
     const persediaan = pF(document.querySelector('[name="input_persediaan_akhir"]')?.value) || 0;
     const totalAsetLancar = kasBank + piutang + persediaan;
 
-    const asetTetapBruto = pF(document.querySelector('[name="neraca_aset_tetap_bruto"]')?.value) || 0;
-    const akmPenyusutan = pF(document.querySelector('[name="neraca_akumulasi_penyusutan"]')?.value) || 0;
+    const asetTetapBrutoInput = pF(document.querySelector('[name="neraca_aset_tetap_bruto"]')?.value) || 0;
+    const asetTetapBruto = asetTetapBrutoInput > 0 ? asetTetapBrutoInput : (saldoAwalAsetTetap + pembelianAsetTetap);
+    const akmPenyusutanInput = document.querySelector('[name="neraca_akumulasi_penyusutan"]')?.value;
+    const akmPenyusutan = (akmPenyusutanInput !== undefined && akmPenyusutanInput !== '') ? pF(akmPenyusutanInput) : penyusutan;
     const asetTetapNeto = Math.max(0, asetTetapBruto - akmPenyusutan);
     const totalAset = totalAsetLancar + asetTetapNeto;
 
@@ -1898,16 +1918,10 @@ function hitungDataLaporanDariDOM() {
     const totalLiabilitas = utangUsaha + utangBankPendek + utangBankPanjang;
 
     const modalDisetor = pF(document.querySelector('[name="neraca_modal_disetor"]')?.value) || 0;
-    const totalEkuitas = totalAset - totalLiabilitas;
-
-    // Arus Kas
-    const cicilanPokok = pF(document.querySelector('[name="input_pembayaran_pokok"]')?.value) || 0;
-    const kasOperasional = labaBersih;
-    const kasInvestasi = 0;
-    const kasPendanaan = -cicilanPokok;
-    const kenaikanBersihKas = kasOperasional + kasInvestasi + kasPendanaan;
-    const kasAkhir = kasBank;
-    const saldoAwalKas = kasAkhir - kenaikanBersihKas;
+    const saldoAwalLabaDitahan = pF(document.querySelector('[name="neraca_awal_laba_ditahan"]')?.value) || 0;
+    const labaDitahanAkhir = saldoAwalLabaDitahan + labaBersih;
+    const totalEkuitas = modalDisetor + labaDitahanAkhir;
+    const totalLiabEkuitas = totalLiabilitas + totalEkuitas;
 
     return {
         laba_rugi: {
@@ -1915,6 +1929,7 @@ function hitungDataLaporanDariDOM() {
             detail_pendapatan: detailPendapatanDOM,
             hpp,
             detail_hpp: detailHppDOM,
+            detail_aset: detailAsetDOM,
             laba_kotor: labaKotor,
             beban_gaji: bebanGaji,
             beban_operasional: bebanOp,
@@ -1931,20 +1946,22 @@ function hitungDataLaporanDariDOM() {
             persediaan: persediaan,
             total_aset_lancar: totalAsetLancar,
             aset_tetap_neto: asetTetapNeto,
+            detail_aset: detailAsetDOM,
             total_aset: totalAset,
             utang_usaha: utangUsaha,
             utang_bank_pendek: utangBankPendek,
             utang_jangka_panjang: utangBankPanjang,
             total_liabilitas: totalLiabilitas,
             modal_disetor: modalDisetor,
-            laba_ditahan_akhir: labaBersih,
+            laba_ditahan_akhir: labaDitahanAkhir,
             total_ekuitas: totalEkuitas,
-            total_liabilitas_ekuitas: totalAset,
+            total_liabilitas_ekuitas: totalLiabEkuitas,
         },
         arus_kas: {
             laba_bersih: labaBersih,
+            penyusutan: penyusutan,
             kas_operasional: kasOperasional,
-            pembelian_aset_tetap: 0,
+            pembelian_aset_tetap: pembelianAsetTetap,
             kas_investasi: kasInvestasi,
             cicilan_pokok: cicilanPokok,
             kas_pendanaan: kasPendanaan,
