@@ -1196,9 +1196,74 @@ class GeminiAiService
     }
 
     /**
-     * Ekstraksi cerdas dokumen Rekening Koran (PDF / Gambar) menggunakan Gemini AI Multimodal Vision
+     * Ekstraksi teks lokal dari berkas PDF (e-Statement bank) tanpa dependency eksternal
+     * Mendukung pdftotext CLI (jika tersedia di server) + pure-PHP FlateDecode stream parser
      */
-    public function ekstrakRekeningKoran(string $filePath, string $clientMime = ''): array
+    protected function ekstrakTeksPdfLokal(string $filePath): string
+    {
+        // 1. Coba pdftotext CLI terlebih dahulu (paling rapi menjaga kolom tabel e-Statement)
+        if (function_exists('shell_exec') && is_readable($filePath)) {
+            $cmd = 'pdftotext -layout ' . escapeshellarg($filePath) . ' - 2>/dev/null';
+            $out = @shell_exec($cmd);
+            if (is_string($out) && mb_strlen(trim($out)) >= 40) {
+                return trim($out);
+            }
+        }
+
+        // 2. Fallback pure-PHP PDF stream parser (FlateDecode + raw text streams)
+        $raw = @file_get_contents($filePath);
+        if ($raw === false || strlen($raw) < 20) {
+            return '';
+        }
+
+        $chunks = [];
+        if (preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $raw, $matches)) {
+            foreach ($matches[1] as $stream) {
+                $decoded = @gzuncompress($stream);
+                if ($decoded === false) {
+                    $decoded = @gzinflate($stream);
+                }
+                if ($decoded === false) {
+                    $decoded = $stream;
+                }
+                if (strpos($decoded, 'Tj') === false && strpos($decoded, 'TJ') === false) {
+                    continue;
+                }
+
+                // Ambil array TJ: [(teks1) -10 (teks2)] TJ
+                $textPart = '';
+                if (preg_match_all('/\[((?:[^\[\]]|\((?:\\\\.|[^\\\\)])*\))*)\]\s*TJ/s', $decoded, $tjArr)) {
+                    foreach ($tjArr[1] as $arrBody) {
+                        if (preg_match_all('/\(((?:\\\\.|[^\\\\)])*)\)/s', $arrBody, $strM)) {
+                            $textPart .= implode('', $strM[1]) . "\n";
+                        }
+                    }
+                }
+                // Ambil single Tj: (teks) Tj
+                if (preg_match_all('/\(((?:\\\\.|[^\\\\)])*)\)\s*Tj/s', $decoded, $tjSingle)) {
+                    foreach ($tjSingle[1] as $s) {
+                        $textPart .= $s . "\n";
+                    }
+                }
+
+                if ($textPart !== '') {
+                    // Unescape PDF literal string escapes
+                    $textPart = str_replace(['\\(', '\\)', '\\\\', '\\n', '\\r', '\\t'], ['(', ')', '\\', "\n", "\r", ' '], $textPart);
+                    $textPart = preg_replace('/[^\P{C}\n\r\t]/u', ' ', $textPart);
+                    $chunks[] = $textPart;
+                }
+            }
+        }
+
+        $result = trim(preg_replace('/[ \t]{2,}/', ' ', implode("\n", $chunks)));
+        $result = trim(preg_replace('/\n{3,}/', "\n\n", $result));
+        return $result;
+    }
+
+    /**
+     * Ekstraksi cerdas dokumen Rekening Koran (PDF / Gambar) menggunakan provider AI terpusat
+     */
+    public function ekstrakRekeningKoran(string $filePath, string $clientMime = '', string $preExtractedText = ''): array
     {
         try {
             if (!file_exists($filePath)) {
@@ -1282,27 +1347,55 @@ PANDUAN EKSTRAKSI WAJIB:
 2. FORMAT ANGKA RUPIAH: Perhatikan pemisah ribuan dan desimal pada rekening koran Indonesia (contoh: '1.500.000,00' atau '1,500,000.00' berarti 1500000 rupiah, JANGAN ikutkan 2 digit sen di belakang desimal sebagai ribuan!). Semua field angka (saldo_awal, total_mutasi_kredit, total_mutasi_debit, saldo_akhir, kredit, debit, saldo) WAJIB berupa ANGKA INTEGER MURNI tanpa titik, koma, atau 'Rp'.
 3. TOTAL MUTASI: Jika dokumen menampilkan baris ringkasan resmi (Total Mutasi Kredit / CR, Total Mutasi Debit / DB, Saldo Awal, Saldo Akhir), WAJIB gunakan angka ringkasan resmi tersebut. Jika tidak ada baris ringkasan, hitung penjumlahan eksak seluruh transaksi kredit (uang masuk) dan seluruh transaksi debit (uang keluar) di seluruh halaman dokumen.
 4. JUMLAH BULAN: Hitung jumlah bulan berdasarkan rentang periode mutasi pada dokumen (misal 1 bulan = 1, Jan-Mar = 3). Minimal 1.
-5. DAFTAR TRANSAKSI: Jika transaksi sangat banyak (lebih dari 40 baris), tetap hitung total_mutasi_kredit dan total_mutasi_debit dari SELURUH transaksi di dokumen, dan masukkan maksimal 40 transaksi utama ke array 'transaksi' agar JSON tidak terpotong.
+5. DAFTAR TRANSAKSI: Hitung total_mutasi_kredit dan total_mutasi_debit dari SELURUH transaksi di dokumen, dan masukkan maksimal 15 transaksi utama ke array 'transaksi' agar respon cepat dan JSON tidak terpotong.
 6. Kembalikan HANYA JSON murni tanpa markdown, tanpa ```json, tanpa penjelasan apapun.";
 
             $configuredModel = trim((string)($settings['model_ai'] ?? ''));
             $configuredEndpoint = trim((string)($settings['api_endpoint'] ?? ''));
             $provider = $this->deteksiProvider($configuredModel, $configuredEndpoint);
 
-            if ($provider === 'deepseek' || $provider === 'anthropic') {
-                return [
-                    'status'  => false,
-                    'message' => 'Model AI aktif saat ini (' . $configuredModel . ') hanya mendukung analisis teks (5C & Web Check) dan belum mendukung baca langsung berkas PDF/foto Rekening Koran. Untuk OCR Rekening Koran, pilih Google Gemini 2.5 Flash atau OpenAI GPT-4o di Pengaturan Superadmin.'
-                ];
-            }
+            $extractedData = null;
+            $usedModel = '';
+            $lastError = '';
+            $cleanPreText = trim($preExtractedText);
 
-            if ($provider === 'openai_compatible') {
-                if (strpos($mimeType, 'image/') !== 0) {
+            if ($provider === 'deepseek' || $provider === 'anthropic' || ($provider === 'openai_compatible' && $mimeType === 'application/pdf')) {
+                if ($mimeType !== 'application/pdf') {
                     return [
                         'status'  => false,
-                        'message' => 'Model OpenAI (' . $configuredModel . ') mendukung OCR gambar (JPG/PNG/WebP). Untuk membaca langsung file PDF Rekening Koran, gunakan Google Gemini 2.5 Flash di Pengaturan Superadmin atau unggah foto/screenshot mutasi.'
+                        'message' => 'Model AI aktif (' . $configuredModel . ') mendukung ekstraksi langsung berkas PDF e-Statement Rekening Koran. Untuk unggahan foto/gambar (JPG/PNG), gunakan Google Gemini 2.5 Flash atau OpenAI GPT-4o di Pengaturan Superadmin.'
                     ];
                 }
+
+                $pdfText = (mb_strlen($cleanPreText) >= 40) ? $cleanPreText : $this->ekstrakTeksPdfLokal($filePath);
+                if (mb_strlen($pdfText) < 40) {
+                    return [
+                        'status'  => false,
+                        'message' => 'PDF rekening koran ini berupa gambar/hasil scan tanpa teks yang bisa dibaca oleh ' . $configuredModel . '. Unggah PDF e-Statement asli dari mobile/internet banking, atau aktifkan Google Gemini 2.5 Flash di Pengaturan Superadmin untuk membaca PDF hasil scan.'
+                    ];
+                }
+
+                // Batasi panjang teks agar tetap cepat dan masuk context window
+                if (mb_strlen($pdfText) > 28000) {
+                    $pdfText = mb_substr($pdfText, 0, 20000) . "\n...\n" . mb_substr($pdfText, -8000);
+                }
+
+                $textPrompt = $prompt . "\n\nBERIKUT ISI TEKS DOKUMEN REKENING KORAN PDF YANG DIUNGGAH:\n" . $pdfText;
+                $textRes = $this->panggilGeminiApi($textPrompt, $apiKey, $configuredModel, 0.0, $configuredEndpoint);
+                if ($textRes['ok'] && !empty($textRes['text'])) {
+                    $cleanText = preg_replace('/^```(?:json)?\s*/i', '', trim($textRes['text']));
+                    $cleanText = preg_replace('/\s*```$/i', '', $cleanText);
+                    $parsed = json_decode($cleanText, true);
+                    if (is_array($parsed) && (isset($parsed['total_mutasi_kredit']) || isset($parsed['transaksi']))) {
+                        $extractedData = $parsed;
+                        $usedModel = $textRes['model'] ?? $configuredModel;
+                    } else {
+                        $lastError = 'Format JSON AI (' . ($textRes['model'] ?? $configuredModel) . ') tidak valid';
+                    }
+                } else {
+                    $lastError = $textRes['error'] ?? ('Gagal menghubungi ' . $configuredModel);
+                }
+            } elseif ($provider === 'openai_compatible') {
                 $oaUrl = ($configuredEndpoint !== '' && stripos($configuredEndpoint, 'googleapis.com') === false)
                     ? rtrim($configuredEndpoint, '/')
                     : 'https://api.openai.com/v1/chat/completions';
@@ -1331,16 +1424,14 @@ PANDUAN EKSTRAKSI WAJIB:
                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Authorization: Bearer ' . trim($apiKey)]);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 35);
                 $oaResp = curl_exec($ch);
                 $oaCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 $oaErr  = curl_error($ch);
                 curl_close($ch);
 
-                $extractedData = null;
                 $usedModel = $oaPayload['model'];
-                $lastError = '';
                 if (!$oaErr && $oaCode === 200 && !empty($oaResp)) {
                     $oaArr = json_decode($oaResp, true);
                     $rawText = $oaArr['choices'][0]['message']['content'] ?? '';
@@ -1363,40 +1454,75 @@ PANDUAN EKSTRAKSI WAJIB:
                     ? rtrim($configuredEndpoint, '/')
                     : 'https://generativelanguage.googleapis.com/v1beta/models';
 
-                $candidateModels = array_values(array_unique(array_filter([
+                // FAST-PATH: Prioritaskan teks pra-ekstraksi PDF.js dari browser (mendukung PDF 100+ halaman & terenkripsi seperti Kopra Mandiri),
+                // lalu fallback ke ekstraksi teks lokal PHP sebelum mengirim biner PDF utuh ke Gemini Vision!
+                $geminiParts = null;
+                if ($mimeType === 'application/pdf') {
+                    $localPdfText = (mb_strlen($cleanPreText) >= 60) ? $cleanPreText : $this->ekstrakTeksPdfLokal($filePath);
+                    $isReadableStatement = mb_strlen($localPdfText) >= 60
+                        && preg_match('/\d{1,3}[.,]\d{3}/', $localPdfText)
+                        && preg_match('/(saldo|kredit|debit|mutasi|bank|rekening|tanggal|balance|credit|transfer|trx|statement|opening|closing)/i', $localPdfText);
+                    if ($isReadableStatement) {
+                        if (mb_strlen($localPdfText) > 24000) {
+                            $localPdfText = mb_substr($localPdfText, 0, 16000) . "\n...\n" . mb_substr($localPdfText, -8000);
+                        }
+                        $geminiParts = [
+                            ['text' => $prompt . "\n\nBERIKUT ISI TEKS DOKUMEN REKENING KORAN PDF YANG DIUNGGAH:\n" . $localPdfText]
+                        ];
+                    }
+                }
+                if ($geminiParts === null) {
+                    $geminiParts = [
+                        [
+                            'inline_data' => [
+                                'mime_type' => $mimeType,
+                                'data'      => $fileData
+                            ]
+                        ],
+                        [
+                            'text' => $prompt
+                        ]
+                    ];
+                }
+
+                // Hanya gunakan model yang terbukti cepat merespons (hindari model hang yang memicu 504 Nginx 30 detik)
+                $candidateModels = [
                     'gemini-flash-lite-latest',
                     'gemini-flash-latest'
-                ])));
+                ];
 
                 $payload = [
                     'contents' => [
                         [
-                            'parts' => [
-                                [
-                                    'inline_data' => [
-                                        'mime_type' => $mimeType,
-                                        'data'      => $fileData
-                                    ]
-                                ],
-                                [
-                                    'text' => $prompt
-                                ]
-                            ]
+                            'parts' => $geminiParts
                         ]
                     ],
                     'generationConfig' => [
                         'temperature'      => 0.0,
                         'responseMimeType' => 'application/json',
-                        'maxOutputTokens'  => 4096
+                        'maxOutputTokens'  => 2048
                     ]
                 ];
 
                 $extractedData = null;
                 $usedModel = '';
                 $lastError = '';
+                $startTime = microtime(true);
+                $maxTotalSec = 23.0; // Wajib di bawah timeout Nginx 30 detik agar tidak pernah 504
 
                 if (!empty($apiKey)) {
-                    foreach ($candidateModels as $modIdx => $mod) {
+                    $attempts = [$candidateModels[0], $candidateModels[1], $candidateModels[0]];
+                    foreach ($attempts as $modIdx => $mod) {
+                        $elapsed = microtime(true) - $startTime;
+                        $remaining = $maxTotalSec - $elapsed;
+                        if ($remaining < 4.0) {
+                            break;
+                        }
+                        if ($modIdx === 2) {
+                            usleep(500000);
+                        }
+                        $reqTimeout = (int)min($modIdx === 0 ? 18 : 10, max(4, floor($remaining)));
+
                         $endpoint = $baseGemini . '/' . urlencode($mod) . ':generateContent?key=' . urlencode(trim($apiKey));
                         $ch = curl_init($endpoint);
                         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -1406,7 +1532,7 @@ PANDUAN EKSTRAKSI WAJIB:
                         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
                         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-                        curl_setopt($ch, CURLOPT_TIMEOUT, $modIdx === 0 ? 15 : 12);
+                        curl_setopt($ch, CURLOPT_TIMEOUT, $reqTimeout);
 
                         $response  = curl_exec($ch);
                         $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);

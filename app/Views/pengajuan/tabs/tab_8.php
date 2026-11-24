@@ -403,3 +403,11 @@
         </div>
     </div>
 </div>
+
+<!-- Self-hosted PDF.js untuk ekstraksi cepat PDF Rekening Koran multi-halaman & terenkripsi di browser -->
+<script src="<?= base_url('libs/pdfjs/pdf.min.js') ?>"></script>
+<script>
+    if (window.pdfjsLib) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = '<?= base_url('libs/pdfjs/pdf.worker.min.js') ?>';
+    }
+</script>

@@ -1814,6 +1814,63 @@ function handleOcrFileSelected(input) {
     }
 }
 
+async function ekstrakTeksPdfDiBrowser(file) {
+    try {
+        if (!window.pdfjsLib || !file) return '';
+        const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+        if (!isPdf) return '';
+
+        const arrayBuffer = await file.arrayBuffer();
+        const loadingTask = window.pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+        const pdf = await loadingTask.promise;
+        const totalPages = pdf.numPages || 0;
+        if (totalPages === 0) return '';
+
+        // Ambil halaman awal (ringkasan & transaksi awal) + halaman akhir (saldo penutup/total)
+        // Untuk PDF besar (mis. 110 halaman Kopra Mandiri), cukup halaman 1-4 & 2 halaman terakhir
+        const pageNums = [];
+        if (totalPages <= 6) {
+            for (let p = 1; p <= totalPages; p++) pageNums.push(p);
+        } else {
+            [1, 2, 3, 4, totalPages - 1, totalPages].forEach(p => {
+                if (p >= 1 && p <= totalPages && !pageNums.includes(p)) pageNums.push(p);
+            });
+        }
+
+        const parts = [`[PDF Info: Total ${totalPages} halaman]`];
+        for (const pNum of pageNums) {
+            const page = await pdf.getPage(pNum);
+            const content = await page.getTextContent();
+            const lines = [];
+            let curY = null;
+            let curLine = [];
+            for (const item of (content.items || [])) {
+                const str = (item.str || '').trim();
+                if (!str) continue;
+                const y = item.transform ? Math.round(item.transform[5] / 4) : null;
+                if (curY !== null && y !== null && Math.abs(y - curY) >= 2) {
+                    if (curLine.length) lines.push(curLine.join(' '));
+                    curLine = [str];
+                } else {
+                    curLine.push(str);
+                }
+                curY = y;
+            }
+            if (curLine.length) lines.push(curLine.join(' '));
+            parts.push(`--- HALAMAN ${pNum} DARI ${totalPages} ---\n` + lines.join('\n'));
+        }
+
+        let joined = parts.join('\n\n').trim();
+        if (joined.length > 24000) {
+            joined = joined.slice(0, 16000) + '\n...\n' + joined.slice(-8000);
+        }
+        return joined;
+    } catch (e) {
+        console.warn('PDF.js client extraction skipped:', e);
+        return '';
+    }
+}
+
 async function prosesOcrRekeningKoran() {
     const fileInput = document.getElementById('inputOcrRekeningFile');
     const file = fileInput?.files?.[0];
@@ -1842,14 +1899,20 @@ async function prosesOcrRekeningKoran() {
 
     const loadingTitle = document.getElementById('ocrLoadingTitle');
     const loadingSub   = document.getElementById('ocrLoadingSub');
-    if (loadingTitle) loadingTitle.innerText = 'Mengunggah & Membaca Berkas...';
-    if (loadingSub) loadingSub.innerText = 'Menyiapkan dokumen rekening koran untuk dianalisis oleh Gemini AI...';
+    if (loadingTitle) loadingTitle.innerText = 'Membaca & Menganalisis Berkas...';
+    if (loadingSub) loadingSub.innerText = 'Mengekstrak ringkasan mutasi rekening koran secara cepat...';
 
     const kid = document.getElementById('kredit_id')?.value || (window.KREDIT_ID_VAL || '');
     const baseUrl = (typeof getBaseUrl === 'function') ? getBaseUrl() : (window.BASE_URL || '');
 
+    // Ekstrak teks PDF langsung di browser via PDF.js agar PDF 100+ halaman & terenkripsi langsung terbaca dalam < 2 detik
+    const preExtractedText = await ekstrakTeksPdfDiBrowser(file);
+
     const formData = new FormData();
     formData.append('file_rekening', file);
+    if (preExtractedText && preExtractedText.length >= 40) {
+        formData.append('extracted_pdf_text', preExtractedText);
+    }
     if (kid) formData.append('kredit_id', kid);
 
     // Animasi teks langkah
