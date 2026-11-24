@@ -16,8 +16,16 @@ class GeminiAiService
      */
     public function getSettings()
     {
-        $sys = $this->db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
-        $ai  = $this->db->table('pengaturan_ai')->where('id', 1)->get()->getRowArray() ?? [];
+        $sys = [];
+        $ai  = [];
+        try {
+            if ($this->db) {
+                $sys = $this->db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+                $ai  = $this->db->table('pengaturan_ai')->where('id', 1)->get()->getRowArray() ?? [];
+            }
+        } catch (\Throwable $e) {
+            // Fallback graceful jika database koneksi terputus/offline
+        }
 
         $sanitizePrompt = static function ($raw, string $pillar, string $fallback): string {
             $txt = trim((string)($raw ?? ''));
@@ -1203,7 +1211,9 @@ class GeminiAiService
     {
         // 1. Coba pdftotext CLI terlebih dahulu (paling rapi menjaga kolom tabel e-Statement)
         if (function_exists('shell_exec') && is_readable($filePath)) {
-            $cmd = 'pdftotext -layout ' . escapeshellarg($filePath) . ' - 2>/dev/null';
+            $isWin = (DIRECTORY_SEPARATOR === '\\');
+            $nullDev = $isWin ? '2>NUL' : '2>/dev/null';
+            $cmd = 'pdftotext -layout -upw "" ' . escapeshellarg($filePath) . ' - ' . $nullDev;
             $out = @shell_exec($cmd);
             if (is_string($out) && mb_strlen(trim($out)) >= 40) {
                 return trim($out);

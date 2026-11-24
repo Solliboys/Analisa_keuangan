@@ -1863,12 +1863,30 @@ async function kompresGambarDiBrowser(file) {
 async function ekstrakKontenPdfDiBrowser(file) {
     const result = { text: '', images: [] };
     try {
-        if (!window.pdfjsLib || !file) return result;
+        if (!file) return result;
         const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
         if (!isPdf) return result;
 
+        // Beri toleransi hingga 1.5 detik jika script PDF.js masih dalam proses pemuatan di browser
+        if (!window.pdfjsLib) {
+            for (let i = 0; i < 15; i++) {
+                await new Promise(r => setTimeout(r, 100));
+                if (window.pdfjsLib) break;
+            }
+        }
+        if (!window.pdfjsLib) return result;
+
         const arrayBuffer = await file.arrayBuffer();
-        const loadingTask = window.pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+        const loadingTask = window.pdfjsLib.getDocument({
+            data: new Uint8Array(arrayBuffer),
+            password: '',
+            nativeImageDecoderSupport: 'none'
+        });
+        if (typeof loadingTask.onPassword === 'function') {
+            loadingTask.onPassword = (updatePassword, reason) => {
+                updatePassword('');
+            };
+        }
         const pdf = await loadingTask.promise;
         const totalPages = pdf.numPages || 0;
         if (totalPages === 0) return result;
