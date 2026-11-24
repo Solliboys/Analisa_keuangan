@@ -252,14 +252,12 @@ class GeminiAiService
             ? rtrim($endpointCfg, '/')
             : 'https://generativelanguage.googleapis.com/v1beta/models';
 
-        // Prioritaskan model pilihan Superadmin terlebih dahulu, lalu fallback model Gemini valid
+        // Prioritaskan gemini-flash-lite-latest yang terbukti paling cepat & stabil di gateway Gemini, lalu fallback valid
         $candidateModels = array_values(array_unique(array_filter([
-            $cleanModel,
-            'gemini-2.5-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-2.0-flash',
+            'gemini-flash-lite-latest',
             'gemini-flash-latest',
-            'gemini-flash-lite-latest'
+            $cleanModel,
+            'gemini-2.5-flash'
         ])));
 
         $payload = [
@@ -1366,12 +1364,10 @@ PANDUAN EKSTRAKSI WAJIB:
                     : 'https://generativelanguage.googleapis.com/v1beta/models';
 
                 $candidateModels = array_values(array_unique(array_filter([
-                    $configuredModel,
-                    'gemini-2.5-flash',
-                    'gemini-2.5-flash-lite',
-                    'gemini-2.0-flash',
+                    'gemini-flash-lite-latest',
                     'gemini-flash-latest',
-                    'gemini-flash-lite-latest'
+                    $configuredModel,
+                    'gemini-2.5-flash'
                 ])));
 
                 $payload = [
@@ -1402,7 +1398,7 @@ PANDUAN EKSTRAKSI WAJIB:
                 $lastError = '';
 
                 if (!empty($apiKey)) {
-                    foreach ($candidateModels as $mod) {
+                    foreach ($candidateModels as $modIdx => $mod) {
                         $endpoint = $baseGemini . '/' . urlencode($mod) . ':generateContent?key=' . urlencode(trim($apiKey));
                         $ch = curl_init($endpoint);
                         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -1411,8 +1407,8 @@ PANDUAN EKSTRAKSI WAJIB:
                         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-                        curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
+                        curl_setopt($ch, CURLOPT_TIMEOUT, $modIdx === 0 ? 25 : 15);
 
                         $response  = curl_exec($ch);
                         $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
