@@ -1301,11 +1301,11 @@
 
             const statusEl = document.getElementById('modalStatus');
             if (status === 'Aktif') {
-                statusEl.className = 'font-bold text-emerald-600';
-                statusEl.innerHTML = 'â— Aktif (Dapat Login)';
+                statusEl.className = 'font-bold text-emerald-600 inline-flex items-center gap-1.5';
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Aktif (Dapat Login)';
             } else {
-                statusEl.className = 'font-bold text-rose-600';
-                statusEl.innerHTML = 'â— Tidak Aktif (Dinonaktifkan)';
+                statusEl.className = 'font-bold text-rose-600 inline-flex items-center gap-1.5';
+                statusEl.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> Tidak Aktif (Dinonaktifkan)';
             }
 
             document.getElementById('userDetailModal').classList.remove('hidden');
