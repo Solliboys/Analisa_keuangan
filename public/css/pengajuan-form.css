@@ -109,8 +109,8 @@ textarea {
 }
 
 /* Flatten decorative light gradients on info banners/cards */
-#camForm div[class*="bg-gradient-to-r"],
-#camForm div[class*="bg-gradient-to-br"] {
+#camForm div[class*="bg-gradient-to-r"]:not([class*="text-white"]),
+#camForm div[class*="bg-gradient-to-br"]:not([class*="text-white"]) {
     background-image: none !important;
 }
 #camForm div[class*="from-purple-50"],
@@ -118,6 +118,14 @@ textarea {
 #camForm div[class*="from-blue-50"] {
     background-color: #f8fafc !important;
     border-color: #cbd5e1 !important;
+}
+
+/* Banner berlatar biru gelap / solid / gradient tetap harus memiliki warna biru tegas */
+#camForm div[class*="bg-gradient-to-"][class*="text-white"],
+#camForm div[class*="text-white"][class*="from-blue-"] {
+    background-color: #1d4ed8 !important;
+    background-image: linear-gradient(to right, #1d4ed8, #2563eb) !important;
+    color: #ffffff !important;
 }
 
 /* 4. Crisp corporate inputs, selects, and textareas */

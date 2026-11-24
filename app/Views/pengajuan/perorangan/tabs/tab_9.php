@@ -353,18 +353,18 @@
         <!-- ======================================================== -->
         <!-- BANNER TOTAL: SISA PENGHASILAN BERSIH (SURPLUS / CASHFLOW)-->
         <!-- ======================================================== -->
-        <div class="p-4 sm:p-5 bg-gradient-to-r from-blue-700 to-indigo-700 text-white rounded-2xl flex items-center justify-between gap-4 shadow-sm">
+        <div class="p-4 sm:p-5 bg-blue-700 bg-gradient-to-r from-blue-700 to-indigo-700 text-white rounded-2xl flex items-center justify-between gap-4 shadow-sm" style="background-color: #1d4ed8 !important; background-image: linear-gradient(135deg, #1d4ed8, #2563eb) !important; color: #ffffff !important;">
             <div class="flex items-center gap-3 min-w-0">
                 <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                 </div>
                 <div class="min-w-0">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-blue-200 truncate">Sisa Penghasilan Bersih (Surplus / Net Cashflow)</div>
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-blue-100 truncate">Sisa Penghasilan Bersih (Surplus / Net Cashflow)</div>
                     <div class="text-xs sm:text-sm font-extrabold text-white truncate">Pendapatan dikurangi HPP &amp; Pengeluaran Rutin</div>
                 </div>
             </div>
             <div class="text-right shrink-0">
-                <span id="nettRK" class="text-xl sm:text-2xl font-black text-white tracking-tight whitespace-nowrap block">Rp 0</span>
+                <span id="nettRK" class="text-xl sm:text-2xl font-black text-white tracking-tight whitespace-nowrap block" style="color: #ffffff !important;">Rp 0</span>
             </div>
         </div>
 
