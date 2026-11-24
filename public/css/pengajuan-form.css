@@ -3,11 +3,21 @@
    Applies uniformly across all 12 tabs (Perorangan & Badan Usaha)
    ======================================================== */
 
+html {
+    color-scheme: light;
+}
+
 body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: #f8fafc !important;
     color: #0f172a;
     -webkit-font-smoothing: antialiased;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="color"]),
+select,
+textarea {
+    color-scheme: light;
 }
 
 .tabular-nums,
