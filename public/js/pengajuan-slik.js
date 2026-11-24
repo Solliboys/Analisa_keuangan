@@ -1042,12 +1042,16 @@ function bukaModalLihatDokumenSlik(idx) {
     }
 
     modal.classList.remove('hidden');
+    modal.style.display = 'flex';
 }
 window.bukaModalLihatDokumenSlik = bukaModalLihatDokumenSlik;
 
 function tutupModalLihatDokumenSlik() {
     const modal = document.getElementById('modalLihatDokumenSlik');
-    if (modal) modal.classList.add('hidden');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
 }
 window.tutupModalLihatDokumenSlik = tutupModalLihatDokumenSlik;
 
@@ -1073,20 +1077,33 @@ function previewFilePengajuanSlik(docType) {
     const previewModal = document.getElementById('modalPreviewDocSlik');
     const previewTitle = document.getElementById('previewDocTitle');
     const previewSub = document.getElementById('previewDocSub');
+    const previewDownloadBtn = document.getElementById('previewDocDownloadBtn');
     const container = document.getElementById('previewDocContainer');
 
     if (!previewModal || !container) return;
 
     const labelTipe = docType === 'identitas' ? 'Pratinjau Dokumen Identitas (KTP/NPWP)' : 'Pratinjau Dokumen Permohonan SLIK';
     if (previewTitle) previewTitle.textContent = labelTipe;
-    if (previewSub) previewSub.textContent = `${doc.name} (${doc.size})`;
+    if (previewSub) previewSub.textContent = `${doc.name || ''} ${doc.size ? '(' + doc.size + ')' : ''}`;
 
-    const ext = (doc.name || '').split('.').pop().toLowerCase();
+    const cleanBase = (window.BASE_URL || '').replace(/\/+$/, '');
+    const docUrl = doc.url || '';
+    const fullUrl = docUrl.startsWith('http') || docUrl.startsWith('data:') || docUrl.startsWith('blob:') 
+        ? docUrl 
+        : (cleanBase + '/' + docUrl.replace(/^\/+/, ''));
+
+    if (previewDownloadBtn) {
+        previewDownloadBtn.href = fullUrl;
+        previewDownloadBtn.classList.remove('hidden');
+        previewDownloadBtn.classList.add('inline-flex');
+    }
+
+    const ext = (doc.name || fullUrl).split('.').pop().toLowerCase().split('?')[0];
 
     if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
-        container.innerHTML = `<div class="p-2 flex items-center justify-center w-full"><img src="${doc.url}" alt="${doc.name}" class="max-h-[70vh] max-w-full object-contain rounded-lg shadow-sm"></div>`;
+        container.innerHTML = `<div class="p-2 flex items-center justify-center w-full"><img src="${fullUrl}" alt="${doc.name || 'Dokumen'}" class="max-h-[70vh] max-w-full object-contain rounded-lg shadow-sm" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'text-center p-6 text-slate-500 text-xs\\'><p class=\\'font-semibold mb-1 text-slate-700\\'>Gagal memuat gambar</p><p class=\\'text-slate-400 mb-3\\'>Berkas tidak dapat ditampilkan langsung.</p><a href=\\'${fullUrl}\\' target=\\'_blank\\' class=\\'px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 inline-block\\'>Buka di Tab Baru ↗</a></div>';"></div>`;
     } else if (ext === 'pdf') {
-        container.innerHTML = `<iframe src="${doc.url}" class="w-full h-[70vh] border border-slate-200 rounded-lg shadow-inner"></iframe>`;
+        container.innerHTML = `<iframe src="${fullUrl}" class="w-full h-[70vh] border border-slate-200 rounded-lg shadow-inner"></iframe>`;
     } else if (['txt', 'csv', 'log'].includes(ext)) {
         if (doc.file) {
             const reader = new FileReader();
@@ -1096,13 +1113,14 @@ function previewFilePengajuanSlik(docType) {
             };
             reader.readAsText(doc.file);
         } else {
-            container.innerHTML = `<iframe src="${doc.url}" class="w-full h-[70vh] border border-slate-200 rounded-lg"></iframe>`;
+            container.innerHTML = `<iframe src="${fullUrl}" class="w-full h-[70vh] border border-slate-200 rounded-lg"></iframe>`;
         }
     } else {
-        container.innerHTML = `<iframe src="${doc.url}" class="w-full h-[70vh] border border-slate-200 rounded-lg"></iframe>`;
+        container.innerHTML = `<iframe src="${fullUrl}" class="w-full h-[70vh] border border-slate-200 rounded-lg"></iframe>`;
     }
 
     previewModal.classList.remove('hidden');
+    previewModal.style.display = 'flex';
 }
 window.previewFilePengajuanSlik = previewFilePengajuanSlik;
 
@@ -1110,11 +1128,22 @@ function tutupPreviewDocSlik() {
     const modal = document.getElementById('modalPreviewDocSlik');
     if (modal) {
         modal.classList.add('hidden');
+        modal.style.display = 'none';
         const container = document.getElementById('previewDocContainer');
         if (container) container.innerHTML = '';
     }
 }
 window.tutupPreviewDocSlik = tutupPreviewDocSlik;
+
+// Event listener ESC untuk menutup modal preview dokumen SLIK
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modalPreview = document.getElementById('modalPreviewDocSlik');
+        if (modalPreview && !modalPreview.classList.contains('hidden')) {
+            tutupPreviewDocSlik();
+        }
+    }
+});
 
 // ========================================================
 // FUNGSI EXPORT TXT PERMOHONAN SLIK

@@ -908,7 +908,7 @@
             const ext = fullUrl.split('.').pop().toLowerCase().split('?')[0];
 
             if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
-                container.innerHTML = `<div class="p-2 flex items-center justify-center w-full"><img src="${fullUrl}" alt="${name || 'Dokumen'}" class="max-h-[70vh] max-w-full object-contain rounded-lg shadow-sm"></div>`;
+                container.innerHTML = `<div class="p-2 flex items-center justify-center w-full"><img src="${fullUrl}" alt="${name || 'Dokumen'}" class="max-h-[70vh] max-w-full object-contain rounded-lg shadow-sm" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'text-center p-6 text-slate-500 text-xs\\'><p class=\\'font-semibold mb-1 text-slate-700\\'>Gagal memuat gambar</p><p class=\\'text-slate-400 mb-3\\'>Berkas tidak dapat ditampilkan langsung atau format tidak terbaca.</p><a href=\\'${fullUrl}\\' target=\\'_blank\\' class=\\'px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 inline-block\\'>Buka di Tab Baru ↗</a></div>';"></div>`;
             } else {
                 container.innerHTML = `<iframe src="${fullUrl}" class="w-full h-[70vh] border border-slate-200 rounded-lg shadow-inner"></iframe>`;
             }
