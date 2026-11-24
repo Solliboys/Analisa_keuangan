@@ -1365,9 +1365,7 @@ PANDUAN EKSTRAKSI WAJIB:
 
                 $candidateModels = array_values(array_unique(array_filter([
                     'gemini-flash-lite-latest',
-                    'gemini-flash-latest',
-                    $configuredModel,
-                    'gemini-2.5-flash'
+                    'gemini-flash-latest'
                 ])));
 
                 $payload = [
@@ -1389,7 +1387,7 @@ PANDUAN EKSTRAKSI WAJIB:
                     'generationConfig' => [
                         'temperature'      => 0.0,
                         'responseMimeType' => 'application/json',
-                        'maxOutputTokens'  => 8192
+                        'maxOutputTokens'  => 4096
                     ]
                 ];
 
@@ -1407,8 +1405,8 @@ PANDUAN EKSTRAKSI WAJIB:
                         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
-                        curl_setopt($ch, CURLOPT_TIMEOUT, $modIdx === 0 ? 25 : 15);
+                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+                        curl_setopt($ch, CURLOPT_TIMEOUT, $modIdx === 0 ? 15 : 12);
 
                         $response  = curl_exec($ch);
                         $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
