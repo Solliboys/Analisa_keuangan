@@ -474,18 +474,34 @@ function validateTab(tabNum) {
             }
         }
     } else if (tabNum === 9) {
-        // Tab 9: Laba Rugi
+        // Tab 9: Laba Rugi / Data Keuangan
+        const isBadanUsaha = Boolean(window.IS_BADAN_USAHA || document.getElementById('nama_usaha_bu') || document.getElementById('containerHppOnlyDinamis'));
         const pendapatan = document.getElementById('pendapatan_rk');
         if (!pendapatan || parseNominal(pendapatan.value) <= 0) {
-            addError(pendapatan, 'Pendapatan/Omset bulanan riil wajib diisi lebih dari 0');
+            if (isBadanUsaha) {
+                const firstPendapatanInp = document.querySelector('#containerPendapatanDinamis input.rupiah-input');
+                const btnTambahPendapatan = document.querySelector('#tab-9 button[onclick*="tambahPendapatan"]');
+                const targetEl = firstPendapatanInp || btnTambahPendapatan || pendapatan;
+                addError(targetEl, 'Pendapatan/Omset bulanan riil wajib diisi lebih dari 0');
+            } else {
+                addError(pendapatan, 'Pendapatan/Omset bulanan riil wajib diisi lebih dari 0');
+            }
         }
 
-        // HPP hanya divalidasi untuk Badan Usaha atau Perorangan yang mencentang opsi toko/dagang
-        const isBadanUsaha = Boolean(window.IS_BADAN_USAHA || document.getElementById('nama_usaha_bu'));
+        // HPP hanya divalidasi jika Perorangan mencentang opsi toko/dagang
+        // Untuk Badan Usaha, HPP bersifat dinamis dan opsional (banyak badan usaha di bidang jasa/layanan tanpa HPP kulakan)
         if (isBadanUsaha) {
-            const hpp = document.getElementById('hpp_persen_rk');
-            if (!hpp || parseFloat(hpp.value) <= 0) {
-                addError(hpp, 'Estimasi persentase HPP (%) wajib diisi lebih dari 0');
+            if (Array.isArray(window.daftarHpp)) {
+                const hppItems = window.daftarHpp.filter(item => (item.kategori || 'hpp').toLowerCase() === 'hpp');
+                if (hppItems.length > 0) {
+                    const itemKosong = hppItems.find(item => (parseInt(item.nominal, 10) || 0) <= 0);
+                    if (itemKosong) {
+                        const firstHppInp = document.querySelector('#containerHppOnlyDinamis input.rupiah-input') || document.querySelector('#tab-9 button[onclick*="tambahHppOnly"]');
+                        if (firstHppInp) {
+                            addError(firstHppInp, 'Nominal rincian HPP yang ditambahkan wajib diisi lebih dari 0');
+                        }
+                    }
+                }
             }
         } else {
             // Perorangan: hanya divalidasi jika checkbox HPP dicentang

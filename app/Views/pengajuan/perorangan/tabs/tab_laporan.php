@@ -817,10 +817,10 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
 
         <!-- Sheet Kertas A4 White Document Preview -->
         <div class="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center bg-slate-200/70" id="printSheetContainer">
-            <div id="printSheetLaporan" class="bg-white w-full max-w-[760px] p-8 sm:p-12 shadow-xl border border-slate-200/90 text-slate-800 space-y-6 text-xs rounded-sm">
+            <div id="printSheetLaporan" class="bg-white w-full max-w-[760px] p-5 sm:p-7 shadow-xl border border-slate-200/90 text-slate-800 space-y-2.5 text-[11px] leading-tight rounded-sm">
                 
                 <!-- Header Dokumen Cetak -->
-                <div class="flex items-center justify-between text-xs text-slate-500 font-semibold border-b border-slate-200 pb-3">
+                <div class="flex items-center justify-between text-[11px] text-slate-500 font-semibold border-b border-slate-200 pb-1.5 mb-1">
                     <div class="flex items-center gap-1.5">
                         <span class="tracking-wider uppercase font-bold text-blue-900 text-[11px]" id="doc_header_entity">
                             ANALISA KEUANGAN DEBITUR PERORANGAN (<?= $kategoriDebiturAwal === 'usaha' ? 'WIRASWASTA' : 'BERPENGHASILAN TETAP' ?>)
@@ -831,52 +831,52 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
 
                 <!-- Judul Laporan -->
                 <div>
-                    <h1 class="text-xl font-black text-slate-900 tracking-tight" id="doc_title_category">
+                    <h1 class="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug" id="doc_title_category">
                         <?= $kategoriDebiturAwal === 'usaha' ? 'LAPORAN KEUANGAN USAHA (WIRASWASTA)' : 'LAPORAN PENGHASILAN & BIAYA HIDUP' ?>
                     </h1>
-                    <p class="text-xs text-slate-500 mt-0.5">Nama Debitur: <strong><?= $namaDebiturDisplay ?></strong> &bull; Periode Evaluasi: <?= $tahunPeriode ?></p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Nama Debitur: <strong><?= $namaDebiturDisplay ?></strong> &bull; Periode Evaluasi: <?= $tahunPeriode ?></p>
                 </div>
 
                 <!-- 1. DATA PENDAPATAN & BIAYA -->
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between bg-blue-50/80 px-3 py-1.5 text-blue-950 font-bold text-xs uppercase border border-blue-200">
+                <div class="space-y-1 print-section-box">
+                    <div class="flex items-center justify-between bg-blue-50/80 px-2.5 py-1 text-blue-950 font-bold text-[11px] uppercase border border-blue-200">
                         <span id="doc_title_sec1"><?= $kategoriDebiturAwal === 'usaha' ? '1. LAPORAN PENDAPATAN & BIAYA USAHA' : '1. LAPORAN PENGHASILAN & BIAYA HIDUP' ?></span>
                         <span class="text-[10px] text-blue-800 font-semibold">(IDR / Bulan)</span>
                     </div>
-                    <table class="w-full text-left text-xs border border-blue-100 border-collapse">
+                    <table class="w-full text-left text-[11px] border border-blue-100 border-collapse">
                         <tbody class="divide-y divide-slate-100">
                             <tr>
-                                <td class="py-1.5 px-3 font-semibold text-slate-700" id="doc_label_pemasukan">
+                                <td class="py-1 px-2.5 font-semibold text-slate-700" id="doc_label_pemasukan">
                                     <?= $kategoriDebiturAwal === 'usaha' ? 'Total Penjualan / Omzet (Pokok + Sampingan)' : 'Total Penghasilan / Gaji (Pokok + Tambahan)' ?>
                                 </td>
-                                <td class="py-1.5 px-3 text-right font-bold text-blue-700" id="doc_pemasukan">Rp <?= number_format($totalPemasukanAwal, 0, ',', '.') ?></td>
+                                <td class="py-1 px-2.5 text-right font-bold text-blue-700" id="doc_pemasukan">Rp <?= number_format($totalPemasukanAwal, 0, ',', '.') ?></td>
                             </tr>
                             <tr>
-                                <td class="py-1.5 px-3 font-semibold text-slate-700" id="doc_label_beban">
+                                <td class="py-1 px-2.5 font-semibold text-slate-700" id="doc_label_beban">
                                     <?= $kategoriDebiturAwal === 'usaha' ? '(-) Total Biaya Operasional & Rumah Tangga' : '(-) Total Pengeluaran & Biaya Hidup' ?>
                                 </td>
-                                <td class="py-1.5 px-3 text-right font-bold text-rose-600" id="doc_beban">(Rp <?= number_format($totalPengeluaranAwal, 0, ',', '.') ?>)</td>
+                                <td class="py-1 px-2.5 text-right font-bold text-rose-600" id="doc_beban">(Rp <?= number_format($totalPengeluaranAwal, 0, ',', '.') ?>)</td>
                             </tr>
                             <tr class="bg-emerald-50 font-bold text-emerald-950">
-                                <td class="py-2 px-3 uppercase">= Sisa Penghasilan Bersih / Surplus Bulanan</td>
-                                <td class="py-2 px-3 text-right font-black text-emerald-800 text-sm" id="doc_surplus">Rp <?= number_format($surplusBulananAwal, 0, ',', '.') ?></td>
+                                <td class="py-1 px-2.5 uppercase">= Sisa Penghasilan Bersih / Surplus Bulanan</td>
+                                <td class="py-1 px-2.5 text-right font-black text-emerald-800 text-xs" id="doc_surplus">Rp <?= number_format($surplusBulananAwal, 0, ',', '.') ?></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <!-- 2. DATA HARTA / ASET ELIGIBLE -->
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between bg-emerald-50/80 px-3 py-1.5 text-emerald-950 font-bold text-xs uppercase border border-emerald-200">
+                <div class="space-y-1 print-section-box">
+                    <div class="flex items-center justify-between bg-emerald-50/80 px-2.5 py-1 text-emerald-950 font-bold text-[11px] uppercase border border-emerald-200">
                         <span>2. DAFTAR HARTA / ASET PEMOHON (BEBAS JAMINAN)</span>
                         <span class="text-[10px] text-emerald-800 font-semibold">Bebas Jaminan</span>
                     </div>
-                    <table class="w-full text-left text-xs border border-emerald-100 border-collapse">
+                    <table class="w-full text-left text-[11px] border border-emerald-100 border-collapse">
                         <thead>
                             <tr class="bg-emerald-100/40 text-[10px] uppercase font-bold text-slate-600 border-b border-emerald-100">
-                                <th class="py-1.5 px-3 font-bold">Aset / Harta</th>
-                                <th class="py-1.5 px-3 text-center font-bold">Status</th>
-                                <th class="py-1.5 px-3 text-right font-bold">Nilai (IDR)</th>
+                                <th class="py-1 px-2.5 font-bold">Aset / Harta</th>
+                                <th class="py-1 px-2.5 text-center font-bold">Status</th>
+                                <th class="py-1 px-2.5 text-right font-bold">Nilai (IDR)</th>
                             </tr>
                         </thead>
                         <tbody id="doc_tbody_harta" class="divide-y divide-slate-100">
@@ -884,63 +884,63 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                         </tbody>
                         <tfoot>
                             <tr class="bg-emerald-50 font-bold text-emerald-950 border-t border-emerald-200">
-                                <td class="py-1.5 px-3" colspan="2">TOTAL HARTA BERSIH ELIGIBLE</td>
-                                <td class="py-1.5 px-3 text-right text-emerald-800 font-black" id="doc_tot_harta_eligible">Rp <?= number_format($totalHartaEligibleAwal, 0, ',', '.') ?></td>
+                                <td class="py-1 px-2.5" colspan="2">TOTAL HARTA BERSIH ELIGIBLE</td>
+                                <td class="py-1 px-2.5 text-right text-emerald-800 font-black" id="doc_tot_harta_eligible">Rp <?= number_format($totalHartaEligibleAwal, 0, ',', '.') ?></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
 
                 <!-- 3. DATA UTANG LUAR & TAMBAHAN UTANG BARU -->
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between bg-rose-50/80 px-3 py-1.5 text-rose-950 font-bold text-xs uppercase border border-rose-200">
+                <div class="space-y-1 print-section-box">
+                    <div class="flex items-center justify-between bg-rose-50/80 px-2.5 py-1 text-rose-950 font-bold text-[11px] uppercase border border-rose-200">
                         <span>3. UTANG LUAR &amp; FASILITAS KREDIT BARU</span>
                         <span class="text-[10px] text-rose-800 font-semibold">Kewajiban Riil</span>
                     </div>
-                    <table class="w-full text-left text-xs border border-rose-100 border-collapse">
+                    <table class="w-full text-left text-[11px] border border-rose-100 border-collapse">
                         <tbody class="divide-y divide-slate-100">
                             <tr>
-                                <td class="py-1.5 px-3 font-semibold text-slate-700">Total Utang Luar Berjalan (Data Keuangan + SLIK)</td>
-                                <td class="py-1.5 px-3 text-right font-bold text-rose-600" id="doc_utang_luar">Rp <?= number_format($totalUtangLuarAwal, 0, ',', '.') ?></td>
+                                <td class="py-1 px-2.5 font-semibold text-slate-700">Total Utang Luar Berjalan (Data Keuangan + SLIK)</td>
+                                <td class="py-1 px-2.5 text-right font-bold text-rose-600" id="doc_utang_luar">Rp <?= number_format($totalUtangLuarAwal, 0, ',', '.') ?></td>
                             </tr>
                             <tr>
-                                <td class="py-1.5 px-3 font-semibold text-slate-700">Total Angsuran Utang Berjalan per Bulan</td>
-                                <td class="py-1.5 px-3 text-right font-bold text-amber-700" id="doc_angs_berjalan">Rp <?= number_format($totalAngsuranBerjalanAwal, 0, ',', '.') ?>/bln</td>
+                                <td class="py-1 px-2.5 font-semibold text-slate-700">Total Angsuran Utang Berjalan per Bulan</td>
+                                <td class="py-1 px-2.5 text-right font-bold text-amber-700" id="doc_angs_berjalan">Rp <?= number_format($totalAngsuranBerjalanAwal, 0, ',', '.') ?>/bln</td>
                             </tr>
                             <tr class="bg-blue-50/50">
-                                <td class="py-1.5 px-3 font-semibold text-blue-900">Tambahan Plafon Kredit Baru yang Diajukan</td>
-                                <td class="py-1.5 px-3 text-right font-bold text-blue-800" id="doc_plafon_baru">Rp <?= number_format($plafonBaru, 0, ',', '.') ?></td>
+                                <td class="py-1 px-2.5 font-semibold text-blue-900">Tambahan Plafon Kredit Baru yang Diajukan</td>
+                                <td class="py-1 px-2.5 text-right font-bold text-blue-800" id="doc_plafon_baru">Rp <?= number_format($plafonBaru, 0, ',', '.') ?></td>
                             </tr>
                             <tr class="bg-blue-50/50">
-                                <td class="py-1.5 px-3 font-semibold text-blue-900">Estimasi Angsuran Fasilitas Kredit Baru per Bulan</td>
-                                <td class="py-1.5 px-3 text-right font-bold text-blue-800" id="doc_angs_baru">Rp <?= number_format($estimasiAngsuranBaru, 0, ',', '.') ?>/bln</td>
+                                <td class="py-1 px-2.5 font-semibold text-blue-900">Estimasi Angsuran Fasilitas Kredit Baru per Bulan</td>
+                                <td class="py-1 px-2.5 text-right font-bold text-blue-800" id="doc_angs_baru">Rp <?= number_format($estimasiAngsuranBaru, 0, ',', '.') ?>/bln</td>
                             </tr>
                             <tr class="bg-slate-900 text-white font-bold">
-                                <td class="py-2 px-3 uppercase text-slate-200">TOTAL KEWAJIBAN ANGSURAN GABUNGAN / BULAN</td>
-                                <td class="py-2 px-3 text-right text-amber-400 font-black text-sm" id="doc_tot_angs_gabungan">Rp <?= number_format($totalAngsuranGabunganAwal, 0, ',', '.') ?>/bln</td>
+                                <td class="py-1.5 px-2.5 uppercase text-slate-200">TOTAL KEWAJIBAN ANGSURAN GABUNGAN / BULAN</td>
+                                <td class="py-1.5 px-2.5 text-right text-amber-400 font-black text-xs" id="doc_tot_angs_gabungan">Rp <?= number_format($totalAngsuranGabunganAwal, 0, ',', '.') ?>/bln</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <!-- 4. KEKAYAAN BERSIH & RASIO KEUANGAN -->
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between bg-indigo-50/80 px-3 py-1.5 text-indigo-950 font-bold text-xs uppercase border border-indigo-200">
+                <div class="space-y-1 print-section-box">
+                    <div class="flex items-center justify-between bg-indigo-50/80 px-2.5 py-1 text-indigo-950 font-bold text-[11px] uppercase border border-indigo-200">
                         <span>4. REKAPITULASI KEKAYAAN BERSIH &amp; RASIO KEUANGAN</span>
                         <span class="text-[10px] text-indigo-800 font-semibold">Hasil Analisa</span>
                     </div>
-                    <table class="w-full text-left text-xs border border-indigo-100 border-collapse">
+                    <table class="w-full text-left text-[11px] border border-indigo-100 border-collapse">
                         <tbody class="divide-y divide-slate-100">
                             <tr class="bg-indigo-100/50 font-bold">
-                                <td class="py-2 px-3 text-indigo-950 font-black">KEKAYAAN BERSIH (HARTA BERSIH - UTANG LUAR)</td>
-                                <td class="py-2 px-3 text-right text-indigo-900 font-black text-sm" id="doc_kekayaan_bersih">Rp <?= number_format($kekayaanBersihAwal, 0, ',', '.') ?></td>
+                                <td class="py-1.5 px-2.5 text-indigo-950 font-black">KEKAYAAN BERSIH (HARTA BERSIH - UTANG LUAR)</td>
+                                <td class="py-1.5 px-2.5 text-right text-indigo-900 font-black text-xs" id="doc_kekayaan_bersih">Rp <?= number_format($kekayaanBersihAwal, 0, ',', '.') ?></td>
                             </tr>
-                            <tr class="text-[11px] bg-slate-50">
-                                <td class="py-1.5 px-3 text-slate-700">
+                            <tr class="text-[10px] bg-slate-50">
+                                <td class="py-1 px-2.5 text-slate-700">
                                     DSCR: <strong class="text-emerald-700" id="doc_dscr"><?= $dscrAwal ?>x</strong> (Standar >= 1.30x) &bull; 
                                     DSR: <strong class="text-blue-700" id="doc_dsr"><?= $dsrAwal ?>%</strong> (Maks 40%)
                                 </td>
-                                <td class="py-1.5 px-3 text-right text-slate-700">
+                                <td class="py-1 px-2.5 text-right text-slate-700">
                                     DAR: <strong class="text-slate-800" id="doc_dar"><?= $darAwal ?>%</strong> &bull; 
                                     DER: <strong class="text-slate-800" id="doc_der"><?= $derAwal ?>x</strong>
                                 </td>
@@ -950,36 +950,36 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                 </div>
 
                 <!-- 5. REKAPITULASI PENCAIRAN BERSIH (DISBURSEMENT) -->
-                <div class="space-y-1.5">
-                    <div class="flex items-center justify-between bg-blue-50/80 px-3 py-1.5 text-blue-950 font-bold text-xs uppercase border border-blue-200">
+                <div class="space-y-1 print-section-box">
+                    <div class="flex items-center justify-between bg-blue-50/80 px-2.5 py-1 text-blue-950 font-bold text-[11px] uppercase border border-blue-200">
                         <span>5. SIMULASI PENCAIRAN BERSIH (DISBURSEMENT)</span>
                         <span class="text-[10px] text-blue-800 font-semibold">Akad Kredit</span>
                     </div>
-                    <table class="w-full text-left text-xs border border-blue-100 border-collapse">
+                    <table class="w-full text-left text-[11px] border border-blue-100 border-collapse">
                         <tbody class="divide-y divide-slate-100">
                             <tr>
-                                <td class="py-1.5 px-3 font-semibold text-slate-700">Plafon Pinjaman Pokok</td>
-                                <td class="py-1.5 px-3 text-right font-bold text-slate-800" id="doc_disb_plafon">Rp <?= number_format($plafonBaru, 0, ',', '.') ?></td>
+                                <td class="py-1 px-2.5 font-semibold text-slate-700">Plafon Pinjaman Pokok</td>
+                                <td class="py-1 px-2.5 text-right font-bold text-slate-800" id="doc_disb_plafon">Rp <?= number_format($plafonBaru, 0, ',', '.') ?></td>
                             </tr>
                             <tr>
-                                <td class="py-1.5 px-3 font-semibold text-slate-700">(-) Total Biaya Potongan Muka (Provisi, Admin &amp; Lainnya)</td>
-                                <td class="py-1.5 px-3 text-right font-bold text-rose-600" id="doc_disb_potongan">- Rp <?= number_format($totalPotonganMukaAwal, 0, ',', '.') ?></td>
+                                <td class="py-1 px-2.5 font-semibold text-slate-700">(-) Total Biaya Potongan Muka (Provisi, Admin &amp; Lainnya)</td>
+                                <td class="py-1 px-2.5 text-right font-bold text-rose-600" id="doc_disb_potongan">- Rp <?= number_format($totalPotonganMukaAwal, 0, ',', '.') ?></td>
                             </tr>
                             <tr class="bg-blue-600 text-white font-bold">
-                                <td class="py-2 px-3 uppercase text-blue-100">ESTIMASI DANA BERSIH YANG DITERIMA DEBITUR (NETT)</td>
-                                <td class="py-2 px-3 text-right text-white font-black text-sm sm:text-base" id="doc_disb_nett">Rp <?= number_format($danaBersihNettAwal, 0, ',', '.') ?></td>
+                                <td class="py-1.5 px-2.5 uppercase text-blue-100">ESTIMASI DANA BERSIH YANG DITERIMA DEBITUR (NETT)</td>
+                                <td class="py-1.5 px-2.5 text-right text-white font-black text-xs sm:text-sm" id="doc_disb_nett">Rp <?= number_format($danaBersihNettAwal, 0, ',', '.') ?></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <!-- Footer Tanda Tangan Cetak -->
-                <div class="pt-6 border-t border-slate-200 grid grid-cols-2 text-center text-xs text-slate-600">
-                    <div class="space-y-12">
+                <div class="pt-3 border-t border-slate-200 grid grid-cols-2 text-center text-[11px] text-slate-600 print-section-box">
+                    <div class="space-y-7">
                         <span>Disusun oleh (Account Officer):</span>
                         <span class="font-bold text-slate-800 block underline">( ............................................ )</span>
                     </div>
-                    <div class="space-y-12">
+                    <div class="space-y-7">
                         <span>Disetujui oleh (Komite Kredit):</span>
                         <span class="font-bold text-slate-800 block underline">( ............................................ )</span>
                     </div>
@@ -993,6 +993,10 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
 
 <style>
 /* CSS Print Native Browser */
+@page {
+    size: A4 portrait;
+    margin: 6mm 8mm 6mm 8mm;
+}
 @media print {
     body * {
         visibility: hidden !important;
@@ -1031,9 +1035,13 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 !important;
-        padding: 10mm 15mm !important;
+        padding: 2mm 4mm !important;
         box-shadow: none !important;
         border: none !important;
+    }
+    .print-section-box {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
     }
 }
 </style>
@@ -1562,7 +1570,22 @@ function sinkronkanLaporanKeuangan() {
     if (document.getElementById('doc_dar')) document.getElementById('doc_dar').innerText = `${dar}%`;
     if (document.getElementById('doc_der')) document.getElementById('doc_der').innerText = `${der}x`;
 
-    // 11. Jalankan Perhitungan Disbursement Terintegrasi
+    // 11. Jalankan Perhitungan Disbursement Terintegrasi & Sinkronkan Section 5 Cetak
+    const provPct = parseFloat(document.getElementById('provisi_persen')?.value || 0);
+    const nomProv = Math.round(plafonBaru * (provPct / 100));
+    const adminPct = parseFloat(document.getElementById('admin_persen')?.value || 0);
+    const nomAdmin = Math.round(plafonBaru * (adminPct / 100));
+    let totalBiayaLain = 0;
+    document.querySelectorAll('.biaya-lain-nominal').forEach(input => {
+        totalBiayaLain += pNomLap(input.value || 0);
+    });
+    const totalPotonganMuka = nomProv + nomAdmin + totalBiayaLain;
+    const danaBersihNett = Math.max(0, plafonBaru - totalPotonganMuka);
+
+    if (document.getElementById('doc_disb_plafon')) document.getElementById('doc_disb_plafon').innerText = fNomLap(plafonBaru);
+    if (document.getElementById('doc_disb_potongan')) document.getElementById('doc_disb_potongan').innerText = `- ${fNomLap(totalPotonganMuka)}`;
+    if (document.getElementById('doc_disb_nett')) document.getElementById('doc_disb_nett').innerText = fNomLap(danaBersihNett);
+
     if (typeof hitungDisbursement === 'function') {
         hitungDisbursement();
     }
@@ -1623,7 +1646,7 @@ function unduhDokumenPdfLangsung() {
 
     if (typeof html2pdf !== 'undefined') {
         const opt = {
-            margin:       [8, 10, 8, 10],
+            margin:       [4, 6, 4, 6],
             filename:     pdfName,
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { 
@@ -1634,7 +1657,8 @@ function unduhDokumenPdfLangsung() {
                 scrollX: 0,
                 scrollY: 0
             },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
         html2pdf().set(opt).from(sheet).save().then(function() {
