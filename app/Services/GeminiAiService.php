@@ -1196,7 +1196,72 @@ class GeminiAiService
     }
 
     /**
-     * Ekstraksi cerdas dokumen Rekening Koran (PDF / Gambar) menggunakan Gemini AI Multimodal Vision
+     * Ekstraksi teks lokal dari berkas PDF (e-Statement bank) tanpa dependency eksternal
+     * Mendukung pdftotext CLI (jika tersedia di server) + pure-PHP FlateDecode stream parser
+     */
+    protected function ekstrakTeksPdfLokal(string $filePath): string
+    {
+        // 1. Coba pdftotext CLI terlebih dahulu (paling rapi menjaga kolom tabel e-Statement)
+        if (function_exists('shell_exec') && is_readable($filePath)) {
+            $cmd = 'pdftotext -layout ' . escapeshellarg($filePath) . ' - 2>/dev/null';
+            $out = @shell_exec($cmd);
+            if (is_string($out) && mb_strlen(trim($out)) >= 40) {
+                return trim($out);
+            }
+        }
+
+        // 2. Fallback pure-PHP PDF stream parser (FlateDecode + raw text streams)
+        $raw = @file_get_contents($filePath);
+        if ($raw === false || strlen($raw) < 20) {
+            return '';
+        }
+
+        $chunks = [];
+        if (preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $raw, $matches)) {
+            foreach ($matches[1] as $stream) {
+                $decoded = @gzuncompress($stream);
+                if ($decoded === false) {
+                    $decoded = @gzinflate($stream);
+                }
+                if ($decoded === false) {
+                    $decoded = $stream;
+                }
+                if (strpos($decoded, 'Tj') === false && strpos($decoded, 'TJ') === false) {
+                    continue;
+                }
+
+                // Ambil array TJ: [(teks1) -10 (teks2)] TJ
+                $textPart = '';
+                if (preg_match_all('/\[((?:[^\[\]]|\((?:\\\\.|[^\\\\)])*\))*)\]\s*TJ/s', $decoded, $tjArr)) {
+                    foreach ($tjArr[1] as $arrBody) {
+                        if (preg_match_all('/\(((?:\\\\.|[^\\\\)])*)\)/s', $arrBody, $strM)) {
+                            $textPart .= implode('', $strM[1]) . "\n";
+                        }
+                    }
+                }
+                // Ambil single Tj: (teks) Tj
+                if (preg_match_all('/\(((?:\\\\.|[^\\\\)])*)\)\s*Tj/s', $decoded, $tjSingle)) {
+                    foreach ($tjSingle[1] as $s) {
+                        $textPart .= $s . "\n";
+                    }
+                }
+
+                if ($textPart !== '') {
+                    // Unescape PDF literal string escapes
+                    $textPart = str_replace(['\\(', '\\)', '\\\\', '\\n', '\\r', '\\t'], ['(', ')', '\\', "\n", "\r", ' '], $textPart);
+                    $textPart = preg_replace('/[^\P{C}\n\r\t]/u', ' ', $textPart);
+                    $chunks[] = $textPart;
+                }
+            }
+        }
+
+        $result = trim(preg_replace('/[ \t]{2,}/', ' ', implode("\n", $chunks)));
+        $result = trim(preg_replace('/\n{3,}/', "\n\n", $result));
+        return $result;
+    }
+
+    /**
+     * Ekstraksi cerdas dokumen Rekening Koran (PDF / Gambar) menggunakan provider AI terpusat
      */
     public function ekstrakRekeningKoran(string $filePath, string $clientMime = ''): array
     {
@@ -1289,20 +1354,47 @@ PANDUAN EKSTRAKSI WAJIB:
             $configuredEndpoint = trim((string)($settings['api_endpoint'] ?? ''));
             $provider = $this->deteksiProvider($configuredModel, $configuredEndpoint);
 
-            if ($provider === 'deepseek' || $provider === 'anthropic') {
-                return [
-                    'status'  => false,
-                    'message' => 'Model AI aktif saat ini (' . $configuredModel . ') hanya mendukung analisis teks (5C & Web Check) dan belum mendukung baca langsung berkas PDF/foto Rekening Koran. Untuk OCR Rekening Koran, pilih Google Gemini 2.5 Flash atau OpenAI GPT-4o di Pengaturan Superadmin.'
-                ];
-            }
+            $extractedData = null;
+            $usedModel = '';
+            $lastError = '';
 
-            if ($provider === 'openai_compatible') {
-                if (strpos($mimeType, 'image/') !== 0) {
+            if ($provider === 'deepseek' || $provider === 'anthropic' || ($provider === 'openai_compatible' && $mimeType === 'application/pdf')) {
+                if ($mimeType !== 'application/pdf') {
                     return [
                         'status'  => false,
-                        'message' => 'Model OpenAI (' . $configuredModel . ') mendukung OCR gambar (JPG/PNG/WebP). Untuk membaca langsung file PDF Rekening Koran, gunakan Google Gemini 2.5 Flash di Pengaturan Superadmin atau unggah foto/screenshot mutasi.'
+                        'message' => 'Model AI aktif (' . $configuredModel . ') mendukung ekstraksi langsung berkas PDF e-Statement Rekening Koran. Untuk unggahan foto/gambar (JPG/PNG), gunakan Google Gemini 2.5 Flash atau OpenAI GPT-4o di Pengaturan Superadmin.'
                     ];
                 }
+
+                $pdfText = $this->ekstrakTeksPdfLokal($filePath);
+                if (mb_strlen($pdfText) < 40) {
+                    return [
+                        'status'  => false,
+                        'message' => 'PDF rekening koran ini berupa gambar/hasil scan tanpa teks yang bisa dibaca oleh ' . $configuredModel . '. Unggah PDF e-Statement asli dari mobile/internet banking, atau aktifkan Google Gemini 2.5 Flash di Pengaturan Superadmin untuk membaca PDF hasil scan.'
+                    ];
+                }
+
+                // Batasi panjang teks agar tetap cepat dan masuk context window
+                if (mb_strlen($pdfText) > 45000) {
+                    $pdfText = mb_substr($pdfText, 0, 45000);
+                }
+
+                $textPrompt = $prompt . "\n\nBERIKUT ISI TEKS DOKUMEN REKENING KORAN PDF YANG DIUNGGAH:\n" . $pdfText;
+                $textRes = $this->panggilGeminiApi($textPrompt, $apiKey, $configuredModel, 0.0, $configuredEndpoint);
+                if ($textRes['ok'] && !empty($textRes['text'])) {
+                    $cleanText = preg_replace('/^```(?:json)?\s*/i', '', trim($textRes['text']));
+                    $cleanText = preg_replace('/\s*```$/i', '', $cleanText);
+                    $parsed = json_decode($cleanText, true);
+                    if (is_array($parsed) && (isset($parsed['total_mutasi_kredit']) || isset($parsed['transaksi']))) {
+                        $extractedData = $parsed;
+                        $usedModel = $textRes['model'] ?? $configuredModel;
+                    } else {
+                        $lastError = 'Format JSON AI (' . ($textRes['model'] ?? $configuredModel) . ') tidak valid';
+                    }
+                } else {
+                    $lastError = $textRes['error'] ?? ('Gagal menghubungi ' . $configuredModel);
+                }
+            } elseif ($provider === 'openai_compatible') {
                 $oaUrl = ($configuredEndpoint !== '' && stripos($configuredEndpoint, 'googleapis.com') === false)
                     ? rtrim($configuredEndpoint, '/')
                     : 'https://api.openai.com/v1/chat/completions';
@@ -1331,16 +1423,14 @@ PANDUAN EKSTRAKSI WAJIB:
                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Authorization: Bearer ' . trim($apiKey)]);
                 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                 curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 35);
                 $oaResp = curl_exec($ch);
                 $oaCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 $oaErr  = curl_error($ch);
                 curl_close($ch);
 
-                $extractedData = null;
                 $usedModel = $oaPayload['model'];
-                $lastError = '';
                 if (!$oaErr && $oaCode === 200 && !empty($oaResp)) {
                     $oaArr = json_decode($oaResp, true);
                     $rawText = $oaArr['choices'][0]['message']['content'] ?? '';
