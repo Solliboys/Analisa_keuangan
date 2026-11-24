@@ -2217,9 +2217,10 @@ class Pengajuan extends BaseController
                 } catch (\Throwable $e) {}
             }
 
-            // Panggil Gemini AI Service untuk mengekstrak data
+            // Panggil AI Service untuk mengekstrak data (mendukung teks pra-ekstraksi PDF.js untuk PDF 100+ halaman & terenkripsi)
+            $preExtractedText = trim((string)($this->request->getPost('extracted_pdf_text') ?? ''));
             $aiService = new \App\Services\GeminiAiService();
-            $res = $aiService->ekstrakRekeningKoran($fullPath, $file->getClientMimeType());
+            $res = $aiService->ekstrakRekeningKoran($fullPath, $file->getClientMimeType(), $preExtractedText);
 
             return $this->response->setJSON([
                 'status'    => $res['status'] ?? true,

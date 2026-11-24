@@ -1263,7 +1263,7 @@ class GeminiAiService
     /**
      * Ekstraksi cerdas dokumen Rekening Koran (PDF / Gambar) menggunakan provider AI terpusat
      */
-    public function ekstrakRekeningKoran(string $filePath, string $clientMime = ''): array
+    public function ekstrakRekeningKoran(string $filePath, string $clientMime = '', string $preExtractedText = ''): array
     {
         try {
             if (!file_exists($filePath)) {
@@ -1357,6 +1357,7 @@ PANDUAN EKSTRAKSI WAJIB:
             $extractedData = null;
             $usedModel = '';
             $lastError = '';
+            $cleanPreText = trim($preExtractedText);
 
             if ($provider === 'deepseek' || $provider === 'anthropic' || ($provider === 'openai_compatible' && $mimeType === 'application/pdf')) {
                 if ($mimeType !== 'application/pdf') {
@@ -1366,7 +1367,7 @@ PANDUAN EKSTRAKSI WAJIB:
                     ];
                 }
 
-                $pdfText = $this->ekstrakTeksPdfLokal($filePath);
+                $pdfText = (mb_strlen($cleanPreText) >= 40) ? $cleanPreText : $this->ekstrakTeksPdfLokal($filePath);
                 if (mb_strlen($pdfText) < 40) {
                     return [
                         'status'  => false,
@@ -1375,8 +1376,8 @@ PANDUAN EKSTRAKSI WAJIB:
                 }
 
                 // Batasi panjang teks agar tetap cepat dan masuk context window
-                if (mb_strlen($pdfText) > 45000) {
-                    $pdfText = mb_substr($pdfText, 0, 45000);
+                if (mb_strlen($pdfText) > 28000) {
+                    $pdfText = mb_substr($pdfText, 0, 20000) . "\n...\n" . mb_substr($pdfText, -8000);
                 }
 
                 $textPrompt = $prompt . "\n\nBERIKUT ISI TEKS DOKUMEN REKENING KORAN PDF YANG DIUNGGAH:\n" . $pdfText;
@@ -1453,18 +1454,17 @@ PANDUAN EKSTRAKSI WAJIB:
                     ? rtrim($configuredEndpoint, '/')
                     : 'https://generativelanguage.googleapis.com/v1beta/models';
 
-                // FAST-PATH: Untuk PDF e-Statement yang memiliki teks terbaca bersih (bukan glyph/scan),
-                // kirim teks ringkas ke Gemini agar proses selesai dalam 2-4 detik tanpa timeout!
+                // FAST-PATH: Prioritaskan teks pra-ekstraksi PDF.js dari browser (mendukung PDF 100+ halaman & terenkripsi seperti Kopra Mandiri),
+                // lalu fallback ke ekstraksi teks lokal PHP sebelum mengirim biner PDF utuh ke Gemini Vision!
                 $geminiParts = null;
                 if ($mimeType === 'application/pdf') {
-                    $localPdfText = $this->ekstrakTeksPdfLokal($filePath);
-                    $isReadableStatement = mb_strlen($localPdfText) >= 80
+                    $localPdfText = (mb_strlen($cleanPreText) >= 60) ? $cleanPreText : $this->ekstrakTeksPdfLokal($filePath);
+                    $isReadableStatement = mb_strlen($localPdfText) >= 60
                         && preg_match('/\d{1,3}[.,]\d{3}/', $localPdfText)
-                        && preg_match('/(saldo|kredit|debit|mutasi|bank|rekening|tanggal|balance|credit|transfer|trx)/i', $localPdfText);
+                        && preg_match('/(saldo|kredit|debit|mutasi|bank|rekening|tanggal|balance|credit|transfer|trx|statement|opening|closing)/i', $localPdfText);
                     if ($isReadableStatement) {
-                        if (mb_strlen($localPdfText) > 20000) {
-                            // Ambil bagian awal (header + transaksi awal) & akhir (ringkasan total + saldo akhir)
-                            $localPdfText = mb_substr($localPdfText, 0, 14000) . "\n...\n" . mb_substr($localPdfText, -6000);
+                        if (mb_strlen($localPdfText) > 24000) {
+                            $localPdfText = mb_substr($localPdfText, 0, 16000) . "\n...\n" . mb_substr($localPdfText, -8000);
                         }
                         $geminiParts = [
                             ['text' => $prompt . "\n\nBERIKUT ISI TEKS DOKUMEN REKENING KORAN PDF YANG DIUNGGAH:\n" . $localPdfText]
