@@ -95,6 +95,7 @@ $routes->group('superadmin', static function ($routes) {
     $routes->post('hapus-user/(:num)', 'Superadmin::hapusUser/$1');
     $routes->post('reset-password-default/(:num)', 'Superadmin::resetPasswordDefault/$1');
     $routes->post('simpan-pengaturan-ai', 'Superadmin::simpanPengaturanAi');
+    $routes->post('tes-koneksi-ai', 'Superadmin::tesKoneksiAi');
     $routes->get('pengaturan', 'Superadmin::pengaturan');
     $routes->post('toggle-petugas-slik', 'Superadmin::togglePetugasSlik');
     $routes->post('toggle-fitur', 'Superadmin::toggleFeatureFlag');

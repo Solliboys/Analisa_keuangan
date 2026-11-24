@@ -68,24 +68,199 @@ class GeminiAiService
     }
 
     /**
-     * Helper pemanggilan Gemini API dengan dukungan IPv4 & Multi-Model Fallback otomatis
+     * Deteksi provider AI berdasarkan model_ai dan api_endpoint terpusat di Pengaturan Superadmin
      */
-    protected function panggilGeminiApi(string $prompt, string $apiKey, string $preferredModel = 'gemini-flash-lite-latest', float $temperature = 0.2): array
+    protected function deteksiProvider(string $model, string $endpoint = ''): string
     {
-        $cleanModel = trim($preferredModel ?: 'gemini-flash-lite-latest');
-        if (preg_match('/^gemini-(1\.5|2\.0|2\.5)/i', $cleanModel)) {
-            $cleanModel = 'gemini-flash-lite-latest';
+        $m = strtolower(trim($model));
+        $e = strtolower(trim($endpoint));
+
+        if (strpos($m, 'deepseek') !== false || strpos($e, 'deepseek.com') !== false) {
+            return 'deepseek';
+        }
+        if (strpos($m, 'claude') !== false || strpos($e, 'anthropic.com') !== false) {
+            return 'anthropic';
+        }
+        if (
+            strpos($m, 'gpt-') !== false ||
+            strpos($m, 'o1') === 0 ||
+            strpos($m, 'o3') === 0 ||
+            $m === 'custom' ||
+            strpos($e, 'openai.com') !== false ||
+            strpos($e, 'openrouter.ai') !== false ||
+            strpos($e, 'groq.com') !== false ||
+            strpos($e, '/chat/completions') !== false
+        ) {
+            return 'openai_compatible';
+        }
+        return 'gemini';
+    }
+
+    /**
+     * Helper pemanggilan AI terpusat (mendukung Google Gemini, DeepSeek V3/R1, OpenAI, Anthropic Claude, & Custom Endpoint)
+     */
+    protected function panggilGeminiApi(string $prompt, string $apiKey, string $preferredModel = 'gemini-2.5-flash', float $temperature = 0.2, ?string $overrideEndpoint = null): array
+    {
+        $settings = $this->getSettings();
+        $endpointCfg = trim((string)($overrideEndpoint !== null ? $overrideEndpoint : ($settings['api_endpoint'] ?? '')));
+        $cleanModel = trim($preferredModel ?: ($settings['model_ai'] ?? 'gemini-2.5-flash'));
+        $provider = $this->deteksiProvider($cleanModel, $endpointCfg);
+
+        if (empty(trim($apiKey))) {
+            return ['ok' => false, 'error' => 'API Key belum diisi di Pengaturan Superadmin'];
         }
 
-        // Urutkan model tercepat & paling stabil di awal
-        $candidateModels = array_values(array_unique([
-            'gemini-flash-lite-latest',
-            'gemini-3.1-flash-lite',
-            'gemini-3.6-flash',
+        // 1. DEEPSEEK / OPENAI / CUSTOM OPENAI-COMPATIBLE
+        if ($provider === 'deepseek' || $provider === 'openai_compatible') {
+            $defaultUrl = ($provider === 'deepseek')
+                ? 'https://api.deepseek.com/chat/completions'
+                : 'https://api.openai.com/v1/chat/completions';
+
+            $url = $defaultUrl;
+            if ($endpointCfg !== '' && stripos($endpointCfg, 'generativelanguage.googleapis.com') === false) {
+                $url = rtrim($endpointCfg, '/');
+                if (stripos($url, '/chat/completions') === false) {
+                    $url .= '/chat/completions';
+                }
+            }
+
+            $targetModel = $cleanModel;
+            if ($targetModel === '' || $targetModel === 'custom') {
+                $targetModel = ($provider === 'deepseek') ? 'deepseek-chat' : 'gpt-4o-mini';
+            }
+
+            $payload = [
+                'model'    => $targetModel,
+                'messages' => [
+                    ['role' => 'system', 'content' => 'Anda adalah analis kredit profesional. Selalu balas dengan JSON murni yang valid tanpa markdown.'],
+                    ['role' => 'user', 'content' => $prompt]
+                ],
+                'max_tokens' => 2048
+            ];
+            // deepseek-reasoner tidak menerima temperature / response_format tertentu
+            if (stripos($targetModel, 'reasoner') === false) {
+                $payload['temperature'] = $temperature;
+                $payload['response_format'] = ['type' => 'json_object'];
+            }
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . trim($apiKey)
+            ]);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 35);
+
+            $response  = curl_exec($ch);
+            $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if (!$curlError && $httpCode === 200 && !empty($response)) {
+                $resData = json_decode($response, true);
+                $rawText = $resData['choices'][0]['message']['content'] ?? '';
+                if (!empty($rawText)) {
+                    return [
+                        'ok'    => true,
+                        'text'  => $rawText,
+                        'model' => $targetModel
+                    ];
+                }
+            }
+            $errMsg = '';
+            if (!empty($response)) {
+                $errJson = json_decode($response, true);
+                $errMsg = $errJson['error']['message'] ?? '';
+            }
+            return [
+                'ok'    => false,
+                'error' => $curlError ?: ("HTTP $httpCode ($targetModel)" . ($errMsg ? ": $errMsg" : ''))
+            ];
+        }
+
+        // 2. ANTHROPIC CLAUDE
+        if ($provider === 'anthropic') {
+            $url = ($endpointCfg !== '' && stripos($endpointCfg, 'anthropic.com') !== false)
+                ? $endpointCfg
+                : 'https://api.anthropic.com/v1/messages';
+
+            $targetModel = $cleanModel ?: 'claude-3-5-sonnet-20241022';
+            if ($targetModel === 'claude-3-5-sonnet') {
+                $targetModel = 'claude-3-5-sonnet-20241022';
+            }
+
+            $payload = [
+                'model'       => $targetModel,
+                'max_tokens'  => 2048,
+                'temperature' => $temperature,
+                'messages'    => [
+                    ['role' => 'user', 'content' => $prompt]
+                ]
+            ];
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'x-api-key: ' . trim($apiKey),
+                'anthropic-version: 2023-06-01'
+            ]);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 35);
+
+            $response  = curl_exec($ch);
+            $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if (!$curlError && $httpCode === 200 && !empty($response)) {
+                $resData = json_decode($response, true);
+                $rawText = $resData['content'][0]['text'] ?? '';
+                if (!empty($rawText)) {
+                    return [
+                        'ok'    => true,
+                        'text'  => $rawText,
+                        'model' => $targetModel
+                    ];
+                }
+            }
+            $errMsg = '';
+            if (!empty($response)) {
+                $errJson = json_decode($response, true);
+                $errMsg = $errJson['error']['message'] ?? '';
+            }
+            return [
+                'ok'    => false,
+                'error' => $curlError ?: ("HTTP $httpCode ($targetModel)" . ($errMsg ? ": $errMsg" : ''))
+            ];
+        }
+
+        // 3. GOOGLE GEMINI (default)
+        if (preg_match('/^gemini-3\./i', $cleanModel)) {
+            $cleanModel = 'gemini-2.5-flash';
+        }
+        $baseGemini = ($endpointCfg !== '' && stripos($endpointCfg, 'googleapis.com') !== false)
+            ? rtrim($endpointCfg, '/')
+            : 'https://generativelanguage.googleapis.com/v1beta/models';
+
+        // Prioritaskan model pilihan Superadmin terlebih dahulu, lalu fallback model Gemini valid
+        $candidateModels = array_values(array_unique(array_filter([
+            $cleanModel,
+            'gemini-2.5-flash',
+            'gemini-2.5-flash-lite',
+            'gemini-2.0-flash',
             'gemini-flash-latest',
-            'gemini-3.8-flash',
-            $cleanModel
-        ]));
+            'gemini-flash-lite-latest'
+        ])));
 
         $payload = [
             'contents' => [
@@ -98,13 +273,13 @@ class GeminiAiService
             'generationConfig' => [
                 'temperature'      => $temperature,
                 'responseMimeType' => 'application/json',
-                'maxOutputTokens'  => 1500
+                'maxOutputTokens'  => 2048
             ]
         ];
 
         $lastError = '';
         foreach ($candidateModels as $mod) {
-            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($mod) . ":generateContent?key=" . urlencode($apiKey);
+            $endpoint = $baseGemini . '/' . urlencode($mod) . ':generateContent?key=' . urlencode(trim($apiKey));
             $ch = curl_init($endpoint);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
@@ -112,8 +287,8 @@ class GeminiAiService
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
 
             $response  = curl_exec($ch);
             $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -131,12 +306,48 @@ class GeminiAiService
                     ];
                 }
             }
-            $lastError = $curlError ?: "HTTP $httpCode ($mod)";
+            $errMsg = '';
+            if (!empty($response)) {
+                $errJson = json_decode($response, true);
+                $errMsg = $errJson['error']['message'] ?? '';
+            }
+            $lastError = $curlError ?: ("HTTP $httpCode ($mod)" . ($errMsg ? ": $errMsg" : ''));
         }
 
         return [
             'ok'    => false,
             'error' => $lastError
+        ];
+    }
+
+    /**
+     * Tes koneksi langsung ke provider AI aktif (Gemini / DeepSeek / OpenAI / Claude) dari Pengaturan Superadmin
+     */
+    public function tesKoneksiAi(?string $modelOverride = null, ?string $endpointOverride = null, ?string $apiKeyOverride = null): array
+    {
+        $settings = $this->getSettings();
+        $model    = trim((string)($modelOverride !== null && $modelOverride !== '' ? $modelOverride : $settings['model_ai']));
+        $endpoint = trim((string)($endpointOverride !== null ? $endpointOverride : $settings['api_endpoint']));
+        $apiKey   = trim((string)($apiKeyOverride !== null && $apiKeyOverride !== '' ? $apiKeyOverride : $settings['api_key']));
+
+        $provider = $this->deteksiProvider($model, $endpoint);
+        $testPrompt = 'Balas hanya dengan JSON valid: {"status":"ok","pesan":"Koneksi AI berhasil"}';
+        $res = $this->panggilGeminiApi($testPrompt, $apiKey, $model, 0.0, $endpoint);
+
+        if ($res['ok']) {
+            return [
+                'status'   => true,
+                'provider' => strtoupper($provider),
+                'model'    => $res['model'] ?? $model,
+                'message'  => 'Koneksi berhasil ke ' . strtoupper($provider) . ' (' . ($res['model'] ?? $model) . ').'
+            ];
+        }
+
+        return [
+            'status'   => false,
+            'provider' => strtoupper($provider),
+            'model'    => $model,
+            'message'  => 'Gagal terhubung ke ' . strtoupper($provider) . ': ' . ($res['error'] ?? 'Kesalahan tidak diketahui')
         ];
     }
 
@@ -1077,90 +1288,165 @@ PANDUAN EKSTRAKSI WAJIB:
 6. Kembalikan HANYA JSON murni tanpa markdown, tanpa ```json, tanpa penjelasan apapun.";
 
             $configuredModel = trim((string)($settings['model_ai'] ?? ''));
-            if (preg_match('/^gemini-3\./i', $configuredModel)) {
-                $configuredModel = '';
-            }
-            $candidateModels = array_values(array_unique(array_filter([
-                $configuredModel,
-                'gemini-2.5-flash',
-                'gemini-2.5-flash-lite',
-                'gemini-2.0-flash',
-                'gemini-flash-latest',
-                'gemini-flash-lite-latest'
-            ])));
+            $configuredEndpoint = trim((string)($settings['api_endpoint'] ?? ''));
+            $provider = $this->deteksiProvider($configuredModel, $configuredEndpoint);
 
-            $payload = [
-                'contents' => [
-                    [
-                        'parts' => [
-                            [
-                                'inline_data' => [
-                                    'mime_type' => $mimeType,
-                                    'data'      => $fileData
-                                ]
-                            ],
-                            [
-                                'text' => $prompt
+            if ($provider === 'deepseek' || $provider === 'anthropic') {
+                return [
+                    'status'  => false,
+                    'message' => 'Model AI aktif saat ini (' . $configuredModel . ') hanya mendukung analisis teks (5C & Web Check) dan belum mendukung baca langsung berkas PDF/foto Rekening Koran. Untuk OCR Rekening Koran, pilih Google Gemini 2.5 Flash atau OpenAI GPT-4o di Pengaturan Superadmin.'
+                ];
+            }
+
+            if ($provider === 'openai_compatible') {
+                if (strpos($mimeType, 'image/') !== 0) {
+                    return [
+                        'status'  => false,
+                        'message' => 'Model OpenAI (' . $configuredModel . ') mendukung OCR gambar (JPG/PNG/WebP). Untuk membaca langsung file PDF Rekening Koran, gunakan Google Gemini 2.5 Flash di Pengaturan Superadmin atau unggah foto/screenshot mutasi.'
+                    ];
+                }
+                $oaUrl = ($configuredEndpoint !== '' && stripos($configuredEndpoint, 'googleapis.com') === false)
+                    ? rtrim($configuredEndpoint, '/')
+                    : 'https://api.openai.com/v1/chat/completions';
+                if (stripos($oaUrl, '/chat/completions') === false) {
+                    $oaUrl .= '/chat/completions';
+                }
+                $oaPayload = [
+                    'model' => ($configuredModel && $configuredModel !== 'custom') ? $configuredModel : 'gpt-4o-mini',
+                    'response_format' => ['type' => 'json_object'],
+                    'max_tokens' => 4096,
+                    'temperature' => 0.0,
+                    'messages' => [
+                        [
+                            'role' => 'user',
+                            'content' => [
+                                ['type' => 'text', 'text' => $prompt],
+                                ['type' => 'image_url', 'image_url' => ['url' => 'data:' . $mimeType . ';base64,' . $fileData]]
                             ]
                         ]
                     ]
-                ],
-                'generationConfig' => [
-                    'temperature'      => 0.0,
-                    'responseMimeType' => 'application/json',
-                    'maxOutputTokens'  => 8192
-                ]
-            ];
+                ];
+                $ch = curl_init($oaUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($oaPayload));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Authorization: Bearer ' . trim($apiKey)]);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+                curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+                $oaResp = curl_exec($ch);
+                $oaCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $oaErr  = curl_error($ch);
+                curl_close($ch);
 
-            $extractedData = null;
-            $usedModel = '';
-            $lastError = '';
-
-            if (!empty($apiKey)) {
-                foreach ($candidateModels as $mod) {
-                    $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" . urlencode($mod) . ":generateContent?key=" . urlencode($apiKey);
-                    $ch = curl_init($endpoint);
-                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                    curl_setopt($ch, CURLOPT_POST, true);
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-                    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                    curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 45);
-
-                    $response  = curl_exec($ch);
-                    $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                    $curlErr   = curl_error($ch);
-                    curl_close($ch);
-
-                    if (!$curlErr && $httpCode === 200 && !empty($response)) {
-                        $resArr = json_decode($response, true);
-                        $rawText = $resArr['candidates'][0]['content']['parts'][0]['text'] ?? '';
-                        if (!empty($rawText)) {
-                            $cleanText = preg_replace('/^```(?:json)?\s*/i', '', trim($rawText));
-                            $cleanText = preg_replace('/\s*```$/i', '', $cleanText);
-                            $parsed = json_decode($cleanText, true);
-                            if (is_array($parsed) && (isset($parsed['total_mutasi_kredit']) || isset($parsed['transaksi']))) {
-                                $extractedData = $parsed;
-                                $usedModel = $mod;
-                                break;
-                            }
-                            $lastError = "Format JSON AI tidak valid ($mod)";
-                        } else {
-                            $lastError = "Respon AI kosong ($mod)";
-                        }
+                $extractedData = null;
+                $usedModel = $oaPayload['model'];
+                $lastError = '';
+                if (!$oaErr && $oaCode === 200 && !empty($oaResp)) {
+                    $oaArr = json_decode($oaResp, true);
+                    $rawText = $oaArr['choices'][0]['message']['content'] ?? '';
+                    $cleanText = preg_replace('/^```(?:json)?\s*|\s*```$/i', '', trim($rawText));
+                    $parsed = json_decode($cleanText, true);
+                    if (is_array($parsed) && (isset($parsed['total_mutasi_kredit']) || isset($parsed['transaksi']))) {
+                        $extractedData = $parsed;
                     } else {
-                        $errDetail = '';
-                        if (!empty($response)) {
-                            $errJson = json_decode($response, true);
-                            $errDetail = $errJson['error']['message'] ?? '';
-                        }
-                        $lastError = $curlErr ?: ("HTTP $httpCode ($mod)" . ($errDetail ? ": $errDetail" : ''));
+                        $lastError = 'Format JSON OpenAI tidak valid';
                     }
+                } else {
+                    $errJson = json_decode((string)$oaResp, true);
+                    $lastError = $oaErr ?: ("HTTP $oaCode: " . ($errJson['error']['message'] ?? 'Gagal menghubungi OpenAI'));
                 }
             } else {
-                $lastError = 'API Key Gemini belum dikonfigurasi di Pengaturan Superadmin.';
+                if (preg_match('/^gemini-3\./i', $configuredModel)) {
+                    $configuredModel = '';
+                }
+                $baseGemini = ($configuredEndpoint !== '' && stripos($configuredEndpoint, 'googleapis.com') !== false)
+                    ? rtrim($configuredEndpoint, '/')
+                    : 'https://generativelanguage.googleapis.com/v1beta/models';
+
+                $candidateModels = array_values(array_unique(array_filter([
+                    $configuredModel,
+                    'gemini-2.5-flash',
+                    'gemini-2.5-flash-lite',
+                    'gemini-2.0-flash',
+                    'gemini-flash-latest',
+                    'gemini-flash-lite-latest'
+                ])));
+
+                $payload = [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                [
+                                    'inline_data' => [
+                                        'mime_type' => $mimeType,
+                                        'data'      => $fileData
+                                    ]
+                                ],
+                                [
+                                    'text' => $prompt
+                                ]
+                            ]
+                        ]
+                    ],
+                    'generationConfig' => [
+                        'temperature'      => 0.0,
+                        'responseMimeType' => 'application/json',
+                        'maxOutputTokens'  => 8192
+                    ]
+                ];
+
+                $extractedData = null;
+                $usedModel = '';
+                $lastError = '';
+
+                if (!empty($apiKey)) {
+                    foreach ($candidateModels as $mod) {
+                        $endpoint = $baseGemini . '/' . urlencode($mod) . ':generateContent?key=' . urlencode(trim($apiKey));
+                        $ch = curl_init($endpoint);
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_POST, true);
+                        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+                        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+                        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                        curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+                        curl_setopt($ch, CURLOPT_TIMEOUT, 45);
+
+                        $response  = curl_exec($ch);
+                        $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                        $curlErr   = curl_error($ch);
+                        curl_close($ch);
+
+                        if (!$curlErr && $httpCode === 200 && !empty($response)) {
+                            $resArr = json_decode($response, true);
+                            $rawText = $resArr['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                            if (!empty($rawText)) {
+                                $cleanText = preg_replace('/^```(?:json)?\s*/i', '', trim($rawText));
+                                $cleanText = preg_replace('/\s*```$/i', '', $cleanText);
+                                $parsed = json_decode($cleanText, true);
+                                if (is_array($parsed) && (isset($parsed['total_mutasi_kredit']) || isset($parsed['transaksi']))) {
+                                    $extractedData = $parsed;
+                                    $usedModel = $mod;
+                                    break;
+                                }
+                                $lastError = "Format JSON AI tidak valid ($mod)";
+                            } else {
+                                $lastError = "Respon AI kosong ($mod)";
+                            }
+                        } else {
+                            $errDetail = '';
+                            if (!empty($response)) {
+                                $errJson = json_decode($response, true);
+                                $errDetail = $errJson['error']['message'] ?? '';
+                            }
+                            $lastError = $curlErr ?: ("HTTP $httpCode ($mod)" . ($errDetail ? ": $errDetail" : ''));
+                        }
+                    }
+                } else {
+                    $lastError = 'API Key belum dikonfigurasi di Pengaturan Superadmin.';
+                }
             }
 
             // JANGAN gunakan data palsu/hardcoded jika ekstraksi AI gagal — laporkan error secara jujur

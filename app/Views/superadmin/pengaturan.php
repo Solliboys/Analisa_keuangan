@@ -430,9 +430,13 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                Gateway Terhubung
+                            <button type="button" onclick="tesKoneksiAiSekarang()" id="btnTesKoneksiAi" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                <span>Tes Koneksi API</span>
+                            </button>
+                            <span id="badgeStatusGateway" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                Terpusat
                             </span>
                         </div>
                     </div>
@@ -452,16 +456,16 @@
                                 <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">Engine</span>
                             </div>
                             <div class="relative">
-                                <select name="model_ai" id="selectModelAi" class="w-full px-3 py-2.5 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition appearance-none pr-8 cursor-pointer shadow-2xs">
+                                <select name="model_ai" id="selectModelAi" onchange="sesuaikanEndpointModelAi(this.value)" class="w-full px-3 py-2.5 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:outline-none transition appearance-none pr-8 cursor-pointer shadow-2xs">
                                     <option value="gemini-2.5-flash" <?= $currentModel === 'gemini-2.5-flash' ? 'selected' : '' ?>>Google Gemini 2.5 Flash (Rekomendasi)</option>
-                                    <option value="gemini-1.5-pro" <?= $currentModel === 'gemini-1.5-pro' ? 'selected' : '' ?>>Google Gemini 1.5 Pro</option>
-                                    <option value="gemini-1.5-flash" <?= $currentModel === 'gemini-1.5-flash' ? 'selected' : '' ?>>Google Gemini 1.5 Flash</option>
+                                    <option value="gemini-2.5-flash-lite" <?= $currentModel === 'gemini-2.5-flash-lite' ? 'selected' : '' ?>>Google Gemini 2.5 Flash Lite</option>
                                     <option value="gemini-2.0-flash" <?= $currentModel === 'gemini-2.0-flash' ? 'selected' : '' ?>>Google Gemini 2.0 Flash</option>
+                                    <option value="deepseek-chat" <?= $currentModel === 'deepseek-chat' ? 'selected' : '' ?>>DeepSeek Chat (V3)</option>
+                                    <option value="deepseek-reasoner" <?= $currentModel === 'deepseek-reasoner' ? 'selected' : '' ?>>DeepSeek Reasoner (R1)</option>
                                     <option value="gpt-4o" <?= $currentModel === 'gpt-4o' ? 'selected' : '' ?>>OpenAI GPT-4o</option>
                                     <option value="gpt-4o-mini" <?= $currentModel === 'gpt-4o-mini' ? 'selected' : '' ?>>OpenAI GPT-4o Mini</option>
                                     <option value="claude-3-5-sonnet" <?= $currentModel === 'claude-3-5-sonnet' ? 'selected' : '' ?>>Anthropic Claude 3.5 Sonnet</option>
-                                    <option value="deepseek-chat" <?= $currentModel === 'deepseek-chat' ? 'selected' : '' ?>>DeepSeek V3 / R1</option>
-                                    <option value="custom" <?= !in_array($currentModel, ['gemini-2.5-flash','gemini-1.5-pro','gemini-1.5-flash','gemini-2.0-flash','gpt-4o','gpt-4o-mini','claude-3-5-sonnet','deepseek-chat']) ? 'selected' : '' ?>>Model Kustom / Self-Hosted</option>
+                                    <option value="custom" <?= !in_array($currentModel, ['gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash','deepseek-chat','deepseek-reasoner','gpt-4o','gpt-4o-mini','claude-3-5-sonnet']) ? 'selected' : '' ?>>Model Kustom / Self-Hosted</option>
                                 </select>
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -545,6 +549,64 @@
         document.addEventListener('DOMContentLoaded', function() {
             updatePreviewKop();
         });
+
+        function sesuaikanEndpointModelAi(model) {
+            const epInput = document.getElementById('inputApiEndpoint');
+            if (!epInput) return;
+            const m = String(model || '').toLowerCase();
+            if (m.startsWith('deepseek')) {
+                epInput.value = 'https://api.deepseek.com/chat/completions';
+            } else if (m.startsWith('gemini')) {
+                epInput.value = 'https://generativelanguage.googleapis.com/v1beta/models';
+            } else if (m.startsWith('gpt-')) {
+                epInput.value = 'https://api.openai.com/v1/chat/completions';
+            } else if (m.startsWith('claude')) {
+                epInput.value = 'https://api.anthropic.com/v1/messages';
+            }
+        }
+
+        async function tesKoneksiAiSekarang() {
+            const btn = document.getElementById('btnTesKoneksiAi');
+            const model = document.getElementById('selectModelAi')?.value || '';
+            const endpoint = document.getElementById('inputApiEndpoint')?.value || '';
+            const apiKey = document.getElementById('inputApiKey')?.value || '';
+
+            if (!apiKey.trim()) {
+                Swal.fire({ icon: 'warning', title: 'API Key Kosong', text: 'Masukkan API Key terlebih dahulu sebelum mengetes koneksi.' });
+                return;
+            }
+
+            if (btn) btn.disabled = true;
+            Swal.fire({
+                title: 'Mengetes Koneksi API...',
+                text: 'Menghubungi ' + model + ' menggunakan konfigurasi di atas...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const fd = new FormData();
+                fd.append('model_ai', model);
+                fd.append('api_endpoint', endpoint);
+                fd.append('api_key', apiKey);
+                const r = await fetch('<?= base_url('superadmin/tes-koneksi-ai') ?>', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: fd
+                });
+                const res = await r.json();
+                Swal.fire({
+                    icon: res.status ? 'success' : 'error',
+                    title: res.status ? 'Koneksi API Berhasil' : 'Koneksi API Gagal',
+                    text: res.message || 'Tidak ada respons.',
+                    confirmButtonColor: '#1D4ED8'
+                });
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Gagal Menguji Koneksi', text: 'Terjadi kesalahan jaringan ke server.' });
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
 
         function updatePreviewKop() {
             const nama = document.getElementById('inputNamaLembaga').value || 'PT Lembaga Pembiayaan';

@@ -306,6 +306,25 @@ class Superadmin extends BaseController
     }
 
     /**
+     * Tes koneksi API AI (Gemini / DeepSeek / OpenAI / Claude) secara langsung dari Pengaturan Superadmin
+     */
+    public function tesKoneksiAi()
+    {
+        if ($redirect = $this->checkSuperadmin()) {
+            return $this->response->setStatusCode(403)->setJSON(['status' => false, 'message' => 'Akses khusus Superadmin.']);
+        }
+
+        $modelAi     = trim((string)$this->request->getPost('model_ai'));
+        $apiEndpoint = trim((string)$this->request->getPost('api_endpoint'));
+        $apiKey      = trim((string)$this->request->getPost('api_key'));
+
+        $aiService = new \App\Services\GeminiAiService();
+        $res = $aiService->tesKoneksiAi($modelAi ?: null, $apiEndpoint, $apiKey ?: null);
+
+        return $this->response->setJSON($res);
+    }
+
+    /**
      * Alias route review dari simulasi menuju ke modul AI 5C
      */
     public function review()
