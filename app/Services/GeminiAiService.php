@@ -1347,7 +1347,7 @@ PANDUAN EKSTRAKSI WAJIB:
 2. FORMAT ANGKA RUPIAH: Perhatikan pemisah ribuan dan desimal pada rekening koran Indonesia (contoh: '1.500.000,00' atau '1,500,000.00' berarti 1500000 rupiah, JANGAN ikutkan 2 digit sen di belakang desimal sebagai ribuan!). Semua field angka (saldo_awal, total_mutasi_kredit, total_mutasi_debit, saldo_akhir, kredit, debit, saldo) WAJIB berupa ANGKA INTEGER MURNI tanpa titik, koma, atau 'Rp'.
 3. TOTAL MUTASI: Jika dokumen menampilkan baris ringkasan resmi (Total Mutasi Kredit / CR, Total Mutasi Debit / DB, Saldo Awal, Saldo Akhir), WAJIB gunakan angka ringkasan resmi tersebut. Jika tidak ada baris ringkasan, hitung penjumlahan eksak seluruh transaksi kredit (uang masuk) dan seluruh transaksi debit (uang keluar) di seluruh halaman dokumen.
 4. JUMLAH BULAN: Hitung jumlah bulan berdasarkan rentang periode mutasi pada dokumen (misal 1 bulan = 1, Jan-Mar = 3). Minimal 1.
-5. DAFTAR TRANSAKSI: Jika transaksi sangat banyak (lebih dari 25 baris), tetap hitung total_mutasi_kredit dan total_mutasi_debit dari SELURUH transaksi di dokumen, dan masukkan maksimal 25 transaksi utama ke array 'transaksi' agar respon cepat dan JSON tidak terpotong.
+5. DAFTAR TRANSAKSI: Hitung total_mutasi_kredit dan total_mutasi_debit dari SELURUH transaksi di dokumen, dan masukkan maksimal 15 transaksi utama ke array 'transaksi' agar respon cepat dan JSON tidak terpotong.
 6. Kembalikan HANYA JSON murni tanpa markdown, tanpa ```json, tanpa penjelasan apapun.";
 
             $configuredModel = trim((string)($settings['model_ai'] ?? ''));
@@ -1453,14 +1453,18 @@ PANDUAN EKSTRAKSI WAJIB:
                     ? rtrim($configuredEndpoint, '/')
                     : 'https://generativelanguage.googleapis.com/v1beta/models';
 
-                // FAST-PATH: Untuk PDF e-Statement yang memiliki teks (BCA, Mandiri, BRI, BNI, dll.),
-                // kirim teks hasil ekstraksi lokal dulu agar Gemini memproses dalam 2-4 detik tanpa timeout!
+                // FAST-PATH: Untuk PDF e-Statement yang memiliki teks terbaca bersih (bukan glyph/scan),
+                // kirim teks ringkas ke Gemini agar proses selesai dalam 2-4 detik tanpa timeout!
                 $geminiParts = null;
                 if ($mimeType === 'application/pdf') {
                     $localPdfText = $this->ekstrakTeksPdfLokal($filePath);
-                    if (mb_strlen($localPdfText) >= 80) {
-                        if (mb_strlen($localPdfText) > 55000) {
-                            $localPdfText = mb_substr($localPdfText, 0, 55000);
+                    $isReadableStatement = mb_strlen($localPdfText) >= 80
+                        && preg_match('/\d{1,3}[.,]\d{3}/', $localPdfText)
+                        && preg_match('/(saldo|kredit|debit|mutasi|bank|rekening|tanggal|balance|credit|transfer|trx)/i', $localPdfText);
+                    if ($isReadableStatement) {
+                        if (mb_strlen($localPdfText) > 20000) {
+                            // Ambil bagian awal (header + transaksi awal) & akhir (ringkasan total + saldo akhir)
+                            $localPdfText = mb_substr($localPdfText, 0, 14000) . "\n...\n" . mb_substr($localPdfText, -6000);
                         }
                         $geminiParts = [
                             ['text' => $prompt . "\n\nBERIKUT ISI TEKS DOKUMEN REKENING KORAN PDF YANG DIUNGGAH:\n" . $localPdfText]
@@ -1481,13 +1485,11 @@ PANDUAN EKSTRAKSI WAJIB:
                     ];
                 }
 
-                $candidateModels = array_values(array_unique(array_filter([
+                // Hanya gunakan model yang terbukti cepat merespons (hindari model hang yang memicu 504 Nginx 30 detik)
+                $candidateModels = [
                     'gemini-flash-lite-latest',
-                    'gemini-2.5-flash-lite',
-                    'gemini-flash-latest',
-                    'gemini-2.5-flash',
-                    'gemini-2.0-flash'
-                ])));
+                    'gemini-flash-latest'
+                ];
 
                 $payload = [
                     'contents' => [
@@ -1498,7 +1500,7 @@ PANDUAN EKSTRAKSI WAJIB:
                     'generationConfig' => [
                         'temperature'      => 0.0,
                         'responseMimeType' => 'application/json',
-                        'maxOutputTokens'  => 4096
+                        'maxOutputTokens'  => 2048
                     ]
                 ];
 
@@ -1506,21 +1508,20 @@ PANDUAN EKSTRAKSI WAJIB:
                 $usedModel = '';
                 $lastError = '';
                 $startTime = microtime(true);
-                $maxTotalSec = 48.0;
+                $maxTotalSec = 23.0; // Wajib di bawah timeout Nginx 30 detik agar tidak pernah 504
 
                 if (!empty($apiKey)) {
-                    $attempts = array_merge($candidateModels, ['gemini-flash-lite-latest']);
+                    $attempts = [$candidateModels[0], $candidateModels[1], $candidateModels[0]];
                     foreach ($attempts as $modIdx => $mod) {
                         $elapsed = microtime(true) - $startTime;
                         $remaining = $maxTotalSec - $elapsed;
-                        if ($remaining < 6.0) {
+                        if ($remaining < 4.0) {
                             break;
                         }
-                        if ($modIdx === count($candidateModels)) {
-                            usleep(800000);
+                        if ($modIdx === 2) {
+                            usleep(500000);
                         }
-                        // Beri waktu cukup (28 dtk untuk percobaan pertama, 18 dtk berikutnya) agar PDF besar/scan tidak terpotong di tengah jalan
-                        $reqTimeout = (int)min($modIdx === 0 ? 28 : 18, max(6, floor($remaining)));
+                        $reqTimeout = (int)min($modIdx === 0 ? 18 : 10, max(4, floor($remaining)));
 
                         $endpoint = $baseGemini . '/' . urlencode($mod) . ':generateContent?key=' . urlencode(trim($apiKey));
                         $ch = curl_init($endpoint);
@@ -1530,7 +1531,7 @@ PANDUAN EKSTRAKSI WAJIB:
                         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
+                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
                         curl_setopt($ch, CURLOPT_TIMEOUT, $reqTimeout);
 
                         $response  = curl_exec($ch);
