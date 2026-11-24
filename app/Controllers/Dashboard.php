@@ -22,7 +22,8 @@ class Dashboard extends BaseController
         $jabatan = session()->get('jabatan');
         $role    = strtolower($jabatan ?? '');
 
-        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
+        $this->ensurePengaturanSistemSchema($db);
+        $pengaturanSistem = $db->table('pengaturan_sistem')->get()->getFirstRow('array') ?? [
             'nama_aplikasi' => 'OTW Kredit',
             'nama_lembaga'  => 'PT Lembaga Pembiayaan',
             'logo_aplikasi' => '',
@@ -717,11 +718,19 @@ class Dashboard extends BaseController
             }
         }
 
-        // Filter kolom agar aman bila schema DB belum memiliki kolom opsional (misal slogan_aplikasi)
+        // Filter kolom agar aman dan pastikan schema kolom lengkap (Auto-heal VPS)
+        $this->ensurePengaturanSistemSchema($db);
         $existingCols = $db->getFieldNames('pengaturan_sistem');
         $safeUpdateData = array_intersect_key($updateData, array_flip($existingCols));
         if (!empty($safeUpdateData)) {
-            $db->table('pengaturan_sistem')->where('id', 1)->update($safeUpdateData);
+            $firstRow = $db->table('pengaturan_sistem')->get()->getFirstRow('array');
+            if (!$firstRow) {
+                $safeUpdateData['id'] = 1;
+                $db->table('pengaturan_sistem')->insert($safeUpdateData);
+            } else {
+                $targetId = $firstRow['id'] ?? 1;
+                $db->table('pengaturan_sistem')->where('id', $targetId)->update($safeUpdateData);
+            }
         }
 
         // Catat Audit Trail Log

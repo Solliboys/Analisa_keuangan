@@ -197,7 +197,8 @@ class Superadmin extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+        $this->ensurePengaturanSistemSchema($db);
+        $pengaturanSistem = $db->table('pengaturan_sistem')->get()->getFirstRow('array') ?? [];
         $pengaturanAi = $db->table('pengaturan_ai')->where('id', 1)->get()->getRowArray() ?? [];
 
         $data = [
@@ -721,7 +722,8 @@ class Superadmin extends BaseController
         }
 
         $db = \Config\Database::connect();
-        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+        $this->ensurePengaturanSistemSchema($db);
+        $pengaturanSistem = $db->table('pengaturan_sistem')->get()->getFirstRow('array') ?? [];
         $pengaturanAi = $db->table('pengaturan_ai')->where('id', 1)->get()->getRowArray() ?? [];
 
         $data = [
