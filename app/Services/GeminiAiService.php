@@ -1365,7 +1365,10 @@ PANDUAN EKSTRAKSI WAJIB:
 
                 $candidateModels = array_values(array_unique(array_filter([
                     'gemini-flash-lite-latest',
-                    'gemini-flash-latest'
+                    'gemini-2.5-flash-lite',
+                    'gemini-flash-latest',
+                    'gemini-2.5-flash',
+                    'gemini-2.0-flash'
                 ])));
 
                 $payload = [
@@ -1394,9 +1397,23 @@ PANDUAN EKSTRAKSI WAJIB:
                 $extractedData = null;
                 $usedModel = '';
                 $lastError = '';
+                $startTime = microtime(true);
+                $maxTotalSec = 26.0;
 
                 if (!empty($apiKey)) {
-                    foreach ($candidateModels as $modIdx => $mod) {
+                    // Coba seluruh model secara berurutan; jika kena 503 cepat (<1 dtk), langsung lanjut model berikutnya tanpa kena 504
+                    $attempts = array_merge($candidateModels, ['gemini-flash-lite-latest']);
+                    foreach ($attempts as $modIdx => $mod) {
+                        $elapsed = microtime(true) - $startTime;
+                        $remaining = $maxTotalSec - $elapsed;
+                        if ($remaining < 4.0) {
+                            break;
+                        }
+                        if ($modIdx === count($candidateModels)) {
+                            usleep(800000); // jeda 0.8 dtk sebelum retry terakhir jika semua sempat 503
+                        }
+                        $reqTimeout = (int)min(14, max(4, floor($remaining)));
+
                         $endpoint = $baseGemini . '/' . urlencode($mod) . ':generateContent?key=' . urlencode(trim($apiKey));
                         $ch = curl_init($endpoint);
                         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -1406,7 +1423,7 @@ PANDUAN EKSTRAKSI WAJIB:
                         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
                         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-                        curl_setopt($ch, CURLOPT_TIMEOUT, $modIdx === 0 ? 15 : 12);
+                        curl_setopt($ch, CURLOPT_TIMEOUT, $reqTimeout);
 
                         $response  = curl_exec($ch);
                         $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
