@@ -1445,8 +1445,143 @@ function hitungRataRataRekening() {
 
     // Auto-sync ke Tab Laba Rugi Badan Usaha
     syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, false);
+
+    // Perbarui panel Ringkasan Laba Rugi di bawah tabel Rekening Koran bila sedang terbuka
+    if (typeof renderRingkasanLabaRugiRekening === 'function') {
+        renderRingkasanLabaRugiRekening(totalKreditAll, totalDebitAll, totalAvgKredit, totalAvgDebit);
+    }
 }
 window.hitungRataRataRekening = hitungRataRataRekening;
+
+function renderRingkasanLabaRugiRekening(totalKreditAll, totalDebitAll, totalAvgKredit, totalAvgDebit) {
+    const netTotal = totalKreditAll - totalDebitAll;
+    const netAvg   = totalAvgKredit - totalAvgDebit;
+    const margin   = totalAvgKredit > 0 ? ((netAvg / totalAvgKredit) * 100) : 0;
+    const rasioOut = totalAvgKredit > 0 ? ((totalAvgDebit / totalAvgKredit) * 100) : 0;
+
+    const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+    setTxt('lrRekPendapatan', formatRupiahString(totalAvgKredit));
+    setTxt('lrRekTotalKreditSub', 'Total Kredit: ' + formatRupiahString(totalKreditAll));
+    setTxt('lrRekPengeluaran', formatRupiahString(totalAvgDebit));
+    setTxt('lrRekTotalDebitSub', 'Total Debit: ' + formatRupiahString(totalDebitAll));
+
+    const fmtSigned = (n) => (n < 0 ? '- ' : '') + formatRupiahString(Math.abs(n));
+    const elLaba = document.getElementById('lrRekLabaBersih');
+    const elStatus = document.getElementById('lrRekStatusKas');
+    if (elLaba) {
+        elLaba.innerText = fmtSigned(netAvg);
+        elLaba.className = 'text-base font-bold mt-1 tabular-nums ' + (netAvg >= 0 ? 'text-emerald-700' : 'text-rose-700');
+    }
+    if (elStatus) {
+        elStatus.innerText = netAvg >= 0 ? 'Surplus arus kas positif' : 'Defisit arus kas (pengeluaran > pemasukan)';
+        elStatus.className = 'text-[10px] font-medium mt-0.5 ' + (netAvg >= 0 ? 'text-emerald-600' : 'text-rose-600');
+    }
+
+    setTxt('lrRekMargin', margin.toFixed(1).replace('.', ',') + '%');
+    setTxt('lrRekRasioBiaya', 'Rasio Pengeluaran: ' + rasioOut.toFixed(1).replace('.', ',') + '%');
+
+    setTxt('lrTblTotalKredit', formatRupiahString(totalKreditAll));
+    setTxt('lrTblAvgKredit', formatRupiahString(totalAvgKredit));
+    setTxt('lrTblTotalDebit', formatRupiahString(totalDebitAll));
+    setTxt('lrTblAvgDebit', formatRupiahString(totalAvgDebit));
+
+    const elTblTotNet = document.getElementById('lrTblTotalNett');
+    const elTblAvgNet = document.getElementById('lrTblAvgNett');
+    if (elTblTotNet) {
+        elTblTotNet.innerText = fmtSigned(netTotal);
+        elTblTotNet.className = 'py-2.5 px-3.5 text-right font-bold tabular-nums ' + (netTotal >= 0 ? 'text-emerald-700' : 'text-rose-700');
+    }
+    if (elTblAvgNet) {
+        elTblAvgNet.innerText = fmtSigned(netAvg);
+        elTblAvgNet.className = 'py-2.5 px-3.5 text-right font-extrabold tabular-nums ' + (netAvg >= 0 ? 'text-emerald-700' : 'text-rose-700');
+    }
+}
+
+function tampilkanLabaRugiRekening() {
+    const items = document.querySelectorAll('.rekening-item');
+    if (!items || items.length === 0) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'info',
+                title: 'Belum Ada Data Rekening Koran',
+                text: 'Silakan unggah berkas rekening koran melalui tombol Import Rekening Koran (AI) terlebih dahulu untuk menghitung Laba Rugi.'
+            });
+        } else if (typeof showToast === 'function') {
+            showToast('Import berkas rekening koran terlebih dahulu untuk menghitung Laba Rugi.', 'warning');
+        }
+        return;
+    }
+
+    hitungRataRataRekening();
+    const sec = document.getElementById('sectionLabaRugiRekening');
+    if (sec) {
+        sec.classList.remove('hidden');
+        sec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+window.tampilkanLabaRugiRekening = tampilkanLabaRugiRekening;
+
+function tutupLabaRugiRekening() {
+    const sec = document.getElementById('sectionLabaRugiRekening');
+    if (sec) sec.classList.add('hidden');
+}
+window.tutupLabaRugiRekening = tutupLabaRugiRekening;
+
+function terapkanLabaRugiRekeningKeTab9() {
+    hitungRataRataRekening();
+    const avgKredit = parseNominal(document.getElementById('totalAvgKreditGabungan')?.innerText || 0);
+    const hppText = document.getElementById('estimasiHppGabungan')?.innerText || '78%';
+    const hppRatio = parseFloat(hppText.replace(/[^0-9.]/g, '')) || 78;
+
+    if (avgKredit <= 0) {
+        if (typeof showToast === 'function') showToast('Nominal rata-rata kredit masih Rp 0.', 'warning');
+        return;
+    }
+
+    const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
+    if (isBU && typeof syncRekeningKeLabaRugiBU === 'function') {
+        syncRekeningKeLabaRugiBU(avgKredit, hppRatio, true);
+    } else {
+        const pEl = document.getElementById('pendapatan_rk');
+        if (pEl) {
+            pEl.value = formatRupiahString(avgKredit).replace(/^Rp\s*/, '');
+            pEl.setAttribute('data-synced-rek', '1');
+        }
+        if (typeof daftarPendapatan !== 'undefined' && Array.isArray(daftarPendapatan)) {
+            const idxSynced = daftarPendapatan.findIndex(it => it._syncedRek || (it.nama || '').toLowerCase().includes('rekening koran'));
+            if (idxSynced >= 0) {
+                daftarPendapatan[idxSynced].nominal = avgKredit;
+            } else if (daftarPendapatan.length === 0) {
+                daftarPendapatan = [{ nama: 'Omset Mutasi Rekening Koran', nominal: avgKredit, _syncedRek: true }];
+            } else {
+                daftarPendapatan[0].nominal = avgKredit;
+                if (!daftarPendapatan[0].nama) daftarPendapatan[0].nama = 'Omset Mutasi Rekening Koran';
+            }
+            window.daftarPendapatan = daftarPendapatan;
+            if (typeof renderListPendapatan === 'function') renderListPendapatan();
+        }
+        if (typeof hitungLabaRugi === 'function') hitungLabaRugi();
+    }
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'success',
+            title: 'Tersinkron ke Laba Rugi!',
+            text: 'Rata-rata pendapatan ' + formatRupiahString(avgKredit) + '/bulan dari Rekening Koran berhasil diterapkan ke Tab Analisa Laba Rugi.',
+            confirmButtonText: 'Lanjut ke Tab Laba Rugi',
+            showCancelButton: true,
+            cancelButtonText: 'Tetap di Sini',
+            confirmButtonColor: '#1D4ED8'
+        }).then((r) => {
+            if (r.isConfirmed && typeof goToTab === 'function') {
+                goToTab(9);
+            }
+        });
+    } else if (typeof showToast === 'function') {
+        showToast('Data Laba Rugi dari Rekening Koran berhasil diterapkan!', 'success');
+    }
+}
+window.terapkanLabaRugiRekeningKeTab9 = terapkanLabaRugiRekeningKeTab9;
 
 function syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, isForce = false) {
     const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));

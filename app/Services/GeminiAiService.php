@@ -1045,8 +1045,8 @@ class GeminiAiService
             }
             $fileData = base64_encode($binaryData);
 
-            $prompt = "Anda adalah Senior Bank Statement / Rekening Koran Parser dan Financial Analyst.
-Tugas Anda adalah membaca dokumen mutasi bank / rekening koran ini dengan sangat teliti dan mengekstrak seluruh datanya ke format JSON berikut:
+            $prompt = "Anda adalah Senior Bank Statement / Rekening Koran Parser dan Financial Analyst yang sangat presisi.
+Tugas Anda adalah membaca dokumen mutasi bank / rekening koran yang dilampirkan PERSIS sesuai isi dokumen asli (JANGAN mengarang atau mengasumsikan angka yang tidak ada di dokumen) dan mengekstraknya ke format JSON berikut:
 {
   \"nama_bank\": \"...\",
   \"nomor_rekening\": \"...\",
@@ -1060,7 +1060,7 @@ Tugas Anda adalah membaca dokumen mutasi bank / rekening koran ini dengan sangat
   \"transaksi\": [
     {
       \"tanggal\": \"02/01/2026\",
-      \"keterangan\": \"Setoran tambahan modal pemilik\",
+      \"keterangan\": \"Deskripsi persis dari mutasi\",
       \"kredit\": 20000000,
       \"debit\": 0,
       \"saldo\": 20000000
@@ -1068,21 +1068,26 @@ Tugas Anda adalah membaca dokumen mutasi bank / rekening koran ini dengan sangat
   ]
 }
 
-PANDUAN EKSTRAKSI PENTING:
-1. Pastikan total_mutasi_kredit adalah penjumlahan seluruh transaksi kredit (uang masuk).
-2. Pastikan total_mutasi_debit adalah penjumlahan seluruh transaksi debit (uang keluar).
-3. Kolom kredit, debit, saldo_awal, saldo_akhir, total_mutasi_kredit, total_mutasi_debit wajib berupa ANGKA INTEGER MURNI (contoh: 20000000 bukan '20.000.000').
-4. Jika nama bank tidak tertulis, tulis 'Bank Mandiri' / 'BCA' / 'BRI' atau 'Bank Operasional Usaha'.
-5. Jika nomor rekening tidak tertulis, berikan string kosong.
+PANDUAN EKSTRAKSI WAJIB:
+1. BACA PERSIS DARI DOKUMEN: Nama bank, nomor rekening, atas nama pemilik rekening, periode mutasi, saldo awal, saldo akhir, dan nominal transaksi harus 100% sesuai yang tertulis di PDF/gambar.
+2. FORMAT ANGKA RUPIAH: Perhatikan pemisah ribuan dan desimal pada rekening koran Indonesia (contoh: '1.500.000,00' atau '1,500,000.00' berarti 1500000 rupiah, JANGAN ikutkan 2 digit sen di belakang desimal sebagai ribuan!). Semua field angka (saldo_awal, total_mutasi_kredit, total_mutasi_debit, saldo_akhir, kredit, debit, saldo) WAJIB berupa ANGKA INTEGER MURNI tanpa titik, koma, atau 'Rp'.
+3. TOTAL MUTASI: Jika dokumen menampilkan baris ringkasan resmi (Total Mutasi Kredit / CR, Total Mutasi Debit / DB, Saldo Awal, Saldo Akhir), WAJIB gunakan angka ringkasan resmi tersebut. Jika tidak ada baris ringkasan, hitung penjumlahan eksak seluruh transaksi kredit (uang masuk) dan seluruh transaksi debit (uang keluar) di seluruh halaman dokumen.
+4. JUMLAH BULAN: Hitung jumlah bulan berdasarkan rentang periode mutasi pada dokumen (misal 1 bulan = 1, Jan-Mar = 3). Minimal 1.
+5. DAFTAR TRANSAKSI: Jika transaksi sangat banyak (lebih dari 40 baris), tetap hitung total_mutasi_kredit dan total_mutasi_debit dari SELURUH transaksi di dokumen, dan masukkan maksimal 40 transaksi utama ke array 'transaksi' agar JSON tidak terpotong.
 6. Kembalikan HANYA JSON murni tanpa markdown, tanpa ```json, tanpa penjelasan apapun.";
 
-            $candidateModels = [
-                'gemini-flash-lite-latest',
-                'gemini-3.1-flash-lite',
-                'gemini-3.6-flash',
+            $configuredModel = trim((string)($settings['model_ai'] ?? ''));
+            if (preg_match('/^gemini-3\./i', $configuredModel)) {
+                $configuredModel = '';
+            }
+            $candidateModels = array_values(array_unique(array_filter([
+                $configuredModel,
+                'gemini-2.5-flash',
+                'gemini-2.5-flash-lite',
+                'gemini-2.0-flash',
                 'gemini-flash-latest',
-                'gemini-3.8-flash'
-            ];
+                'gemini-flash-lite-latest'
+            ])));
 
             $payload = [
                 'contents' => [
@@ -1101,14 +1106,15 @@ PANDUAN EKSTRAKSI PENTING:
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature'      => 0.1,
+                    'temperature'      => 0.0,
                     'responseMimeType' => 'application/json',
-                    'maxOutputTokens'  => 4000
+                    'maxOutputTokens'  => 8192
                 ]
             ];
 
             $extractedData = null;
             $usedModel = '';
+            $lastError = '';
 
             if (!empty($apiKey)) {
                 foreach ($candidateModels as $mod) {
@@ -1120,14 +1126,15 @@ PANDUAN EKSTRAKSI PENTING:
                     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                     curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
-                    curl_setopt($ch, CURLOPT_TIMEOUT, 14);
+                    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 45);
 
                     $response  = curl_exec($ch);
                     $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    $curlErr   = curl_error($ch);
                     curl_close($ch);
 
-                    if ($httpCode === 200 && !empty($response)) {
+                    if (!$curlErr && $httpCode === 200 && !empty($response)) {
                         $resArr = json_decode($response, true);
                         $rawText = $resArr['candidates'][0]['content']['parts'][0]['text'] ?? '';
                         if (!empty($rawText)) {
@@ -1139,79 +1146,131 @@ PANDUAN EKSTRAKSI PENTING:
                                 $usedModel = $mod;
                                 break;
                             }
+                            $lastError = "Format JSON AI tidak valid ($mod)";
+                        } else {
+                            $lastError = "Respon AI kosong ($mod)";
                         }
+                    } else {
+                        $errDetail = '';
+                        if (!empty($response)) {
+                            $errJson = json_decode($response, true);
+                            $errDetail = $errJson['error']['message'] ?? '';
+                        }
+                        $lastError = $curlErr ?: ("HTTP $httpCode ($mod)" . ($errDetail ? ": $errDetail" : ''));
                     }
+                }
+            } else {
+                $lastError = 'API Key Gemini belum dikonfigurasi di Pengaturan Superadmin.';
+            }
+
+            // JANGAN gunakan data palsu/hardcoded jika ekstraksi AI gagal — laporkan error secara jujur
+            if (!$extractedData) {
+                return [
+                    'status'  => false,
+                    'message' => 'Gagal membaca dokumen rekening koran dari PDF/gambar (' . ($lastError ?: 'AI tidak merespons') . '). Pastikan berkas jelas/tidak diproteksi password dan API Key Gemini aktif.'
+                ];
+            }
+
+            $parseAngka = static function ($val): float {
+                if (is_int($val) || is_float($val)) {
+                    return round((float)$val);
+                }
+                $s = trim((string)$val);
+                if ($s === '') return 0.0;
+                $s = preg_replace('/[^0-9.,-]/', '', $s);
+                // Hapus bagian desimal 2 digit di akhir (mis. .00 atau ,00)
+                if (preg_match('/[.,]\d{2}$/', $s)) {
+                    $s = substr($s, 0, -3);
+                }
+                $s = str_replace(['.', ','], '', $s);
+                return (float)$s;
+            };
+
+            // Normalisasi transaksi
+            $transaksiClean = [];
+            $sumKreditTrans = 0.0;
+            $sumDebitTrans  = 0.0;
+            $lastSaldoTrans = 0.0;
+            if (!empty($extractedData['transaksi']) && is_array($extractedData['transaksi'])) {
+                foreach ($extractedData['transaksi'] as $tr) {
+                    if (!is_array($tr)) continue;
+                    $kVal = max(0.0, $parseAngka($tr['kredit'] ?? 0));
+                    $dVal = max(0.0, $parseAngka($tr['debit'] ?? 0));
+                    $sVal = $parseAngka($tr['saldo'] ?? 0);
+                    $sumKreditTrans += $kVal;
+                    $sumDebitTrans  += $dVal;
+                    if ($sVal > 0) $lastSaldoTrans = $sVal;
+                    $transaksiClean[] = [
+                        'tanggal'    => trim((string)($tr['tanggal'] ?? '-')),
+                        'keterangan' => trim((string)($tr['keterangan'] ?? '-')),
+                        'kredit'     => $kVal,
+                        'debit'      => $dVal,
+                        'saldo'      => $sVal,
+                    ];
                 }
             }
 
-            // Jika AI tidak berhasil atau API key kosong, jalankan fallback parser cerdas
-            if (!$extractedData) {
-                $extractedData = $this->fallbackParserRekening($filePath);
+            $saldoAwal   = $parseAngka($extractedData['saldo_awal'] ?? 0);
+            $totalKredit = $parseAngka($extractedData['total_mutasi_kredit'] ?? 0);
+            $totalDebit  = $parseAngka($extractedData['total_mutasi_debit'] ?? 0);
+            $saldoAkhir  = $parseAngka($extractedData['saldo_akhir'] ?? 0);
+
+            if ($totalKredit <= 0 && $sumKreditTrans > 0) {
+                $totalKredit = $sumKreditTrans;
+            }
+            if ($totalDebit <= 0 && $sumDebitTrans > 0) {
+                $totalDebit = $sumDebitTrans;
+            }
+            if ($saldoAkhir <= 0 && $lastSaldoTrans > 0) {
+                $saldoAkhir = $lastSaldoTrans;
             }
 
-            // Normalisasi dan hitung rata-rata
-            $totalKredit = (float)($extractedData['total_mutasi_kredit'] ?? 0);
-            $totalDebit  = (float)($extractedData['total_mutasi_debit'] ?? 0);
             $jumlahBulan = max(1, (int)($extractedData['jumlah_bulan'] ?? 1));
             $avgKredit   = round($totalKredit / $jumlahBulan);
             $avgDebit    = round($totalDebit / $jumlahBulan);
 
             return [
                 'status'  => true,
-                'message' => 'Ekstraksi rekening koran berhasil' . ($usedModel ? " (Gemini AI: $usedModel)" : ' (Parser Lokal)'),
+                'message' => 'Ekstraksi rekening koran berhasil' . ($usedModel ? " (Gemini AI: $usedModel)" : ''),
                 'data'    => [
-                    'nama_bank'           => $extractedData['nama_bank'] ?? 'Bank Operasional Usaha',
-                    'nomor_rekening'      => $extractedData['nomor_rekening'] ?? '',
-                    'atas_nama'           => $extractedData['atas_nama'] ?? '',
-                    'periode'             => $extractedData['periode'] ?? date('F Y'),
+                    'nama_bank'           => trim((string)($extractedData['nama_bank'] ?? '')) ?: 'Bank Operasional Usaha',
+                    'nomor_rekening'      => trim((string)($extractedData['nomor_rekening'] ?? '')),
+                    'atas_nama'           => trim((string)($extractedData['atas_nama'] ?? '')),
+                    'periode'             => trim((string)($extractedData['periode'] ?? '')) ?: date('F Y'),
                     'jumlah_bulan'        => $jumlahBulan,
-                    'saldo_awal'          => (float)($extractedData['saldo_awal'] ?? 0),
+                    'saldo_awal'          => $saldoAwal,
                     'total_mutasi_kredit' => $totalKredit,
                     'total_mutasi_debit'  => $totalDebit,
-                    'saldo_akhir'         => (float)($extractedData['saldo_akhir'] ?? 0),
+                    'saldo_akhir'         => $saldoAkhir,
                     'rata_rata_kredit'    => $avgKredit,
                     'rata_rata_debit'     => $avgDebit,
-                    'transaksi'           => $extractedData['transaksi'] ?? []
+                    'transaksi'           => $transaksiClean
                 ]
             ];
         } catch (\Throwable $e) {
-            $fallback = $this->fallbackParserRekening($filePath);
             return [
-                'status'  => true,
-                'message' => 'Ekstraksi rekening koran selesai (Mode Parser Cadangan)',
-                'data'    => $fallback
+                'status'  => false,
+                'message' => 'Gagal memproses dokumen rekening koran: ' . $e->getMessage()
             ];
         }
     }
 
     /**
-     * Fallback parser cerdas untuk dokumen rekening koran
+     * Fallback parser kosong (tidak lagi mengembalikan data dummy UD SUMBER REJEKI)
      */
     public function fallbackParserRekening(string $filePath): array
     {
         return [
-            'nama_bank'           => 'Bank Rekening Operasional',
+            'nama_bank'           => '',
             'nomor_rekening'      => '',
-            'atas_nama'           => 'UD SUMBER REJEKI',
-            'periode'             => '1 - 31 Januari 2026',
+            'atas_nama'           => '',
+            'periode'             => '',
             'jumlah_bulan'        => 1,
             'saldo_awal'          => 0,
-            'total_mutasi_kredit' => 62000000,
-            'total_mutasi_debit'  => 37000000,
-            'saldo_akhir'         => 25000000,
-            'transaksi'           => [
-                ['tanggal' => '02/01/2026', 'keterangan' => 'Setoran tambahan modal pemilik', 'kredit' => 20000000, 'debit' => 0, 'saldo' => 20000000],
-                ['tanggal' => '08/01/2026', 'keterangan' => 'Pembayaran utang usaha - PT Sinar Abadi', 'kredit' => 0, 'debit' => 15000000, 'saldo' => 5000000],
-                ['tanggal' => '09/01/2026', 'keterangan' => 'Pelunasan piutang usaha (saldo awal)', 'kredit' => 10000000, 'debit' => 0, 'saldo' => 15000000],
-                ['tanggal' => '10/01/2026', 'keterangan' => 'Pembayaran gaji karyawan', 'kredit' => 0, 'debit' => 8000000, 'saldo' => 7000000],
-                ['tanggal' => '12/01/2026', 'keterangan' => 'Pembayaran sewa toko', 'kredit' => 0, 'debit' => 5000000, 'saldo' => 2000000],
-                ['tanggal' => '16/01/2026', 'keterangan' => 'Setoran kas tunai ke rekening', 'kredit' => 20000000, 'debit' => 0, 'saldo' => 22000000],
-                ['tanggal' => '18/01/2026', 'keterangan' => 'Pembayaran listrik & air', 'kredit' => 0, 'debit' => 1500000, 'saldo' => 20500000],
-                ['tanggal' => '22/01/2026', 'keterangan' => 'Pelunasan piutang - Toko Makmur', 'kredit' => 12000000, 'debit' => 0, 'saldo' => 32500000],
-                ['tanggal' => '26/01/2026', 'keterangan' => 'Angsuran pokok pinjaman bank', 'kredit' => 0, 'debit' => 3000000, 'saldo' => 29500000],
-                ['tanggal' => '26/01/2026', 'keterangan' => 'Pembayaran bunga pinjaman bank', 'kredit' => 0, 'debit' => 500000, 'saldo' => 29000000],
-                ['tanggal' => '28/01/2026', 'keterangan' => 'Penarikan prive pemilik', 'kredit' => 0, 'debit' => 4000000, 'saldo' => 25000000],
-            ]
+            'total_mutasi_kredit' => 0,
+            'total_mutasi_debit'  => 0,
+            'saldo_akhir'         => 0,
+            'transaksi'           => []
         ];
     }
 }

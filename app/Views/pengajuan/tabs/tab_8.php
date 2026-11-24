@@ -11,8 +11,12 @@
                         </div>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <button type="button" onclick="bukaModalUploadOcrRekening()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer" title="Unggah PDF atau foto rekening koran untuk pengisian otomatis">
-                            <svg class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <button type="button" onclick="tampilkanLabaRugiRekening()" id="btnLabaRugiRekening" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer" title="Tampilkan ringkasan Laba Rugi dari mutasi rekening koran di bawah tabel">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span>Laba Rugi</span>
+                        </button>
+                        <button type="button" onclick="bukaModalUploadOcrRekening()" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer" title="Unggah PDF atau foto rekening koran untuk pengisian otomatis">
+                            <svg class="w-4 h-4 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                             <span>Import Rekening Koran (AI)</span>
                         </button>
                     </div>
@@ -110,6 +114,77 @@
                             <?php endif; ?>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Ringkasan Laba Rugi dari Mutasi Rekening Koran (muncul di bawah tabel saat tombol Laba Rugi diklik) -->
+                <div id="sectionLabaRugiRekening" class="hidden mt-6 rounded-2xl border border-blue-200/90 bg-slate-50/70 p-5 sm:p-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/80 mb-5">
+                        <div>
+                            <h4 class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wider">Ringkasan Laba Rugi (Mutasi Rekening Koran)</h4>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Kalkulasi otomatis pendapatan, pengeluaran, dan surplus arus kas bulanan dari rekening koran di atas.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" onclick="terapkanLabaRugiRekeningKeTab9()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold transition cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <span>Terapkan ke Analisa Laba Rugi</span>
+                            </button>
+                            <button type="button" onclick="tutupLabaRugiRekening()" class="px-3 py-2 bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 rounded-lg text-xs font-semibold transition cursor-pointer">
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                        <div class="bg-white rounded-xl border border-slate-200/90 p-3.5">
+                            <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Pendapatan / Bln (Kredit)</div>
+                            <div id="lrRekPendapatan" class="text-base font-bold text-blue-700 mt-1 tabular-nums">Rp 0</div>
+                            <div id="lrRekTotalKreditSub" class="text-[10px] text-slate-400 mt-0.5">Total Kredit: Rp 0</div>
+                        </div>
+                        <div class="bg-white rounded-xl border border-slate-200/90 p-3.5">
+                            <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Pengeluaran / Bln (Debit)</div>
+                            <div id="lrRekPengeluaran" class="text-base font-bold text-slate-800 mt-1 tabular-nums">Rp 0</div>
+                            <div id="lrRekTotalDebitSub" class="text-[10px] text-slate-400 mt-0.5">Total Debit: Rp 0</div>
+                        </div>
+                        <div class="bg-white rounded-xl border border-slate-200/90 p-3.5">
+                            <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Surplus / Laba Bersih Kas</div>
+                            <div id="lrRekLabaBersih" class="text-base font-bold text-emerald-700 mt-1 tabular-nums">Rp 0</div>
+                            <div id="lrRekStatusKas" class="text-[10px] font-medium text-emerald-600 mt-0.5">Arus kas positif</div>
+                        </div>
+                        <div class="bg-white rounded-xl border border-slate-200/90 p-3.5">
+                            <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Estimasi Margin &amp; Rasio Biaya</div>
+                            <div id="lrRekMargin" class="text-base font-bold text-slate-900 mt-1 tabular-nums">0%</div>
+                            <div id="lrRekRasioBiaya" class="text-[10px] text-slate-400 mt-0.5">Rasio Pengeluaran: 0%</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200/90 overflow-x-auto">
+                        <table class="w-full text-xs text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                                    <th class="py-2.5 px-3.5">Komponen Laba Rugi (Rekening Koran)</th>
+                                    <th class="py-2.5 px-3.5 text-right">Total Periode</th>
+                                    <th class="py-2.5 px-3.5 text-right">Rata-rata / Bulan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr>
+                                    <td class="py-2.5 px-3.5 font-medium text-slate-700">Pemasukan / Mutasi Kredit (Omzet)</td>
+                                    <td id="lrTblTotalKredit" class="py-2.5 px-3.5 text-right font-semibold text-slate-800 tabular-nums">Rp 0</td>
+                                    <td id="lrTblAvgKredit" class="py-2.5 px-3.5 text-right font-bold text-blue-700 tabular-nums">Rp 0</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-3.5 font-medium text-slate-700">Pengeluaran / Mutasi Debit (HPP &amp; Operasional)</td>
+                                    <td id="lrTblTotalDebit" class="py-2.5 px-3.5 text-right font-semibold text-slate-800 tabular-nums">Rp 0</td>
+                                    <td id="lrTblAvgDebit" class="py-2.5 px-3.5 text-right font-semibold text-slate-700 tabular-nums">Rp 0</td>
+                                </tr>
+                                <tr class="bg-blue-50/40">
+                                    <td class="py-2.5 px-3.5 font-bold text-slate-900">Estimasi Laba Bersih / Surplus Kas</td>
+                                    <td id="lrTblTotalNett" class="py-2.5 px-3.5 text-right font-bold text-emerald-700 tabular-nums">Rp 0</td>
+                                    <td id="lrTblAvgNett" class="py-2.5 px-3.5 text-right font-extrabold text-emerald-700 tabular-nums">Rp 0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- Hidden counters untuk kompatibilitas kalkulasi JS -->
