@@ -23,11 +23,11 @@ class Dashboard extends BaseController
         $role    = strtolower($jabatan ?? '');
 
         $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
-            'nama_aplikasi' => 'OTW Credit Engine & CAM',
-            'nama_lembaga'  => 'PT BPR / Lembaga Pembiayaan',
+            'nama_aplikasi' => 'OTW Kredit',
+            'nama_lembaga'  => 'PT Lembaga Pembiayaan',
             'logo_aplikasi' => '',
             'api_key'       => getenv('GEMINI_API_KEY') ?: '',
-            'model_ai'      => 'gemini-3.8-flash',
+            'model_ai'      => 'gemini-2.5-flash',
             'api_endpoint'  => 'https://generativelanguage.googleapis.com/v1beta/models',
             'prompt_sistem' => 'Anda adalah Senior Credit Underwriter dan Risk Analyst perbankan profesional. Lakukan evaluasi komprehensif terhadap calon debitur pembiayaan berdasarkan prinsip 5C (Character, Capacity, Capital, Collateral, Condition).'
         ];
@@ -629,12 +629,12 @@ class Dashboard extends BaseController
 
         $db = \Config\Database::connect();
 
-        $namaAplikasi   = trim($this->request->getPost('nama_aplikasi') ?? 'OTW Credit Engine & CAM');
-        $sloganAplikasi = trim($this->request->getPost('slogan_aplikasi') ?? 'Sistem Analisa Kredit');
-        $namaLembaga    = trim($this->request->getPost('nama_lembaga') ?? 'PT BPR / Lembaga Pembiayaan');
-        $alamatLembaga  = trim($this->request->getPost('alamat_lembaga') ?? 'BPR Financial Center, Lantai 8, Jakarta Selatan');
-        $emailLembaga   = trim($this->request->getPost('email_lembaga') ?? 'info@otwkredit.id');
-        $teleponLembaga = trim($this->request->getPost('telepon_lembaga') ?? '(021) 5088-2900');
+        $namaAplikasi   = trim((string)($this->request->getPost('nama_aplikasi') ?: 'OTW Kredit'));
+        $sloganAplikasi = trim((string)($this->request->getPost('slogan_aplikasi') ?: 'Sistem Analisa Kredit'));
+        $namaLembaga    = trim((string)($this->request->getPost('nama_lembaga') ?: 'PT Lembaga Pembiayaan'));
+        $alamatLembaga  = trim((string)($this->request->getPost('alamat_lembaga') ?: 'Financial Center, Lantai 8, Jakarta Selatan'));
+        $emailLembaga   = trim((string)($this->request->getPost('email_lembaga') ?: 'info@otwkredit.id'));
+        $teleponLembaga = trim((string)($this->request->getPost('telepon_lembaga') ?: '(021) 5088-2900'));
 
         // Handle upload logo (dengan validasi ketat ekstensi & MIME gambar)
         $logoFile = $this->request->getFile('logo_file');
@@ -733,6 +733,8 @@ class Dashboard extends BaseController
                 'nama_aplikasi'   => $namaAplikasi,
                 'slogan_aplikasi' => $sloganAplikasi,
                 'nama_lembaga'    => $namaLembaga,
+                'alamat_lembaga'  => $alamatLembaga,
+                'email_lembaga'   => $emailLembaga,
                 'telepon_lembaga' => $teleponLembaga,
                 'logo_diunggah'   => !empty($logoPath)
             ]
@@ -779,8 +781,8 @@ class Dashboard extends BaseController
         $user = $userModel->find(session()->get('user_id'));
         $db = \Config\Database::connect();
         $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
-            'nama_aplikasi' => 'OTW Credit Engine & CAM',
-            'nama_lembaga'  => 'PT BPR / Lembaga Pembiayaan',
+            'nama_aplikasi' => 'OTW Kredit',
+            'nama_lembaga'  => 'PT Lembaga Pembiayaan',
             'logo_aplikasi' => ''
         ];
 
@@ -880,12 +882,12 @@ class Dashboard extends BaseController
 
         $db = \Config\Database::connect();
         $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
-            'nama_aplikasi' => 'OTW Credit Engine & CAM',
-            'nama_lembaga'  => 'PT BPR / Lembaga Pembiayaan'
+            'nama_aplikasi' => 'OTW Kredit',
+            'nama_lembaga'  => 'PT Lembaga Pembiayaan'
         ];
 
         return view('audit/laporan_qa_qc', [
-            'title'             => 'Laporan Resmi Audit QA & QC - OTW Credit Engine & CAM',
+            'title'             => 'Laporan Resmi Audit QA & QC - OTW Kredit',
             'pengaturan_sistem' => $pengaturanSistem,
             'tanggal_audit'     => date('d F Y')
         ]);

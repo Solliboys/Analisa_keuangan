@@ -542,6 +542,10 @@
 
     <!-- Script Interaktif -->
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePreviewKop();
+        });
+
         function updatePreviewKop() {
             const nama = document.getElementById('inputNamaLembaga').value || 'PT Lembaga Pembiayaan';
             const alamat = document.getElementById('inputAlamatLembaga').value || 'Financial Center, Lantai 8, Jakarta Selatan';

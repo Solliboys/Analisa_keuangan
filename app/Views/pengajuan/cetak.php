@@ -218,8 +218,8 @@
                         KOMITE KREDIT & DIVISI MANAJEMEN RISIKO PEMBIAYAAN
                     </h3>
                     <p class="text-[9px] sm:text-[10px] text-slate-600 mt-1 leading-relaxed">
-                        Gedung Graha Finansial Lt. 5, Jl. Jenderal Sudirman Kav. 45-46 &bull; Telp: (021) 5290-8800 (Hunting) &bull; Fax: (021) 5290-8801<br>
-                        Email: <span class="text-blue-700 underline">komite.kredit@bank-otw.co.id</span> &bull; Website: www.credit-engine.co.id
+                        <?= esc(!empty($pengaturan_sistem['alamat_lembaga']) ? $pengaturan_sistem['alamat_lembaga'] : 'Financial Center, Lantai 8, Jakarta Selatan') ?> &bull; Telp: <?= esc(!empty($pengaturan_sistem['telepon_lembaga']) ? $pengaturan_sistem['telepon_lembaga'] : '(021) 5088-2900') ?><br>
+                        Email: <span class="text-blue-700 underline"><?= esc(!empty($pengaturan_sistem['email_lembaga']) ? $pengaturan_sistem['email_lembaga'] : 'info@otwkredit.id') ?></span>
                     </p>
                 </div>
 
