@@ -77,9 +77,32 @@ class Reviewer extends BaseController
         $dokumen  = $dokumenModel->where('kredit_id', $kreditId)->findAll();
 
         $komiteList = $this->komiteModel->where('kredit_id', $kreditId)->findAll();
-        $keputusanReviewer = $this->komiteModel->where('kredit_id', $kreditId)
-                                               ->where('role_approver', 'Reviewer / Analis Senior')
-                                               ->first();
+        
+        // Ambil seluruh rekomendasi dari para reviewer (bisa > 1 reviewer)
+        $semuaReviewer = $this->komiteModel->where('kredit_id', $kreditId)
+                                           ->groupStart()
+                                               ->where('role_approver', 'Reviewer')
+                                               ->orWhere('role_approver', 'Reviewer / Analis Senior')
+                                           ->groupEnd()
+                                           ->findAll();
+
+        // Ambil keputusan final CEO jika sudah ada
+        $keputusanCeo = $this->komiteModel->where('kredit_id', $kreditId)
+                                          ->groupStart()
+                                              ->where('role_approver', 'CEO / Direktur Utama')
+                                              ->orWhere('role_approver', 'CEO')
+                                          ->groupEnd()
+                                          ->first();
+
+        // Ambil review milik user yang sedang login jika ada
+        $currentUserId = session()->get('user_id');
+        $reviewSaya = null;
+        if ($currentUserId) {
+            $reviewSaya = $this->komiteModel->where('kredit_id', $kreditId)
+                                            ->where('user_id', $currentUserId)
+                                            ->first();
+        }
+        $keputusanReviewer = $reviewSaya ?: ($semuaReviewer[0] ?? null);
 
         // Hitung total MV dan LV Agunan
         $totalMV = 0;
@@ -116,6 +139,9 @@ class Reviewer extends BaseController
             'analisa'            => $analisa,
             'dokumen'            => $dokumen,
             'komite'             => $komiteList,
+            'semua_reviewer'     => $semuaReviewer,
+            'keputusan_ceo'      => $keputusanCeo,
+            'review_saya'        => $reviewSaya,
             'keputusan_reviewer' => $keputusanReviewer,
             'total_mv'           => $totalMV,
             'total_lv'           => $totalLV,
@@ -181,24 +207,55 @@ class Reviewer extends BaseController
             $statusSave = $keputusan;
         }
 
-        // 1. Update status_pengajuan di tabel kredit
-        $this->kreditModel->update($kreditId, [
-            'status_pengajuan' => $statusSave,
-            'updated_at'       => date('Y-m-d H:i:s')
-        ]);
+        $userRole = strtolower(session()->get('jabatan') ?? '');
+        $isCeoRole = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false);
+        $userId = session()->get('user_id');
 
-        // 2. Simpan / perbarui ke tabel komite
-        $userId       = session()->get('user_id');
-        $namaApprover = session()->get('nama_lengkap') ?: 'Reviewer / Analis Senior';
+        if ($isCeoRole) {
+            // ==============================================================
+            // CEO: KEPUTUSAN FINAL
+            // ==============================================================
+            $roleApprover = 'CEO / Direktur Utama';
+            $namaApprover = session()->get('nama_lengkap') ?: 'CEO / Direktur Utama';
 
+            $this->kreditModel->update($kreditId, [
+                'status_pengajuan' => $statusSave,
+                'updated_at'       => date('Y-m-d H:i:s')
+            ]);
+
+            $messageSukses = ($statusSave === 'Revisi')
+                ? 'Pengajuan berhasil dikembalikan oleh CEO ke Staf Pengusul (AO) untuk revisi.'
+                : 'Keputusan Final CEO berhasil disimpan: Pengajuan telah di-' . strtoupper($statusSave) . '.';
+        } else {
+            // ==============================================================
+            // REVIEWER: MEMBERIKAN REKOMENDASI (Layer pra-CEO, bisa > 1)
+            // ==============================================================
+            $roleApprover = 'Reviewer';
+            $namaApprover = session()->get('nama_lengkap') ?: 'Reviewer';
+
+            // Jika reviewer minta revisi langsung ke AO, status pengajuan jadi Revisi
+            // Jika merekomendasikan setuju/bersyarat/tolak, teruskan ke CEO
+            $statusPengajuan = ($statusSave === 'Revisi') ? 'Revisi' : 'Menunggu Persetujuan CEO';
+
+            $this->kreditModel->update($kreditId, [
+                'status_pengajuan' => $statusPengajuan,
+                'updated_at'       => date('Y-m-d H:i:s')
+            ]);
+
+            $messageSukses = ($statusSave === 'Revisi')
+                ? 'Rekomendasi Revisi dicatat. Berkas dikembalikan ke Staf Pengusul (AO).'
+                : 'Rekomendasi Reviewer (' . strtoupper($statusSave) . ') berhasil disimpan dan diteruskan ke CEO untuk keputusan final.';
+        }
+
+        // Simpan / perbarui ke tabel komite berdasarkan kredit_id dan user_id
         $komiteExist = $this->komiteModel->where('kredit_id', $kreditId)
-                                         ->where('role_approver', 'Reviewer / Analis Senior')
+                                         ->where('user_id', $userId)
                                          ->first();
 
         $dataKomite = [
             'kredit_id'        => $kreditId,
             'user_id'          => $userId,
-            'role_approver'    => 'Reviewer / Analis Senior',
+            'role_approver'    => $roleApprover,
             'nama_approver'    => $namaApprover,
             'status_approval'  => $statusSave,
             'tanggal_approval' => date('Y-m-d'),

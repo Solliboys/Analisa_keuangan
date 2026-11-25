@@ -1538,10 +1538,9 @@ PANDUAN EKSTRAKSI WAJIB:
                     ];
                 }
 
-                // Hanya gunakan model yang terbukti cepat merespons (hindari model hang yang memicu 504 Nginx 30 detik)
+                // Hanya gunakan model yang terbukti cepat merespons (hindari model hang/503 yang memicu 504 Nginx)
                 $candidateModels = [
-                    'gemini-flash-lite-latest',
-                    'gemini-flash-latest'
+                    'gemini-flash-lite-latest'
                 ];
 
                 $payload = [
@@ -1561,20 +1560,20 @@ PANDUAN EKSTRAKSI WAJIB:
                 $usedModel = '';
                 $lastError = '';
                 $startTime = microtime(true);
-                $maxTotalSec = 25.0; // Aman di bawah timeout Nginx 30 detik agar tidak pernah 504
+                $maxTotalSec = 18.0; // Maksimal 18 detik total agar aman jauh di bawah timeout Nginx 30/60 detik
 
                 if (!empty($apiKey)) {
-                    $attempts = [$candidateModels[0], $candidateModels[1], $candidateModels[0]];
+                    $attempts = [$candidateModels[0], $candidateModels[0]];
                     foreach ($attempts as $modIdx => $mod) {
                         $elapsed = microtime(true) - $startTime;
                         $remaining = $maxTotalSec - $elapsed;
-                        if ($remaining < 5.0) {
+                        if ($remaining < 4.0) {
                             break;
                         }
-                        if ($modIdx === 2) {
-                            usleep(400000);
+                        if ($modIdx > 0) {
+                            usleep(300000);
                         }
-                        $reqTimeout = (int)min($modIdx === 0 ? 12 : 18, max(5, floor($remaining)));
+                        $reqTimeout = (int)min(12, max(4, floor($remaining)));
 
                         $endpoint = $baseGemini . '/' . urlencode($mod) . ':generateContent?key=' . urlencode(trim($apiKey));
                         $ch = curl_init($endpoint);
@@ -1584,7 +1583,7 @@ PANDUAN EKSTRAKSI WAJIB:
                         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
                         curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+                        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
                         curl_setopt($ch, CURLOPT_TIMEOUT, $reqTimeout);
 
                         $response  = curl_exec($ch);

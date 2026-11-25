@@ -656,7 +656,7 @@ async function simpanTambahPermohonanSlik() {
                         <input type="checkbox" class="slik-select-item w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer" data-index="${newIdx}" value="${newIdx}" checked>
                     </div>
                 </td>
-                <td class="py-2.5 px-2 whitespace-nowrap" id="status-badge-cell-${newIdx}">
+                <td class="py-2.5 px-2 whitespace-nowrap hidden" id="status-badge-cell-${newIdx}">
                     <span class="inline-block bg-[#f59e0b] text-white font-bold text-[10px] px-2 py-0.5 rounded shadow-2xs">
                         Belum Terbit
                     </span>

@@ -277,31 +277,117 @@
             <!-- SEBELAH KANAN (lg:col-span-5): LEMBAR KEPUTUSAN REVIEWER (DILURUSKAN DENGAN KIRI) -->
             <div class="lg:col-span-5 flex flex-col">
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-                    <!-- Header Card (Tinggi dan styling lurus sejajar dengan header kiri) -->
+                    <?php 
+                        $userRole = strtolower(session()->get('jabatan') ?? '');
+                        $isCeoRole = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false);
+                        
+                        // Keputusan final oleh CEO
+                        $hasCeoDecision = !empty($keputusan_ceo['status_approval']);
+                        $ceoDecisionStatus = $keputusan_ceo['status_approval'] ?? '';
+                        $ceoCatatan = $keputusan_ceo['catatan_approval'] ?? '';
+
+                        // Rekomendasi reviewer
+                        $hasReviewerRec = !empty($semua_reviewer) && count($semua_reviewer) > 0;
+                        $hasMyReview = !empty($review_saya['status_approval']);
+
+                        // Status finalized tampilan:
+                        // - Untuk CEO: dianggap finalized jika CEO SUDAH menetapkan keputusan akhir
+                        // - Untuk Reviewer: dianggap finalized jika reviewer INI sudah memberikan review
+                        // - Untuk role lain: finalized jika CEO sudah memutuskan
+                        if ($isCeoRole) {
+                            $isFinalized = $hasCeoDecision;
+                            $currentDecision = $ceoDecisionStatus;
+                            $currentCatatan = $ceoCatatan;
+                        } else {
+                            $isFinalized = $hasMyReview;
+                            $currentDecision = $review_saya['status_approval'] ?? '';
+                            $currentCatatan = $review_saya['catatan_approval'] ?? '';
+                        }
+                    ?>
+
+                    <!-- Header Card -->
                     <div class="p-4 sm:p-5 border-b border-slate-100 bg-blue-50/60 min-h-0 sm:min-h-[92px] flex flex-col justify-center">
                         <div class="flex items-center justify-between flex-wrap gap-2">
                             <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full <?= !empty($currentDecision) ? 'bg-emerald-500' : 'bg-blue-600 animate-pulse' ?>"></span>
+                                <span class="w-2.5 h-2.5 rounded-full <?= $isFinalized ? 'bg-emerald-500' : 'bg-blue-600 animate-pulse' ?>"></span>
                                 <h2 class="text-xs sm:text-sm font-extrabold text-blue-900 uppercase tracking-wider">
-                                    Lembar Keputusan Reviewer
+                                    <?= $isCeoRole ? 'Lembar Keputusan CEO / Direktur Utama' : 'Lembar Rekomendasi Reviewer' ?>
                                 </h2>
                             </div>
-                            <?php if (!empty($currentDecision)): ?>
+                            <?php if ($isFinalized): ?>
                                 <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200 shrink-0">
-                                    Mode Lihat (Sudah Di-review)
+                                    <?= $isCeoRole ? 'Keputusan Final Ditetapkan' : 'Rekomendasi Terkirim' ?>
+                                </span>
+                            <?php elseif ($isCeoRole): ?>
+                                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                                    Penentu Keputusan Akhir
+                                </span>
+                            <?php else: ?>
+                                <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                                    Layer Pra-CEO (Opsional)
                                 </span>
                             <?php endif; ?>
                         </div>
                         <p class="text-xs text-blue-700/80 mt-1">
-                            <?= !empty($currentDecision) ? 'Pemeriksaan review telah selesai. Keputusan tercatat resmi pada risalah komite.' : 'Pilih salah satu dari 4 opsi keputusan komite kredit beserta catatan resmi.' ?>
+                            <?php if ($isCeoRole): ?>
+                                CEO memegang hak putusan akhir (Setuju, Bersyarat, Revisi, atau Tolak). Anda dapat menambahkan komentar dan catatan resmi di bawah.
+                            <?php else: ?>
+                                Reviewer bertugas merekomendasikan dan memberikan catatan analisis kepada CEO. Reviewer bersifat opsional dan bisa lebih dari satu orang.
+                            <?php endif; ?>
                         </p>
                     </div>
 
-                    <?php 
-                        $userRole = strtolower(session()->get('jabatan') ?? '');
-                        $isCeoRole = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false);
-                        $isFinalized = (!empty($currentDecision) && in_array($currentDecision, ['Disetujui', 'Disetujui Bersyarat', 'Ditolak', 'Revisi']));
-                    ?>
+                    <!-- ============================================================== -->
+                    <!-- SECTION RIWAYAT REKOMENDASI REVIEWER (LAYER SEBELUM CEO)        -->
+                    <!-- ============================================================== -->
+                    <div class="p-4 border-b border-slate-100 bg-slate-50/70">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                Rekomendasi Reviewer (Layer Pra-CEO)
+                            </span>
+                            <span class="text-[10px] font-semibold text-slate-400">
+                                <?= !empty($semua_reviewer) ? count($semua_reviewer) . ' Reviewer' : 'Opsional' ?>
+                            </span>
+                        </div>
+
+                        <?php if (!empty($semua_reviewer) && count($semua_reviewer) > 0): ?>
+                            <div class="space-y-2.5">
+                                <?php foreach ($semua_reviewer as $rev): 
+                                    $rStatus = $rev['status_approval'] ?? '-';
+                                    $rBadge = 'bg-slate-100 text-slate-700 border-slate-200';
+                                    if ($rStatus === 'Disetujui') $rBadge = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                                    elseif ($rStatus === 'Disetujui Bersyarat') $rBadge = 'bg-amber-100 text-amber-800 border-amber-300';
+                                    elseif ($rStatus === 'Revisi') $rBadge = 'bg-purple-100 text-purple-800 border-purple-300';
+                                    elseif ($rStatus === 'Ditolak') $rBadge = 'bg-rose-100 text-rose-800 border-rose-300';
+                                ?>
+                                    <div class="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs space-y-1.5">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="flex items-center gap-1.5 min-w-0">
+                                                <div class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0">
+                                                    <?= esc(substr($rev['nama_approver'] ?? 'R', 0, 1)) ?>
+                                                </div>
+                                                <span class="text-xs font-bold text-slate-800 truncate"><?= esc($rev['nama_approver'] ?? 'Reviewer') ?></span>
+                                            </div>
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-black border shrink-0 <?= $rBadge ?>">
+                                                <?= esc($rStatus) ?>
+                                            </span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-600 bg-slate-50/80 p-2 rounded-lg border border-slate-100 italic">
+                                            "<?= esc($rev['catatan_approval'] ?: 'Tidak ada catatan khusus.') ?>"
+                                        </p>
+                                        <div class="text-[10px] text-slate-400 text-right">
+                                            <?= !empty($rev['tanggal_approval']) ? date('d/m/Y', strtotime($rev['tanggal_approval'])) : '' ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="p-3 bg-white border border-dashed border-slate-200 rounded-xl text-center text-slate-400 text-[11px]">
+                                Belum ada review dari reviewer. (Reviewer berstatus opsional, CEO dapat langsung memutuskan persetujuan kredit).
+                            </div>
+                        <?php endif; ?>
+                    </div>
 
                     <?php if ($isFinalized): ?>
                         <!-- ============================================================== -->
@@ -518,7 +604,7 @@
                             <button type="submit" id="btnSubmitKeputusan" 
                                     class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                                <span>Simpan Keputusan Reviewer</span>
+                                <span><?= $isCeoRole ? 'Simpan Keputusan Final CEO' : 'Kirim Rekomendasi Reviewer' ?></span>
                             </button>
 
                             <a href="<?= base_url('dashboard') ?>" 
