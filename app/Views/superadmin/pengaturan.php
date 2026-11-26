@@ -174,6 +174,15 @@
                             <span class="text-[11px] text-slate-400 block">
                                 Format: <span id="previewKodeAplikasi" class="font-mono font-bold text-blue-700"><?= esc($pengaturan_sistem['prefix_nomor_aplikasi'] ?? 'CAM') ?>-<?= date('Ymd') ?>-XXXX</span>
                             </span>
+                            <div class="pt-1">
+                                <button type="button" 
+                                        onclick="migrasiPrefixDataLama()" 
+                                        class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-[10px] font-bold transition cursor-pointer w-full justify-center shadow-2xs"
+                                        title="Ubah awalan semua nomor berkas pengajuan kredit lama ke prefix yang baru">
+                                    <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                    <span>Terapkan ke Berkas Lama</span>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Logo Lembaga -->
@@ -421,19 +430,48 @@
                             <p class="text-[11px] text-slate-400">Unduh salinan cadangan data sistem secara berkala</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2">
-                            <div class="text-xs font-bold text-slate-900">🗄️ Backup Database (.sql)</div>
-                            <p class="text-[11px] text-slate-500">Seluruh data pengajuan, pengguna, pengaturan, dan log.</p>
-                            <a href="<?= base_url('superadmin/backup-database') ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- 1. Backup Database SQL -->
+                        <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2 flex flex-col justify-between">
+                            <div>
+                                <div class="text-xs font-bold text-slate-900">🗄️ Backup Database (.sql)</div>
+                                <p class="text-[11px] text-slate-500 mt-1">Seluruh data pengajuan, pengguna, pengaturan, dan log audit.</p>
+                            </div>
+                            <a href="<?= base_url('superadmin/backup-database') ?>" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-2xs">
                                 <span>⬇️</span> Unduh Database
                             </a>
                         </div>
-                        <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2">
-                            <div class="text-xs font-bold text-slate-900">📦 Backup Berkas Upload (.zip)</div>
-                            <p class="text-[11px] text-slate-500">Semua dokumen, berkas persyaratan, dan foto pengajuan.</p>
-                            <a href="<?= base_url('superadmin/backup-berkas') ?>" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition">
+
+                        <!-- 2. Backup Berkas Upload ZIP -->
+                        <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2 flex flex-col justify-between">
+                            <div>
+                                <div class="text-xs font-bold text-slate-900">📦 Backup Berkas Upload (.zip)</div>
+                                <p class="text-[11px] text-slate-500 mt-1">Semua dokumen fisik, berkas persyaratan, dan foto pengajuan.</p>
+                            </div>
+                            <a href="<?= base_url('superadmin/backup-berkas') ?>" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-2xs">
                                 <span>⬇️</span> Unduh Berkas
+                            </a>
+                        </div>
+
+                        <!-- 3. Ekspor Audit Trail CSV -->
+                        <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2 flex flex-col justify-between">
+                            <div>
+                                <div class="text-xs font-bold text-slate-900">📋 Audit Trail Log (.csv)</div>
+                                <p class="text-[11px] text-slate-500 mt-1">Rekam jejak aktivitas pengguna, modul, waktu kejadian, dan IP address.</p>
+                            </div>
+                            <a href="<?= base_url('log/download') ?>" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-2xs">
+                                <span>⬇️</span> Ekspor Audit Trail
+                            </a>
+                        </div>
+
+                        <!-- 4. Ekspor Data Pengajuan Tahunan CSV -->
+                        <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2 flex flex-col justify-between">
+                            <div>
+                                <div class="text-xs font-bold text-slate-900">📊 Rekap Pengajuan (.csv)</div>
+                                <p class="text-[11px] text-slate-500 mt-1">Rekapitulasi data pinjaman masuk (debitur, plafon, tenor, status komite).</p>
+                            </div>
+                            <a href="<?= base_url('pengajuan/download') ?>" class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-2xs">
+                                <span>⬇️</span> Ekspor Data Kredit
                             </a>
                         </div>
                     </div>
@@ -636,6 +674,50 @@
             if (previewEl) {
                 previewEl.innerText = clean + '-<?= date("Ymd") ?>-XXXX';
             }
+        }
+
+        function migrasiPrefixDataLama() {
+            const prefix = (document.getElementById('inputPrefixAplikasi')?.value || 'CAM').trim().toUpperCase() || 'CAM';
+            Swal.fire({
+                title: 'Perbarui Berkas Lama?',
+                html: `Apakah Anda ingin mengubah seluruh nomor berkas pengajuan kredit lama yang masih memakai awalan sebelumnya menjadi berawalan <strong>${prefix}-...</strong>?<br><br><div class="p-2.5 bg-slate-100 rounded-lg text-left text-xs text-slate-700 leading-relaxed font-mono">Contoh konversi:<br>CAM-20261126-4D9D &rarr; <strong class="text-blue-700">${prefix}-20261126-4D9D</strong></div>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: `Ya, Terapkan ${prefix}-`,
+                cancelButtonText: 'Batal'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    Swal.fire({ title: 'Memproses...', text: 'Sedang memperbarui nomor pengajuan lama...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    
+                    const fd = new FormData();
+                    fd.append('prefix', prefix);
+                    
+                    fetch('<?= base_url("dashboard/migrasi-prefix-aplikasi") ?>', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: fd
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.status) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil Diperbarui!',
+                                text: data.message
+                            });
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Gagal', text: data.message || 'Terjadi kesalahan saat memperbarui berkas.' });
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Koneksi ke server gagal, silakan coba lagi.' });
+                    });
+                }
+            });
         }
 
         function updatePreviewKop() {

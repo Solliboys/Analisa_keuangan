@@ -23,6 +23,7 @@ $routes->post('/dashboard/update-ai', 'Dashboard::updateAi');
 $routes->get('/dashboard/setujui-user/(:num)', 'Dashboard::setujuiUser/$1');
 $routes->get('/dashboard/tolak-user/(:num)', 'Dashboard::tolakUser/$1');
 $routes->post('/dashboard/update-pengaturan', 'Dashboard::updatePengaturan');
+$routes->post('/dashboard/migrasi-prefix-aplikasi', 'Dashboard::migrasiPrefixAplikasi');
 $routes->get('/profil', 'Dashboard::profil');
 $routes->post('/profil/update', 'Dashboard::updateProfil');
 $routes->get('/log', 'LogAktivitas::index');

@@ -786,6 +786,56 @@ class Dashboard extends BaseController
         return redirect()->to($redirectUrl)->with('success', $successMsg);
     }
 
+    /**
+     * Memperbarui awalan (prefix) seluruh nomor berkas pengajuan kredit lama
+     */
+    public function migrasiPrefixAplikasi()
+    {
+        if (!session()->get('logged_in') || strtolower(session()->get('jabatan') ?? '') !== 'superadmin') {
+            return $this->response->setJSON(['status' => false, 'message' => 'Akses ditolak: Hanya Superadmin yang berwenang.']);
+        }
+
+        $rawPrefix = trim((string)($this->request->getPost('prefix') ?: 'CAM'));
+        $prefixBaru = strtoupper(preg_replace('/[^A-Za-z0-9_-]/', '', $rawPrefix)) ?: 'CAM';
+
+        $db = \Config\Database::connect();
+        $kreditList = $db->table('kredit')->select('kredit_id, nomor_aplikasi')->get()->getResultArray() ?? [];
+
+        $updatedCount = 0;
+        foreach ($kreditList as $row) {
+            $oldNum = (string)($row['nomor_aplikasi'] ?? '');
+            // Cocokkan pola format: PREFIX-YYYYMMDD-XXXX (contoh: CAM-20261126-4D9D)
+            if (preg_match('/^[A-Za-z0-9_-]+-(\d{8}-[A-Za-z0-9]+)$/', $oldNum, $matches)) {
+                $newNum = $prefixBaru . '-' . $matches[1];
+                if ($newNum !== $oldNum) {
+                    $db->table('kredit')->where('kredit_id', $row['kredit_id'])->update(['nomor_aplikasi' => $newNum]);
+                    $updatedCount++;
+                }
+            }
+        }
+
+        // Sinkronisasi prefix aktif ke pengaturan_sistem
+        $this->ensurePengaturanSistemSchema($db);
+        $db->table('pengaturan_sistem')->where('id', 1)->update([
+            'prefix_nomor_aplikasi' => $prefixBaru,
+            'updated_at'            => date('Y-m-d H:i:s')
+        ]);
+
+        LogAktivitasModel::catat(
+            "Memperbarui awalan ({$updatedCount} berkas) pengajuan kredit menjadi '{$prefixBaru}-...'",
+            'PENGATURAN',
+            'SUCCESS',
+            ['prefix_baru' => $prefixBaru, 'jumlah_diperbarui' => $updatedCount]
+        );
+
+        return $this->response->setJSON([
+            'status'  => true,
+            'count'   => $updatedCount,
+            'prefix'  => $prefixBaru,
+            'message' => "Berhasil memperbarui {$updatedCount} berkas pengajuan lama ke prefix '{$prefixBaru}-...'."
+        ]);
+    }
+
     public function profil()
     {
         if (!session()->get('logged_in')) {
