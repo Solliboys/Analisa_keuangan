@@ -157,9 +157,6 @@ if (!empty($listDetailBeban)) {
     $totalBebanAwal = (float)($keuangan['beban_lainnya_nominal_rk'] ?? ($keuangan['biaya_hidup_nominal_rk'] ?? 0));
     $listDetailBeban = [['nama' => 'Pengeluaran Rutin & Kebutuhan Rumah Tangga', 'nominal' => $totalBebanAwal]];
 }
-$totalPengeluaranAwal = $totalBebanAwal + $totalHppAwal;
-$surplusBulananAwal = $totalPemasukanAwal - $totalPengeluaranAwal;
-
 // =============================================================================
 // 4. DAFTAR HARTA / ASET DARI DATA KEUANGAN (TIDAK BOLEH DARI NILAI AGUNAN)
 // =============================================================================
@@ -207,7 +204,14 @@ $totalHartaEligibleAwal = max(0, $totalHartaBrutoAwal - $asetTerikatAwal);
 // 5. DAFTAR UTANG LUAR DARI DATA KEUANGAN & SLIK OJK
 // =============================================================================
 $listDetailUtang = [];
-if (!empty($rawDetailHarta)) {
+$rawDetailUtang = $keuangan['detail_utang_json'] ?? '';
+if (!empty($rawDetailUtang) && $rawDetailUtang !== '[]') {
+    $decU = json_decode($rawDetailUtang, true);
+    if (is_array($decU) && count($decU) > 0) {
+        $listDetailUtang = $decU;
+    }
+}
+if (empty($listDetailUtang) && !empty($rawDetailHarta)) {
     $decH = json_decode($rawDetailHarta, true);
     if (is_array($decH) && isset($decH['daftar_utang']) && is_array($decH['daftar_utang'])) {
         $listDetailUtang = $decH['daftar_utang'];
@@ -215,17 +219,22 @@ if (!empty($rawDetailHarta)) {
 }
 if (empty($listDetailUtang)) {
     $utangDagangDb = (float)($keuangan['neraca_utang_usaha'] ?? 0);
-    $listDetailUtang = [
-        ['nama' => 'Utang Dagang / Supplier', 'nominal' => $utangDagangDb, 'angsuran' => 0]
-    ];
+    if ($utangDagangDb > 0) {
+        $listDetailUtang = [
+            ['nama' => 'Utang Dagang / Supplier', 'nominal' => $utangDagangDb, 'angsuran' => 0]
+        ];
+    }
 }
 
 $subtotalUtangDinamisAwal = 0;
 $subtotalAngsuranDinamisAwal = 0;
 foreach ($listDetailUtang as $u) {
-    $subtotalUtangDinamisAwal    += (float)($u['nominal'] ?? 0);
-    $subtotalAngsuranDinamisAwal += (float)($u['angsuran'] ?? 0);
+    $subtotalUtangDinamisAwal    += (float)($u['plafon'] ?? ($u['nominal'] ?? 0));
+    $subtotalAngsuranDinamisAwal += (float)($u['cicilan_bulanan'] ?? ($u['angsuran'] ?? 0));
 }
+
+$totalPengeluaranAwal = $totalBebanAwal + $totalHppAwal + $subtotalAngsuranDinamisAwal;
+$surplusBulananAwal = $totalPemasukanAwal - $totalPengeluaranAwal;
 
 $totalUtangLuarAwal        = $subtotalUtangDinamisAwal + $totalOutstandingSlik;
 $totalAngsuranBerjalanAwal  = $subtotalAngsuranDinamisAwal + $totalCicilanSlik;
@@ -235,7 +244,8 @@ $totalAngsuranGabunganAwal  = $totalAngsuranBerjalanAwal + $estimasiAngsuranBaru
 // 6. KEKAYAAN BERSIH & RASIO KEUANGAN
 // =============================================================================
 $kekayaanBersihAwal = $totalHartaEligibleAwal - $totalUtangLuarAwal;
-$dscrAwal = ($totalAngsuranGabunganAwal > 0) ? round($surplusBulananAwal / $totalAngsuranGabunganAwal, 2) : 0;
+// DSCR = Surplus Bersih / Angsuran Baru yang Diajukan (Standar OJK & Perbankan: Min 1.30x)
+$dscrAwal = ($estimasiAngsuranBaru > 0) ? round($surplusBulananAwal / $estimasiAngsuranBaru, 2) : 0;
 $dsrAwal  = ($totalPemasukanAwal > 0) ? round(($totalAngsuranGabunganAwal / $totalPemasukanAwal) * 100, 1) : 0;
 $darAwal  = ($totalHartaEligibleAwal > 0) ? round(($totalUtangLuarAwal / $totalHartaEligibleAwal) * 100, 1) : 0;
 $derAwal  = ($kekayaanBersihAwal > 0) ? round($totalUtangLuarAwal / $kekayaanBersihAwal, 2) : 0;
@@ -732,7 +742,7 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                             <span id="rasio_lap_dscr" class="text-lg font-black text-emerald-700"><?= $dscrAwal ?>x</span>
                             <span class="text-[10px] text-slate-500 font-semibold">Min 1.30x</span>
                         </div>
-                        <span class="text-[9px] text-slate-400 block">Sisa / Total Angsuran</span>
+                        <span class="text-[9px] text-slate-400 block">Surplus Bersih &divide; Angsuran Baru</span>
                     </div>
 
                     <!-- DSR / DBR -->
@@ -1236,8 +1246,29 @@ function sinkronkanLaporanKeuangan() {
         }
     }
 
-    // Total Pengeluaran = Beban Rutin + HPP
-    const totalPengeluaran = totBeban + totHpp;
+    // 4. Ambil Daftar Utang Luar dari Tab 9 (Daftar Hutang Dinamis) + SLIK OJK
+    let listUtang = [];
+    if (Array.isArray(window.daftarUtang) && window.daftarUtang.length > 0) {
+        listUtang = window.daftarUtang;
+    } else {
+        listUtang = <?= json_encode($listDetailUtang) ?>;
+    }
+
+    let subUtangDinamis = 0;
+    let subAngsDinamis = 0;
+    listUtang.forEach(item => {
+        subUtangDinamis += pNomLap(item.plafon || item.nominal || 0);
+        subAngsDinamis += pNomLap(item.cicilan_bulanan || item.angsuran || 0);
+    });
+
+    const outSlik = window.OUTSTANDING_SLIK_DEFAULT || <?= $totalOutstandingSlik ?>;
+    const angsSlik = window.ANGSURAN_SLIK_DEFAULT || <?= $totalCicilanSlik ?>;
+
+    const totUtangLuar = subUtangDinamis + outSlik;
+    const totAngsBerjalan = subAngsDinamis + angsSlik;
+
+    // Total Pengeluaran = Beban Rutin + HPP + Cicilan Bulanan Hutang Berjalan (100% Sinkron Tab 9)
+    const totalPengeluaran = totBeban + totHpp + subAngsDinamis;
 
     // Auto-deteksi kategori sesuai pilihan/ada HPP di Tab 9
     const targetKategori = (isCheckedAdaLain || totHpp > 0) ? 'usaha' : 'gaji';
@@ -1245,10 +1276,10 @@ function sinkronkanLaporanKeuangan() {
         gantiKategoriDebitur(targetKategori);
     }
 
-    // 4. Sisa Penghasilan (Surplus Bulanan / Net Cashflow)
+    // 5. Sisa Penghasilan (Surplus Bulanan / Net Cashflow)
     const surplus = totalPemasukan - totalPengeluaran;
 
-    // 5. Ambil Daftar Harta (Aset) Dinamis dari Kotak 3 Data Keuangan
+    // 6. Ambil Daftar Harta (Aset) Dinamis dari Kotak 3 Data Keuangan
     let listHarta = [];
     if (listAsetKotak3.length > 0) {
         listHarta = listAsetKotak3;
@@ -1266,27 +1297,6 @@ function sinkronkanLaporanKeuangan() {
         }
     });
     const totHartaEligible = Math.max(0, totHartaBruto - asetTerikat);
-
-    // 6. Ambil Daftar Utang Luar dari Tab 9 + SLIK OJK
-    let listUtang = [];
-    if (Array.isArray(window.daftarUtang) && window.daftarUtang.length > 0) {
-        listUtang = window.daftarUtang;
-    } else {
-        listUtang = <?= json_encode($listDetailUtang) ?>;
-    }
-
-    let subUtangDinamis = 0;
-    let subAngsDinamis = 0;
-    listUtang.forEach(item => {
-        subUtangDinamis += pNomLap(item.nominal);
-        subAngsDinamis += pNomLap(item.angsuran);
-    });
-
-    const outSlik = window.OUTSTANDING_SLIK_DEFAULT || <?= $totalOutstandingSlik ?>;
-    const angsSlik = window.ANGSURAN_SLIK_DEFAULT || <?= $totalCicilanSlik ?>;
-
-    const totUtangLuar = subUtangDinamis + outSlik;
-    const totAngsBerjalan = subAngsDinamis + angsSlik;
 
     // 7. Fasilitas Kredit Baru yang Diajukan (Sinkron 100% dengan Metode Bunga & Skema Pembayaran Tab 1)
     const plafonBaru = pNomLap(document.getElementById('plafon_pengajuan')?.value) || <?= $plafonBaru ?>;
@@ -1322,8 +1332,9 @@ function sinkronkanLaporanKeuangan() {
     const kekayaanBersih = totHartaEligible - totUtangLuar;
 
     // 9. Rasio-Rasio Keuangan
-    const dscr = (totAngsGabungan > 0) ? (surplus / totAngsGabungan).toFixed(2) : '0.00';
-    const dsr  = (totalPemasukan > 0) ? ((totAngsGabungan / totalPemasukan) * 100).toFixed(1) : '0.0';
+    // DSCR = Surplus Bersih / Angsuran Baru yang Diajukan (Standar OJK & Perbankan: Min 1.30x)
+    const dscr = (estimasiAngsBaru > 0) ? (surplus / estimasiAngsBaru).toFixed(2) : '0.00';
+    const dsr  = (totalPemasukan > 0) ? (((subAngsDinamis + estimasiAngsBaru) / totalPemasukan) * 100).toFixed(1) : '0.0';
     const dar  = (totHartaEligible > 0) ? ((totUtangLuar / totHartaEligible) * 100).toFixed(1) : '0.0';
     const der  = (kekayaanBersih > 0) ? (totUtangLuar / kekayaanBersih).toFixed(2) : '0.00';
 
@@ -1403,6 +1414,30 @@ function sinkronkanLaporanKeuangan() {
             });
         }
 
+        if (listUtang.length > 0) {
+            let hasCicilan = false;
+            let htmCicilan = `
+                <tr class="bg-rose-50/60 font-bold text-[10px] uppercase text-rose-900 border-t border-b border-rose-100">
+                    <td colspan="2" class="py-1 px-3 font-extrabold tracking-wider">💳 Cicilan Hutang / Pinjaman Berjalan</td>
+                </tr>
+            `;
+            listUtang.forEach(item => {
+                const cicilan = pNomLap(item.cicilan_bulanan || item.angsuran || 0);
+                if (cicilan > 0) {
+                    hasCicilan = true;
+                    htmCicilan += `
+                        <tr>
+                            <td class="py-2 px-3 font-semibold text-slate-800 pl-5">• Cicilan ${escapeHtmlLap(item.nama || 'Pinjaman Bank')}</td>
+                            <td class="py-2 px-3 text-right font-bold text-rose-600">${fNomLap(cicilan)}</td>
+                        </tr>
+                    `;
+                }
+            });
+            if (hasCicilan) {
+                htmB += htmCicilan;
+            }
+        }
+
         if (!htmB) {
             htmB = `<tr><td class="py-2.5 px-3 text-slate-400 italic text-center" colspan="2">Belum ada rincian pengeluaran</td></tr>`;
         }
@@ -1455,8 +1490,8 @@ function sinkronkanLaporanKeuangan() {
     if (tbodyUtang) {
         let htmU = '';
         listUtang.forEach(item => {
-            const nom = pNomLap(item.nominal);
-            const angs = pNomLap(item.angsuran);
+            const nom = pNomLap(item.plafon || item.nominal || 0);
+            const angs = pNomLap(item.cicilan_bulanan || item.angsuran || 0);
             if (item.nama || nom > 0 || angs > 0) {
                 htmU += `
                     <tr>

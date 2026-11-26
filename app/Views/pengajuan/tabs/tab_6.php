@@ -178,7 +178,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                             <input type="checkbox" id="checkAllSlik" onchange="toggleSelectAllSlik(this)" class="w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer" checked title="Pilih Semua">
                         </div>
                     </th>
-                    <th class="py-2.5 px-2 whitespace-nowrap">STATUS</th>
+                    <th class="py-2.5 px-2 whitespace-nowrap hidden">STATUS</th>
                     <th class="py-2.5 px-2 whitespace-nowrap">NO REFF SLIK</th>
                     <th class="py-2.5 px-2 whitespace-nowrap">TANGGAL</th>
                     <th class="py-2.5 px-2 whitespace-nowrap">NO ID</th>
@@ -224,7 +224,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                                 <input type="checkbox" class="slik-select-item w-3.5 h-3.5 rounded text-blue-600 border-slate-300 focus:ring-blue-500 cursor-pointer" data-index="<?= $idx ?>" value="<?= $idx ?>" checked>
                             </div>
                         </td>
-                        <td class="py-2.5 px-2 whitespace-nowrap" id="status-badge-cell-<?= $idx ?>">
+                        <td class="py-2.5 px-2 whitespace-nowrap hidden" id="status-badge-cell-<?= $idx ?>">
                             <span class="inline-block <?= $isTerbit ? "bg-[#00a859]" : "bg-[#f59e0b]" ?> text-white font-bold text-[10px] px-2 py-0.5 rounded shadow-2xs">
                                 <?= esc($rowStatus) ?>
                             </span>

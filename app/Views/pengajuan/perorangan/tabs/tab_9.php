@@ -301,11 +301,39 @@
                     </div>
                 </div>
 
+                <!-- Sub-Bagian 2C: Pengeluaran Cicilan Bulanan (Daftar Hutang / Pinjaman Berjalan) -->
+                <div class="p-4 bg-white/80 rounded-xl border border-rose-100 shadow-2xs">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                                C. Pengeluaran Cicilan Bulanan (Daftar Hutang / Pinjaman Berjalan)
+                            </h4>
+                            <p class="text-[10px] text-slate-400">Cicilan pinjaman berjalan di bank/lembaga lain: [Plafon + (Plafon &times; Bunga &times; Tenor)] &divide; (Tenor &times; 12 Bulan)</p>
+                        </div>
+                        <button type="button" onclick="tambahUtang('', 0, 12, 1);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            <span>Tambah Hutang</span>
+                        </button>
+                    </div>
+
+                    <!-- Container List Utang Dinamis -->
+                    <div id="containerUtangDinamis" class="space-y-2 mb-2.5">
+                        <!-- Diisi oleh renderListUtang() -->
+                    </div>
+
+                    <!-- Subtotal Cicilan Bulanan Hutang -->
+                    <div class="p-2.5 bg-rose-50/60 border border-rose-200/70 rounded-xl flex justify-between items-center text-xs">
+                        <span class="font-bold text-slate-600 text-[11px] uppercase tracking-wider">Subtotal Cicilan Bulanan Hutang:</span>
+                        <span id="nomTotalCicilanUtangDinamis" class="font-bold text-rose-700 text-xs sm:text-sm">Rp 0</span>
+                    </div>
+                </div>
+
                 <!-- Ringkasan Terpisah: Total Seluruh Pengeluaran -->
                 <div class="p-3.5 bg-white border border-rose-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
                     <div>
                         <span class="font-bold text-rose-900 text-xs uppercase tracking-wider block">Total Seluruh Pengeluaran:</span>
-                        <span class="text-[10px] text-slate-400 font-medium">* Akumulasi Subtotal Pengeluaran + Subtotal HPP (Bahan/Kulakan)</span>
+                        <span class="text-[10px] text-slate-400 font-medium">* Akumulasi Subtotal Beban Pengeluaran + Subtotal HPP + Subtotal Cicilan Bulanan Hutang</span>
                     </div>
                     <span id="nomTotalPengeluaranBU" class="text-sm sm:text-base font-black text-rose-700">Rp 0</span>
                 </div>
@@ -360,11 +388,37 @@
                 </div>
                 <div class="min-w-0">
                     <div class="text-[10px] font-bold uppercase tracking-wider text-blue-100 truncate">Sisa Penghasilan Bersih (Surplus / Net Cashflow)</div>
-                    <div class="text-xs sm:text-sm font-extrabold text-white truncate">Pendapatan dikurangi HPP &amp; Pengeluaran Rutin</div>
+                    <div class="text-xs sm:text-sm font-extrabold text-white truncate">Pendapatan dikurangi HPP, Beban &amp; Cicilan Utang Berjalan</div> (feat: overhaul Rekening Koran direct upload without popup, add Daftar Hutang and live DSCR, update Tab 1 & Tab 6 metadata, and optimize Reviewer & CEO workflow)
                 </div>
             </div>
             <div class="text-right shrink-0">
                 <span id="nettRK" class="text-xl sm:text-2xl font-black text-white tracking-tight whitespace-nowrap block" style="color: #ffffff !important;">Rp 0</span>
+            </div>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- BANNER METRIK UTAMA: RASIO DSCR (DEBT SERVICE COVERAGE)  -->
+        <!-- ======================================================== -->
+        <div id="metric_lap_dscr_tab9" class="p-4 sm:p-5 bg-slate-900 text-white rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-slate-800">
+            <div class="flex items-center gap-3.5 min-w-0">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-400/30">
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-300">Kapasitas Bayar: Rasio DSCR</span>
+                        <span id="badgeStatusDSCRK" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                            Sangat Aman (≥ 1.30x)
+                        </span>
+                    </div>
+                    <div class="text-xs text-slate-300 mt-1">
+                        Surplus Bersih (<span id="dscrNumeratorLabel" class="font-semibold text-white">Rp 0</span>) &divide; Angsuran Baru yang Diajukan (<span id="dscrDenominatorLabel" class="font-semibold text-white">Rp 0</span>)
+                    </div>
+                </div>
+            </div>
+            <div class="text-left sm:text-right shrink-0">
+                <span id="labelRasioDSCRK" class="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight whitespace-nowrap block">0.00x</span>
+                <span class="text-[10px] text-slate-400 block">* Standar perbankan &amp; lembaga pembiayaan: DSCR ≥ 1.30x</span>
             </div>
         </div>
 
@@ -381,6 +435,9 @@
         <input type="hidden" name="detail_beban_lainnya_rk" id="detail_beban_lainnya_rk" value="<?= esc(!empty($listDetailBeban) ? json_encode($listDetailBeban) : '[]') ?>">
         <input type="hidden" name="beban_lainnya_persen_rk" id="beban_lainnya_persen_rk" value="<?= esc($keuangan['beban_lainnya_persen_rk'] ?? 0) ?>">
         <input type="hidden" name="detail_harta_json" id="detail_harta_json" value="<?= esc(!empty($rawDetailHarta) ? $rawDetailHarta : json_encode(['daftar_harta' => $listDetailHarta, 'daftar_utang' => $listDetailUtang])) ?>">
+        <input type="hidden" name="detail_utang_json" id="detail_utang_json" value="<?= esc(!empty($listDetailUtang) ? json_encode($listDetailUtang) : '[]') ?>">
+        <input type="hidden" name="dsc_rasio_rk" id="dsc_rasio_rk" value="0">
+        <input type="hidden" name="rasio_dsc_dscr" id="rasio_dsc_dscr" value="0">
 
         <span id="nomHppRK" class="hidden">Rp 0</span>
         <span id="nomBiayaHidupRK" class="hidden">Rp 0</span>
@@ -402,5 +459,8 @@
     window.daftarHpp = <?= !empty($listDetailHppPR) ? json_encode($listDetailHppPR) : '[]' ?>;
     window.daftarHarta = <?= !empty($listDetailHarta) ? json_encode($listDetailHarta) : '[]' ?>;
     window.daftarUtang = <?= !empty($listDetailUtang) ? json_encode($listDetailUtang) : '[]' ?>;
+    if (typeof initDaftarUtang === 'function') {
+        initDaftarUtang();
+    }
     </script>
 </div>

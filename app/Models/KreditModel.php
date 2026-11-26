@@ -15,6 +15,8 @@ class KreditModel extends Model
     protected $allowedFields    = [
         'user_id',
         'nomor_aplikasi',
+        'tanggal_permohonan',
+        'nama_pengusul',
         'tipe_aplikasi',
         'jenis_debitur',
         'nama_debitur',

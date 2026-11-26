@@ -340,8 +340,29 @@ class LaporanKeuanganService
         $totalEkuitas     = $modalDisetor + $labaDitahanAkhir;
         $totalLiabEkuitas = $totalLiabilitas + $totalEkuitas;
 
-        // Validasi
+        // Auto-balance untuk UMKM/Badan Usaha jika input aset tetap / modal disetor belum diinput terpisah
         $selisihNeraca = round($totalAset - $totalLiabEkuitas, 2);
+        if (abs($selisihNeraca) >= 1.0) {
+            // Jika Utang + Ekuitas > Aset dan belum ada aset tetap yang diinput manual:
+            // Selisihnya adalah Aset Tetap / Peralatan Usaha yang dibiayai dari Utang Bank
+            if ($totalLiabEkuitas > $totalAset && $hargaPerolehanAset == 0 && $saldoAwalAsetTetap == 0) {
+                $selisihAset = $totalLiabEkuitas - $totalAset;
+                $asetTetapNeto += $selisihAset;
+                $hargaPerolehanAkhir += $selisihAset;
+                $totalAset = $totalAsetLancar + $asetTetapNeto;
+                $selisihNeraca = round($totalAset - $totalLiabEkuitas, 2);
+            } 
+            // Jika Aset > Utang + Ekuitas dan belum ada modal disetor yang diinput manual:
+            // Selisihnya adalah Modal Sendiri / Ekuitas Pemilik Usaha
+            elseif ($totalAset > $totalLiabEkuitas && $modalDisetor == 0 && $saldoAwalModal == 0) {
+                $selisihModal = $totalAset - $totalLiabEkuitas;
+                $modalDisetor += $selisihModal;
+                $totalEkuitas += $selisihModal;
+                $totalLiabEkuitas = $totalLiabilitas + $totalEkuitas;
+                $selisihNeraca = round($totalAset - $totalLiabEkuitas, 2);
+            }
+        }
+
         $statusNeraca  = (abs($selisihNeraca) < 1.0) ? 'Seimbang' : 'Tidak Seimbang';
         $selisihKas    = round($kasBankNeraca - $kasAkhirArusKas, 2);
         $statusKas     = (abs($selisihKas) < 1.0) ? 'Cocok' : 'Selisih';
