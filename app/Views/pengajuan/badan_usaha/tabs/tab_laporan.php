@@ -1913,15 +1913,43 @@ function hitungDataLaporanDariDOM() {
     const totalAset = totalAsetLancar + asetTetapNeto;
 
     const utangUsaha = pF(document.querySelector('[name="input_utang_usaha_akhir"]')?.value) || 0;
-    const utangBankPendek = pF(document.querySelector('[name="neraca_utang_bank_lancar"]')?.value) || 0;
-    const utangBankPanjang = pF(document.querySelector('[name="neraca_utang_bank_panjang"]')?.value) || 0;
+    let utangBankPendek = pF(document.querySelector('[name="neraca_utang_bank_lancar"]')?.value) || 0;
+    let utangBankPanjang = pF(document.querySelector('[name="neraca_utang_bank_panjang"]')?.value) || 0;
+    // Jika input utang bank belum diisi manual di form neraca, ambil otomatis dari Baki Debet (Outstanding) SLIK OJK
+    if (utangBankPendek === 0 && utangBankPanjang === 0) {
+        let sumSlikDOM = 0;
+        document.querySelectorAll('.slik-outstanding').forEach(el => {
+            sumSlikDOM += pF(el.value);
+        });
+        if (sumSlikDOM === 0) {
+            const elTotSlik = document.getElementById('totalOutstandingSlik');
+            if (elTotSlik) sumSlikDOM = pF(elTotSlik.innerText);
+        }
+        if (sumSlikDOM > 0) {
+            utangBankPanjang = sumSlikDOM;
+        }
+    }
     const totalLiabilitas = utangUsaha + utangBankPendek + utangBankPanjang;
 
-    const modalDisetor = pF(document.querySelector('[name="neraca_modal_disetor"]')?.value) || 0;
+    let modalDisetor = pF(document.querySelector('[name="neraca_modal_disetor"]')?.value) || 0;
     const saldoAwalLabaDitahan = pF(document.querySelector('[name="neraca_awal_laba_ditahan"]')?.value) || 0;
     const labaDitahanAkhir = saldoAwalLabaDitahan + labaBersih;
-    const totalEkuitas = modalDisetor + labaDitahanAkhir;
-    const totalLiabEkuitas = totalLiabilitas + totalEkuitas;
+    let totalEkuitas = modalDisetor + labaDitahanAkhir;
+    let totalLiabEkuitas = totalLiabilitas + totalEkuitas;
+
+    // Auto-balance jika belum ada input manual untuk Aset Tetap / Modal Disetor
+    let finalAsetTetapNeto = asetTetapNeto;
+    let finalTotalAset = totalAset;
+    if (totalLiabEkuitas > finalTotalAset && asetTetapBrutoInput === 0) {
+        const diff = totalLiabEkuitas - finalTotalAset;
+        finalAsetTetapNeto += diff;
+        finalTotalAset += diff;
+    } else if (finalTotalAset > totalLiabEkuitas && modalDisetor === 0) {
+        const diff = finalTotalAset - totalLiabEkuitas;
+        modalDisetor += diff;
+        totalEkuitas += diff;
+        totalLiabEkuitas += diff;
+    }
 
     return {
         laba_rugi: {
@@ -1945,9 +1973,9 @@ function hitungDataLaporanDariDOM() {
             piutang_usaha: piutang,
             persediaan: persediaan,
             total_aset_lancar: totalAsetLancar,
-            aset_tetap_neto: asetTetapNeto,
+            aset_tetap_neto: finalAsetTetapNeto,
             detail_aset: detailAsetDOM,
-            total_aset: totalAset,
+            total_aset: finalTotalAset,
             utang_usaha: utangUsaha,
             utang_bank_pendek: utangBankPendek,
             utang_jangka_panjang: utangBankPanjang,

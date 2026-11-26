@@ -56,6 +56,23 @@ class LaporanKeuanganSeeder extends Seeder
             $kreditIdBU = $db->insertID();
         }
 
+        // Seed SLIK untuk Badan Usaha (kredit berjalan yang menjadi dasar Utang Bank di Neraca)
+        $db->table('slik')->where('kredit_id', $kreditIdBU)->delete();
+        $db->table('slik')->insert([
+            'kredit_id'    => $kreditIdBU,
+            'nama_debitur' => 'PT Sumber Makmur Sejahtera',
+            'bank_lembaga' => 'Bank Mandiri',
+            'plafon'       => 200000000,
+            'outstanding'  => 160000000,
+            'angsuran'     => 4800000,
+            'kelancaran'   => 'Lancar',
+            'keterangan'   => 'Kredit Modal Kerja (KMK)',
+            'is_verified'  => 1,
+            'diinput_oleh' => 'petugas_slik',
+            'created_at'   => date('Y-m-d H:i:s'),
+            'updated_at'   => date('Y-m-d H:i:s'),
+        ]);
+
         // Data keuangan DSC untuk Badan Usaha
         // Sesuai requirement:
         // Pendapatan 1.200jt, HPP 700jt, Gaji 96jt, Sewa/Utilitas 104jt, Penyusutan 30jt, Bunga 20jt, Pajak 25jt
