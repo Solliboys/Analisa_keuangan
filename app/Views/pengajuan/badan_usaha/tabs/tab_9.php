@@ -386,7 +386,7 @@
                 </div>
                 <div class="min-w-0">
                     <div class="text-[10px] font-bold uppercase tracking-wider text-blue-100 truncate">Laba Operasional Usaha (EBITDA)</div>
-                    <div class="text-xs sm:text-sm font-extrabold text-white truncate">Pendapatan dikurangi HPP, Beban &amp; Cicilan Utang Berjalan</div> (feat: overhaul Rekening Koran direct upload without popup, add Daftar Hutang and live DSCR, update Tab 1 & Tab 6 metadata, and optimize Reviewer & CEO workflow)
+                    <div class="text-xs sm:text-sm font-extrabold text-white truncate">Pendapatan dikurangi HPP, Beban &amp; Cicilan Utang Berjalan</div>
                 </div>
             </div>
             <div class="text-right shrink-0">

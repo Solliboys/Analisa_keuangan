@@ -23,6 +23,10 @@
 
     $statusAplikasi  = $kredit['status_pengajuan'] ?? 'Draft';
 
+    // Role session pengguna
+    $userRole = strtolower(session()->get('jabatan') ?? '');
+    $isCeoRole = ($userRole === 'ceo' || $userRole === 'direktur' || $userRole === 'direksi' || strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false);
+
     // Form khusus CEO
     $currentDecision = $keputusan_ceo['status_approval'] ?? '';
     $currentCatatan  = $keputusan_ceo['catatan_approval'] ?? '';
@@ -67,7 +71,7 @@
         $labaVal = max(0, $omzetVal - $hppNom - $bhNom - $blNom);
     }
 
-    $dscVal = (float)($keuangan['dsc_rasio_rk'] ?? ($keuangan['rasio_dsc_dscr'] ?? 0));
+    $dscVal = (float)($keuangan['rasio_dsc_rk'] ?? ($keuangan['rasio_dsc_iv'] ?? ($keuangan['dsc_rasio_rk'] ?? ($keuangan['rasio_dsc_dscr'] ?? 0))));
     if ($dscVal <= 0 && $angsuranVal > 0 && $labaVal > 0) {
         $dscVal = round($labaVal / $angsuranVal, 2);
     }

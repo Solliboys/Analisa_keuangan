@@ -526,14 +526,14 @@
                         </div>
                         <div>
                             <label class="block font-semibold text-slate-700 mb-1">Plafond (Rp)</label>
-                            <input type="text" id="inputFasPlafon" placeholder="0" oninput="this.value = formatRupiahInput(this.value)" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold focus:border-blue-500 focus:outline-none">
+                            <input type="text" id="inputFasPlafon" placeholder="0" oninput="this.value = formatRupiahInput(this.value); if(typeof updateLivePreviewAngsuranModalSlik === 'function') updateLivePreviewAngsuranModalSlik();" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold focus:border-blue-500 focus:outline-none">
                         </div>
                         <div>
                             <label class="block font-semibold text-slate-700 mb-1">Baki Debet (Rp)</label>
-                            <input type="text" id="inputFasOutstanding" placeholder="0" oninput="this.value = formatRupiahInput(this.value)" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold text-blue-700 focus:border-blue-500 focus:outline-none">
+                            <input type="text" id="inputFasOutstanding" placeholder="0" oninput="this.value = formatRupiahInput(this.value); if(typeof updateLivePreviewAngsuranModalSlik === 'function') updateLivePreviewAngsuranModalSlik();" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold text-blue-700 focus:border-blue-500 focus:outline-none">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
                         <div>
                             <label class="block font-semibold text-slate-700 mb-1">Kolektibilitas</label>
                             <select id="inputFasKelancaran" class="w-full bg-white border border-slate-300 rounded-lg p-2 focus:border-blue-500 focus:outline-none cursor-pointer">
@@ -545,17 +545,27 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block font-semibold text-slate-700 mb-1">Suku Bunga</label>
-                            <input type="text" id="inputFasBunga" placeholder="Contoh: 9%" class="w-full bg-white border border-slate-300 rounded-lg p-2 focus:border-blue-500 focus:outline-none">
+                            <label class="block font-semibold text-slate-700 mb-1">Suku Bunga (% / thn)</label>
+                            <input type="text" id="inputFasBunga" placeholder="10%" value="10%" oninput="if(typeof updateLivePreviewAngsuranModalSlik === 'function') updateLivePreviewAngsuranModalSlik();" class="w-full bg-white border border-slate-300 rounded-lg p-2 focus:border-blue-500 focus:outline-none">
                         </div>
-                        <div class="flex items-end gap-2">
-                            <button type="button" onclick="simpanFasilitasSlikBaru()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition shadow-xs cursor-pointer">
-                                Simpan ke Rincian
-                            </button>
-                            <button type="button" onclick="tutupFormTambahFasilitasSlik()" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold transition cursor-pointer">
-                                Batal
-                            </button>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">Jangka Waktu (Bulan)</label>
+                            <input type="number" id="inputFasTenor" placeholder="36" value="36" min="1" oninput="if(typeof updateLivePreviewAngsuranModalSlik === 'function') updateLivePreviewAngsuranModalSlik();" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold focus:border-blue-500 focus:outline-none">
                         </div>
+                        <div>
+                            <label class="block font-semibold text-rose-600 mb-1">Estimasi Cicilan / Bulan</label>
+                            <div id="labelLiveAngsuranFasilitas" class="w-full bg-rose-50 border border-rose-200 rounded-lg p-2 font-extrabold text-rose-700">
+                                Rp 0 / bln
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-2 pt-1 border-t border-blue-200">
+                        <button type="button" onclick="tutupFormTambahFasilitasSlik()" class="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold transition cursor-pointer">
+                            Batal
+                        </button>
+                        <button type="button" onclick="simpanFasilitasSlikBaru()" class="px-5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition shadow-xs cursor-pointer">
+                            Simpan ke Rincian Fasilitas
+                        </button>
                     </div>
                 </div>
 

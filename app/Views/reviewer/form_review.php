@@ -165,7 +165,7 @@
                                 <span class="text-[11px] text-slate-400">Wajib diisi</span>
                             </div>
                             <textarea id="catatanKeputusan" name="catatan" rows="4" 
-                                      class="w-full text-xs text-slate-800 border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-600 transition placeholder:text-slate-400"
+                                      class="w-full bg-white text-xs text-slate-800 border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-600 transition placeholder:text-slate-400"
                                       placeholder="Tuliskan catatan hasil telaah berkas pengajuan kredit, pertimbangan mitigasi risiko 5C, evaluasi rekening koran & SLIK, serta rekomendasi untuk CEO..."><?= esc(trim($catatan_dari_reviewer['catatan_approval'] ?? '')) ?></textarea>
                             <p class="text-[11px] text-slate-400 mt-1" id="catatanHelperText">
                                 Catatan ini akan langsung diterima oleh CEO sebagai dasar pertimbangan pengambilan keputusan final.

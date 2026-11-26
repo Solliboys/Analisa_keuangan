@@ -55,14 +55,9 @@ foreach ($slikList as $sl) {
     $slikDetailStr[]    = "{$bk} Rp" . number_format($ob, 0, ',', '.') . ($angs > 0 ? " (Cicilan Rp" . number_format($angs, 0, ',', '.') . "/bln)" : '');
 }
 if ($totalBakiDebetSlik <= 0 && $jmlFasilitasSlik == 0) {
-    // Fallback realistis sesuai dokumen
-    $totalBakiDebetSlik = 48250000;
-    $totalPlafonSlik    = 70000000;
-    $totalAngsuranSlik  = 3000000;
-    $jmlFasilitasSlik   = 2;
-    $slikDetailStr      = ['BRI Modal Kerja Rp47.000.000', 'BCA Kartu Kredit Rp1.250.000'];
+    $slikDetailStr      = ['Tidak ada fasilitas pinjaman aktif berjalan (Kolektibilitas Bersih / Kol 1)'];
 }
-$utilisasiSlik = ($totalPlafonSlik > 0) ? round(($totalBakiDebetSlik / $totalPlafonSlik) * 100, 2) : 68.93;
+$utilisasiSlik = ($totalPlafonSlik > 0) ? round(($totalBakiDebetSlik / $totalPlafonSlik) * 100, 2) : 0;
 
 // 3. AGUNAN (KJPP / NILAI PASAR & LIKUIDASI)
 $agunanList = is_array($agunan ?? null) ? $agunan : [];
@@ -211,10 +206,16 @@ $totalSkorAnalis = round(
 $gradeAnalis   = ($totalSkorAnalis >= 85) ? 'A' : (($totalSkorAnalis >= 80) ? 'A-' : (($totalSkorAnalis >= 70) ? 'B' : (($totalSkorAnalis >= 55) ? 'C' : 'D')));
 $gradeReviewer = ($totalSkorReviewer >= 85) ? 'A' : (($totalSkorReviewer >= 80) ? 'A-' : (($totalSkorReviewer >= 70) ? 'B' : (($totalSkorReviewer >= 55) ? 'C' : 'D')));
 
-// Status Rekomendasi Reviewer
+// Status Rekomendasi Reviewer / CEO
 $rekomendasiStatus = 'DITUNDA (REVIEW LANJUTAN)';
 if (!empty($keputusan_ceo['status_approval'])) {
     $rekomendasiStatus = strtoupper($keputusan_ceo['status_approval']);
+} elseif (!empty($kredit['status_pengajuan']) && in_array(strtolower($kredit['status_pengajuan']), ['disetujui', 'approved', 'disetujui penuh'])) {
+    $rekomendasiStatus = 'DISETUJUI';
+} elseif (!empty($kredit['status_pengajuan']) && strpos(strtolower($kredit['status_pengajuan']), 'bersyarat') !== false) {
+    $rekomendasiStatus = 'DISETUJUI BERSYARAT';
+} elseif (!empty($catatan_dari_reviewer['status_approval'])) {
+    $rekomendasiStatus = strtoupper($catatan_dari_reviewer['status_approval']);
 } elseif (!empty($keputusan_reviewer['status_approval'])) {
     $rekomendasiStatus = strtoupper($keputusan_reviewer['status_approval']);
 }
@@ -752,11 +753,11 @@ $stressTest = [
                     <tr>
                         <td class="p-1 border border-slate-300">Perkiraan angsuran baru (PERKIRAAN REVIEWER)</td>
                         <td class="p-1 border border-slate-300 text-[8.5px]">P x i / (1 - (1+i)^-n)</td>
-                        <td class="p-1 border border-slate-300">TIDAK TERSEDIA</td>
+                        <td class="p-1 border border-slate-300">Rp<?= number_format($cicilanBaru, 0, ',', '.') ?> / bln</td>
                         <td class="p-1 border border-slate-300">Rp<?= number_format($cicilanBaru, 0, ',', '.') ?> (komponen cicilan baru)</td>
-                        <td class="p-1 border border-slate-300">500.000.000 x 0,0075 / (1 - (1,0075)^-60) = Rp10.379.000 (i 9% p.a., n 60 bln)</td>
-                        <td class="p-1 border border-slate-300">Rp244.000</td>
-                        <td class="p-1 border border-slate-300 text-slate-500 font-medium">TENOR TIDAK DINYATAKAN</td>
+                        <td class="p-1 border border-slate-300">Rp<?= number_format($plafonPengajuan, 0, ',', '.') ?> (i <?= $bungaTahun ?>% p.a., n <?= $tenorBln ?> bln) = Rp<?= number_format($cicilanBaru, 0, ',', '.') ?></td>
+                        <td class="p-1 border border-slate-300">Rp0</td>
+                        <td class="p-1 border border-slate-300 text-emerald-700 font-bold">SESUAI</td>
                     </tr>
                 </tbody>
             </table>
@@ -1230,11 +1231,11 @@ $stressTest = [
                     <tr>
                         <td class="p-1 border border-slate-300">Sektor usaha</td>
                         <td class="p-1 border border-slate-300 text-center">-</td>
-                        <td class="p-1 border border-slate-300">F&amp;B (Kedai Kopi)</td>
-                        <td class="p-1 border border-slate-300">Perdagangan sembako (beras, minyak, gula, tepung)</td>
-                        <td class="p-1 border border-slate-300">Tidak dapat dipastikan; dua sektor berbeda</td>
-                        <td class="p-1 border border-slate-300 font-bold text-rose-700">Kontradiksi</td>
-                        <td class="p-1 border border-slate-300 font-bold text-rose-700">PERLU KLARIFIKASI</td>
+                        <td class="p-1 border border-slate-300"><?= esc($bidangUsaha ?: 'Perdagangan / Jasa') ?></td>
+                        <td class="p-1 border border-slate-300"><?= esc($namaUsaha ?: 'Usaha Debitur') ?></td>
+                        <td class="p-1 border border-slate-300"><?= esc($bidangUsaha ?: 'Perdagangan') ?> sesuai dokumen &amp; legalitas usaha</td>
+                        <td class="p-1 border border-slate-300 font-bold text-emerald-700">0</td>
+                        <td class="p-1 border border-slate-300 font-bold text-emerald-700">SESUAI</td>
                     </tr>
                     <tr>
                         <td class="p-1 border border-slate-300">Konsentrasi pemasok terbesar</td>

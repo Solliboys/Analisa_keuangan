@@ -1724,21 +1724,56 @@ class Pengajuan extends BaseController
 
         $pengusul = $db->table('users')->where('id', $kredit['user_id'] ?? 0)->get()->getRowArray() ?? [];
 
+        // Ambil data komite kredit (Reviewer & CEO)
+        $daftarKomite = $this->komiteModel->where('kredit_id', $id)->findAll();
+        $catatanDariReviewer = null;
+        $keputusanCeo = null;
+        if (!empty($daftarKomite)) {
+            foreach ($daftarKomite as $km) {
+                $roleAp = strtolower($km['role_approver'] ?? '');
+                if (strpos($roleAp, 'ceo') !== false || strpos($roleAp, 'direk') !== false) {
+                    $keputusanCeo = $km;
+                } else {
+                    $catatanDariReviewer = $km;
+                }
+            }
+        }
+
+        // Hitung total MV dan LV Agunan
+        $agunanList = $this->agunanModel->where('kredit_id', $id)->findAll();
+        $totalMV = 0;
+        $totalLV = 0;
+        foreach ($agunanList as $ag) {
+            $mv = (float)($ag['nilai_pasar_mv'] ?? 0);
+            $lv = (float)($ag['nilai_likuidasi_lv'] ?? ($mv * 0.6));
+            $totalMV += $mv;
+            $totalLV += $lv;
+        }
+        $plafonKredit = (float)($kredit['plafon_pengajuan'] ?? 0);
+        $coverageMV = $plafonKredit > 0 ? round(($totalMV / $plafonKredit) * 100, 1) : 0;
+        $coverageLV = $plafonKredit > 0 ? round(($totalLV / $plafonKredit) * 100, 1) : 0;
+
         $data = [
-            'title'             => 'Credit Application & Memo (CAM) - ' . $kredit['nomor_aplikasi'],
-            'kredit'            => $kredit,
-            'pengusul'          => $pengusul,
-            'agunan'            => $this->agunanModel->where('kredit_id', $id)->findAll(),
-            'slik'              => $this->slikModel->where('kredit_id', $id)->findAll(),
-            'webcheck'          => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],
-            'analisa'           => $this->analisaModel->where('kredit_id', $id)->first() ?? [],
-            'rekening'          => $this->rekeningModel->where('kredit_id', $id)->findAll(),
-            'keuangan'          => $this->keuanganModel->where('kredit_id', $id)->first() ?? [],
-            'disbursement'      => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
-            'komite'            => $this->komiteModel->where('kredit_id', $id)->findAll(),
-            'referensi'         => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
-            'pengaturan_sistem' => $pengaturanSistem,
-            'laporan_keuangan'  => [],
+            'title'                 => 'Credit Application & Memo (CAM) - ' . $kredit['nomor_aplikasi'],
+            'kredit'                => $kredit,
+            'pengusul'              => $pengusul,
+            'agunan'                => $agunanList,
+            'slik'                  => $this->slikModel->where('kredit_id', $id)->findAll(),
+            'webcheck'              => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],
+            'analisa'               => $this->analisaModel->where('kredit_id', $id)->first() ?? [],
+            'rekening'              => $this->rekeningModel->where('kredit_id', $id)->findAll(),
+            'keuangan'              => $this->keuanganModel->where('kredit_id', $id)->first() ?? [],
+            'disbursement'          => $this->disbursementModel->where('kredit_id', $id)->first() ?? [],
+            'komite'                => $daftarKomite,
+            'catatan_dari_reviewer' => $catatanDariReviewer,
+            'keputusan_ceo'         => $keputusanCeo,
+            'total_mv'              => $totalMV,
+            'total_lv'              => $totalLV,
+            'coverage_mv'           => $coverageMV,
+            'coverage_lv'           => $coverageLV,
+            'referensi'             => $this->referensiModel->where('is_active', 1)->orderBy('urutan', 'ASC')->findAll(),
+            'pengaturan_sistem'     => $pengaturanSistem,
+            'laporan_keuangan'      => [],
         ];
 
         return view('pengajuan/cetak', $data);
@@ -2192,6 +2227,43 @@ class Pengajuan extends BaseController
                 }
             } catch (\Throwable $e) {}
             $this->kreditModel->update($kreditId, $updateData);
+        }
+
+        // Simpan rincian fasilitas SLIK yang dikirim dari form/modal ringkasan hasil
+        $slikFasilitasPost = $this->request->getPost('slik_fasilitas');
+        if (!empty($slikFasilitasPost)) {
+            $fasilitasArray = json_decode($slikFasilitasPost, true);
+            if (is_array($fasilitasArray) && !empty($fasilitasArray) && $kreditId) {
+                $this->slikModel->where('kredit_id', $kreditId)->delete();
+                $db = \Config\Database::connect();
+                foreach ($fasilitasArray as $fac) {
+                    $plafon = (float)($fac['plafon'] ?? 0);
+                    $outstanding = (float)($fac['outstanding'] ?? ($fac['baki_debet'] ?? 0));
+                    $pAcuan = $plafon > 0 ? $plafon : $outstanding;
+                    $bungaStr = $fac['suku_bunga'] ?? ($fac['bunga'] ?? '10%');
+                    $jwStr = $fac['jangka_waktu'] ?? ($fac['tenor'] ?? '36 bln');
+                    $angsuran = (float)($fac['angsuran'] ?? 0);
+                    if ($angsuran <= 0 && $pAcuan > 0) {
+                        $angsuran = $this->hitungAngsuranPinjamanResmi($pAcuan, $bungaStr, $jwStr);
+                    }
+                    $insData = [
+                        'kredit_id'       => $kreditId,
+                        'nama_debitur'    => $fac['nama_debitur'] ?? ($existingKredit['nama_debitur'] ?? 'Debitur'),
+                        'plafon'          => $plafon,
+                        'outstanding'     => $outstanding,
+                        'angsuran'        => $angsuran,
+                        'kelancaran'      => $fac['kelancaran'] ?? 'Lancar',
+                        'bank_lembaga'    => $fac['bank_lembaga'] ?? ($fac['bank'] ?? 'Bank'),
+                        'keterangan'      => $fac['keterangan'] ?? ($fac['jenis_fasilitas'] ?? 'Modal Kerja'),
+                        'jenis_fasilitas' => $fac['jenis_fasilitas'] ?? ($fac['keterangan'] ?? 'Modal Kerja'),
+                        'is_verified'     => 1,
+                        'diinput_oleh'    => session()->get('nama_lengkap') ?: 'Petugas SLIK'
+                    ];
+                    if ($db->fieldExists('suku_bunga', 'slik')) $insData['suku_bunga'] = $bungaStr;
+                    if ($db->fieldExists('jangka_waktu', 'slik')) $insData['jangka_waktu'] = $jwStr;
+                    $this->slikModel->insert($insData);
+                }
+            }
         }
 
         // Otomatis ekstrak data fasilitas dari berkas PDF yang baru diunggah

@@ -1415,6 +1415,9 @@ async function submitFormUploadHasilSlik(e) {
         if (filePdf) formData.append('file_pdf', filePdf);
         if (fileTxt) formData.append('file_txt', fileTxt);
         formData.append('daftar_permohonan_slik', JSON.stringify(window.daftarPermohonanSlikArray));
+        if (window.slikFasilitasArray && window.slikFasilitasArray.length > 0) {
+            formData.append('slik_fasilitas', JSON.stringify(window.slikFasilitasArray));
+        }
 
         const res = await fetch(baseUrl + '/pengajuan/upload-hasil-slik', {
             method: 'POST',
