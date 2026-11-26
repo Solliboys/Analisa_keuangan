@@ -522,13 +522,8 @@
 
                             <div class="space-y-2.5">
                                 <?php
-                                    // Hanya tampilkan catatan terbaru per reviewer (1 per user)
-                                    $latestPerReviewer = [];
-                                    foreach ($daftarReviewerNotes as $rn) {
-                                        $key = $rn['nama_approver'] ?? 'Reviewer';
-                                        $latestPerReviewer[$key] = $rn; // Yang terakhir menimpa yang sebelumnya
-                                    }
-                                    $filteredNotes = array_values($latestPerReviewer);
+                                    // Tampilkan seluruh riwayat catatan telaah dari seluruh reviewer secara lengkap dan kronologis
+                                    $filteredNotes = $daftarReviewerNotes;
                                 ?>
                                 <?php foreach ($filteredNotes as $idx => $rNote): ?>
                                     <?php 

@@ -106,26 +106,103 @@
             </div>
 
             <!-- Body Panel Reviewer -->
-            <div id="bodyPanelReviewer" class="p-4 sm:p-6 space-y-4">
+            <div id="bodyPanelReviewer" class="p-4 sm:p-6 space-y-5">
+                <?php 
+                    $daftarCatatan = $daftar_catatan_reviewer ?? [];
+                ?>
+
                 <?php if ($isFinalized): ?>
                     <!-- TAMPILAN READ-ONLY: KEPUTUSAN TELAH FINAL -->
                     <div class="p-4 rounded-xl border bg-slate-50 border-slate-200 text-slate-800 space-y-3">
                         <div class="flex items-center justify-between flex-wrap gap-2">
-                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Keputusan Resmi Terakhir:</span>
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Keputusan Resmi Final Komite:</span>
                             <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-100 text-blue-900 border border-blue-200">
                                 <?= strtoupper(esc($currentDecision ?: $statusAplikasi)) ?>
                             </span>
                         </div>
                         <?php if (!empty($currentCatatan)): ?>
                             <div class="p-3 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 leading-relaxed">
-                                <strong>Catatan:</strong> <?= nl2br(esc($currentCatatan)) ?>
+                                <strong>Catatan Final:</strong> <?= nl2br(esc($currentCatatan)) ?>
                             </div>
                         <?php endif; ?>
                     </div>
-                <?php else: ?>
-                    <!-- FORM INPUT CATATAN REVIEWER UNTUK CEO -->
-                    <form id="formKeputusanReviewer" action="<?= base_url('reviewer/simpan-keputusan') ?>" method="POST" class="space-y-4">
+                <?php endif; ?>
+
+                <!-- RIWAYAT CATATAN TELAAH DARI SELURUH TIM REVIEWER UNTUK CEO -->
+                <?php if (!empty($daftarCatatan)): ?>
+                    <div class="p-4 rounded-xl border border-indigo-200 bg-indigo-50/60 space-y-3">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-black text-indigo-950 uppercase tracking-wider">
+                                        Catatan Telaah Tim Reviewer untuk CEO (<?= count($daftarCatatan) ?> Catatan)
+                                    </h4>
+                                    <p class="text-[11px] text-indigo-700/80">
+                                        Kumpulan catatan dan rekomendasi dari seluruh reviewer yang telah diteruskan ke meja kerja CEO
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                                Diskusi Tim Reviewer Aktif
+                            </span>
+                        </div>
+
+                        <div class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+                            <?php foreach ($daftarCatatan as $idx => $rNote): ?>
+                                <?php 
+                                    $noteText = trim($rNote['catatan_approval'] ?? '');
+                                    if (empty($noteText)) continue;
+                                    $revName  = $rNote['nama_approver'] ?? 'Senior Credit Reviewer';
+                                    $revDate  = !empty($rNote['tanggal_approval']) ? date('d F Y', strtotime($rNote['tanggal_approval'])) : (!empty($rNote['created_at']) ? date('d F Y, H:i', strtotime($rNote['created_at'])) . ' WIB' : '');
+                                    $revRek   = $rNote['status_approval'] ?? '';
+                                ?>
+                                <div class="p-3.5 bg-white rounded-xl border border-indigo-200/80 shadow-2xs space-y-2">
+                                    <div class="flex items-center justify-between text-[11px] pb-1.5 border-b border-slate-100 flex-wrap gap-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center">
+                                                <?= strtoupper(substr($revName, 0, 1)) ?>
+                                            </span>
+                                            <strong class="text-slate-800"><?= esc($revName) ?></strong>
+                                            <?php if (!empty($revRek) && !in_array($revRek, ['Ditinjau Reviewer', 'Pending', 'Menunggu Review'])): ?>
+                                                <?php
+                                                    $rekBadgeClass = 'bg-slate-100 text-slate-700 border-slate-300';
+                                                    if ($revRek === 'Disetujui') $rekBadgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                                                    elseif ($revRek === 'Disetujui Bersyarat' || $revRek === 'Bersyarat') $rekBadgeClass = 'bg-amber-100 text-amber-800 border-amber-300';
+                                                    elseif ($revRek === 'Revisi') $rekBadgeClass = 'bg-purple-100 text-purple-800 border-purple-300';
+                                                    elseif ($revRek === 'Ditolak') $rekBadgeClass = 'bg-rose-100 text-rose-800 border-rose-300';
+                                                ?>
+                                                <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border <?= $rekBadgeClass ?>">
+                                                    Rekomendasi: <?= esc($revRek) ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if (!empty($revDate)): ?>
+                                            <span class="text-slate-400 text-[10px]"><?= $revDate ?></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-xs text-slate-700 leading-relaxed font-normal">
+                                        <?= nl2br(esc($noteText)) ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (!$isFinalized): ?>
+                    <!-- FORM INPUT CATATAN BARU REVIEWER UNTUK CEO -->
+                    <form id="formKeputusanReviewer" action="<?= base_url('reviewer/simpan-keputusan') ?>" method="POST" class="space-y-4 pt-1">
                         <input type="hidden" name="kredit_id" value="<?= esc($kredit['kredit_id']) ?>">
+
+                        <div class="flex items-center gap-2 pb-1 border-b border-slate-200">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                            <h4 class="text-xs font-black text-slate-800 uppercase tracking-wider">
+                                <?= !empty($daftarCatatan) ? 'Tambah Catatan / Masukan Tambahan ke CEO' : 'Kirim Catatan Reviewer Pertama ke CEO' ?>
+                            </h4>
+                        </div>
 
                         <!-- Pilihan Rekomendasi (Opsional untuk Reviewer) -->
                         <div>
@@ -160,15 +237,15 @@
                         <div>
                             <div class="flex justify-between items-center mb-1.5">
                                 <label for="catatanKeputusan" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                    Catatan Hasil Review untuk CEO <span class="text-rose-500 font-bold">*</span>
+                                    Catatan / Masukan Telaah untuk CEO <span class="text-rose-500 font-bold">*</span>
                                 </label>
                                 <span class="text-[11px] text-slate-400">Wajib diisi</span>
                             </div>
                             <textarea id="catatanKeputusan" name="catatan" rows="4" 
                                       class="w-full bg-white text-xs text-slate-800 border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-600 transition placeholder:text-slate-400"
-                                      placeholder="Tuliskan catatan hasil telaah berkas pengajuan kredit, pertimbangan mitigasi risiko 5C, evaluasi rekening koran & SLIK, serta rekomendasi untuk CEO..."><?= esc(trim($catatan_dari_reviewer['catatan_approval'] ?? '')) ?></textarea>
+                                      placeholder="Tuliskan catatan hasil telaah berkas, pertimbangan mitigasi risiko 5C, kapasitas repayment (DSC), atau catatan tambahan untuk CEO..."></textarea>
                             <p class="text-[11px] text-slate-400 mt-1" id="catatanHelperText">
-                                Catatan ini akan langsung diterima oleh CEO sebagai dasar pertimbangan pengambilan keputusan final.
+                                Catatan ini akan dicatat atas nama Anda dan langsung diteruskan ke meja kerja CEO sebagai dasar pertimbangan komite.
                             </p>
                         </div>
 
@@ -181,7 +258,7 @@
                                 <button type="submit" id="btnSubmitKeputusan" 
                                         class="w-full sm:w-auto py-2.5 px-6 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                                    <span>Kirim Catatan ke CEO</span>
+                                    <span><?= !empty($daftarCatatan) ? 'Kirim Catatan Tambahan ke CEO' : 'Kirim Catatan ke CEO' ?></span>
                                 </button>
                             </div>
                         </div>

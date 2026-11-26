@@ -91,24 +91,8 @@ class Reviewer extends BaseController
                                                       ->orderBy('komite_id', 'ASC')
                                                       ->findAll();
 
-            // Untuk Reviewer: HANYA tampilkan catatan miliknya sendiri (catatan orang lain disembunyikan)
-            // Untuk CEO: tampilkan seluruh catatan dari semua reviewer
-            if (!$isCeo) {
-                $userNama = strtolower(trim(session()->get('nama_lengkap') ?? ''));
-                $daftarCatatanReviewer = array_values(array_filter($semuaCatatanReviewer, function($c) use ($userId, $userNama) {
-                    $cUserId = (int)($c['user_id'] ?? 0);
-                    $cNama   = strtolower(trim($c['nama_approver'] ?? ''));
-                    if ($userId > 0 && $cUserId === $userId) {
-                        return true;
-                    }
-                    if ($cUserId === 0 && !empty($userNama) && $cNama === $userNama) {
-                        return true;
-                    }
-                    return false;
-                }));
-            } else {
-                $daftarCatatanReviewer = $semuaCatatanReviewer;
-            }
+            // Seluruh catatan dari semua reviewer agar dapat dibaca bersama oleh seluruh tim Reviewer & CEO
+            $daftarCatatanReviewer = $semuaCatatanReviewer;
 
             $keputusanReviewer   = !empty($daftarCatatanReviewer) ? end($daftarCatatanReviewer) : null;
             $catatanDariReviewer = $keputusanReviewer;
