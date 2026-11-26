@@ -2391,9 +2391,9 @@ async function handleOcrDirectUpload(input) {
 
     const progressContainer = document.getElementById('ocrInlineProgressContainer');
     const progressBar = document.getElementById('ocrInlineProgressBar');
-    const progressPercent = document.getElementById('ocrInlineProgressPercent');
-    const stepTitle = document.getElementById('ocrInlineStepTitle');
-    const stepSub = document.getElementById('ocrInlineStepSub');
+    const progressPercent = document.getElementById('ocrInlinePercent') || document.getElementById('ocrInlineProgressPercent');
+    const stepTitle = document.getElementById('ocrInlineTitle') || document.getElementById('ocrInlineStepTitle');
+    const stepSub = document.getElementById('ocrInlineSub') || document.getElementById('ocrInlineStepSub');
 
     const updateProgress = (percent, title, sub) => {
         if (progressBar) progressBar.style.width = percent + '%';
@@ -2604,6 +2604,13 @@ function bukaModalDetailEkstraksiRekening(btn) {
                 jumlah_bulan: parseInt(tr.querySelector('input[name*="[jumlah_bulan]"]')?.value || 1),
                 transaksi: []
             };
+            const rawTx = tr.querySelector('.rek-transaksi-json')?.value || tr.querySelector('input[name*="[transaksi_json]"]')?.value;
+            if (rawTx) {
+                try {
+                    const parsedTx = typeof rawTx === 'string' ? JSON.parse(rawTx) : rawTx;
+                    if (Array.isArray(parsedTx)) d.transaksi = parsedTx;
+                } catch (e) {}
+            }
             d.saldo_akhir = d.saldo_awal + d.total_mutasi_kredit - d.total_mutasi_debit;
             d.rata_rata_kredit = Math.round(d.total_mutasi_kredit / Math.max(1, d.jumlah_bulan));
         }
@@ -2611,7 +2618,7 @@ function bukaModalDetailEkstraksiRekening(btn) {
     if (!d) return;
 
     const fileUrl = btn.getAttribute('data-file-url') || '';
-    const detBank = document.getElementById('detRekBank');
+    const detBank = document.getElementById('detRekNamaBank') || document.getElementById('detRekBank');
     if (detBank) detBank.innerText = d.nama_bank || 'Bank Operasional Usaha';
     const detSub = document.getElementById('detRekSubtitle');
     if (detSub) detSub.innerText = `Rekening: ${d.nomor_rekening || '-'} a.n ${d.atas_nama || '-'} (Periode: ${d.periode || '-'})`;
@@ -3650,7 +3657,7 @@ function renderListUtang() {
             const cicilanVal = parseInt(item.cicilan_bulanan, 10) || 0;
 
             html += `
-                <div class="p-3 bg-white border border-rose-200/90 hover:border-rose-300 rounded-xl shadow-2xs space-y-2 transition">
+                <div class="item-utang-row p-3 bg-white border border-rose-200/90 hover:border-rose-300 rounded-xl shadow-2xs space-y-2 transition" data-utang-index="${index}">
                     <div class="flex items-center justify-between gap-2">
                         <input type="text" value="${safeNama}" 
                                placeholder="Nama Bank / Lembaga Kreditur (cth: Bank Mandiri, BRI, Leasing, dll)" 
@@ -3684,7 +3691,7 @@ function renderListUtang() {
                         </div>
                         <div>
                             <label class="block text-[10px] text-rose-500 font-bold uppercase">Cicilan / Bulan</label>
-                            <div class="mt-0.5 font-extrabold text-rose-700 bg-rose-50/80 border border-rose-200 rounded-lg px-2 py-1 text-right truncate" title="${formatRupiahString(cicilanVal)}">
+                            <div id="utang_cicilan_label_${index}" class="utang-cicilan-label mt-0.5 font-extrabold text-rose-700 bg-rose-50/80 border border-rose-200 rounded-lg px-2 py-1 text-right truncate" title="${formatRupiahString(cicilanVal)}">
                                 ${formatRupiahString(cicilanVal)}
                             </div>
                         </div>
@@ -3750,8 +3757,26 @@ function updateItemUtang(index, field, val) {
     const totalHutang = P + totalBunga;
     daftarUtang[index].cicilan_bulanan = (t > 0) ? Math.round(totalHutang / (t * 12)) : 0;
 
+    // Update label cicilan baris ini secara langsung tanpa me-replace innerHTML (agar input tetap fokus)
+    const cicilanLabelEl = document.getElementById(`utang_cicilan_label_${index}`);
+    if (cicilanLabelEl) {
+        cicilanLabelEl.innerText = formatRupiahString(daftarUtang[index].cicilan_bulanan);
+        cicilanLabelEl.title = formatRupiahString(daftarUtang[index].cicilan_bulanan);
+    }
+
+    // Update subtotal cicilan utang
+    let totalCicilanUtang = 0;
+    daftarUtang.forEach(u => {
+        totalCicilanUtang += parseNominal(u.cicilan_bulanan || 0);
+    });
+    const elSubtotalUtang = document.getElementById('nomTotalCicilanUtangDinamis');
+    if (elSubtotalUtang) elSubtotalUtang.innerText = formatRupiahString(totalCicilanUtang);
+
     syncDaftarUtangKeHidden();
-    renderListUtang();
+    hitungLabaRugi();
+    if (typeof window.sinkronkanLaporanKeuangan === 'function') {
+        window.sinkronkanLaporanKeuangan();
+    }
 }
 window.updateItemUtang = updateItemUtang;
 
@@ -4267,7 +4292,16 @@ document.addEventListener('keydown', function(e) {
 
 // Kalkulasi Rasio DSC
 function hitungRasioDSC() {
-    const angsuran = parseNominal(document.getElementById('angsuran_dipilih')?.value || 0);
+    let angsuran = parseNominal(document.getElementById('angsuran_dipilih')?.value || 0);
+    if (angsuran <= 0) {
+        angsuran = parseNominal(document.getElementById('angsuran_installment')?.value || 0);
+    }
+    if (angsuran <= 0) {
+        angsuran = parseNominal(document.getElementById('boxAngsuranInstallment')?.innerText || 0);
+    }
+    if (angsuran <= 0 && typeof window.ESTIMASI_ANGSURAN_BARU === 'number' && window.ESTIMASI_ANGSURAN_BARU > 0) {
+        angsuran = window.ESTIMASI_ANGSURAN_BARU;
+    }
 
     // Gunakan nilai eksak dari hitungLabaRugi() agar tidak pernah dobel hitung biaya_hidup + beban_lain atau kena default 60%
     let totalNettRK = 0;
@@ -4279,9 +4313,15 @@ function hitungRasioDSC() {
         const inputBh = document.getElementById('biaya_hidup_nominal_rk');
         const nomBh = (inputBh && inputBh.type !== 'hidden') ? parseNominal(inputBh.value || 0) : 0;
         const nomBl = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
+        let totalCicilanUtang = 0;
+        if (Array.isArray(window.daftarUtang)) {
+            window.daftarUtang.forEach(u => {
+                totalCicilanUtang += parseNominal(u.cicilan_bulanan || 0);
+            });
+        }
         const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
         const pLainRK = isAdaLain ? parseNominal(document.getElementById('pendapatan_lain_rk')?.value || 0) : 0;
-        totalNettRK = (pRK - nomHpp - nomBh - nomBl) + pLainRK;
+        totalNettRK = (pRK - nomHpp - nomBh - nomBl - totalCicilanUtang) + pLainRK;
     }
 
     // Nett IV
@@ -4305,7 +4345,33 @@ function hitungRasioDSC() {
     if (denLabel) denLabel.innerText = formatRupiahString(angsuran);
 
     const elRekapDsc = document.getElementById('rasio_lap_dscr');
-    if (elRekapDsc) elRekapDsc.innerText = dscRK + 'x';
+    if (elRekapDsc) {
+        elRekapDsc.innerText = dscRK + 'x';
+        const dscVal = parseFloat(dscRK);
+        if (dscVal >= 1.3) {
+            elRekapDsc.className = 'text-lg font-black text-emerald-700';
+        } else if (dscVal >= 1.0) {
+            elRekapDsc.className = 'text-lg font-black text-amber-600';
+        } else {
+            elRekapDsc.className = 'text-lg font-black text-rose-600';
+        }
+    }
+
+    const labelStatus = document.getElementById('labelStatusKelayakanRasio');
+    const boxStatus = document.getElementById('boxStatusKelayakanRasio');
+    if (labelStatus && boxStatus) {
+        const dscVal = parseFloat(dscRK);
+        if (dscVal >= 1.30) {
+            boxStatus.className = 'mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs text-emerald-800 font-medium';
+            labelStatus.innerText = 'Rasio keuangan debitur sangat sehat (DSCR ≥ 1.30x) dan memiliki kapasitas pembayaran yang memadai.';
+        } else if (dscVal >= 1.0) {
+            boxStatus.className = 'mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-800 font-medium';
+            labelStatus.innerText = 'Kapasitas bayar cukup ketat (DSCR 1.00x - 1.29x). Disarankan evaluasi mitigasi risiko tambahan.';
+        } else {
+            boxStatus.className = 'mt-4 p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-xs text-rose-800 font-medium';
+            labelStatus.innerText = 'Perhatian: Kapasitas bayar defisit / berisiko tinggi (DSCR < 1.00x).';
+        }
+    }
 
     updateDSCBadge('badgeStatusDSCRK', dscRK);
     updateDSCBadge('badgeStatusDSCIV', dscIV);
@@ -5734,26 +5800,45 @@ async function jalankanAiWebcheck() {
 
     const btn = document.getElementById('btnAiWebcheck');
     const loadingBox = document.getElementById('tab7_loading_box');
-    const loadingSubjek = document.getElementById('tab7_loading_subjek');
+    const progressBar = document.getElementById('webcheckProgressBar');
+    const progressPercent = document.getElementById('webcheckProgressPercent');
+    const progressTitle = document.getElementById('webcheckProgressTitle');
+    const progressSub = document.getElementById('tab7_loading_subjek') || document.getElementById('webcheckProgressSub');
     const originalBtnHtml = btn ? btn.innerHTML : '';
 
     if (btn) {
         btn.disabled = true;
         btn.innerHTML = `
-            <svg class="animate-spin h-4 w-4 text-amber-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
             </svg>
-            <span>Memindai MA & 5 Aspek...</span>
+            <span>Memindai Rekam Jejak...</span>
         `;
     }
 
-    if (loadingSubjek) {
-        const labelOrang = info.namaDebitur + (info.umurDebitur ? ` (${info.umurDebitur})` : '');
-        const labelUsaha = info.namaUsaha ? `${info.namaUsaha} (${info.bidangUsaha || info.bentukUsaha})` : '(Tanpa Nama Perusahaan)';
-        loadingSubjek.innerText = `Melacak 4 Variabel Inti — Subjek: "${labelOrang}" | Usaha: "${labelUsaha}" | Lokasi: "${info.kota || info.alamatLengkap || '-'}" ke Direktori Putusan MA & Media Online...`;
-    }
     if (loadingBox) loadingBox.classList.remove('hidden');
+
+    const updateWebcheckProgress = (pct, title, sub) => {
+        if (progressBar) progressBar.style.width = pct + '%';
+        if (progressPercent) progressPercent.innerText = pct + '%';
+        if (progressTitle && title) progressTitle.innerText = title;
+        if (progressSub && sub) progressSub.innerText = sub;
+    };
+
+    updateWebcheckProgress(15, 'Menghubungkan ke Direktori Putusan Mahkamah Agung & SIPP...', `Memeriksa berkas peradilan atas nama ${info.namaDebitur || info.namaUsaha}...`);
+
+    let progressTimer = setInterval(() => {
+        if (!progressBar) return;
+        const cur = parseInt(progressBar.style.width) || 15;
+        if (cur < 45) {
+            updateWebcheckProgress(cur + 5, 'Memindai Berita Media Nasional & Jejak Digital...', 'Melacak rekam jejak berita dan eksposur media publik...');
+        } else if (cur < 75) {
+            updateWebcheckProgress(cur + 4, 'Memeriksa Database APU-PPT / DTTOT & Portal Lelang...', 'Verifikasi kepatuhan anti pencucian uang dan status agunan...');
+        } else if (cur < 92) {
+            updateWebcheckProgress(cur + 2, 'Menganalisis Matriks Risiko & 5 Aspek Kepatuhan...', 'Menyusun kesimpulan verifikasi latar belakang calon debitur...');
+        }
+    }, 600);
 
     try {
         const formData = new FormData();
@@ -5775,7 +5860,12 @@ async function jalankanAiWebcheck() {
         });
         const data = await res.json();
 
-        if (loadingBox) loadingBox.classList.add('hidden');
+        clearInterval(progressTimer);
+        updateWebcheckProgress(100, 'Verifikasi Rekam Jejak Selesai!', 'Data 5 aspek dan bukti pelacakan siap ditampilkan.');
+
+        setTimeout(() => {
+            if (loadingBox) loadingBox.classList.add('hidden');
+        }, 600);
 
         if (data.status) {
             // 1. Langsung isi otomatis ke-5 kotak di halaman Web Check (Tab 7)
@@ -5814,6 +5904,7 @@ async function jalankanAiWebcheck() {
             showToast(data.message || 'Gagal memproses investigasi Web Check', 'error');
         }
     } catch (err) {
+        clearInterval(progressTimer);
         if (loadingBox) loadingBox.classList.add('hidden');
         showToast('Koneksi terganggu saat memproses investigasi Web Check', 'error');
     } finally {
