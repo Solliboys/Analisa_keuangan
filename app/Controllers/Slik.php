@@ -114,6 +114,11 @@ class Slik extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'Sesi berakhir, silakan login ulang']);
         }
 
+        $jabatan = strtolower(session()->get('jabatan') ?? '');
+        if ($jabatan !== 'superadmin' && strpos($jabatan, 'slik') === false) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Akses khusus Petugas Verifikasi SLIK.']);
+        }
+
         $input    = $this->request->getPost();
         $kreditId = $input['kredit_id'] ?? null;
 
@@ -126,105 +131,151 @@ class Slik extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'Pengajuan kredit tidak ditemukan']);
         }
 
-        // 1. Simpan Data Fasilitas SLIK
-        // Bersihkan data lama untuk kredit ini
-        $this->slikModel->where('kredit_id', $kreditId)->delete();
+        // Mulai Transaksi Database untuk menjamin integritas data
+        $this->db->transBegin();
 
-        $slikInputs = $input['slik'] ?? [];
-        $totalBakiDebet = 0;
-        $totalPlafonSlik = 0;
-        $adaTunggakan = false;
-        $jumlahFasilitas = 0;
-
-        if (is_array($slikInputs) && !empty($slikInputs)) {
-            foreach ($slikInputs as $row) {
-                $bank = trim($row['bank_lembaga'] ?? '');
-                $nama = trim($row['nama_debitur'] ?? '');
-                
-                // Lewati jika nama dan bank kosong
-                if (empty($bank) && empty($nama)) {
-                    continue;
-                }
-
-                $plafon      = $this->cleanNumber($row['plafon'] ?? 0);
-                $outstanding = $this->cleanNumber($row['outstanding'] ?? 0);
-                $kelancaran  = trim($row['kelancaran'] ?? 'Lancar');
-
-                $totalPlafonSlik += $plafon;
-                $totalBakiDebet += $outstanding;
-                $jumlahFasilitas++;
-
-                $kolLower = strtolower($kelancaran);
-                if ($kolLower !== 'lancar' && !empty($kolLower)) {
-                    $adaTunggakan = true;
-                }
-
-                $this->slikModel->insert([
-                    'kredit_id'    => $kreditId,
-                    'nama_debitur' => $nama ?: ($kredit['nama_debitur'] ?: 'Debitur'),
-                    'bank_lembaga' => $bank,
-                    'plafon'       => $plafon,
-                    'outstanding'  => $outstanding,
-                    'kelancaran'   => $kelancaran,
-                    'keterangan'   => $row['keterangan'] ?? '',
-                    'is_verified'  => 1, // Resmi disetujui / diverifikasi oleh petugas SLIK
-                    'diinput_oleh' => 'petugas_slik'
-                ]);
-            }
-        }
-
-        // Tentukan Hasil SLIK
-        $ringkasanSlik = trim($input['ringkasan_slik'] ?? '');
-        $statusSlikInput = $input['status_slik'] ?? 'Terbit';
-
-        if ($statusSlikInput === 'Terbit') {
-            $statusSlik = 'Terbit';
-            if ($adaTunggakan) {
-                $hasilSlik = 'Kolektibilitas 2-5 (Ada Tunggakan)';
-            } else {
-                $hasilSlik = 'Kol 1 (Lancar / Clear)';
-            }
-        } else {
-            $statusSlik = 'Belum Terbit';
-            $hasilSlik  = 'Menunggu Pengecekan';
-        }
-
-        // Handle Berkas Upload Hasil SLIK (PDF & TXT)
-        $updateKredit = [
-            'ringkasan_slik'   => $ringkasanSlik,
-            'status_slik'      => $statusSlik,
-            'hasil_slik'       => $hasilSlik,
-            'slik_verified_at' => date('Y-m-d H:i:s'),
-            'slik_verified_by' => session()->get('nama_lengkap')
-        ];
-
-        $targetDir = FCPATH . 'uploads/slik';
-        if (!is_dir($targetDir)) {
-            mkdir($targetDir, 0777, true);
-        }
-
-        $filePdf = $this->request->getFile('file_pdf');
-        if ($filePdf && $filePdf->isValid() && !$filePdf->hasMoved()) {
-            $newNamePdf = $filePdf->getRandomName();
-            $filePdf->move($targetDir, $newNamePdf);
-            $updateKredit['berkas_slik_pdf'] = 'uploads/slik/' . $newNamePdf;
-        }
-
-        $fileTxt = $this->request->getFile('file_txt');
-        if ($fileTxt && $fileTxt->isValid() && !$fileTxt->hasMoved()) {
-            $newNameTxt = $fileTxt->getRandomName();
-            $fileTxt->move($targetDir, $newNameTxt);
-            $updateKredit['berkas_slik_txt'] = 'uploads/slik/' . $newNameTxt;
-        }
-
-        // Update data kredit induk
         try {
-            $tableCols = $this->kreditModel->db->getFieldNames('kredit');
-            if (is_array($tableCols) && !empty($tableCols)) {
-                $updateKredit = array_intersect_key($updateKredit, array_flip($tableCols));
+            // 1. Simpan Data Fasilitas SLIK
+            // Bersihkan data lama untuk kredit ini
+            $this->slikModel->where('kredit_id', $kreditId)->delete();
+
+            $slikInputs = $input['slik'] ?? [];
+            $totalBakiDebet = 0;
+            $totalPlafonSlik = 0;
+            $adaTunggakan = false;
+            $jumlahFasilitas = 0;
+
+            if (is_array($slikInputs) && !empty($slikInputs)) {
+                foreach ($slikInputs as $row) {
+                    $bank = trim($row['bank_lembaga'] ?? '');
+                    $nama = trim($row['nama_debitur'] ?? '');
+                    
+                    // Lewati jika nama dan bank kosong
+                    if (empty($bank) && empty($nama)) {
+                        continue;
+                    }
+
+                    $plafon      = $this->cleanNumber($row['plafon'] ?? 0);
+                    $outstanding = $this->cleanNumber($row['outstanding'] ?? 0);
+                    $pAcuan      = $plafon > 0 ? $plafon : $outstanding;
+                    $kelancaran  = trim($row['kelancaran'] ?? 'Lancar');
+                    $bungaStr    = trim($row['suku_bunga'] ?? '10%');
+                    $jwStr       = trim($row['jangka_waktu'] ?? '36 bln');
+                    $angsuran    = $this->cleanNumber($row['angsuran'] ?? 0);
+
+                    // Kalkulasi otomatis angsuran jika belum terisi
+                    if ($angsuran <= 0 && $pAcuan > 0) {
+                        $angsuran = $this->hitungAngsuranPinjamanResmi($pAcuan, $bungaStr, $jwStr);
+                    }
+
+                    $totalPlafonSlik += $plafon;
+                    $totalBakiDebet  += $outstanding;
+                    $jumlahFasilitas++;
+
+                    $kolLower = strtolower($kelancaran);
+                    if ($kolLower !== 'lancar' && !empty($kolLower)) {
+                        $adaTunggakan = true;
+                    }
+
+                    $dataSlikInsert = [
+                        'kredit_id'       => $kreditId,
+                        'nama_debitur'    => $nama ?: ($kredit['nama_debitur'] ?: 'Debitur'),
+                        'bank_lembaga'    => $bank,
+                        'jenis_fasilitas' => $row['jenis_fasilitas'] ?? ($row['keterangan'] ?? 'Kredit Usaha'),
+                        'keterangan'      => $row['keterangan'] ?? ($row['jenis_fasilitas'] ?? 'Modal Kerja'),
+                        'plafon'          => $plafon,
+                        'outstanding'     => $outstanding,
+                        'angsuran'        => $angsuran,
+                        'kelancaran'      => $kelancaran,
+                        'is_verified'     => 1, // Resmi disetujui / diverifikasi oleh petugas SLIK
+                        'diinput_oleh'    => 'petugas_slik'
+                    ];
+
+                    if ($this->db->fieldExists('suku_bunga', 'slik')) $dataSlikInsert['suku_bunga'] = $bungaStr;
+                    if ($this->db->fieldExists('jangka_waktu', 'slik')) $dataSlikInsert['jangka_waktu'] = $jwStr;
+                    if ($this->db->fieldExists('tgl_akad', 'slik')) $dataSlikInsert['tgl_akad'] = $row['tgl_akad'] ?? '-';
+                    if ($this->db->fieldExists('jatuh_tempo', 'slik')) $dataSlikInsert['jatuh_tempo'] = $row['jatuh_tempo'] ?? '-';
+                    if ($this->db->fieldExists('tunggakan', 'slik')) $dataSlikInsert['tunggakan'] = $row['tunggakan'] ?? '0';
+
+                    $this->slikModel->insert($dataSlikInsert);
+                }
             }
-        } catch (\Throwable $e) {}
-        $this->kreditModel->update($kreditId, $updateKredit);
+
+            // Tentukan Hasil SLIK
+            $ringkasanSlik = trim($input['ringkasan_slik'] ?? '');
+            $statusSlikInput = $input['status_slik'] ?? 'Terbit';
+
+            if ($statusSlikInput === 'Terbit') {
+                $statusSlik = 'Terbit';
+                if ($adaTunggakan) {
+                    $hasilSlik = 'Kolektibilitas 2-5 (Ada Tunggakan)';
+                } else {
+                    $hasilSlik = 'Kol 1 (Lancar / Clear)';
+                }
+            } else {
+                $statusSlik = 'Belum Terbit';
+                $hasilSlik  = 'Menunggu Pengecekan';
+            }
+
+            // Handle Berkas Upload Hasil SLIK (PDF & TXT) dengan Validasi Ketat
+            $updateKredit = [
+                'ringkasan_slik'   => $ringkasanSlik,
+                'status_slik'      => $statusSlik,
+                'hasil_slik'       => $hasilSlik,
+                'slik_verified_at' => date('Y-m-d H:i:s'),
+                'slik_verified_by' => session()->get('nama_lengkap')
+            ];
+
+            $targetDir = FCPATH . 'uploads/slik';
+            if (!is_dir($targetDir)) {
+                mkdir($targetDir, 0777, true);
+            }
+
+            $filePdf = $this->request->getFile('file_pdf');
+            if ($filePdf && $filePdf->isValid() && !$filePdf->hasMoved()) {
+                $extPdf = strtolower($filePdf->getClientExtension() ?: $filePdf->guessExtension() ?: '');
+                $mimePdf = $filePdf->getMimeType();
+                if ($extPdf !== 'pdf' || (strpos((string)$mimePdf, 'pdf') === false && strpos((string)$mimePdf, 'octet-stream') === false) || $filePdf->getSize() > 20 * 1024 * 1024) {
+                    $this->db->transRollback();
+                    return $this->response->setJSON(['status' => false, 'message' => 'Berkas hasil SLIK harus berupa dokumen PDF resmi maksimal 20 MB.']);
+                }
+                $newNamePdf = $filePdf->getRandomName();
+                $filePdf->move($targetDir, $newNamePdf);
+                $updateKredit['berkas_slik_pdf'] = 'uploads/slik/' . $newNamePdf;
+            }
+
+            $fileTxt = $this->request->getFile('file_txt');
+            if ($fileTxt && $fileTxt->isValid() && !$fileTxt->hasMoved()) {
+                $extTxt = strtolower($fileTxt->getClientExtension() ?: $fileTxt->guessExtension() ?: '');
+                if ($extTxt !== 'txt' || $fileTxt->getSize() > 10 * 1024 * 1024) {
+                    $this->db->transRollback();
+                    return $this->response->setJSON(['status' => false, 'message' => 'Berkas teks SLIK harus berupa file TXT maksimal 10 MB.']);
+                }
+                $newNameTxt = $fileTxt->getRandomName();
+                $fileTxt->move($targetDir, $newNameTxt);
+                $updateKredit['berkas_slik_txt'] = 'uploads/slik/' . $newNameTxt;
+            }
+
+            // Update data kredit induk
+            try {
+                $tableCols = $this->kreditModel->db->getFieldNames('kredit');
+                if (is_array($tableCols) && !empty($tableCols)) {
+                    $updateKredit = array_intersect_key($updateKredit, array_flip($tableCols));
+                }
+            } catch (\Throwable $e) {}
+            $this->kreditModel->update($kreditId, $updateKredit);
+
+            if ($this->db->transStatus() === false) {
+                $this->db->transRollback();
+                return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyimpan transaksi verifikasi SLIK.']);
+            }
+
+            $this->db->transCommit();
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            log_message('error', 'Slik::simpan error: ' . $e->getMessage());
+            return $this->response->setJSON(['status' => false, 'message' => 'Gagal menyimpan: ' . $e->getMessage()]);
+        }
 
         // Catat ke log aktivitas sistem
         try {
@@ -364,6 +415,31 @@ class Slik extends BaseController
             'status'  => true,
             'message' => 'Permohonan pengecekan SLIK berhasil diajukan ke meja kerja Petugas SLIK!'
         ]);
+    }
+
+    private function hitungAngsuranPinjamanResmi($plafon, $bungaStr = '10%', $jwStr = '12 bln')
+    {
+        $plafon = (float)$plafon;
+        if ($plafon <= 0) return 0;
+
+        $bungaPct = 10;
+        if (preg_match('/([0-9]+([.,][0-9]+)?)/', (string)$bungaStr, $bm)) {
+            $bungaPct = (float)str_replace(',', '.', $bm[1]);
+        }
+        if ($bungaPct <= 0) $bungaPct = 10;
+
+        $tenorBulan = 12;
+        if (preg_match('/([0-9]+)/', (string)$jwStr, $jwm)) {
+            $tenorBulan = (int)$jwm[1];
+        }
+        if ($tenorBulan <= 0) $tenorBulan = 12;
+
+        $tenorTahun = $tenorBulan / 12;
+        $totalBungaPct = ($bungaPct / 100) * $tenorTahun;
+        $totalPengembalian = $plafon * (1 + $totalBungaPct);
+        $angsuranBulanan = (int)round($totalPengembalian / $tenorBulan);
+
+        return $angsuranBulanan;
     }
 
     private function cleanNumber($val)

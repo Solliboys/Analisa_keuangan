@@ -363,26 +363,31 @@ class Reviewer extends BaseController
             $catatan = 'Pengajuan dinilai layak setelah dilakukan review mendalam terhadap prinsip 5C, kapasitas repayment (DSC), rekam jejak fasilitas kredit SLIK OJK, serta kelayakan nilai jaminan.';
         }
 
+        $userRole = strtolower(session()->get('jabatan') ?? '');
+        $isCeo    = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false || $userRole === 'superadmin');
+        $statusPengajuanBaru = $isCeo ? 'Disetujui' : 'Menunggu Keputusan CEO';
+        $roleApprover = $isCeo ? 'Direktur Utama / CEO' : 'Reviewer / Analis Senior';
+
         // 1. Update status di tabel kredit induk
         $this->kreditModel->update($kreditId, [
-            'status_pengajuan' => 'Disetujui',
+            'status_pengajuan' => $statusPengajuanBaru,
             'updated_at'       => date('Y-m-d H:i:s')
         ]);
 
         // 2. Catat keputusan di tabel komite / approval log
         $userId       = session()->get('user_id');
-        $namaApprover = session()->get('nama_lengkap') ?: 'Reviewer / Analis Senior';
+        $namaApprover = session()->get('nama_lengkap') ?: $roleApprover;
 
         $komiteExist = $this->komiteModel->where('kredit_id', $kreditId)
-                                         ->where('role_approver', 'Reviewer / Analis Senior')
+                                         ->where('role_approver', $roleApprover)
                                          ->first();
 
         $dataKomite = [
             'kredit_id'        => $kreditId,
             'user_id'          => $userId,
-            'role_approver'    => 'Reviewer / Analis Senior',
+            'role_approver'    => $roleApprover,
             'nama_approver'    => $namaApprover,
-            'status_approval'  => 'Disetujui',
+            'status_approval'  => $isCeo ? 'Disetujui' : 'Ditinjau Reviewer',
             'tanggal_approval' => date('Y-m-d'),
             'catatan_approval' => $catatan,
         ];
@@ -393,9 +398,13 @@ class Reviewer extends BaseController
             $this->komiteModel->insert($dataKomite);
         }
 
+        $suksesMsg = $isCeo
+            ? ('Pengajuan ' . esc($kredit['nomor_aplikasi']) . ' (' . esc($kredit['nama_debitur']) . ') BERHASIL DISETUJUI oleh Direktur Utama / CEO!')
+            : ('Rekomendasi persetujuan berkas ' . esc($kredit['nomor_aplikasi']) . ' (' . esc($kredit['nama_debitur']) . ') berhasil diteruskan ke CEO untuk penetapan keputusan final komite.');
+
         return $this->response->setJSON([
             'status'  => true,
-            'message' => 'Pengajuan ' . esc($kredit['nomor_aplikasi']) . ' (' . esc($kredit['nama_debitur']) . ') BERHASIL DISETUJUI oleh Reviewer!'
+            'message' => $suksesMsg
         ]);
     }
 

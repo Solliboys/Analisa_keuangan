@@ -455,6 +455,16 @@ class Superadmin extends BaseController
         $fotoPath = '';
         $fotoFile = $this->request->getFile('foto_file');
         if ($fotoFile && $fotoFile->isValid() && !$fotoFile->hasMoved()) {
+            $ext = strtolower($fotoFile->getClientExtension() ?: $fotoFile->guessExtension() ?: '');
+            $mime = $fotoFile->getMimeType();
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true) || strpos((string)$mime, 'image/') !== 0 || $fotoFile->getSize() > 5 * 1024 * 1024) {
+                $errMsg = 'Format foto profil harus berupa gambar (JPG/PNG/WEBP) maksimal 5 MB.';
+                if ($isAjax) {
+                    return $this->response->setJSON(['status' => 'error', 'message' => $errMsg]);
+                }
+                return redirect()->to('/superadmin/manajemen_user')->with('error', $errMsg);
+            }
+
             $uploadFolder = FCPATH . 'uploads/profil/';
             if (!is_dir($uploadFolder)) {
                 mkdir($uploadFolder, 0777, true);

@@ -570,6 +570,9 @@ class Pengajuan extends BaseController
                 }
             }
 
+            // Mulai Transaksi Database untuk menjamin ACID & integritas data multi-tabel
+            $this->db->transBegin();
+
             if ($kreditId) {
                 $this->kreditModel->update($kreditId, $dataKredit);
             } else {
@@ -577,6 +580,7 @@ class Pengajuan extends BaseController
             }
 
             if (!$kreditId) {
+                $this->db->transRollback();
                 $errs = $this->kreditModel->errors();
                 $errMsg = !empty($errs) ? implode(', ', $errs) : 'Gagal menyimpan data induk kredit';
                 return $this->response->setJSON(['status' => false, 'message' => $errMsg]);
@@ -610,7 +614,18 @@ class Pengajuan extends BaseController
             if ($isReviewer) {
                 $this->simpanKomite($kreditId, $input);
             }
+
+            if ($this->db->transStatus() === false) {
+                $this->db->transRollback();
+                return $this->response->setJSON([
+                    'status'  => false,
+                    'message' => 'Gagal memproses transaksi database pengajuan kredit.'
+                ]);
+            }
+
+            $this->db->transCommit();
         } catch (\Throwable $e) {
+            $this->db->transRollback();
             log_message('error', 'Gagal simpan pengajuan: ' . $e->getMessage());
             return $this->response->setJSON([
                 'status'  => false,
@@ -1849,6 +1864,12 @@ class Pengajuan extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'File bukti tidak valid atau tidak terbaca.']);
         }
 
+        $ext = strtolower($file->getClientExtension() ?: $file->guessExtension() ?: '');
+        $allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'doc', 'docx', 'xls', 'xlsx'];
+        if (!in_array($ext, $allowedExt, true) || $file->getSize() > 15 * 1024 * 1024) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Format file tidak diizinkan (hanya PDF, Dokumen, dan Gambar maks 15 MB)']);
+        }
+
         $folder = FCPATH . 'uploads/webcheck/';
         if (!is_dir($folder)) {
             mkdir($folder, 0777, true);
@@ -2035,10 +2056,15 @@ class Pengajuan extends BaseController
 
         $uploaded = [];
         $filesObj = $this->request->getFiles();
+        $allowedExt = ['pdf', 'jpg', 'jpeg', 'png', 'webp'];
 
         foreach (['file_identitas' => 'identitas', 'file_permohonan' => 'permohonan'] as $key => $type) {
             if (isset($filesObj[$key]) && $filesObj[$key]->isValid() && !$filesObj[$key]->hasMoved()) {
                 $f = $filesObj[$key];
+                $ext = strtolower($f->getClientExtension() ?: $f->guessExtension() ?: '');
+                if (!in_array($ext, $allowedExt, true) || $f->getSize() > 15 * 1024 * 1024) {
+                    continue;
+                }
                 $newName = $f->getRandomName();
                 $targetFile = $folder . DIRECTORY_SEPARATOR . $newName;
                 $f->move($folder, $newName);
@@ -2128,6 +2154,11 @@ class Pengajuan extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'File PDF tidak valid atau gagal diunggah']);
         }
 
+        $ext = strtolower($file->getClientExtension() ?: $file->guessExtension() ?: '');
+        if ($ext !== 'pdf' || $file->getSize() > 20 * 1024 * 1024) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Format berkas harus PDF resmi maksimal 20 MB.']);
+        }
+
         $newName = $file->getRandomName();
         $targetDir = FCPATH . 'uploads/slik';
         if (!is_dir($targetDir)) {
@@ -2168,6 +2199,20 @@ class Pengajuan extends BaseController
 
         $filePdf = $this->request->getFile('file_pdf');
         $fileTxt = $this->request->getFile('file_txt');
+
+        if ($filePdf && $filePdf->isValid() && !$filePdf->hasMoved()) {
+            $extPdf = strtolower($filePdf->getClientExtension() ?: $filePdf->guessExtension() ?: '');
+            if ($extPdf !== 'pdf' || $filePdf->getSize() > 20 * 1024 * 1024) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Format file PDF harus .pdf resmi maksimal 20 MB']);
+            }
+        }
+
+        if ($fileTxt && $fileTxt->isValid() && !$fileTxt->hasMoved()) {
+            $extTxt = strtolower($fileTxt->getClientExtension() ?: $fileTxt->guessExtension() ?: '');
+            if ($extTxt !== 'txt' || $fileTxt->getSize() > 10 * 1024 * 1024) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Format file teks harus .txt maksimal 10 MB']);
+            }
+        }
 
         $updateData = [
             'status_slik'      => $statusSlik,
