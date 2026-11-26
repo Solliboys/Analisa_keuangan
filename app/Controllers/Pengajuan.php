@@ -3343,6 +3343,12 @@ class Pengajuan extends BaseController
             return redirect()->to('/pengajuan')->with('error', 'Data pengajuan tidak ditemukan');
         }
 
+        // Jika tidak secara spesifik meminta laporan keuangan 3 lembar (legacy/tipe),
+        // arahkan otomatis ke Cetak Laporan Komite 10 Bab resmi (?print=1)
+        if (empty($this->request->getGet('tipe')) && empty($this->request->getGet('legacy'))) {
+            return redirect()->to(base_url('pengajuan/cetak/' . $id . '?print=1'));
+        }
+
         // Cegah IDOR: Pengusul hanya boleh mencetak laporan pengajuan miliknya sendiri
         $jabatanLap = strtolower(session()->get('jabatan') ?? '');
         $isGlobalLap = ($jabatanLap === 'superadmin' || strpos($jabatanLap, 'ceo') !== false || strpos($jabatanLap, 'direk') !== false || strpos($jabatanLap, 'review') !== false || strpos($jabatanLap, 'slik') !== false);
