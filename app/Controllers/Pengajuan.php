@@ -60,6 +60,25 @@ class Pengajuan extends BaseController
         return null;
     }
 
+    /**
+     * Generate format nomor aplikasi dinamis berbasis konfigurasi pengaturan sistem
+     */
+    private function generateNomorAplikasi(?array $pengaturan = null): string
+    {
+        try {
+            if ($pengaturan === null) {
+                $db = \Config\Database::connect();
+                $pengaturan = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+            }
+            $prefix = !empty($pengaturan['prefix_nomor_aplikasi']) ? trim($pengaturan['prefix_nomor_aplikasi']) : 'CAM';
+            $prefix = strtoupper(preg_replace('/[^A-Za-z0-9_-]/', '', $prefix)) ?: 'CAM';
+        } catch (\Throwable $e) {
+            $prefix = 'CAM';
+        }
+
+        return $prefix . '-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
+    }
+
     public function index()
     {
         if ($redirect = $this->cekAuth()) return $redirect;
@@ -244,10 +263,10 @@ class Pengajuan extends BaseController
             return redirect()->to('/dashboard')->with('error', 'Pembuatan berkas pengajuan kredit baru hanya diperuntukkan bagi Staf Pengusul (AO).');
         }
 
-        $nomorAplikasi = 'CAM-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
-
         $db = \Config\Database::connect();
         $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
+
+        $nomorAplikasi = $this->generateNomorAplikasi($pengaturanSistem);
 
         $jenisDebitur = $this->request->getGet('tipe') ?? 'perorangan';
         $viewFolder = (stripos($jenisDebitur, 'badan') !== false) ? 'badan_usaha' : 'perorangan';
@@ -369,7 +388,7 @@ class Pengajuan extends BaseController
                 if ($isReviewer || $dupApp['user_id'] == $userId) {
                     $kreditId = $dupApp['kredit_id'];
                 } else {
-                    $input['nomor_aplikasi'] = 'CAM-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(2)));
+                    $input['nomor_aplikasi'] = $this->generateNomorAplikasi();
                 }
             }
         }
@@ -431,7 +450,7 @@ class Pengajuan extends BaseController
 
         $dataKredit = [
             'user_id'                 => $userIdPembuat,
-            'nomor_aplikasi'          => $input['nomor_aplikasi'] ?? ('CAM-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4))),
+            'nomor_aplikasi'          => !empty($input['nomor_aplikasi']) ? trim($input['nomor_aplikasi']) : $this->generateNomorAplikasi(),
             'tipe_aplikasi'           => $input['tipe_aplikasi'] ?? 'Fasilitas Baru',
             'jenis_debitur'           => $input['jenis_debitur'] ?? 'Individu',
             'nama_debitur'            => $valNamaDebitur,

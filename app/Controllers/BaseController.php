@@ -58,6 +58,7 @@ abstract class BaseController extends Controller
                 'telepon_lembaga'        => "VARCHAR(50) NULL DEFAULT '(021) 5088-2900'",
                 'petugas_slik_aktif'     => "TINYINT(1) NULL DEFAULT 1",
                 'ijin_pengusul_isi_slik' => "TINYINT(1) NULL DEFAULT 0",
+                'prefix_nomor_aplikasi'  => "VARCHAR(20) NULL DEFAULT 'CAM'",
             ];
 
             foreach ($neededCols as $col => $colDef) {
@@ -79,6 +80,7 @@ abstract class BaseController extends Controller
                     'telepon_lembaga'        => '(021) 5088-2900',
                     'petugas_slik_aktif'     => 1,
                     'ijin_pengusul_isi_slik' => 0,
+                    'prefix_nomor_aplikasi'  => 'CAM',
                 ]);
             }
         } catch (\Throwable $e) {

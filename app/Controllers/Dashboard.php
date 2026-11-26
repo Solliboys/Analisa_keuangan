@@ -639,6 +639,8 @@ class Dashboard extends BaseController
         $alamatLembaga  = trim((string)($this->request->getPost('alamat_lembaga') ?: 'Financial Center, Lantai 8, Jakarta Selatan'));
         $emailLembaga   = trim((string)($this->request->getPost('email_lembaga') ?: 'info@otwkredit.id'));
         $teleponLembaga = trim((string)($this->request->getPost('telepon_lembaga') ?: '(021) 5088-2900'));
+        $rawPrefix      = trim((string)($this->request->getPost('prefix_nomor_aplikasi') ?: 'CAM'));
+        $prefixNomorApp = strtoupper(preg_replace('/[^A-Za-z0-9_-]/', '', $rawPrefix)) ?: 'CAM';
 
         // Handle upload logo (dengan validasi ketat ekstensi & MIME gambar)
         $logoFile = $this->request->getFile('logo_file');
@@ -664,13 +666,14 @@ class Dashboard extends BaseController
         }
 
         $updateData = [
-            'nama_aplikasi'   => $namaAplikasi,
-            'slogan_aplikasi' => $sloganAplikasi,
-            'nama_lembaga'    => $namaLembaga,
-            'alamat_lembaga'  => $alamatLembaga,
-            'email_lembaga'   => $emailLembaga,
-            'telepon_lembaga' => $teleponLembaga,
-            'updated_at'      => date('Y-m-d H:i:s')
+            'nama_aplikasi'         => $namaAplikasi,
+            'slogan_aplikasi'       => $sloganAplikasi,
+            'nama_lembaga'          => $namaLembaga,
+            'alamat_lembaga'        => $alamatLembaga,
+            'email_lembaga'         => $emailLembaga,
+            'telepon_lembaga'       => $teleponLembaga,
+            'prefix_nomor_aplikasi' => $prefixNomorApp,
+            'updated_at'            => date('Y-m-d H:i:s')
         ];
 
         if ($logoPath) {

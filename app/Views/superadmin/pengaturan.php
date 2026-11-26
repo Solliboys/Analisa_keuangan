@@ -109,7 +109,7 @@
                         <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 shrink-0">Identitas Utama</span>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                         <!-- Nama Sistem / Aplikasi -->
                         <div class="space-y-1.5">
                             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -154,8 +154,30 @@
                             <span class="text-[11px] text-slate-400 block">Nama resmi pada kop surat dokumen.</span>
                         </div>
 
+                        <!-- Prefix Kode Pengajuan / Aplikasi -->
+                        <div class="space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                    Prefix Kode Pengajuan <span class="text-rose-500">*</span>
+                                </label>
+                                <span class="text-[10px] text-blue-600 font-semibold cursor-help" title="CAM = Credit Appraisal Memorandum (Istilah Perbankan untuk Nota Analisa Kelayakan Kredit)">Info CAM</span>
+                            </div>
+                            <input type="text" 
+                                   name="prefix_nomor_aplikasi" 
+                                   id="inputPrefixAplikasi"
+                                   oninput="updatePreviewNomorAplikasi(this.value)"
+                                   maxlength="15"
+                                   placeholder="Contoh: CAM, PK, KRD, BPR"
+                                   value="<?= esc($pengaturan_sistem['prefix_nomor_aplikasi'] ?? 'CAM') ?>" 
+                                   class="w-full text-xs font-bold uppercase tracking-wider border border-slate-200 rounded-xl p-2.5 focus:border-blue-500 focus:outline-none transition shadow-2xs text-slate-900 bg-white" 
+                                   required />
+                            <span class="text-[11px] text-slate-400 block">
+                                Format: <span id="previewKodeAplikasi" class="font-mono font-bold text-blue-700"><?= esc($pengaturan_sistem['prefix_nomor_aplikasi'] ?? 'CAM') ?>-<?= date('Ymd') ?>-XXXX</span>
+                            </span>
+                        </div>
+
                         <!-- Logo Lembaga -->
-                        <div class="md:col-span-3 space-y-2 pt-3 border-t border-slate-100">
+                        <div class="col-span-1 md:col-span-2 lg:col-span-4 space-y-2 pt-3 border-t border-slate-100">
                             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                                 Logo Aplikasi &amp; Kop Dokumen
                             </label>
@@ -608,6 +630,14 @@
             }
         }
 
+        function updatePreviewNomorAplikasi(val) {
+            const clean = (val || '').replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase() || 'CAM';
+            const previewEl = document.getElementById('previewKodeAplikasi');
+            if (previewEl) {
+                previewEl.innerText = clean + '-<?= date("Ymd") ?>-XXXX';
+            }
+        }
+
         function updatePreviewKop() {
             const nama = document.getElementById('inputNamaLembaga').value || 'PT Lembaga Pembiayaan';
             const alamat = document.getElementById('inputAlamatLembaga').value || 'Financial Center, Lantai 8, Jakarta Selatan';
@@ -623,7 +653,7 @@
         function resetFormDefault() {
             Swal.fire({
                 title: 'Reset Identitas & Kontak?',
-                text: 'Kembalikan data nama aplikasi, lembaga, dan kontak ke format bawaan?',
+                text: 'Kembalikan data nama aplikasi, lembaga, prefix pengajuan, dan kontak ke format bawaan?',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#2563eb',
@@ -635,6 +665,10 @@
                     if (document.getElementById('inputNamaAplikasi')) document.getElementById('inputNamaAplikasi').value = 'OTW Kredit';
                     if (document.getElementById('inputSloganAplikasi')) document.getElementById('inputSloganAplikasi').value = 'Sistem Analisa Kredit';
                     if (document.getElementById('inputNamaLembaga')) document.getElementById('inputNamaLembaga').value = 'PT Lembaga Pembiayaan';
+                    if (document.getElementById('inputPrefixAplikasi')) {
+                        document.getElementById('inputPrefixAplikasi').value = 'CAM';
+                        updatePreviewNomorAplikasi('CAM');
+                    }
                     if (document.getElementById('inputAlamatLembaga')) document.getElementById('inputAlamatLembaga').value = 'Financial Center, Lantai 8, Jakarta Selatan';
                     if (document.getElementById('inputEmailLembaga')) document.getElementById('inputEmailLembaga').value = 'info@otwkredit.id';
                     if (document.getElementById('inputTeleponLembaga')) document.getElementById('inputTeleponLembaga').value = '(021) 5088-2900';
