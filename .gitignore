@@ -114,3 +114,6 @@ _modules/*
 
 # Database dumps
 *.sql
+
+# Temporary Testing & Scratch Scripts
+scratch/
