@@ -307,21 +307,20 @@
                 <table class="w-full min-w-[860px] text-left text-xs text-slate-600 tabular-nums" id="tabelPengajuan">
                     <thead class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                         <tr>
+                            <th class="py-3 px-4">Tanggal Permohonan</th>
                             <th class="py-3 px-4">No. Aplikasi</th>
                             <th class="py-3 px-4">Nama Debitur &amp; Usaha</th>
                             <th class="py-3 px-4">Tipe</th>
                             <th class="py-3 px-4 text-right">Plafon &amp; Tenor</th>
                             <th class="py-3 px-4 text-center">Status SLIK</th>
                             <th class="py-3 px-4 text-center">Status Pengajuan</th>
-                            <th class="py-3 px-4">Hasil &amp; Fasilitas SLIK</th>
-                            <th class="py-3 px-4">Tanggal Permohonan</th>
                             <th class="py-3 px-4 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200/80">
                         <?php if (empty($daftar_pengajuan)): ?>
                             <tr id="emptyTableRow">
-                                <td colspan="9" class="text-center py-12 text-slate-400">
+                                <td colspan="8" class="text-center py-12 text-slate-400">
                                     <?php if (($petugas_slik_aktif ?? 1) !== 1): ?>
                                         <div class="w-10 h-10 mx-auto mb-2 text-slate-300">
                                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -345,6 +344,9 @@
                                     $isTerbit = (($row['status_slik'] ?? '') === 'Terbit');
                                 ?>
                                 <tr class="hover:bg-blue-50/30 transition-colors" id="row-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>" data-status-slik="<?= $slInfo['key'] ?>">
+                                    <td class="py-3 px-4 text-[11px] text-slate-500 whitespace-nowrap">
+                                        <?= date('d M Y', strtotime($row['created_at'])) ?>
+                                    </td>
                                     <td class="py-3 px-4 font-semibold text-slate-950 whitespace-nowrap">
                                         <?= esc($row['nomor_aplikasi']) ?>
                                         <span class="block text-[11px] font-normal text-slate-400"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?></span>
@@ -370,33 +372,6 @@
                                             <span class="w-1.5 h-1.5 rounded-full <?= $stInfo['dot'] ?>"></span>
                                             <span><?= esc($stInfo['label']) ?></span>
                                         </span>
-                                    </td>
-                                    <td class="py-3 px-4 min-w-[190px]">
-                                        <?php if ($isTerbit): ?>
-                                            <div>
-                                                <?php if (!empty($row['ada_tunggakan_slik'])): ?>
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Kol 2 &minus; 5 (Tunggakan)
-                                                    </span>
-                                                <?php else: ?>
-                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Kol 1 (Lancar / Clear)
-                                                    </span>
-                                                <?php endif; ?>
-                                                <div class="text-[11px] text-slate-500 mt-0.5">
-                                                    Baki Debet: <span class="font-semibold text-slate-700">Rp <?= number_format((float)($row['total_baki_debet_slik'] ?? 0), 0, ',', '.') ?></span>
-                                                    <span class="text-slate-400">(<?= (int)($row['total_slik_records'] ?? 0) ?> Fasilitas)</span>
-                                                </div>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-[11px] text-slate-400 italic font-normal flex items-center gap-1">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-                                                <span>Menunggu Cek SLIK</span>
-                                            </span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="py-3 px-4 text-[11px] text-slate-500 whitespace-nowrap">
-                                        <?= date('d M Y', strtotime($row['created_at'])) ?>
                                     </td>
                                     <td class="py-3 px-4 text-center whitespace-nowrap">
                                         <div class="inline-flex items-center gap-1.5">

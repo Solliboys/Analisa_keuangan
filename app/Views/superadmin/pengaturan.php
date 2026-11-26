@@ -371,7 +371,6 @@
                         ['key' => 'fitur_disbursement_aktif', 'icon' => '💰', 'judul' => 'Pencairan & Angsuran', 'desc' => 'Simulasi biaya pencairan.', 'def' => 1],
                         ['key' => 'mode_strict_dokumen', 'icon' => '📁', 'judul' => 'Dokumen Wajib', 'desc' => 'Wajib unggah berkas.', 'def' => 0],
                     ];
-                    $modeKomite = $pengaturan_sistem['mode_approval_komite'] ?? 'cepat';
                 ?>
                 <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs w-full">
                     <div class="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
@@ -400,18 +399,6 @@
                                 </div>
                             </div>
                         <?php endforeach; ?>
-
-                        <!-- Mode Persetujuan Komite -->
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
-                            <div class="min-w-0">
-                                <div class="text-xs font-bold text-slate-900">⚖️ Persetujuan Komite</div>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Alur persetujuan pengajuan kredit.</p>
-                            </div>
-                            <select id="selectModeKomite" onchange="setModeKomite(this.value)" class="shrink-0 px-3 py-1.5 text-xs font-bold text-slate-900 bg-white border border-slate-200 rounded-xl cursor-pointer">
-                                <option value="cepat" <?= $modeKomite === 'cepat' ? 'selected' : '' ?>>Cepat (Siapa Cepat)</option>
-                                <option value="bertingkat" <?= $modeKomite === 'bertingkat' ? 'selected' : '' ?>>Bertingkat (Reviewer → CEO)</option>
-                            </select>
-                        </div>
                     </div>
 
                     <p class="mt-3 text-[11px] text-slate-500 bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2">
@@ -900,10 +887,6 @@
             const cur = parseInt(btn.dataset.on) === 1;
             renderSwitch(btn, !cur);
             kirimToggleFitur(btn.dataset.feature, cur ? 0 : 1, () => {}, () => renderSwitch(btn, cur));
-        }
-
-        function setModeKomite(val) {
-            kirimToggleFitur('mode_approval_komite', val, () => {}, () => { window.location.reload(); });
         }
 
         function toggleApiKeyVisibility() {

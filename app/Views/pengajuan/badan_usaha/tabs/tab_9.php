@@ -349,8 +349,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                            <span>BELANJA / PEMBELIAN ASET USAHA</span>
-                            <span class="px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full">Investasi / Capex</span>
+                            <span>ASET</span>
                         </h3>
                         <span class="text-[11px] text-slate-400 font-medium">Rincian pembelian aset tetap, mesin produksi, kendaraan, atau peralatan kantor</span>
                     </div>

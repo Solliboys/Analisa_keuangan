@@ -47,127 +47,126 @@ class Reviewer extends BaseController
      */
     public function review($kreditId = null)
     {
-        try {
-            if (!session()->get('logged_in')) {
-                return redirect()->to('/auth');
-            }
-
-            if (!$this->isAuthorizedReviewer()) {
-                return redirect()->to('/dashboard')->with('error', 'Akses khusus Reviewer / Komite Kredit / CEO.');
-            }
-
-            $kredit = $this->kreditModel->find($kreditId);
-            if (!$kredit) {
-                return redirect()->to('/dashboard')->with('error', 'Data pengajuan kredit tidak ditemukan.');
-            }
-
-            $agunanModel   = new \App\Models\AgunanModel();
-            $slikModel     = new \App\Models\SlikModel();
-            $rekeningModel = new \App\Models\KreditRekeningModel();
-            $keuanganModel = new \App\Models\KreditKeuanganDscModel();
-            $webcheckModel = new \App\Models\KreditWebcheckModel();
-            $analisaModel  = new \App\Models\KreditAnalisaModel();
-            $dokumenModel  = new \App\Models\KreditDokumenModel();
-            $disbursementModel = new \App\Models\KreditDisbursementModel();
-
-            $agunan   = $agunanModel->where('kredit_id', $kreditId)->findAll();
-            $slik     = $slikModel->where('kredit_id', $kreditId)->findAll();
-            $rekening = $rekeningModel->where('kredit_id', $kreditId)->findAll();
-            $keuangan = $keuanganModel->where('kredit_id', $kreditId)->first() ?? [];
-            $webcheck = $webcheckModel->where('kredit_id', $kreditId)->first() ?? [];
-            $analisa  = $analisaModel->where('kredit_id', $kreditId)->first() ?? [];
-            $dokumen  = $dokumenModel->where('kredit_id', $kreditId)->findAll();
-            $disbursement = $disbursementModel->where('kredit_id', $kreditId)->first() ?? [];
-
-            $komiteList = $this->komiteModel->where('kredit_id', $kreditId)->findAll();
-
-            $userRole = strtolower(session()->get('jabatan') ?? '');
-            $userId   = (int)session()->get('user_id');
-            $isCeo    = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false);
-
-            // Ambil semua catatan dari reviewer (role_approver bukan CEO)
-            $semuaCatatanReviewer = $this->komiteModel->where('kredit_id', $kreditId)
-                                                      ->where('role_approver !=', 'Direktur Utama / CEO')
-                                                      ->orderBy('komite_id', 'ASC')
-                                                      ->findAll();
-
-            // Seluruh catatan dari semua reviewer agar dapat dibaca bersama oleh seluruh tim Reviewer & CEO
-            $daftarCatatanReviewer = $semuaCatatanReviewer;
-
-            $keputusanReviewer   = !empty($daftarCatatanReviewer) ? end($daftarCatatanReviewer) : null;
-            $catatanDariReviewer = $keputusanReviewer;
-
-            // Ambil keputusan CEO (jika sudah ada)
-            $keputusanCeo = $this->komiteModel->where('kredit_id', $kreditId)
-                                              ->where('role_approver', 'Direktur Utama / CEO')
-                                              ->first();
-
-            // Hitung total MV dan LV Agunan
-            $totalMV = 0;
-            $totalLV = 0;
-            foreach ($agunan as $ag) {
-                $mv = (float)($ag['nilai_pasar_mv'] ?? 0);
-                $lv = (float)($ag['nilai_likuidasi_lv'] ?? ($mv * 0.6));
-                $totalMV += $mv;
-                $totalLV += $lv;
-            }
-
-            $plafon = (float)($kredit['plafon_pengajuan'] ?? 0);
-            $coverageMV = $plafon > 0 ? round(($totalMV / $plafon) * 100, 1) : 0;
-            $coverageLV = $plafon > 0 ? round(($totalLV / $plafon) * 100, 1) : 0;
-
-            $db = \Config\Database::connect();
-            $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
-                'nama_aplikasi' => 'OTW Credit Engine & CAM',
-                'nama_lembaga'  => 'PT BPR / Lembaga Pembiayaan',
-                'logo_aplikasi' => ''
-            ];
-
-            $pengusul = $db->table('users')->where('id', $kredit['user_id'] ?? 0)->get()->getRowArray() ?? [];
-
-            $data = [
-                'title'              => 'Review Pengajuan Kredit - ' . esc($kredit['nomor_aplikasi']),
-                'nama_lengkap'       => session()->get('nama_lengkap'),
-                'jabatan'            => session()->get('jabatan'),
-                'kredit_id'          => $kreditId,
-                'kredit'             => $kredit,
-                'agunan'             => $agunan,
-                'slik'               => $slik,
-                'rekening'           => $rekening,
-                'keuangan'           => $keuangan,
-                'webcheck'           => $webcheck,
-                'analisa'            => $analisa,
-                'dokumen'            => $dokumen,
-                'disbursement'       => $disbursement,
-                'pengusul'           => $pengusul,
-                'komite'                  => $komiteList,
-                'keputusan_reviewer'      => $keputusanReviewer,
-                'catatan_dari_reviewer'   => $catatanDariReviewer,
-                'daftar_catatan_reviewer' => $daftarCatatanReviewer,
-                'keputusan_ceo'           => $keputusanCeo,
-                'total_mv'           => $totalMV,
-                'total_lv'           => $totalLV,
-                'coverage_mv'        => $coverageMV,
-                'coverage_lv'        => $coverageLV,
-                'pengaturan_sistem'  => $pengaturanSistem
-            ];
-
-            if ($isCeo) {
-                $data['title'] = 'Lembar Keputusan CEO - ' . esc($kredit['nomor_aplikasi']);
-                return view('ceo/form_keputusan_ceo', $data);
-            }
-
-            return view('reviewer/form_review', $data);
-        } catch (\Throwable $e) {
-            log_message('error', 'Reviewer::review error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-            echo '<div style="background:#fee2e2;border:2px solid #ef4444;color:#991b1b;padding:24px;margin:24px;border-radius:12px;font-family:monospace;font-size:13px;">';
-            echo '<h3 style="margin-top:0;">Terjadi Kesalahan Reviewer/CEO:</h3>';
-            echo '<p><strong>Message:</strong> ' . esc($e->getMessage()) . '</p>';
-            echo '<p><strong>File:</strong> ' . esc($e->getFile()) . ' on line ' . esc((string)$e->getLine()) . '</p>';
-            echo '<pre style="background:#fff;padding:12px;border-radius:8px;overflow:auto;max-height:400px;">' . esc($e->getTraceAsString()) . '</pre>';
-            echo '</div>';
-            exit;
+        if (!session()->get('logged_in')) {
+            return redirect()->to('/auth');
         }
+
+        if (!$this->isAuthorizedReviewer()) {
+            return redirect()->to('/dashboard')->with('error', 'Akses khusus Reviewer / Komite Kredit / CEO.');
+        }
+
+        $kredit = $this->kreditModel->find($kreditId);
+        if (!$kredit) {
+            return redirect()->to('/dashboard')->with('error', 'Data pengajuan kredit tidak ditemukan.');
+        }
+
+        $agunanModel   = new \App\Models\AgunanModel();
+        $slikModel     = new \App\Models\SlikModel();
+        $rekeningModel = new \App\Models\KreditRekeningModel();
+        $keuanganModel = new \App\Models\KreditKeuanganDscModel();
+        $webcheckModel = new \App\Models\KreditWebcheckModel();
+        $analisaModel  = new \App\Models\KreditAnalisaModel();
+        $dokumenModel  = new \App\Models\KreditDokumenModel();
+
+        $agunan   = $agunanModel->where('kredit_id', $kreditId)->findAll();
+        $slik     = $slikModel->where('kredit_id', $kreditId)->findAll();
+        $rekening = $rekeningModel->where('kredit_id', $kreditId)->findAll();
+        $keuangan = $keuanganModel->where('kredit_id', $kreditId)->first() ?? [];
+        $webcheck = $webcheckModel->where('kredit_id', $kreditId)->first() ?? [];
+        $analisa  = $analisaModel->where('kredit_id', $kreditId)->first() ?? [];
+        $dokumen  = $dokumenModel->where('kredit_id', $kreditId)->findAll();
+
+        $komiteList = $this->komiteModel->where('kredit_id', $kreditId)->findAll();
+
+        $userRole = strtolower(session()->get('jabatan') ?? '');
+        $userId   = (int)session()->get('user_id');
+        $isCeo    = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false);
+
+        // Ambil semua catatan dari reviewer (role_approver bukan CEO)
+        $semuaCatatanReviewer = $this->komiteModel->where('kredit_id', $kreditId)
+                                                  ->where('role_approver !=', 'Direktur Utama / CEO')
+                                                  ->orderBy('komite_id', 'ASC')
+                                                  ->findAll();
+
+        // Untuk Reviewer: HANYA tampilkan catatan miliknya sendiri (catatan orang lain disembunyikan)
+        // Untuk CEO: tampilkan seluruh catatan dari semua reviewer
+        if (!$isCeo) {
+            $userNama = strtolower(trim(session()->get('nama_lengkap') ?? ''));
+            $daftarCatatanReviewer = array_values(array_filter($semuaCatatanReviewer, function($c) use ($userId, $userNama) {
+                $cUserId = (int)($c['user_id'] ?? 0);
+                $cNama   = strtolower(trim($c['nama_approver'] ?? ''));
+                if ($userId > 0 && $cUserId === $userId) {
+                    return true;
+                }
+                if ($cUserId === 0 && !empty($userNama) && $cNama === $userNama) {
+                    return true;
+                }
+                return false;
+            }));
+        } else {
+            $daftarCatatanReviewer = $semuaCatatanReviewer;
+        }
+
+        $keputusanReviewer   = !empty($daftarCatatanReviewer) ? end($daftarCatatanReviewer) : null;
+        $catatanDariReviewer = $keputusanReviewer;
+
+        // Ambil keputusan CEO (jika sudah ada)
+        $keputusanCeo = $this->komiteModel->where('kredit_id', $kreditId)
+                                          ->where('role_approver', 'Direktur Utama / CEO')
+                                          ->first();
+
+        // Hitung total MV dan LV Agunan
+        $totalMV = 0;
+        $totalLV = 0;
+        foreach ($agunan as $ag) {
+            $mv = (float)($ag['nilai_pasar_mv'] ?? 0);
+            $lv = (float)($ag['nilai_likuidasi_lv'] ?? ($mv * 0.6));
+            $totalMV += $mv;
+            $totalLV += $lv;
+        }
+
+        $plafon = (float)($kredit['plafon_pengajuan'] ?? 0);
+        $coverageMV = $plafon > 0 ? round(($totalMV / $plafon) * 100, 1) : 0;
+        $coverageLV = $plafon > 0 ? round(($totalLV / $plafon) * 100, 1) : 0;
+
+        $db = \Config\Database::connect();
+        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
+            'nama_aplikasi' => 'OTW Credit Engine & CAM',
+            'nama_lembaga'  => 'PT BPR / Lembaga Pembiayaan',
+            'logo_aplikasi' => ''
+        ];
+
+        $data = [
+            'title'              => 'Review Pengajuan Kredit - ' . esc($kredit['nomor_aplikasi']),
+            'nama_lengkap'       => session()->get('nama_lengkap'),
+            'jabatan'            => session()->get('jabatan'),
+            'kredit_id'          => $kreditId,
+            'kredit'             => $kredit,
+            'agunan'             => $agunan,
+            'slik'               => $slik,
+            'rekening'           => $rekening,
+            'keuangan'           => $keuangan,
+            'webcheck'           => $webcheck,
+            'analisa'            => $analisa,
+            'dokumen'            => $dokumen,
+            'komite'                  => $komiteList,
+            'keputusan_reviewer'      => $keputusanReviewer,
+            'catatan_dari_reviewer'   => $catatanDariReviewer,
+            'daftar_catatan_reviewer' => $daftarCatatanReviewer,
+            'keputusan_ceo'           => $keputusanCeo,
+            'total_mv'           => $totalMV,
+            'total_lv'           => $totalLV,
+            'coverage_mv'        => $coverageMV,
+            'coverage_lv'        => $coverageLV,
+            'pengaturan_sistem'  => $pengaturanSistem
+        ];
+
+        if ($isCeo) {
+            $data['title'] = 'Lembar Keputusan CEO - ' . esc($kredit['nomor_aplikasi']);
+            return view('ceo/form_keputusan_ceo', $data);
+        }
+
+        return view('reviewer/form_review', $data);
     }
 
     /**
@@ -347,31 +346,26 @@ class Reviewer extends BaseController
             $catatan = 'Pengajuan dinilai layak setelah dilakukan review mendalam terhadap prinsip 5C, kapasitas repayment (DSC), rekam jejak fasilitas kredit SLIK OJK, serta kelayakan nilai jaminan.';
         }
 
-        $userRole = strtolower(session()->get('jabatan') ?? '');
-        $isCeo    = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false || $userRole === 'superadmin');
-        $statusPengajuanBaru = $isCeo ? 'Disetujui' : 'Menunggu Keputusan CEO';
-        $roleApprover = $isCeo ? 'Direktur Utama / CEO' : 'Reviewer / Analis Senior';
-
         // 1. Update status di tabel kredit induk
         $this->kreditModel->update($kreditId, [
-            'status_pengajuan' => $statusPengajuanBaru,
+            'status_pengajuan' => 'Disetujui',
             'updated_at'       => date('Y-m-d H:i:s')
         ]);
 
         // 2. Catat keputusan di tabel komite / approval log
         $userId       = session()->get('user_id');
-        $namaApprover = session()->get('nama_lengkap') ?: $roleApprover;
+        $namaApprover = session()->get('nama_lengkap') ?: 'Reviewer / Analis Senior';
 
         $komiteExist = $this->komiteModel->where('kredit_id', $kreditId)
-                                         ->where('role_approver', $roleApprover)
+                                         ->where('role_approver', 'Reviewer / Analis Senior')
                                          ->first();
 
         $dataKomite = [
             'kredit_id'        => $kreditId,
             'user_id'          => $userId,
-            'role_approver'    => $roleApprover,
+            'role_approver'    => 'Reviewer / Analis Senior',
             'nama_approver'    => $namaApprover,
-            'status_approval'  => $isCeo ? 'Disetujui' : 'Ditinjau Reviewer',
+            'status_approval'  => 'Disetujui',
             'tanggal_approval' => date('Y-m-d'),
             'catatan_approval' => $catatan,
         ];
@@ -382,13 +376,9 @@ class Reviewer extends BaseController
             $this->komiteModel->insert($dataKomite);
         }
 
-        $suksesMsg = $isCeo
-            ? ('Pengajuan ' . esc($kredit['nomor_aplikasi']) . ' (' . esc($kredit['nama_debitur']) . ') BERHASIL DISETUJUI oleh Direktur Utama / CEO!')
-            : ('Rekomendasi persetujuan berkas ' . esc($kredit['nomor_aplikasi']) . ' (' . esc($kredit['nama_debitur']) . ') berhasil diteruskan ke CEO untuk penetapan keputusan final komite.');
-
         return $this->response->setJSON([
             'status'  => true,
-            'message' => $suksesMsg
+            'message' => 'Pengajuan ' . esc($kredit['nomor_aplikasi']) . ' (' . esc($kredit['nama_debitur']) . ') BERHASIL DISETUJUI oleh Reviewer!'
         ]);
     }
 
