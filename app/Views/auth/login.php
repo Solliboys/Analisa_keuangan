@@ -215,36 +215,6 @@ if ($jam >= 4 && $jam < 11) {
                         </button>
                     </div>
                 </form>
-
-                <!-- Akun Pengujian (Quick Fill) -->
-                <div class="mt-7 pt-5 border-t border-slate-200">
-                    <div class="flex items-center justify-between mb-2.5">
-                        <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Akun Uji Coba</span>
-                        <span class="text-[10px] font-medium text-slate-400">Klik untuk isi otomatis</span>
-                    </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                        <button type="button" onclick="quickFill('superadmin', 'admin123')" class="px-2.5 py-2 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition cursor-pointer">
-                            <div class="text-[11px] font-semibold text-slate-800">Superadmin</div>
-                            <div class="text-[10px] text-slate-400 font-mono">superadmin</div>
-                        </button>
-                        <button type="button" onclick="quickFill('pengusul', 'pengusul123')" class="px-2.5 py-2 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition cursor-pointer">
-                            <div class="text-[11px] font-semibold text-slate-800">Pengusul</div>
-                            <div class="text-[10px] text-slate-400 font-mono">pengusul</div>
-                        </button>
-                        <button type="button" onclick="quickFill('slik', 'slik123')" class="px-2.5 py-2 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition cursor-pointer">
-                            <div class="text-[11px] font-semibold text-slate-800">Petugas SLIK</div>
-                            <div class="text-[10px] text-slate-400 font-mono">slik</div>
-                        </button>
-                        <button type="button" onclick="quickFill('reviewer', 'reviewer123')" class="px-2.5 py-2 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition cursor-pointer">
-                            <div class="text-[11px] font-semibold text-slate-800">Reviewer</div>
-                            <div class="text-[10px] text-slate-400 font-mono">reviewer</div>
-                        </button>
-                        <button type="button" onclick="quickFill('ceo', 'ceo123')" class="px-2.5 py-2 text-left bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md transition cursor-pointer">
-                            <div class="text-[11px] font-semibold text-slate-800">Direktur</div>
-                            <div class="text-[10px] text-slate-400 font-mono">ceo</div>
-                        </button>
-                    </div>
-                </div>
             </div>
 
             <!-- Bottom Copyright -->
@@ -330,16 +300,6 @@ if ($jam >= 4 && $jam < 11) {
             else if (jam >= 15 && jam < 18) salam = 'sore';
             el.textContent = salam;
         })();
-
-        function quickFill(user, pass) {
-            const u = document.getElementById('username');
-            const p = document.getElementById('password');
-            if (u && p) {
-                u.value = user;
-                p.value = pass;
-                u.focus();
-            }
-        }
 
         function togglePassword() {
             const passwordInput = document.getElementById('password');

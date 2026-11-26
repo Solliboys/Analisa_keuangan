@@ -25,7 +25,7 @@ class Auth extends BaseController
     }
 
     /**
-     * Pastikan seluruh akun demo utama (Pengusul, SLIK, Reviewer, CEO, Superadmin) selalu aktif & siap pakai
+     * Pastikan seluruh akun operasional utama (1 Superadmin, 1 CEO, 1 Petugas SLIK, 4 Pengusul, 4 Reviewer) selalu aktif & siap pakai
      */
     private function ensureDemoAccounts(): void
     {
@@ -33,18 +33,97 @@ class Auth extends BaseController
             $db = \Config\Database::connect();
             if (!$db->tableExists('users')) return;
 
-            $demoUsers = [
-                'pengusul'   => ['pass' => 'pengusul123', 'nama' => 'Staff Pengusul Kredit', 'jabatan' => 'Pengusul'],
-                'slik'       => ['pass' => 'slik123',     'nama' => 'Petugas Verifikasi SLIK', 'jabatan' => 'Petugas SLIK'],
-                'reviewer'   => ['pass' => 'reviewer123', 'nama' => 'Senior Credit Reviewer', 'jabatan' => 'Reviewer'],
-                'ceo'        => ['pass' => 'ceo123',      'nama' => 'Direktur Utama / CEO', 'jabatan' => 'CEO'],
-                'superadmin' => ['pass' => 'admin123',    'nama' => 'Super Administrator', 'jabatan' => 'Superadmin'],
+            $defaultUsers = [
+                // 1 Super Administrator
+                'superadmin' => [
+                    'pass'     => 'admin123',
+                    'nama'     => 'Super Administrator Sistem',
+                    'jabatan'  => 'Superadmin',
+                    'email'    => 'admin@otwkredit.id',
+                    'nomor_hp' => '081234567890'
+                ],
+                // 1 Direktur Utama / CEO
+                'ceo' => [
+                    'pass'     => 'ceo123',
+                    'nama'     => 'Dr. H. Hendra Wijaya, S.E., M.M.',
+                    'jabatan'  => 'CEO',
+                    'email'    => 'ceo@otwkredit.id',
+                    'nomor_hp' => '081122334455'
+                ],
+                // 1 Petugas Verifikasi SLIK OJK
+                'slik' => [
+                    'pass'     => 'slik123',
+                    'nama'     => 'Ahmad Fauzi, S.Kom.',
+                    'jabatan'  => 'Petugas SLIK',
+                    'email'    => 'slik@otwkredit.id',
+                    'nomor_hp' => '081399887766'
+                ],
+                // 4 Staff Pengusul Kredit (Account Officer)
+                'pengusul' => [
+                    'pass'     => 'pengusul123',
+                    'nama'     => 'Budi Pratama, S.E.',
+                    'jabatan'  => 'Pengusul',
+                    'email'    => 'budi.pratama@otwkredit.id',
+                    'nomor_hp' => '081211112221'
+                ],
+                'pengusul2' => [
+                    'pass'     => 'pengusul123',
+                    'nama'     => 'Siti Rahmawati, S.E.',
+                    'jabatan'  => 'Pengusul',
+                    'email'    => 'siti.rahmawati@otwkredit.id',
+                    'nomor_hp' => '081211112222'
+                ],
+                'pengusul3' => [
+                    'pass'     => 'pengusul123',
+                    'nama'     => 'Dedi Kurniawan, S.E.',
+                    'jabatan'  => 'Pengusul',
+                    'email'    => 'dedi.kurniawan@otwkredit.id',
+                    'nomor_hp' => '081211112223'
+                ],
+                'pengusul4' => [
+                    'pass'     => 'pengusul123',
+                    'nama'     => 'Maya Anggraini, S.M.',
+                    'jabatan'  => 'Pengusul',
+                    'email'    => 'maya.anggraini@otwkredit.id',
+                    'nomor_hp' => '081211112224'
+                ],
+                // 4 Senior Credit Reviewer & Risk Analyst
+                'reviewer' => [
+                    'pass'     => 'reviewer123',
+                    'nama'     => 'Rian Hidayat, S.E., CRA',
+                    'jabatan'  => 'Reviewer',
+                    'email'    => 'rian.hidayat@otwkredit.id',
+                    'nomor_hp' => '081322223331'
+                ],
+                'reviewer2' => [
+                    'pass'     => 'reviewer123',
+                    'nama'     => 'Ratna Kusuma Dewi, S.E., CRP',
+                    'jabatan'  => 'Reviewer',
+                    'email'    => 'ratna.kusuma@otwkredit.id',
+                    'nomor_hp' => '081322223332'
+                ],
+                'reviewer3' => [
+                    'pass'     => 'reviewer123',
+                    'nama'     => 'Agus Setiawan, M.M., CRA',
+                    'jabatan'  => 'Reviewer',
+                    'email'    => 'agus.setiawan@otwkredit.id',
+                    'nomor_hp' => '081322223333'
+                ],
+                'reviewer4' => [
+                    'pass'     => 'reviewer123',
+                    'nama'     => 'Dewi Lestari, S.E., Ak.',
+                    'jabatan'  => 'Reviewer',
+                    'email'    => 'dewi.lestari@otwkredit.id',
+                    'nomor_hp' => '081322223334'
+                ],
             ];
 
-            $builder = $db->table('users');
+            $builder      = $db->table('users');
             $hasDeletedAt = $db->fieldExists('deleted_at', 'users');
+            $hasEmail     = $db->fieldExists('email', 'users');
+            $hasHp        = $db->fieldExists('nomor_hp', 'users');
 
-            foreach ($demoUsers as $uname => $meta) {
+            foreach ($defaultUsers as $uname => $meta) {
                 $user = $builder->where('username', $uname)->get()->getRowArray();
                 if (!$user) {
                     $ins = [
@@ -56,6 +135,8 @@ class Auth extends BaseController
                         'created_at'   => date('Y-m-d H:i:s'),
                         'updated_at'   => date('Y-m-d H:i:s'),
                     ];
+                    if ($hasEmail && !empty($meta['email'])) $ins['email'] = $meta['email'];
+                    if ($hasHp && !empty($meta['nomor_hp']))  $ins['nomor_hp'] = $meta['nomor_hp'];
                     if ($hasDeletedAt) $ins['deleted_at'] = null;
                     $builder->insert($ins);
                 } else {
@@ -66,7 +147,19 @@ class Auth extends BaseController
                     if ((int)($user['status'] ?? 0) !== 1) {
                         $upd['status'] = 1;
                     }
-                    // Pastikan password akun demo cocok dengan kredensial cepat
+                    if ($hasEmail && (empty($user['email']) || $user['email'] === 'info@instansi.id') && !empty($meta['email'])) {
+                        $upd['email'] = $meta['email'];
+                    }
+                    if ($hasHp && empty($user['nomor_hp']) && !empty($meta['nomor_hp'])) {
+                        $upd['nomor_hp'] = $meta['nomor_hp'];
+                    }
+                    // Jika nama masih berupa placeholder generic lama, perbarui dengan nama profesional lengkap
+                    if (!empty($meta['nama']) && in_array($user['nama_lengkap'], [
+                        'Staff Pengusul Kredit', 'Senior Credit Reviewer', 'Direktur Utama / CEO', 'Petugas Verifikasi SLIK'
+                    ], true)) {
+                        $upd['nama_lengkap'] = $meta['nama'];
+                    }
+                    // Pastikan password cocok
                     if (!password_verify($meta['pass'], $user['password']) && !hash_equals((string)$user['password'], $meta['pass'])) {
                         $upd['password'] = password_hash($meta['pass'], PASSWORD_DEFAULT);
                     }
