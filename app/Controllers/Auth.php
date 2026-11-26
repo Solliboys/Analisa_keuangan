@@ -53,90 +53,92 @@ class Auth extends BaseController
         $username = trim($this->request->getPost('username') ?? '');
         $password = (string) ($this->request->getPost('password') ?? '');
 
-        $user = $userModel->where('username', $username)->first();
+        // Cari user termasuk yang di-soft delete (data tidak hilang dari database)
+        $user = $userModel->withDeleted()->where('username', $username)->first();
 
-        if ($user) {
-            // Verifikasi password yang aman (hapus backdoor hardcoded, auto-hash plaintext legacy)
-            $passwordValid = false;
-            if (password_verify($password, $user['password'])) {
-                $passwordValid = true;
-                if (password_needs_rehash($user['password'], PASSWORD_BCRYPT, ['cost' => 10])) {
-                    $userModel->update($user['id'], ['password' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 10])]);
-                }
-            } elseif (hash_equals((string) $user['password'], $password)) {
-                // Akun legacy plaintext — cocokkan lalu langsung upgrade ke bcrypt hash
-                $passwordValid = true;
+        // Jika user tidak terdaftar sama sekali atau sudah dihapus (deleted_at terisi)
+        if (!$user || !empty($user['deleted_at'])) {
+            $failCount = (int) (session()->get('login_fail_count') ?? 0) + 1;
+            session()->set('login_fail_count', $failCount);
+            if ($failCount >= 10) {
+                session()->set('login_lock_until', time() + 300);
+            }
+            try {
+                LogAktivitasModel::catat(
+                    'Percobaan login ditolak (' . ($user ? 'akun telah dihapus' : 'username tidak ditemukan') . '): ' . $username,
+                    'AUTH',
+                    'WARNING',
+                    ['username' => $username]
+                );
+            } catch (\Throwable $e) {}
+
+            session()->setFlashdata('error', 'Anda tidak terdaftar.');
+            return redirect()->to('/auth');
+        }
+
+        // Verifikasi password yang aman (auto-hash plaintext legacy)
+        $passwordValid = false;
+        if (password_verify($password, $user['password'])) {
+            $passwordValid = true;
+            if (password_needs_rehash($user['password'], PASSWORD_BCRYPT, ['cost' => 10])) {
                 $userModel->update($user['id'], ['password' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 10])]);
             }
+        } elseif (hash_equals((string) $user['password'], $password)) {
+            // Akun legacy plaintext — cocokkan lalu langsung upgrade ke bcrypt hash
+            $passwordValid = true;
+            $userModel->update($user['id'], ['password' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 10])]);
+        }
 
-            if ($passwordValid) {
-                if ($user['status'] == 1) {
-                    // Reset penghitung gagal & regenerasi ID sesi (cegah Session Fixation)
-                    session()->remove(['login_fail_count', 'login_lock_until']);
-                    session()->regenerate(true);
+        if ($passwordValid) {
+            if ($user['status'] == 1) {
+                // Reset penghitung gagal & regenerasi ID sesi (cegah Session Fixation)
+                session()->remove(['login_fail_count', 'login_lock_until']);
+                session()->regenerate(true);
 
-                    $sessionData = [
-                        'user_id'      => $user['id'],
-                        'username'     => $user['username'],
-                        'nama_lengkap' => $user['nama_lengkap'],
-                        'email'        => $user['email'] ?? '',
-                        'nomor_hp'     => $user['nomor_hp'] ?? '',
-                        'foto'         => $user['foto'] ?? '',
-                        'jabatan'      => $user['jabatan'],
-                        'logged_in'    => true,
-                    ];
-                    session()->set($sessionData);
+                $sessionData = [
+                    'user_id'      => $user['id'],
+                    'username'     => $user['username'],
+                    'nama_lengkap' => $user['nama_lengkap'],
+                    'email'        => $user['email'] ?? '',
+                    'nomor_hp'     => $user['nomor_hp'] ?? '',
+                    'foto'         => $user['foto'] ?? '',
+                    'jabatan'      => $user['jabatan'],
+                    'logged_in'    => true,
+                ];
+                session()->set($sessionData);
 
-                    // Update terakhir login
-                    $userModel->update($user['id'], [
-                        'terakhir_login' => date('Y-m-d H:i:s')
-                    ]);
+                // Update terakhir login
+                $userModel->update($user['id'], [
+                    'terakhir_login' => date('Y-m-d H:i:s')
+                ]);
 
-                    // Catat ke log aktivitas sistem
-                    try {
-                        LogAktivitasModel::catat(
-                            'Pengguna @' . $user['username'] . ' (' . $user['nama_lengkap'] . ') berhasil login sebagai ' . $user['jabatan'],
-                            'AUTH',
-                            'SUCCESS',
-                            ['username' => $user['username'], 'jabatan' => $user['jabatan']],
-                            (int)$user['id'],
-                            $user['nama_lengkap'],
-                            $user['jabatan']
-                        );
-                    } catch (\Throwable $e) {}
-
-                    return redirect()->to('/dashboard');
-                } else {
-                    // Status 0: Tidak Aktif / Dinonaktifkan
-                    try {
-                        LogAktivitasModel::catat(
-                            'Login ditolak: Akun @' . $user['username'] . ' berstatus TIDAK AKTIF',
-                            'AUTH',
-                            'WARNING',
-                            ['username' => $user['username']]
-                        );
-                    } catch (\Throwable $e) {}
-
-                    session()->remove(['user_id', 'username', 'nama_lengkap', 'jabatan', 'logged_in']);
-                    session()->setFlashdata('error', '⛔ Akun Anda (@' . esc($user['username']) . ') berstatus TIDAK AKTIF atau dinonaktifkan oleh administrator.');
-                    return redirect()->to('/auth');
-                }
-            } else {
-                $failCount = (int) (session()->get('login_fail_count') ?? 0) + 1;
-                session()->set('login_fail_count', $failCount);
-                if ($failCount >= 10) {
-                    session()->set('login_lock_until', time() + 300);
-                }
+                // Catat ke log aktivitas sistem
                 try {
                     LogAktivitasModel::catat(
-                        'Percobaan login gagal (password salah) untuk username: ' . $username,
+                        'Pengguna @' . $user['username'] . ' (' . $user['nama_lengkap'] . ') berhasil login sebagai ' . $user['jabatan'],
                         'AUTH',
-                        'WARNING',
-                        ['username' => $username]
+                        'SUCCESS',
+                        ['username' => $user['username'], 'jabatan' => $user['jabatan']],
+                        (int)$user['id'],
+                        $user['nama_lengkap'],
+                        $user['jabatan']
                     );
                 } catch (\Throwable $e) {}
 
-                session()->setFlashdata('error', 'Username atau password yang Anda masukkan salah.');
+                return redirect()->to('/dashboard');
+            } else {
+                // Status 0: Tidak Aktif / Belum Disetujui
+                try {
+                    LogAktivitasModel::catat(
+                        'Login ditolak: Akun @' . $user['username'] . ' berstatus TIDAK AKTIF / Belum Disetujui',
+                        'AUTH',
+                        'WARNING',
+                        ['username' => $user['username']]
+                    );
+                } catch (\Throwable $e) {}
+
+                session()->remove(['user_id', 'username', 'nama_lengkap', 'jabatan', 'logged_in']);
+                session()->setFlashdata('error', '⛔ Akun Anda (@' . esc($user['username']) . ') berstatus TIDAK AKTIF atau belum disetujui oleh administrator.');
                 return redirect()->to('/auth');
             }
         } else {
@@ -147,14 +149,14 @@ class Auth extends BaseController
             }
             try {
                 LogAktivitasModel::catat(
-                    'Percobaan login gagal (username tidak ditemukan): ' . $username,
+                    'Percobaan login gagal (password salah) untuk username: ' . $username,
                     'AUTH',
                     'WARNING',
                     ['username' => $username]
                 );
             } catch (\Throwable $e) {}
 
-            session()->setFlashdata('error', 'Username atau password yang Anda masukkan salah.');
+            session()->setFlashdata('error', 'Kata sandi yang Anda masukkan salah.');
             return redirect()->to('/auth');
         }
     }

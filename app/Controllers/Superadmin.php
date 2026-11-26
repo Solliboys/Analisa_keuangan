@@ -60,78 +60,8 @@ class Superadmin extends BaseController
             return $redirect;
         }
 
-        $kreditModel  = new \App\Models\KreditModel();
-        $daftarKredit = $kreditModel->orderBy('created_at', 'DESC')->findAll();
-
-        $db = \Config\Database::connect();
-        $analisaModel = new \App\Models\KreditAnalisaModel();
-        $komiteModel  = new \App\Models\KomiteModel();
-        $agunanModel  = new \App\Models\AgunanModel();
-        
-        $semuaAnalisa = $analisaModel->findAll();
-        $mapAnalisa = [];
-        foreach ($semuaAnalisa as $a) {
-            $mapAnalisa[$a['kredit_id']] = $a;
-        }
-
-        $semuaKomite = $komiteModel->orderBy('komite_id', 'DESC')->findAll();
-        $mapKomite = [];
-        foreach ($semuaKomite as $km) {
-            if (!isset($mapKomite[$km['kredit_id']]) && !empty($km['catatan_approval'])) {
-                $mapKomite[$km['kredit_id']] = $km;
-            }
-        }
-        foreach ($semuaKomite as $km) {
-            if (!isset($mapKomite[$km['kredit_id']])) {
-                $mapKomite[$km['kredit_id']] = $km;
-            }
-        }
-
-        $semuaAgunan = $agunanModel->findAll();
-        $mapAgunan = [];
-        foreach ($semuaAgunan as $ag) {
-            if (!isset($mapAgunan[$ag['kredit_id']])) {
-                $mapAgunan[$ag['kredit_id']] = [];
-            }
-            $mapAgunan[$ag['kredit_id']][] = $ag;
-        }
-
-        foreach ($daftarKredit as &$k) {
-            $km = $mapKomite[$k['kredit_id']] ?? null;
-            $an = $mapAnalisa[$k['kredit_id']] ?? null;
-            $agList = $mapAgunan[$k['kredit_id']] ?? [];
-
-            $k['catatan_reviewer'] = !empty($km['catatan_approval']) ? $km['catatan_approval'] : '';
-            $k['status_komite']    = !empty($km['status_approval']) ? $km['status_approval'] : ($k['status_pengajuan'] ?? 'Draft');
-            $k['skor_ai']          = !empty($an['skor_kelayakan_ai']) ? (int)$an['skor_kelayakan_ai'] : 82;
-            $k['rekomendasi_ai']   = !empty($an['rekomendasi_keputusan_ai']) ? $an['rekomendasi_keputusan_ai'] : 'Disetujui Penuh';
-            $k['analisis_risiko']  = !empty($an['analisis_risiko_ai']) ? $an['analisis_risiko_ai'] : '';
-            
-            $totalLv = 0;
-            $totalMv = 0;
-            foreach ($agList as $ag) {
-                $totalLv += (float)($ag['nilai_likuidasi'] ?? 0);
-                $totalMv += (float)($ag['nilai_pasar'] ?? 0);
-            }
-            $k['total_nilai_likuidasi'] = $totalLv;
-            $k['total_nilai_pasar']     = $totalMv;
-            $plafon = (float)($k['plafon_pengajuan'] ?? 0);
-            $k['coverage_lv'] = $plafon > 0 ? round(($totalLv / $plafon) * 100) : 0;
-        }
-        unset($k);
-
-        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [];
-
-        $data = [
-            'title'             => 'Semua Pengajuan Kredit | ' . ($pengaturanSistem['nama_aplikasi'] ?? 'OTW Kredit'),
-            'nama_lengkap'      => session()->get('nama_lengkap') ?? 'Super Administrator',
-            'jabatan'           => session()->get('jabatan') ?? 'Superadmin',
-            'active_menu'       => 'simulasi',
-            'daftar_kredit'     => $daftarKredit,
-            'pengaturan_sistem' => $pengaturanSistem,
-        ];
-
-        return view('superadmin/simulasi', $data);
+        // Pengajuan kredit hanya diperuntukkan bagi Staf Pengusul (AO)
+        return redirect()->to('/dashboard')->with('info', 'Pengelolaan pengajuan kredit hanya diperuntukkan bagi Staf Pengusul (AO).');
     }
 
     /**
@@ -685,6 +615,8 @@ class Superadmin extends BaseController
             return redirect()->to('/superadmin/manajemen_user')->with('error', $msg);
         }
 
+        // Nonaktifkan status (0) dan jalankan soft delete (deleted_at terisi, data tidak hilang dari database)
+        $userModel->update($id, ['status' => 0]);
         $userModel->delete($id);
 
         // Catat Audit Trail Log

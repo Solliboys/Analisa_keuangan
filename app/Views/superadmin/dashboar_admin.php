@@ -105,10 +105,10 @@
                         Pusat Komando Superadmin
                     </div>
                     <h1 class="text-lg sm:text-xl font-bold tracking-tight text-slate-950">
-                        Ringkasan Portofolio &amp; Kontrol Sistem
+                        Kontrol Operasional &amp; Manajemen Sistem
                     </h1>
                     <p class="text-xs text-slate-500">
-                        Pantau pengajuan pembiayaan, keputusan komite, akun pengguna, dan log audit sistem.
+                        Pusat kendali operasional: manajemen pengguna, konfigurasi model AI 5C, referensi data, dan audit log sistem.
                     </p>
                 </div>
 
@@ -122,64 +122,67 @@
                 <?php endif; ?>
             </div>
 
-            <!-- 5 KPI STATISTIK UTAMA (PORTOFOLIO & SISTEM) -->
+            <!-- 5 KPI STATISTIK UTAMA SISTEM ADMINISTRATOR -->
             <div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
                 
-                <!-- 1. Total Portofolio -->
+                <!-- 1. Total Pengguna Sistem -->
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Pengajuan</span>
-                    <div class="text-2xl font-extrabold text-slate-900 mt-1"><?= number_format($total_pengajuan ?? 0) ?></div>
-                    <span class="text-[11px] text-slate-500 mt-0.5 block">Seluruh berkas kredit</span>
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Pengguna</span>
+                    <div class="text-2xl font-extrabold text-slate-900 mt-1"><?= number_format($total_users ?? 0) ?></div>
+                    <span class="text-[11px] text-slate-500 mt-0.5 block">Akun terdaftar</span>
                 </div>
 
-                <!-- 2. Total Plafon -->
+                <!-- 2. Pengguna Aktif -->
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                    <span class="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">Total Plafon</span>
-                    <div class="text-xl sm:text-2xl font-extrabold text-blue-600 mt-1 truncate" title="Rp <?= number_format($total_plafon ?? 0, 0, ',', '.') ?>">
-                        Rp <?= number_format($total_plafon ?? 0, 0, ',', '.') ?>
+                    <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">Pengguna Aktif</span>
+                    <div class="text-2xl font-extrabold text-emerald-600 mt-1">
+                        <?= number_format($users_aktif ?? 0) ?>
                     </div>
-                    <span class="text-[11px] text-slate-500 mt-0.5 block">Akumulasi pengajuan</span>
+                    <span class="text-[11px] text-slate-500 mt-0.5 block">Status siap bertugas</span>
                 </div>
 
-                <!-- 3. Menunggu Komite -->
+                <!-- 3. Menunggu Persetujuan -->
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                    <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">Menunggu persetujuan</span>
-                    <div class="text-2xl font-extrabold text-amber-600 mt-1"><?= number_format($total_pending ?? 0) ?></div>
-                    <span class="text-[11px] text-slate-500 mt-0.5 block">Draft / Sedang Diajukan</span>
+                    <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">Menunggu Approval</span>
+                    <div class="text-2xl font-extrabold text-amber-600 mt-1"><?= number_format($users_pending ?? 0) ?></div>
+                    <span class="text-[11px] text-slate-500 mt-0.5 block">Pendaftaran staf baru</span>
                 </div>
 
-                <!-- 4. Disetujui Komite -->
+                <!-- 4. Total Log Aktivitas -->
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-                    <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">Disetujui Komite</span>
-                    <div class="text-2xl font-extrabold text-emerald-600 mt-1"><?= number_format($total_approved ?? 0) ?></div>
-                    <span class="text-[11px] text-slate-500 mt-0.5 block">Lolos persetujuan komite</span>
+                    <span class="text-[11px] font-bold text-purple-600 uppercase tracking-wider block">Log Aktivitas</span>
+                    <div class="text-2xl font-extrabold text-purple-600 mt-1"><?= number_format($total_logs ?? 0) ?></div>
+                    <span class="text-[11px] text-slate-500 mt-0.5 block">Audit trail tercatat</span>
                 </div>
 
-                <!-- 5. Pengguna Sistem -->
+                <!-- 5. Status Engine AI 5C -->
                 <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-2xs col-span-2 lg:col-span-1">
-                    <span class="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block">Pengguna Sistem</span>
-                    <div class="text-2xl font-extrabold text-indigo-700 mt-1"><?= number_format($total_users ?? 0) ?></div>
-                    <span class="text-[11px] text-slate-500 mt-0.5 block"><?= (int)($users_pending ?? 0) ?> menunggu verifikasi</span>
+                    <span class="text-[11px] font-bold text-blue-600 uppercase tracking-wider block">Engine AI 5C</span>
+                    <div class="text-xl sm:text-2xl font-extrabold text-blue-700 mt-1 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Aktif</span>
+                    </div>
+                    <span class="text-[11px] text-slate-500 mt-0.5 block">Gemini Underwriting</span>
                 </div>
             </div>
 
             <!-- DAFTAR TABEL DASHBOARD PER BARIS (FULL WIDTH) -->
             <div class="space-y-6">
 
-                <!-- KOLOM KIRI: PENGAJUAN KREDIT TERBARU -->
+                <!-- KOLOM KIRI: PENGGUNA SISTEM MENUNGGU PERSETUJUAN -->
                 <div class="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden flex flex-col">
                     <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
-                                📑
+                            <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+                                👥
                             </div>
                             <div>
-                                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Pengajuan Kredit Terbaru</h2>
-                                <p class="text-[11px] text-slate-400">Antrean permohonan kredit terkini dari seluruh pengusul</p>
+                                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Personel Sistem Menunggu Persetujuan</h2>
+                                <p class="text-[11px] text-slate-400">Pendaftaran akun pengguna baru yang membutuhkan validasi Administrator</p>
                             </div>
                         </div>
-                        <a href="<?= base_url('superadmin/simulasi') ?>" class="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline">
-                            Lihat Semua &rarr;
+                        <a href="<?= base_url('superadmin/manajemen_user') ?>" class="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline">
+                            Kelola Semua Pengguna &rarr;
                         </a>
                     </div>
 
@@ -187,49 +190,52 @@
                         <table class="w-full min-w-[680px] text-left border-collapse text-xs">
                             <thead class="bg-slate-50/80 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
                                 <tr>
-                                    <th class="py-3 px-4">No. Aplikasi</th>
-                                    <th class="py-3 px-4">Debitur</th>
-                                    <th class="py-3 px-4">Plafon</th>
+                                    <th class="py-3 px-4">Nama Lengkap</th>
+                                    <th class="py-3 px-4">Username</th>
+                                    <th class="py-3 px-4">Jabatan / Role</th>
                                     <th class="py-3 px-4">Status</th>
-                                    <th class="py-3 px-4 text-center">Aksi</th>
+                                    <th class="py-3 px-4 text-center">Aksi Cepat</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100">
-                                <?php if (empty($antrean_pengajuan)): ?>
+                                <?php if (empty($pending_users)): ?>
                                     <tr>
                                         <td colspan="5" class="py-8 text-center text-slate-400 italic text-[11px]">
-                                            Belum ada pengajuan kredit terdaftar.
+                                            Tidak ada personel baru yang menunggu persetujuan. Seluruh akun telah terverifikasi.
                                         </td>
                                     </tr>
                                 <?php else: ?>
-                                    <?php foreach (array_slice($antrean_pengajuan, 0, 5) as $row): ?>
+                                    <?php foreach ($pending_users as $pUser): ?>
                                         <tr class="hover:bg-slate-50/70 transition-colors">
-                                            <td class="py-3 px-4 font-bold text-slate-900 whitespace-nowrap font-mono-code text-[11px]">
-                                                <?= esc($row['nomor_aplikasi']) ?>
+                                            <td class="py-3 px-4 font-bold text-slate-900 whitespace-nowrap text-[11px]">
+                                                <?= esc($pUser['nama_lengkap']) ?>
+                                            </td>
+                                            <td class="py-3 px-4 whitespace-nowrap text-slate-600 font-mono-code text-[11px]">
+                                                @<?= esc($pUser['username']) ?>
                                             </td>
                                             <td class="py-3 px-4 whitespace-nowrap">
-                                                <div class="font-bold text-slate-800"><?= esc($row['nama_debitur'] ?: '-') ?></div>
-                                                <div class="text-[10px] text-slate-400"><?= esc($row['nama_usaha'] ?: 'Individu') ?></div>
-                                            </td>
-                                            <td class="py-3 px-4 font-bold text-blue-600 whitespace-nowrap">
-                                                Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?>
+                                                <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                    <?= esc($pUser['jabatan']) ?>
+                                                </span>
                                             </td>
                                             <td class="py-3 px-4 whitespace-nowrap">
-                                                <?php
-                                                    $st = strtolower($row['status_pengajuan'] ?? 'draft');
-                                                    $badge = 'bg-slate-100 text-slate-700 border-slate-200';
-                                                    if ($st === 'disetujui') $badge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                                                    elseif ($st === 'diajukan') $badge = 'bg-blue-50 text-blue-700 border-blue-200';
-                                                    elseif ($st === 'ditolak') $badge = 'bg-rose-50 text-rose-700 border-rose-200';
-                                                ?>
-                                                <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border <?= $badge ?>">
-                                                    <?= esc($row['status_pengajuan'] ?? 'Draft') ?>
+                                                <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                    Menunggu Approval
                                                 </span>
                                             </td>
                                             <td class="py-3 px-4 text-center whitespace-nowrap">
-                                                <a href="<?= base_url('superadmin/simulasi') ?>" class="px-2.5 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition">
-                                                    Detail
-                                                </a>
+                                                <div class="inline-flex items-center gap-1.5">
+                                                    <a href="<?= base_url('dashboard/approveUser/' . $pUser['id']) ?>" 
+                                                       onclick="return confirm('Setujui akun <?= esc($pUser['nama_lengkap']) ?>?')"
+                                                       class="px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition">
+                                                        Setujui
+                                                    </a>
+                                                    <a href="<?= base_url('dashboard/rejectUser/' . $pUser['id']) ?>" 
+                                                       onclick="return confirm('Tolak akun <?= esc($pUser['nama_lengkap']) ?>?')"
+                                                       class="px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition">
+                                                        Tolak
+                                                    </a>
+                                                </div>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

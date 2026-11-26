@@ -34,28 +34,7 @@ class Dashboard extends BaseController
         ];
 
         if ($role === 'superadmin') {
-            // Data Komprehensif Superadmin: Seluruh Pengajuan, User Management, AI Setting
-            $totalPengajuan = $kreditModel->countAllResults();
-            $semuaKredit    = $kreditModel->orderBy('created_at', 'DESC')->findAll(5);
-            
-            $totalPlafon = 0;
-            $pendingKomite = 0;
-            $approvedKomite = 0;
-            $rejectedKomite = 0;
-            
-            $allData = $kreditModel->findAll();
-            foreach ($allData as $k) {
-                $totalPlafon += (float)($k['plafon_pengajuan'] ?? 0);
-                $st = strtolower($k['status_pengajuan'] ?? '');
-                if ($st === 'diajukan' || $st === 'draft') {
-                    $pendingKomite++;
-                } elseif (strpos($st, 'setuju') !== false) {
-                    $approvedKomite++;
-                } elseif (strpos($st, 'tolak') !== false) {
-                    $rejectedKomite++;
-                }
-            }
-
+            // Data Komprehensif Superadmin: User Management, AI Setting, Log Aktivitas
             $daftarUsers = $userModel->orderBy('created_at', 'DESC')->findAll();
             $pengaturanAi = $db->table('pengaturan_ai')->where('id', 1)->get()->getRowArray() ?? [
                 'prompt_character'  => 'Analisis karakter debitur berdasarkan riwayat kredit dan integritas.',
@@ -66,30 +45,43 @@ class Dashboard extends BaseController
                 'prompt_final'      => 'Berikan ringkasan rekomendasi keputusan akhir kredit beserta skor 1-100.'
             ];
 
+            $totalUsers = count($daftarUsers);
+            $usersAktif = 0;
             $usersPending = 0;
+            $pendingUserList = [];
             foreach ($daftarUsers as $u) {
-                if ($u['status'] == 0) $usersPending++;
+                if ((int)($u['status'] ?? 0) === 1) {
+                    $usersAktif++;
+                } else {
+                    $usersPending++;
+                    $pendingUserList[] = $u;
+                }
             }
 
+            $totalLogs = 0;
             $recentLogs = [];
             try {
-                $recentLogs = $db->table('log_aktivitas')->orderBy('created_at', 'DESC')->limit(5)->get()->getResultArray() ?? [];
+                $totalLogs = $db->table('log_aktivitas')->countAllResults();
+                $recentLogs = $db->table('log_aktivitas')->orderBy('created_at', 'DESC')->limit(8)->get()->getResultArray() ?? [];
             } catch (\Throwable $e) {
                 $recentLogs = [];
             }
+
+            $totalReferensi = 0;
+            try {
+                $totalReferensi = $db->table('referensi')->countAllResults();
+            } catch (\Throwable $e) {}
 
             $data = [
                 'title'                 => 'Executive Command Dashboard | Superadmin',
                 'nama_lengkap'          => session()->get('nama_lengkap'),
                 'jabatan'               => $jabatan,
-                'total_pengajuan'       => $totalPengajuan,
-                'total_plafon'          => $totalPlafon,
-                'total_pending'         => $pendingKomite,
-                'total_approved'        => $approvedKomite,
-                'total_rejected'        => $rejectedKomite,
-                'total_users'           => count($daftarUsers),
+                'total_users'           => $totalUsers,
+                'users_aktif'           => $usersAktif,
                 'users_pending'         => $usersPending,
-                'antrean_pengajuan'     => $semuaKredit,
+                'pending_users'         => $pendingUserList,
+                'total_logs'            => $totalLogs,
+                'total_referensi'       => $totalReferensi,
                 'daftar_users'          => $daftarUsers,
                 'recent_logs'           => $recentLogs,
                 'pengaturan_sistem'     => $pengaturanSistem,

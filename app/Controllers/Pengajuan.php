@@ -237,6 +237,13 @@ class Pengajuan extends BaseController
     {
         if ($redirect = $this->cekAuth()) return $redirect;
 
+        // Validasi Hak Akses: Pembuatan pengajuan kredit HANYA untuk Staf Pengusul (AO)
+        $jabatan = strtolower(session()->get('jabatan') ?? '');
+        $isPengusul = ($jabatan === 'pengusul' || strpos($jabatan, 'pengusul') !== false || strpos($jabatan, 'ao') !== false || strpos($jabatan, 'officer') !== false);
+        if (!$isPengusul) {
+            return redirect()->to('/dashboard')->with('error', 'Pembuatan berkas pengajuan kredit baru hanya diperuntukkan bagi Staf Pengusul (AO).');
+        }
+
         $nomorAplikasi = 'CAM-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
 
         $db = \Config\Database::connect();
