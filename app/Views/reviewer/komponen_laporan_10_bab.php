@@ -30,19 +30,35 @@ $slikList         = is_array($slik ?? null) ? $slik : [];
 $jmlFasilitasSlik = count($slikList);
 $totalBakiDebetSlik = 0;
 $totalPlafonSlik    = 0;
+$totalAngsuranSlik  = 0;
 $slikDetailStr      = [];
 foreach ($slikList as $sl) {
     $ob = (float)($sl['outstanding'] ?? ($sl['baki_debet'] ?? 0));
     $pl = (float)($sl['plafon'] ?? 0);
     $bk = $sl['bank_lembaga'] ?? 'Bank';
+    $pAcuan = $pl > 0 ? $pl : $ob;
+
+    $angs = (float)($sl['angsuran'] ?? 0);
+    if ($angs <= 0 && $pAcuan > 0) {
+        $jwBln = 12;
+        if (preg_match('/([0-9]+)/', (string)($sl['jangka_waktu'] ?? ''), $jwm)) $jwBln = (int)$jwm[1];
+        if ($jwBln <= 0) $jwBln = 12;
+        $bPct = 10;
+        if (preg_match('/([0-9]+([.,][0-9]+)?)/', (string)($sl['suku_bunga'] ?? ''), $bm)) $bPct = (float)str_replace(',', '.', $bm[1]);
+        if ($bPct <= 0) $bPct = 10;
+        $jwThn = $jwBln / 12;
+        $angs = round(($pAcuan * (1 + ($bPct / 100) * $jwThn)) / $jwBln);
+    }
     $totalBakiDebetSlik += $ob;
     $totalPlafonSlik    += $pl;
-    $slikDetailStr[]    = "{$bk} Rp" . number_format($ob, 0, ',', '.');
+    $totalAngsuranSlik  += $angs;
+    $slikDetailStr[]    = "{$bk} Rp" . number_format($ob, 0, ',', '.') . ($angs > 0 ? " (Cicilan Rp" . number_format($angs, 0, ',', '.') . "/bln)" : '');
 }
 if ($totalBakiDebetSlik <= 0 && $jmlFasilitasSlik == 0) {
     // Fallback realistis sesuai dokumen
     $totalBakiDebetSlik = 48250000;
     $totalPlafonSlik    = 70000000;
+    $totalAngsuranSlik  = 3000000;
     $jmlFasilitasSlik   = 2;
     $slikDetailStr      = ['BRI Modal Kerja Rp47.000.000', 'BCA Kartu Kredit Rp1.250.000'];
 }
@@ -97,18 +113,24 @@ $arusKasForm = 30000000;
 $arusKasDok  = 33500000;
 
 // Cicilan Berjalan & Baru
-$cicilanBerjalan = 3000000;
+$cicilanBerjalan = 0;
+if ($totalAngsuranSlik > 0) {
+    $cicilanBerjalan = $totalAngsuranSlik;
+}
 if (!empty($keuangan['detail_utang_json'])) {
     $decU = json_decode($keuangan['detail_utang_json'], true);
     if (is_array($decU) && count($decU) > 0) {
         $cTmp = 0;
-        foreach ($decU as $uItem) $cTmp += (float)($uItem['cicilan'] ?? ($uItem['angsuran'] ?? 0));
+        foreach ($decU as $uItem) $cTmp += (float)($uItem['cicilan'] ?? ($uItem['cicilan_bulanan'] ?? ($uItem['angsuran'] ?? 0)));
         if ($cTmp > 0) $cicilanBerjalan = $cTmp;
     }
 }
+if ($cicilanBerjalan <= 0) {
+    $cicilanBerjalan = 3000000;
+}
 $cicilanBaru = (float)($keuangan['angsuran_dipilih'] ?? ($keuangan['angsuran_installment'] ?? 10623000));
 if ($cicilanBaru <= 0) $cicilanBaru = 10623000;
-$totalCicilan = $cicilanBerjalan + $cicilanBaru; // 13.623.000
+$totalCicilan = $cicilanBerjalan + $cicilanBaru;
 
 // DSR & DSCR
 $dsrForm  = ($labaForm > 0) ? round(($totalCicilan / $labaForm) * 100, 2) : 54.49;

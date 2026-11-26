@@ -93,6 +93,84 @@
                 ];
             }
         }
+
+        // 4. Komponen SLIK & Fasilitas Kredit Berjalan (Rumus Resmi Komite Kredit)
+        $totalOutstandingSlik = 0;
+        $totalCicilanSlik = 0;
+        $listSlikAutoUtang = [];
+        if (!empty($slik) && is_array($slik)) {
+            foreach ($slik as $s) {
+                $out = (float)($s['outstanding'] ?? ($s['baki_debet'] ?? 0));
+                $pl  = (float)($s['plafon'] ?? 0);
+                $pAcuan = $pl > 0 ? $pl : $out;
+                $angs = (float)($s['angsuran'] ?? ($s['angsuran_bulanan'] ?? 0));
+                
+                $jwBln = 12;
+                if (preg_match('/([0-9]+)/', (string)($s['jangka_waktu'] ?? ''), $jwm)) {
+                    $jwBln = (int)$jwm[1];
+                }
+                if ($jwBln <= 0) $jwBln = 12;
+
+                $bPct = 10;
+                if (preg_match('/([0-9]+([.,][0-9]+)?)/', (string)($s['suku_bunga'] ?? ''), $bm)) {
+                    $bPct = (float)str_replace(',', '.', $bm[1]);
+                }
+                if ($bPct <= 0) $bPct = 10;
+
+                if ($angs <= 0 && $pAcuan > 0) {
+                    $jwThn = $jwBln / 12;
+                    $angs = round(($pAcuan * (1 + ($bPct / 100) * $jwThn)) / $jwBln);
+                }
+
+                $totalOutstandingSlik += $out;
+                $totalCicilanSlik += $angs;
+
+                if ($pAcuan > 0) {
+                    $listSlikAutoUtang[] = [
+                        'nama'            => !empty($s['bank_lembaga']) ? "{$s['bank_lembaga']} ({$s['jenis_fasilitas']})" : 'Pinjaman Bank',
+                        'plafon'          => $pAcuan,
+                        'bunga_persen'    => $bPct,
+                        'tenor_tahun'     => round($jwBln / 12, 1),
+                        'tenor_bulan'     => $jwBln,
+                        'cicilan_bulanan' => $angs
+                    ];
+                }
+            }
+        }
+
+        // 5. Data Daftar Hutang Dinamis (Prioritas: Data Tersimpan -> Otomatis SLIK)
+        $rawDetailUtang = $keuangan['detail_utang_json'] ?? '';
+        $listDetailUtang = [];
+        if (!empty($rawDetailUtang) && $rawDetailUtang !== '[]') {
+            $decU = json_decode($rawDetailUtang, true);
+            if (is_array($decU) && count($decU) > 0) {
+                $listDetailUtang = $decU;
+            }
+        }
+        if (empty($listDetailUtang) && !empty($listSlikAutoUtang)) {
+            $listDetailUtang = $listSlikAutoUtang;
+        }
+
+        // Estimasi Angsuran Kredit Baru yang Diajukan
+        $plafonBaru = (float)($kredit['plafon_pengajuan'] ?? 100000000);
+        $tenorBulanBaru = (int)($kredit['tenor_bulan'] ?? 12);
+        if ($tenorBulanBaru <= 0) $tenorBulanBaru = 12;
+        $bungaTahunPersenBU = (float)($kredit['bunga_per_tahun'] ?? 0);
+        $bungaBulanPersen = ($bungaTahunPersenBU > 0) ? ($bungaTahunPersenBU / 12) : (float)($kredit['bunga_per_bulan'] ?? 1.25);
+        $metodeBungaBU = strtoupper($kredit['perhitungan_bunga'] ?? 'ANUITAS');
+        $skemaBayarBU = strtolower(($kredit['skema_pembayaran'] ?? '') . ' ' . ($kredit['skema_kredit'] ?? ''));
+        $rateBlnBU = $bungaBulanPersen / 100;
+        if (strpos($skemaBayarBU, 'balloon') !== false) {
+            $estimasiAngsuranBaru = ($plafonBaru > 0) ? round($plafonBaru * $rateBlnBU) : 0;
+        } elseif ($metodeBungaBU === 'ANUITAS' && $plafonBaru > 0 && $tenorBulanBaru > 0) {
+            $estimasiAngsuranBaru = ($rateBlnBU > 0)
+                ? round($plafonBaru * ($rateBlnBU / (1 - pow(1 + $rateBlnBU, -$tenorBulanBaru))))
+                : round($plafonBaru / $tenorBulanBaru);
+        } else {
+            $angsuranPokokBaru = ($plafonBaru > 0) ? ($plafonBaru / $tenorBulanBaru) : 0;
+            $angsuranBungaBaru = ($plafonBaru > 0) ? ($plafonBaru * $rateBlnBU) : 0;
+            $estimasiAngsuranBaru = round($angsuranPokokBaru + $angsuranBungaBaru);
+        }
     ?>
 
     <!-- Layout 3 Kotak Data Keuangan Badan Usaha (1: Pendapatan [Biru], 2: Pengeluaran [Merah], 3: Aset [Hijau]) -->
@@ -369,6 +447,9 @@
     </div>
 
     <script>
+    window.ANGSURAN_SLIK_DEFAULT = <?= (float)$totalCicilanSlik ?>;
+    window.OUTSTANDING_SLIK_DEFAULT = <?= (float)$totalOutstandingSlik ?>;
+    window.ESTIMASI_ANGSURAN_BARU = <?= (float)$estimasiAngsuranBaru ?>;
     window.daftarHpp = <?= !empty($listDetailHppBU) ? json_encode($listDetailHppBU) : '[]' ?>;
     window.daftarUtang = <?= !empty($listDetailUtang) ? json_encode($listDetailUtang) : '[]' ?>;
     if (typeof initDaftarUtang === 'function') {

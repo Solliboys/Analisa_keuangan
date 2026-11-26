@@ -46,6 +46,7 @@ if (!empty($kredit['daftar_permohonan_slik'])) {
 // Perhitungan Ringkasan SLIK
 $totalPlafonSlik = 0;
 $totalBakiDebetSlik = 0;
+$totalAngsuranSlik = 0;
 $kolTerburuk = '-';
 $kolPriority = ['Macet' => 5, 'Diragukan' => 4, 'Kurang Lancar' => 3, 'DPK' => 2, 'Lancar' => 1];
 $maxKolVal = 0;
@@ -55,11 +56,32 @@ $countLembagaPembiayaan = 0;
 $countLainnya = 0;
 
 if (!empty($slik) && is_array($slik)) {
-    foreach ($slik as $s) {
+    foreach ($slik as &$s) {
         $pl = (float)($s['plafon'] ?? 0);
         $bd = (float)($s['outstanding'] ?? 0);
         $totalPlafonSlik += $pl;
         $totalBakiDebetSlik += $bd;
+
+        $pAcuan = $pl > 0 ? $pl : $bd;
+        $angs = (float)($s['angsuran'] ?? 0);
+        if ($angs <= 0 && $pAcuan > 0) {
+            $jwBln = 12;
+            if (preg_match('/([0-9]+)/', (string)($s['jangka_waktu'] ?? ''), $jwm)) {
+                $jwBln = (int)$jwm[1];
+            }
+            if ($jwBln <= 0) $jwBln = 12;
+
+            $bPct = 10;
+            if (preg_match('/([0-9]+([.,][0-9]+)?)/', (string)($s['suku_bunga'] ?? ''), $bm)) {
+                $bPct = (float)str_replace(',', '.', $bm[1]);
+            }
+            if ($bPct <= 0) $bPct = 10;
+
+            $jwThn = $jwBln / 12;
+            $angs = round(($pAcuan * (1 + ($bPct / 100) * $jwThn)) / $jwBln);
+            $s['angsuran'] = $angs;
+        }
+        $totalAngsuranSlik += $angs;
 
         $bank = strtolower($s['bank_lembaga'] ?? '');
         if (strpos($bank, 'bpr') !== false || strpos($bank, 'bprs') !== false) {
@@ -79,6 +101,7 @@ if (!empty($slik) && is_array($slik)) {
             $kolTerburuk = $kol;
         }
     }
+    unset($s);
 }
 
 
@@ -354,8 +377,8 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 </div>
             </div>
             
-            <!-- Baris 1: 3 Kartu Metrik Utama -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Baris 1: 4 Kartu Metrik Utama -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <!-- Total Plafond -->
                 <div class="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs">
                     <div class="text-[11px] text-slate-500 font-medium">Total Plafond</div>
@@ -370,6 +393,18 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                     <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricBakiDebet">
                         Rp <?= number_format($totalBakiDebetSlik, 0, ',', '.') ?>
                     </div>
+                </div>
+
+                <!-- Total Angsuran SLIK / Bulan -->
+                <div class="p-4 rounded-xl border border-rose-200/90 bg-rose-50/40 shadow-2xs">
+                    <div class="text-[11px] text-rose-600 font-bold flex items-center justify-between">
+                        <span>Cicilan SLIK / Bulan</span>
+                        <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700">Kewajiban</span>
+                    </div>
+                    <div class="text-base font-black text-rose-700 mt-1" id="ringkasanMetricAngsuran">
+                        Rp <?= number_format($totalAngsuranSlik, 0, ',', '.') ?>
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-0.5">Masuk ke pengeluaran Tab 9 &amp; DSCR</div>
                 </div>
 
                 <!-- Kolektibilitas Terburuk -->
@@ -419,7 +454,10 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
 
             <!-- Header Tabel & Tombol Tambah Fasilitas -->
             <div class="flex items-center justify-between pt-2">
-                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wide">Rincian Fasilitas Pinjaman / Kredit</h4>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wide">Rincian Fasilitas Pinjaman / Kredit</h4>
+                    <p class="text-[10px] text-slate-400">Formula Angsuran: [Plafon + (Plafon &times; Bunga% &times; (Tenor Bulan / 12))] &divide; Tenor Bulan</p>
+                </div>
                 <div class="flex items-center gap-2">
                     <button type="button" onclick="bukaFormTambahFasilitasSlik()" class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
@@ -445,14 +483,14 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                     </div>
                     <div>
                         <label class="block font-semibold text-slate-700 mb-1">Plafond (Rp)</label>
-                        <input type="text" id="inputFasPlafon" placeholder="0" oninput="this.value = formatRupiahInput(this.value)" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold focus:border-blue-500 focus:outline-none">
+                        <input type="text" id="inputFasPlafon" placeholder="0" oninput="this.value = formatRupiahInput(this.value); if(typeof updateLivePreviewAngsuranModalSlik === 'function') updateLivePreviewAngsuranModalSlik();" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold focus:border-blue-500 focus:outline-none">
                     </div>
                     <div>
                         <label class="block font-semibold text-slate-700 mb-1">Baki Debet (Rp)</label>
-                        <input type="text" id="inputFasOutstanding" placeholder="0" oninput="this.value = formatRupiahInput(this.value)" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold text-blue-700 focus:border-blue-500 focus:outline-none">
+                        <input type="text" id="inputFasOutstanding" placeholder="0" oninput="this.value = formatRupiahInput(this.value); if(typeof updateLivePreviewAngsuranModalSlik === 'function') updateLivePreviewAngsuranModalSlik();" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold text-blue-700 focus:border-blue-500 focus:outline-none">
                     </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
                     <div>
                         <label class="block font-semibold text-slate-700 mb-1">Kolektibilitas</label>
                         <select id="inputFasKelancaran" class="w-full bg-white border border-slate-300 rounded-lg p-2 focus:border-blue-500 focus:outline-none cursor-pointer">
@@ -464,17 +502,27 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                         </select>
                     </div>
                     <div>
-                        <label class="block font-semibold text-slate-700 mb-1">Suku Bunga</label>
-                        <input type="text" id="inputFasBunga" placeholder="Contoh: 9%" class="w-full bg-white border border-slate-300 rounded-lg p-2 focus:border-blue-500 focus:outline-none">
+                        <label class="block font-semibold text-slate-700 mb-1">Suku Bunga (% / thn)</label>
+                        <input type="text" id="inputFasBunga" placeholder="10%" value="10%" oninput="if(typeof updateLivePreviewAngsuranModalSlik === 'function') updateLivePreviewAngsuranModalSlik();" class="w-full bg-white border border-slate-300 rounded-lg p-2 focus:border-blue-500 focus:outline-none">
                     </div>
-                    <div class="flex items-end gap-2">
-                        <button type="button" onclick="simpanFasilitasSlikBaru()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition shadow-xs cursor-pointer">
-                            Simpan ke Rincian
-                        </button>
-                        <button type="button" onclick="tutupFormTambahFasilitasSlik()" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold transition cursor-pointer">
-                            Batal
-                        </button>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Jangka Waktu (Bulan)</label>
+                        <input type="number" id="inputFasTenor" placeholder="36" value="36" min="1" oninput="if(typeof updateLivePreviewAngsuranModalSlik === 'function') updateLivePreviewAngsuranModalSlik();" class="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold focus:border-blue-500 focus:outline-none">
                     </div>
+                    <div>
+                        <label class="block font-semibold text-rose-600 mb-1">Estimasi Cicilan / Bulan</label>
+                        <div id="labelLiveAngsuranFasilitas" class="w-full bg-rose-50 border border-rose-200 rounded-lg p-2 font-extrabold text-rose-700">
+                            Rp 0 / bln
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-1 border-t border-blue-200">
+                    <button type="button" onclick="tutupFormTambahFasilitasSlik()" class="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="button" onclick="simpanFasilitasSlikBaru()" class="px-5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold transition shadow-xs cursor-pointer">
+                        Simpan ke Rincian Fasilitas
+                    </button>
                 </div>
             </div>
 
@@ -494,6 +542,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                             <th class="py-2.5 px-3 border-r border-slate-200 min-w-[100px]">TGL AKAD</th>
                             <th class="py-2.5 px-3 border-r border-slate-200 min-w-[100px]">JATUH TEMPO</th>
                             <th class="py-2.5 px-3 border-r border-slate-200 min-w-[100px]">JANGKA WAKTU</th>
+                            <th class="py-2.5 px-3 border-r border-slate-200 min-w-[120px] bg-rose-50/70 text-rose-800">ANGSURAN / BLN</th>
                             <th class="py-2.5 px-3 border-r border-slate-200 min-w-[100px]">TUNGGAKAN</th>
                             <th class="py-2.5 px-3 min-w-[110px] text-center">KOLEKTIBILITAS</th>
                             <th class="py-2.5 px-2 text-center w-10">AKSI</th>
@@ -502,7 +551,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                     <tbody class="divide-y divide-slate-100 font-medium text-slate-700" id="bodyRincianFasilitasSlik">
                         <?php if (empty($slik)): ?>
                             <tr id="emptyFasilitasRow">
-                                <td colspan="14" class="py-8 text-center text-xs text-slate-400 italic bg-white">
+                                <td colspan="15" class="py-8 text-center text-xs text-slate-400 italic bg-white">
                                     Tidak ada catatan fasilitas pinjaman aktif.
                                 </td>
                             </tr>
@@ -520,6 +569,7 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                                     <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['tgl_akad'] ?? '-') ?></td>
                                     <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['jatuh_tempo'] ?? '-') ?></td>
                                     <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['jangka_waktu'] ?? '-') ?></td>
+                                    <td class="py-2 px-3 border-r border-slate-100 font-bold text-rose-700 bg-rose-50/40">Rp <?= number_format((float)($row['angsuran'] ?? 0), 0, ',', '.') ?></td>
                                     <td class="py-2 px-3 border-r border-slate-100"><?= esc($row['tunggakan'] ?? '0') ?></td>
                                     <td class="py-2 px-3 text-center border-r border-slate-100">
                                         <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold border <?= strtolower($row['kelancaran'] ?? '') === 'lancar' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-rose-50 text-rose-700 border-rose-300' ?>">

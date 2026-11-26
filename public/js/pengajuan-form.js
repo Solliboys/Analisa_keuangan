@@ -3643,7 +3643,7 @@ function renderListUtang() {
     if (!Array.isArray(daftarUtang) || daftarUtang.length === 0) {
         container.innerHTML = `
             <div class="p-3 text-center border border-dashed border-rose-200 rounded-xl text-slate-400 text-xs bg-rose-50/30">
-                Tidak ada pinjaman / hutang berjalan. Klik <strong class="text-rose-600 font-semibold cursor-pointer hover:underline" onclick="tambahUtang('', 0, 12, 1)">Tambah Hutang</strong> jika memiliki cicilan aktif di bank lain.
+                Tidak ada pinjaman / hutang berjalan. Klik <strong class="text-rose-600 font-semibold cursor-pointer hover:underline" onclick="tambahUtang('', 0, 10, 36)">Tambah Hutang</strong> jika memiliki cicilan aktif di bank lain.
             </div>
         `;
     } else {
@@ -3652,8 +3652,16 @@ function renderListUtang() {
             const safeNama = (item.nama || '').replace(/"/g, '&quot;');
             const plafonVal = parseInt(item.plafon, 10) || 0;
             const plafonStr = plafonVal > 0 ? plafonVal.toLocaleString('id-ID') : '';
-            const bungaVal = (item.bunga_persen !== undefined && item.bunga_persen !== null) ? item.bunga_persen : 12;
-            const tenorVal = (item.tenor_tahun !== undefined && item.tenor_tahun !== null) ? item.tenor_tahun : 1;
+            const bungaVal = (item.bunga_persen !== undefined && item.bunga_persen !== null) ? item.bunga_persen : 10;
+            
+            // Konversi Tenor Bulan dan Tahun
+            let tenorBulan = 12;
+            if (item.tenor_bulan !== undefined && item.tenor_bulan !== null && parseInt(item.tenor_bulan, 10) > 0) {
+                tenorBulan = parseInt(item.tenor_bulan, 10);
+            } else if (item.tenor_tahun !== undefined && item.tenor_tahun !== null && parseFloat(item.tenor_tahun) > 0) {
+                tenorBulan = Math.round(parseFloat(item.tenor_tahun) * 12);
+            }
+            const tenorTahun = Math.round((tenorBulan / 12) * 10) / 10;
             const cicilanVal = parseInt(item.cicilan_bulanan, 10) || 0;
 
             html += `
@@ -3679,15 +3687,18 @@ function renderListUtang() {
                         </div>
                         <div>
                             <label class="block text-[10px] text-slate-400 font-semibold uppercase">Bunga (% / thn)</label>
-                            <input type="number" step="0.1" min="0" value="${bungaVal}" placeholder="12" 
-                                   class="w-full mt-0.5 font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-right focus:bg-white focus:outline-none" 
-                                   oninput="updateItemUtang(${index}, 'bunga', this.value)">
+                            <input type="number" step="0.1" min="0" value="${bungaVal}" placeholder="10" 
+                                    class="w-full mt-0.5 font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-right focus:bg-white focus:outline-none" 
+                                    oninput="updateItemUtang(${index}, 'bunga', this.value)">
                         </div>
                         <div>
-                            <label class="block text-[10px] text-slate-400 font-semibold uppercase">Tenor (Tahun)</label>
-                            <input type="number" step="0.5" min="0.5" value="${tenorVal}" placeholder="1" 
-                                   class="w-full mt-0.5 font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-right focus:bg-white focus:outline-none" 
-                                   oninput="updateItemUtang(${index}, 'tenor', this.value)">
+                            <label class="block text-[10px] text-slate-400 font-semibold uppercase flex items-center justify-between">
+                                <span>Tenor (Bulan)</span>
+                                <span id="utang_tenor_tahun_label_${index}" class="text-[9px] text-blue-600 font-bold lowercase">= ${tenorTahun} thn</span>
+                            </label>
+                            <input type="number" step="1" min="1" value="${tenorBulan}" placeholder="36" 
+                                    class="w-full mt-0.5 font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-right focus:bg-white focus:outline-none" 
+                                    oninput="updateItemUtang(${index}, 'tenor_bulan', this.value)">
                         </div>
                         <div>
                             <label class="block text-[10px] text-rose-500 font-bold uppercase">Cicilan / Bulan</label>
@@ -3707,19 +3718,31 @@ function renderListUtang() {
 }
 window.renderListUtang = renderListUtang;
 
-function tambahUtang(nama = '', plafon = 0, bunga = 12, tenor = 1) {
+/**
+ * Tambah Hutang Baru
+ * Rumus Resmi Komite Kredit (Tenor bulan dikonversi ke tahun):
+ * Tenor Tahun = Tenor Bulan / 12
+ * Total Bunga Persen = Bunga Pertahun (%) * Tenor Tahun
+ * Total Hutang = Plafon * (1 + Total Bunga Persen / 100)
+ * Cicilan Bulanan = Total Hutang / Tenor Bulan
+ */
+function tambahUtang(nama = '', plafon = 0, bunga = 10, tenorBulan = 36) {
     const P = parseNominal(plafon);
-    const r = parseFloat(bunga) || 0;
-    const t = parseFloat(tenor) || 1;
-    const totalBunga = P * (r / 100) * t;
-    const totalHutang = P + totalBunga;
-    const cicilan = (t > 0) ? Math.round(totalHutang / (t * 12)) : 0;
+    const r = parseFloat(bunga) || 10;
+    let m = parseInt(tenorBulan, 10) || 36;
+    if (m <= 0) m = 12;
+
+    const t = m / 12;
+    const totalBungaPersen = (r / 100) * t;
+    const totalHutang = P * (1 + totalBungaPersen);
+    const cicilan = (m > 0) ? Math.round(totalHutang / m) : 0;
 
     daftarUtang.push({
         nama: nama,
         plafon: P,
         bunga_persen: r,
-        tenor_tahun: t,
+        tenor_bulan: m,
+        tenor_tahun: Math.round(t * 10) / 10,
         cicilan_bulanan: cicilan
     });
     window.daftarUtang = daftarUtang;
@@ -3745,17 +3768,35 @@ function updateItemUtang(index, field, val) {
         daftarUtang[index].plafon = parseNominal(val);
     } else if (field === 'bunga') {
         daftarUtang[index].bunga_persen = parseFloat(val) || 0;
+    } else if (field === 'tenor_bulan') {
+        let m = parseInt(val, 10) || 12;
+        if (m <= 0) m = 12;
+        daftarUtang[index].tenor_bulan = m;
+        daftarUtang[index].tenor_tahun = Math.round((m / 12) * 10) / 10;
     } else if (field === 'tenor') {
-        daftarUtang[index].tenor_tahun = parseFloat(val) || 1;
+        let t = parseFloat(val) || 1;
+        if (t <= 0) t = 1;
+        daftarUtang[index].tenor_tahun = t;
+        daftarUtang[index].tenor_bulan = Math.round(t * 12);
     }
 
-    // Hitung ulang cicilan bulanan secara otomatis sesuai rumus: [Plafon + (Plafon * Bunga * Tenor)] / (Tenor * 12)
+    // Hitung ulang cicilan bulanan secara otomatis sesuai rumus resmi:
+    // [Plafon + (Plafon * Bunga * (Tenor Bulan / 12))] / Tenor Bulan
     const P = parseNominal(daftarUtang[index].plafon || 0);
     const r = parseFloat(daftarUtang[index].bunga_persen) || 0;
-    const t = parseFloat(daftarUtang[index].tenor_tahun) || 1;
-    const totalBunga = P * (r / 100) * t;
-    const totalHutang = P + totalBunga;
-    daftarUtang[index].cicilan_bulanan = (t > 0) ? Math.round(totalHutang / (t * 12)) : 0;
+    let m = parseInt(daftarUtang[index].tenor_bulan, 10) || 12;
+    if (m <= 0) m = 12;
+    const t = m / 12;
+    const totalBungaPersen = (r / 100) * t;
+    const totalHutang = P * (1 + totalBungaPersen);
+    daftarUtang[index].cicilan_bulanan = (m > 0) ? Math.round(totalHutang / m) : 0;
+    daftarUtang[index].tenor_tahun = Math.round(t * 10) / 10;
+
+    // Update label konversi tahun
+    const tenorThnLabel = document.getElementById(`utang_tenor_tahun_label_${index}`);
+    if (tenorThnLabel) {
+        tenorThnLabel.innerText = `= ${daftarUtang[index].tenor_tahun} thn`;
+    }
 
     // Update label cicilan baris ini secara langsung tanpa me-replace innerHTML (agar input tetap fokus)
     const cicilanLabelEl = document.getElementById(`utang_cicilan_label_${index}`);
@@ -4301,6 +4342,14 @@ function hitungRasioDSC() {
     }
     if (angsuran <= 0 && typeof window.ESTIMASI_ANGSURAN_BARU === 'number' && window.ESTIMASI_ANGSURAN_BARU > 0) {
         angsuran = window.ESTIMASI_ANGSURAN_BARU;
+    }
+    if (angsuran <= 0) {
+        const plafonInput = parseNominal(document.getElementById('plafon_pengajuan')?.value || 0);
+        const tenorBln = parseInt(document.getElementById('tenor_bulan')?.value || 12, 10) || 12;
+        const bungaBln = parseFloat(document.getElementById('bunga_per_bulan')?.value || 1.25) || 1.25;
+        if (plafonInput > 0) {
+            angsuran = Math.round((plafonInput / tenorBln) + (plafonInput * (bungaBln / 100)));
+        }
     }
 
     // Gunakan nilai eksak dari hitungLabaRugi() agar tidak pernah dobel hitung biaya_hidup + beban_lain atau kena default 60%

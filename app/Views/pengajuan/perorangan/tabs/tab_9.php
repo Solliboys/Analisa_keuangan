@@ -99,18 +99,47 @@
             }
         }
 
-        // Komponen SLIK & Fasilitas Kredit untuk Kompatibilitas Laporan
+        // Komponen SLIK & Fasilitas Kredit untuk Kompatibilitas Laporan (Rumus Resmi Komite Kredit)
         $totalOutstandingSlik = 0;
         $totalCicilanSlik = 0;
+        $listSlikAutoUtangPR = [];
         if (!empty($slik) && is_array($slik)) {
             foreach ($slik as $s) {
                 $out = (float)($s['outstanding'] ?? ($s['baki_debet'] ?? 0));
+                $pl  = (float)($s['plafon'] ?? 0);
+                $pAcuan = $pl > 0 ? $pl : $out;
                 $angs = (float)($s['angsuran'] ?? ($s['angsuran_bulanan'] ?? 0));
-                if ($angs <= 0 && $out > 0) {
-                    $angs = round(($out / 36) + ($out * 0.0125));
+
+                $jwBln = 12;
+                if (preg_match('/([0-9]+)/', (string)($s['jangka_waktu'] ?? ''), $jwm)) {
+                    $jwBln = (int)$jwm[1];
                 }
+                if ($jwBln <= 0) $jwBln = 12;
+
+                $bPct = 10;
+                if (preg_match('/([0-9]+([.,][0-9]+)?)/', (string)($s['suku_bunga'] ?? ''), $bm)) {
+                    $bPct = (float)str_replace(',', '.', $bm[1]);
+                }
+                if ($bPct <= 0) $bPct = 10;
+
+                if ($angs <= 0 && $pAcuan > 0) {
+                    $jwThn = $jwBln / 12;
+                    $angs = round(($pAcuan * (1 + ($bPct / 100) * $jwThn)) / $jwBln);
+                }
+
                 $totalOutstandingSlik += $out;
                 $totalCicilanSlik += $angs;
+
+                if ($pAcuan > 0) {
+                    $listSlikAutoUtangPR[] = [
+                        'nama'            => !empty($s['bank_lembaga']) ? "{$s['bank_lembaga']} ({$s['jenis_fasilitas']})" : 'Pinjaman Bank',
+                        'plafon'          => $pAcuan,
+                        'bunga_persen'    => $bPct,
+                        'tenor_tahun'     => round($jwBln / 12, 1),
+                        'tenor_bulan'     => $jwBln,
+                        'cicilan_bulanan' => $angs
+                    ];
+                }
             }
         }
         // Jika tidak ada fasilitas SLIK berjalan, kewajiban SLIK = 0 (jangan tarik angsuran kredit baru)
@@ -151,6 +180,9 @@
                     $listDetailUtang = $decH['daftar_utang'];
                 }
             }
+        }
+        if (empty($listDetailUtang) && !empty($listSlikAutoUtangPR)) {
+            $listDetailUtang = $listSlikAutoUtangPR;
         }
 
         // Prioritas Aset: Ekstrak aset dari Kotak 3 ($listDetailHppPR kategori 'aset')

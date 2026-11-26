@@ -730,6 +730,39 @@ class Pengajuan extends BaseController
         }
     }
 
+    /**
+     * Hitung Angsuran Bulanan Resmi Fasilitas Pinjaman (SLIK / Utang):
+     * Formula Resmi Komite:
+     * 1. Tenor Tahun = Tenor Bulan / 12 (Konversi bulan ke tahun)
+     * 2. Total Bunga Persen = Bunga Pertahun (%) * Tenor Tahun
+     * 3. Total Pengembalian = Plafon * (1 + Total Bunga Persen / 100)
+     * 4. Angsuran Bulanan = Total Pengembalian / Tenor Bulan
+     */
+    private function hitungAngsuranPinjamanResmi($plafon, $bungaStr = '10%', $jwStr = '12 bln')
+    {
+        $plafon = (float)$plafon;
+        if ($plafon <= 0) return 0;
+
+        $bungaPct = 10;
+        if (preg_match('/([0-9]+([.,][0-9]+)?)/', (string)$bungaStr, $bm)) {
+            $bungaPct = (float)str_replace(',', '.', $bm[1]);
+        }
+        if ($bungaPct <= 0) $bungaPct = 10;
+
+        $tenorBulan = 12;
+        if (preg_match('/([0-9]+)/', (string)$jwStr, $jwm)) {
+            $tenorBulan = (int)$jwm[1];
+        }
+        if ($tenorBulan <= 0) $tenorBulan = 12;
+
+        $tenorTahun = $tenorBulan / 12;
+        $totalBungaPct = ($bungaPct / 100) * $tenorTahun;
+        $totalPengembalian = $plafon * (1 + $totalBungaPct);
+        $angsuranBulanan = (int)round($totalPengembalian / $tenorBulan);
+
+        return $angsuranBulanan;
+    }
+
     private function simpanSlik($kreditId, $input)
     {
         $db = \Config\Database::connect();
@@ -761,17 +794,40 @@ class Pengajuan extends BaseController
         if (isset($input['slik']) && is_array($input['slik'])) {
             foreach ($input['slik'] as $row) {
                 if (empty($row['bank_lembaga']) && empty($row['nama_debitur'])) continue;
-                $this->slikModel->insert([
-                    'kredit_id'    => $kreditId,
-                    'nama_debitur' => $row['nama_debitur'] ?? '',
-                    'plafon'       => $this->cleanNumber($row['plafon'] ?? 0),
-                    'outstanding'  => $this->cleanNumber($row['outstanding'] ?? 0),
-                    'kelancaran'   => $row['kelancaran'] ?? 'Lancar',
-                    'bank_lembaga' => $row['bank_lembaga'] ?? '',
-                    'keterangan'   => $row['keterangan'] ?? '',
-                    'is_verified'  => $isPetugasSlik ? 1 : 0,
-                    'diinput_oleh' => $isPetugasSlik ? 'petugas_slik' : 'pengusul'
-                ]);
+
+                $plafon = $this->cleanNumber($row['plafon'] ?? 0);
+                $out = $this->cleanNumber($row['outstanding'] ?? 0);
+                $pAcuan = $plafon > 0 ? $plafon : $out;
+                $bungaStr = $row['suku_bunga'] ?? '10%';
+                $jwStr = $row['jangka_waktu'] ?? '12 bln';
+                $angs = $this->cleanNumber($row['angsuran'] ?? 0);
+
+                if ($angs <= 0 && $pAcuan > 0) {
+                    $angs = $this->hitungAngsuranPinjamanResmi($pAcuan, $bungaStr, $jwStr);
+                }
+
+                $dataSlikInsert = [
+                    'kredit_id'       => $kreditId,
+                    'nama_debitur'    => $row['nama_debitur'] ?? '',
+                    'plafon'          => $plafon,
+                    'outstanding'     => $out,
+                    'angsuran'        => $angs,
+                    'kelancaran'      => $row['kelancaran'] ?? 'Lancar',
+                    'bank_lembaga'    => $row['bank_lembaga'] ?? '',
+                    'jenis_fasilitas' => $row['jenis_fasilitas'] ?? ($row['keterangan'] ?? 'Kredit Usaha'),
+                    'keterangan'      => $row['keterangan'] ?? ($row['jenis_fasilitas'] ?? 'Modal Kerja'),
+                    'is_verified'     => $isPetugasSlik ? 1 : 0,
+                    'diinput_oleh'    => $isPetugasSlik ? 'petugas_slik' : 'pengusul'
+                ];
+
+                // Tambahkan field detail jika kolom tersedia di DB
+                if ($db->fieldExists('suku_bunga', 'slik')) $dataSlikInsert['suku_bunga'] = $bungaStr;
+                if ($db->fieldExists('jangka_waktu', 'slik')) $dataSlikInsert['jangka_waktu'] = $jwStr;
+                if ($db->fieldExists('tgl_akad', 'slik')) $dataSlikInsert['tgl_akad'] = $row['tgl_akad'] ?? '-';
+                if ($db->fieldExists('jatuh_tempo', 'slik')) $dataSlikInsert['jatuh_tempo'] = $row['jatuh_tempo'] ?? '-';
+                if ($db->fieldExists('tunggakan', 'slik')) $dataSlikInsert['tunggakan'] = $row['tunggakan'] ?? '0';
+
+                $this->slikModel->insert($dataSlikInsert);
             }
         }
     }
@@ -1057,14 +1113,18 @@ class Pengajuan extends BaseController
         if (!empty($dataSlik) && is_array($dataSlik)) {
             foreach ($dataSlik as $slk) {
                 $out = (float)($slk['outstanding'] ?? 0);
+                $pl = (float)($slk['plafon'] ?? 0);
                 $angs = (float)($slk['angsuran'] ?? 0);
-                if ($angs <= 0 && $out > 0) $angs = round($out / 24);
+                if ($angs <= 0) {
+                    $pAcuan = $pl > 0 ? $pl : $out;
+                    if ($pAcuan > 0) {
+                        $angs = $this->hitungAngsuranPinjamanResmi($pAcuan, $slk['suku_bunga'] ?? '10%', $slk['jangka_waktu'] ?? '12 bln');
+                    }
+                }
                 $totOutSlik += $out;
                 $totAngsSlik += $angs;
             }
         }
-        if ($totAngsSlik <= 0) $totAngsSlik = $angsuran;
-        if ($totOutSlik <= 0) $totOutSlik = $totAngsSlik * 18;
 
         $subtotalUtangDinamis = 0;
         $subtotalAngsuranDinamis = 0;
@@ -2443,19 +2503,42 @@ class Pengajuan extends BaseController
                 $facilities = $parsed;
                 if ($kreditId) {
                     $this->slikModel->where('kredit_id', $kreditId)->delete();
-                    foreach ($facilities as $fac) {
-                        $this->slikModel->insert([
+                    $db = \Config\Database::connect();
+                    foreach ($facilities as &$fac) {
+                        $plafon = (float)($fac['plafon'] ?? 0);
+                        $out    = (float)($fac['outstanding'] ?? 0);
+                        $pAcuan = $plafon > 0 ? $plafon : $out;
+                        $bungaStr = $fac['suku_bunga'] ?? '10%';
+                        $jwStr    = $fac['jangka_waktu'] ?? '12 bln';
+                        $angs     = (float)($fac['angsuran'] ?? 0);
+                        if ($angs <= 0 && $pAcuan > 0) {
+                            $angs = $this->hitungAngsuranPinjamanResmi($pAcuan, $bungaStr, $jwStr);
+                            $fac['angsuran'] = $angs;
+                        }
+
+                        $dataInsert = [
                             'kredit_id'       => $kreditId,
                             'nama_debitur'    => $fac['nama_debitur'],
-                            'plafon'          => (float)$fac['plafon'],
-                            'outstanding'     => (float)$fac['outstanding'],
+                            'plafon'          => $plafon,
+                            'outstanding'     => $out,
+                            'angsuran'        => $angs,
                             'kelancaran'      => $fac['kelancaran'],
                             'bank_lembaga'    => $fac['bank_lembaga'],
+                            'jenis_fasilitas' => $fac['jenis_fasilitas'] ?? ($fac['keterangan'] ?? 'Kredit Usaha'),
                             'keterangan'      => $fac['keterangan'] ?? 'Modal Kerja',
                             'is_verified'     => 1,
                             'diinput_oleh'    => session()->get('nama_lengkap') ?: 'Sistem SLIK'
-                        ]);
+                        ];
+
+                        if ($db->fieldExists('suku_bunga', 'slik')) $dataInsert['suku_bunga'] = $bungaStr;
+                        if ($db->fieldExists('jangka_waktu', 'slik')) $dataInsert['jangka_waktu'] = $jwStr;
+                        if ($db->fieldExists('tgl_akad', 'slik')) $dataInsert['tgl_akad'] = $fac['tgl_akad'] ?? '-';
+                        if ($db->fieldExists('jatuh_tempo', 'slik')) $dataInsert['jatuh_tempo'] = $fac['jatuh_tempo'] ?? '-';
+                        if ($db->fieldExists('tunggakan', 'slik')) $dataInsert['tunggakan'] = $fac['tunggakan'] ?? '0';
+
+                        $this->slikModel->insert($dataInsert);
                     }
+                    unset($fac);
                 }
             }
         }
@@ -2464,6 +2547,16 @@ class Pengajuan extends BaseController
         if (empty($facilities) && $kreditId) {
             $existing = $this->slikModel->where('kredit_id', $kreditId)->findAll();
             if (!empty($existing)) {
+                foreach ($existing as &$ex) {
+                    $p = (float)($ex['plafon'] ?? 0);
+                    $o = (float)($ex['outstanding'] ?? 0);
+                    $pa = $p > 0 ? $p : $o;
+                    $ang = (float)($ex['angsuran'] ?? 0);
+                    if ($ang <= 0 && $pa > 0) {
+                        $ex['angsuran'] = $this->hitungAngsuranPinjamanResmi($pa, $ex['suku_bunga'] ?? '10%', $ex['jangka_waktu'] ?? '12 bln');
+                    }
+                }
+                unset($ex);
                 $facilities = $existing;
             }
         }
@@ -2718,6 +2811,9 @@ class Pengajuan extends BaseController
                     }
                 }
                 
+                $pAcuan = $plafon > 0 ? $plafon : $outstanding;
+                $angsuran = $this->hitungAngsuranPinjamanResmi($pAcuan, $sukuBunga, $jangkaWaktu);
+
                 $facilities[] = [
                     'nama_debitur'    => $namaDebitur ?: ($defaultDebitur ?: 'Debitur'),
                     'bank_lembaga'    => $bank ?: 'Bank Mitra',
@@ -2727,6 +2823,7 @@ class Pengajuan extends BaseController
                     'jenis_fasilitas' => $jenisKredit,
                     'plafon'          => $plafon,
                     'outstanding'     => $outstanding,
+                    'angsuran'        => $angsuran,
                     'suku_bunga'      => $sukuBunga,
                     'tgl_akad'        => $tglAkad,
                     'jatuh_tempo'     => $jatuhTempo,
@@ -2789,6 +2886,11 @@ class Pengajuan extends BaseController
         foreach ($dataSlik as $sl) {
             $angsuran = (float)($sl['angsuran'] ?? 0);
             $out      = (float)($sl['outstanding'] ?? 0);
+            $pl       = (float)($sl['plafon'] ?? 0);
+            $pAcuan   = $pl > 0 ? $pl : $out;
+            if ($angsuran <= 0 && $pAcuan > 0) {
+                $angsuran = $this->hitungAngsuranPinjamanResmi($pAcuan, $sl['suku_bunga'] ?? '10%', $sl['jangka_waktu'] ?? '12 bln');
+            }
             $totOutstanding += $out;
             $bungaBln = ($out > 0) ? round(($out * 0.11) / 12) : 0;
             $totBungaBulan += $bungaBln;
