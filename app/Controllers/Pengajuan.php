@@ -1655,9 +1655,12 @@ class Pengajuan extends BaseController
             'logo_aplikasi' => ''
         ];
 
+        $pengusul = $db->table('users')->where('id', $kredit['user_id'] ?? 0)->get()->getRowArray() ?? [];
+
         $data = [
             'title'             => 'Credit Application & Memo (CAM) - ' . $kredit['nomor_aplikasi'],
             'kredit'            => $kredit,
+            'pengusul'          => $pengusul,
             'agunan'            => $this->agunanModel->where('kredit_id', $id)->findAll(),
             'slik'              => $this->slikModel->where('kredit_id', $id)->findAll(),
             'webcheck'          => $this->webcheckModel->where('kredit_id', $id)->first() ?? [],

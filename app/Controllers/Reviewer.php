@@ -67,6 +67,7 @@ class Reviewer extends BaseController
         $webcheckModel = new \App\Models\KreditWebcheckModel();
         $analisaModel  = new \App\Models\KreditAnalisaModel();
         $dokumenModel  = new \App\Models\KreditDokumenModel();
+        $disbursementModel = new \App\Models\KreditDisbursementModel();
 
         $agunan   = $agunanModel->where('kredit_id', $kreditId)->findAll();
         $slik     = $slikModel->where('kredit_id', $kreditId)->findAll();
@@ -75,6 +76,7 @@ class Reviewer extends BaseController
         $webcheck = $webcheckModel->where('kredit_id', $kreditId)->first() ?? [];
         $analisa  = $analisaModel->where('kredit_id', $kreditId)->first() ?? [];
         $dokumen  = $dokumenModel->where('kredit_id', $kreditId)->findAll();
+        $disbursement = $disbursementModel->where('kredit_id', $kreditId)->first() ?? [];
 
         $komiteList = $this->komiteModel->where('kredit_id', $kreditId)->findAll();
 
@@ -136,6 +138,8 @@ class Reviewer extends BaseController
             'logo_aplikasi' => ''
         ];
 
+        $pengusul = $db->table('users')->where('id', $kredit['user_id'] ?? 0)->get()->getRowArray() ?? [];
+
         $data = [
             'title'              => 'Review Pengajuan Kredit - ' . esc($kredit['nomor_aplikasi']),
             'nama_lengkap'       => session()->get('nama_lengkap'),
@@ -149,6 +153,8 @@ class Reviewer extends BaseController
             'webcheck'           => $webcheck,
             'analisa'            => $analisa,
             'dokumen'            => $dokumen,
+            'disbursement'       => $disbursement,
+            'pengusul'           => $pengusul,
             'komite'                  => $komiteList,
             'keputusan_reviewer'      => $keputusanReviewer,
             'catatan_dari_reviewer'   => $catatanDariReviewer,
