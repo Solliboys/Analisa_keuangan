@@ -215,6 +215,130 @@ if ($jam >= 4 && $jam < 11) {
                         </button>
                     </div>
                 </form>
+
+                <!-- PANEL AKUN UJI COBA LENGKAP (11 AKUN OPERASIONAL) -->
+                <div class="mt-6 pt-5 border-t border-slate-200">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Akun Uji Coba (11 Akun)</span>
+                        </div>
+                        <span class="text-[11px] text-slate-500 font-medium">Klik untuk isi otomatis</span>
+                    </div>
+
+                    <!-- Role Switcher Tabs -->
+                    <div class="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg mb-2.5">
+                        <button type="button" onclick="switchDemoTab('tab-reviewer', this)" class="demo-tab-btn flex-1 py-1.5 text-center text-xs font-bold rounded-md transition bg-white text-blue-700 shadow-xs cursor-pointer">
+                            Reviewer (4)
+                        </button>
+                        <button type="button" onclick="switchDemoTab('tab-pengusul', this)" class="demo-tab-btn flex-1 py-1.5 text-center text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900 cursor-pointer">
+                            Pengusul (4)
+                        </button>
+                        <button type="button" onclick="switchDemoTab('tab-manajemen', this)" class="demo-tab-btn flex-1 py-1.5 text-center text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900 cursor-pointer">
+                            Manajemen (3)
+                        </button>
+                    </div>
+
+                    <!-- Tab 1: Reviewer (4 Akun) -->
+                    <div id="tab-reviewer" class="demo-tab-content grid grid-cols-2 gap-2">
+                        <button type="button" onclick="quickFill('reviewer', 'reviewer123', 'Reviewer 1')" class="p-2.5 text-left bg-white hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">Reviewer 1</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-blue-600">reviewer</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Rian Hidayat, CRA</div>
+                            <div class="text-[10px] text-slate-400">Senior Credit Reviewer</div>
+                        </button>
+                        <button type="button" onclick="quickFill('reviewer2', 'reviewer123', 'Reviewer 2')" class="p-2.5 text-left bg-white hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">Reviewer 2</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-blue-600">reviewer2</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Ratna Kusuma, CRP</div>
+                            <div class="text-[10px] text-slate-400">Risk & Compliance Reviewer</div>
+                        </button>
+                        <button type="button" onclick="quickFill('reviewer3', 'reviewer123', 'Reviewer 3')" class="p-2.5 text-left bg-white hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">Reviewer 3</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-blue-600">reviewer3</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Agus Setiawan, M.M.</div>
+                            <div class="text-[10px] text-slate-400">Financial Analyst Reviewer</div>
+                        </button>
+                        <button type="button" onclick="quickFill('reviewer4', 'reviewer123', 'Reviewer 4')" class="p-2.5 text-left bg-white hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">Reviewer 4</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-blue-600">reviewer4</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Dewi Lestari, Ak.</div>
+                            <div class="text-[10px] text-slate-400">Legal & Agunan Reviewer</div>
+                        </button>
+                    </div>
+
+                    <!-- Tab 2: Pengusul / AO (4 Akun) -->
+                    <div id="tab-pengusul" class="demo-tab-content grid grid-cols-2 gap-2 hidden">
+                        <button type="button" onclick="quickFill('pengusul', 'pengusul123', 'Pengusul 1')" class="p-2.5 text-left bg-white hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Pengusul 1</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-emerald-600">pengusul</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Budi Pratama, S.E.</div>
+                            <div class="text-[10px] text-slate-400">Account Officer Komersil</div>
+                        </button>
+                        <button type="button" onclick="quickFill('pengusul2', 'pengusul123', 'Pengusul 2')" class="p-2.5 text-left bg-white hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Pengusul 2</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-emerald-600">pengusul2</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Siti Rahmawati, S.E.</div>
+                            <div class="text-[10px] text-slate-400">Account Officer Mikro/SME</div>
+                        </button>
+                        <button type="button" onclick="quickFill('pengusul3', 'pengusul123', 'Pengusul 3')" class="p-2.5 text-left bg-white hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Pengusul 3</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-emerald-600">pengusul3</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Dedi Kurniawan, S.E.</div>
+                            <div class="text-[10px] text-slate-400">Account Officer Konsumer</div>
+                        </button>
+                        <button type="button" onclick="quickFill('pengusul4', 'pengusul123', 'Pengusul 4')" class="p-2.5 text-left bg-white hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">Pengusul 4</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-emerald-600">pengusul4</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Maya Anggraini, S.M.</div>
+                            <div class="text-[10px] text-slate-400">Account Officer Korporasi</div>
+                        </button>
+                    </div>
+
+                    <!-- Tab 3: Manajemen (3 Akun) -->
+                    <div id="tab-manajemen" class="demo-tab-content grid grid-cols-3 gap-2 hidden">
+                        <button type="button" onclick="quickFill('ceo', 'ceo123', 'CEO')" class="p-2.5 text-left bg-white hover:bg-purple-50/60 border border-slate-200 hover:border-purple-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">CEO</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-purple-600">ceo</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Dr. H. Hendra W.</div>
+                            <div class="text-[10px] text-slate-400">Direktur Utama</div>
+                        </button>
+                        <button type="button" onclick="quickFill('slik', 'slik123', 'Petugas SLIK')" class="p-2.5 text-left bg-white hover:bg-cyan-50/60 border border-slate-200 hover:border-cyan-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-cyan-700 bg-cyan-50 px-1.5 py-0.5 rounded">SLIK</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-cyan-600">slik</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Ahmad Fauzi</div>
+                            <div class="text-[10px] text-slate-400">Verifikator SLIK</div>
+                        </button>
+                        <button type="button" onclick="quickFill('superadmin', 'admin123', 'Superadmin')" class="p-2.5 text-left bg-white hover:bg-rose-50/60 border border-slate-200 hover:border-rose-300 rounded-lg transition group cursor-pointer shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded">Admin</span>
+                                <span class="text-[10px] font-mono text-slate-400 group-hover:text-rose-600">superadmin</span>
+                            </div>
+                            <div class="text-xs font-semibold text-slate-800 truncate mt-1">Superadmin</div>
+                            <div class="text-[10px] text-slate-400">Administrator</div>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Bottom Copyright -->
@@ -383,6 +507,34 @@ if ($jam >= 4 && $jam < 11) {
                     });
                 }
             });
+        }
+
+        function switchDemoTab(tabId, btn) {
+            document.querySelectorAll('.demo-tab-content').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(tabId);
+            if (target) target.classList.remove('hidden');
+
+            document.querySelectorAll('.demo-tab-btn').forEach(b => {
+                b.className = 'demo-tab-btn flex-1 py-1.5 text-center text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900 cursor-pointer';
+            });
+            btn.className = 'demo-tab-btn flex-1 py-1.5 text-center text-xs font-bold rounded-md transition bg-white text-blue-700 shadow-xs cursor-pointer';
+        }
+
+        function quickFill(user, pass, label) {
+            const u = document.getElementById('username');
+            const p = document.getElementById('password');
+            if (u && p) {
+                u.value = user;
+                p.value = pass;
+                u.classList.add('ring-2', 'ring-blue-500');
+                p.classList.add('ring-2', 'ring-blue-500');
+                setTimeout(() => {
+                    u.classList.remove('ring-2', 'ring-blue-500');
+                    p.classList.remove('ring-2', 'ring-blue-500');
+                }, 600);
+            }
+            const btn = document.getElementById('btnLogin');
+            if (btn) btn.focus();
         }
 
         document.getElementById('loginForm').addEventListener('submit', function() {
