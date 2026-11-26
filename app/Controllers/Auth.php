@@ -9,6 +9,8 @@ class Auth extends BaseController
 {
     public function index()
     {
+        $this->ensureDemoAccounts();
+
         // Jika ada flash message (misal baru daftar atau ada error), tetap tampilkan halaman login
         if (session()->getFlashdata('success') || session()->getFlashdata('error')) {
             return view('auth/login', $this->getPengaturanSistem());
@@ -20,6 +22,62 @@ class Auth extends BaseController
         }
 
         return view('auth/login', $this->getPengaturanSistem());
+    }
+
+    /**
+     * Pastikan seluruh akun demo utama (Pengusul, SLIK, Reviewer, CEO, Superadmin) selalu aktif & siap pakai
+     */
+    private function ensureDemoAccounts(): void
+    {
+        try {
+            $db = \Config\Database::connect();
+            if (!$db->tableExists('users')) return;
+
+            $demoUsers = [
+                'pengusul'   => ['pass' => 'pengusul123', 'nama' => 'Staff Pengusul Kredit', 'jabatan' => 'Pengusul'],
+                'slik'       => ['pass' => 'slik123',     'nama' => 'Petugas Verifikasi SLIK', 'jabatan' => 'Petugas SLIK'],
+                'reviewer'   => ['pass' => 'reviewer123', 'nama' => 'Senior Credit Reviewer', 'jabatan' => 'Reviewer'],
+                'ceo'        => ['pass' => 'ceo123',      'nama' => 'Direktur Utama / CEO', 'jabatan' => 'CEO'],
+                'superadmin' => ['pass' => 'admin123',    'nama' => 'Super Administrator', 'jabatan' => 'Superadmin'],
+            ];
+
+            $builder = $db->table('users');
+            $hasDeletedAt = $db->fieldExists('deleted_at', 'users');
+
+            foreach ($demoUsers as $uname => $meta) {
+                $user = $builder->where('username', $uname)->get()->getRowArray();
+                if (!$user) {
+                    $ins = [
+                        'username'     => $uname,
+                        'password'     => password_hash($meta['pass'], PASSWORD_DEFAULT),
+                        'nama_lengkap' => $meta['nama'],
+                        'jabatan'      => $meta['jabatan'],
+                        'status'       => 1,
+                        'created_at'   => date('Y-m-d H:i:s'),
+                        'updated_at'   => date('Y-m-d H:i:s'),
+                    ];
+                    if ($hasDeletedAt) $ins['deleted_at'] = null;
+                    $builder->insert($ins);
+                } else {
+                    $upd = [];
+                    if ($hasDeletedAt && !empty($user['deleted_at'])) {
+                        $upd['deleted_at'] = null;
+                    }
+                    if ((int)($user['status'] ?? 0) !== 1) {
+                        $upd['status'] = 1;
+                    }
+                    // Pastikan password akun demo cocok dengan kredensial cepat
+                    if (!password_verify($meta['pass'], $user['password']) && !hash_equals((string)$user['password'], $meta['pass'])) {
+                        $upd['password'] = password_hash($meta['pass'], PASSWORD_DEFAULT);
+                    }
+                    if (!empty($upd)) {
+                        $builder->where('id', $user['id'])->update($upd);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Abaikan agar tidak menghambat aliran login utama
+        }
     }
 
     /**
@@ -41,6 +99,8 @@ class Auth extends BaseController
 
     public function process()
     {
+        $this->ensureDemoAccounts();
+
         // Proteksi brute-force ringan berbasis sesi/IP (maks 10 percobaan gagal per 5 menit)
         $failCount = (int) (session()->get('login_fail_count') ?? 0);
         $lockUntil = (int) (session()->get('login_lock_until') ?? 0);
