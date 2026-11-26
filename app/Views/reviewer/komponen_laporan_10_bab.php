@@ -18,7 +18,10 @@ $lamaUsahaForm    = esc(($kredit['lama_usaha'] ?? '') ?: '5 tahun');
 $jenisKredit      = !empty($kredit['tujuan_pembiayaan']) ? $kredit['tujuan_pembiayaan'] : 'Kredit Modal Kerja (ASUMSI REVIEWER dari fasilitas berjalan SLIK)';
 $plafonPengajuan  = (float)($kredit['plafon_pengajuan'] ?? 500000000);
 $tenorBulan       = (int)($kredit['tenor_bulan'] ?? 0);
+$tenorBln         = $tenorBulan > 0 ? $tenorBulan : 36;
 $bungaBulan       = (float)($kredit['bunga_per_bulan'] ?? 0);
+$bungaTahun       = (float)($kredit['bunga_per_tahun'] ?? ($bungaBulan > 0 ? $bungaBulan * 12 : 10));
+if ($bungaTahun <= 0) $bungaTahun = 10;
 $skemaBayar       = $kredit['skema_pembayaran'] ?? 'Installment';
 
 // Rekomendasi Plafon & Skor Analis AI
