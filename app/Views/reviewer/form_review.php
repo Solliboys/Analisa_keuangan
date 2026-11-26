@@ -22,9 +22,10 @@
     $logoWeb     = !empty($pengaturan_sistem['logo_aplikasi']) ? $pengaturan_sistem['logo_aplikasi'] : 'img/logo-oap.png?v=2';
 
     $statusAplikasi  = $kredit['status_pengajuan'] ?? 'Draft';
-    $currentDecision = $keputusan_reviewer['status_approval'] ?? ($statusAplikasi === 'Disetujui' || $statusAplikasi === 'Disetujui Bersyarat' || $statusAplikasi === 'Bersyarat' || $statusAplikasi === 'Ditolak' || $statusAplikasi === 'Revisi' ? $statusAplikasi : '');
-    if ($currentDecision === 'Bersyarat') $currentDecision = 'Disetujui Bersyarat';
-    $currentCatatan  = $keputusan_reviewer['catatan_approval'] ?? '';
+
+    // Form khusus Reviewer: catatan input selalu fresh/kosong untuk input review baru
+    $currentDecision = '';
+    $currentCatatan  = '';
 
     // Hitung parameter 5C & Skor AI dari kolom database aktual
     $omzetVal = (float)($keuangan['pendapatan_rk'] ?? ($keuangan['pendapatan_rata_rata_bulanan'] ?? ($keuangan['pendapatan_bersih_bulan'] ?? 0)));
@@ -283,24 +284,34 @@
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full <?= !empty($currentDecision) ? 'bg-emerald-500' : 'bg-blue-600 animate-pulse' ?>"></span>
                                 <h2 class="text-xs sm:text-sm font-extrabold text-blue-900 uppercase tracking-wider">
-                                    Lembar Keputusan Reviewer
+                                    Lembar Catatan Reviewer
                                 </h2>
                             </div>
-                            <?php if (!empty($currentDecision)): ?>
+                            <?php if (!empty($currentDecision) && in_array($currentDecision, ['Disetujui', 'Disetujui Bersyarat', 'Ditolak', 'Revisi'])): ?>
                                 <span class="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200 shrink-0">
                                     Mode Lihat (Sudah Di-review)
                                 </span>
                             <?php endif; ?>
                         </div>
                         <p class="text-xs text-blue-700/80 mt-1">
-                            <?= !empty($currentDecision) ? 'Pemeriksaan review telah selesai. Keputusan tercatat resmi pada risalah komite.' : 'Pilih salah satu dari 4 opsi keputusan komite kredit beserta catatan resmi.' ?>
+                            <?php if (!empty($currentDecision) && in_array($currentDecision, ['Disetujui', 'Disetujui Bersyarat', 'Ditolak', 'Revisi'])): ?>
+                                Pemeriksaan review telah selesai. Keputusan tercatat resmi pada risalah komite.
+                            <?php else: ?>
+                                Tuliskan catatan hasil telaah berkas untuk diteruskan ke CEO.
+                            <?php endif; ?>
                         </p>
                     </div>
 
                     <?php 
-                        $userRole = strtolower(session()->get('jabatan') ?? '');
-                        $isCeoRole = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false);
-                        $isFinalized = (!empty($currentDecision) && in_array($currentDecision, ['Disetujui', 'Disetujui Bersyarat', 'Ditolak', 'Revisi']));
+                        $isFinalized = in_array($statusAplikasi, ['Disetujui', 'Disetujui Bersyarat', 'Bersyarat', 'Ditolak', 'Revisi']) 
+                                       || !empty($keputusan_ceo);
+                        
+                        // Di mode read-only (finalized), gunakan catatan & keputusan yang disahkan
+                        if ($isFinalized) {
+                            $currentDecision = !empty($keputusan_ceo['status_approval']) ? $keputusan_ceo['status_approval'] : (!empty($keputusan_reviewer['status_approval']) ? $keputusan_reviewer['status_approval'] : $statusAplikasi);
+                            $currentCatatan  = !empty($keputusan_ceo['catatan_approval']) ? $keputusan_ceo['catatan_approval'] : ($keputusan_reviewer['catatan_approval'] ?? '');
+                            if ($currentDecision === 'Bersyarat') $currentDecision = 'Disetujui Bersyarat';
+                        }
                     ?>
 
                     <?php if ($isFinalized): ?>
@@ -378,6 +389,41 @@
                                         <?= nl2br(esc($currentCatatan ?: 'Tidak ada catatan khusus yang dicantumkan.')) ?>
                                     </div>
                                 </div>
+
+                                <?php 
+                                    $daftarReadOnlyNotes = $daftar_catatan_reviewer ?? [];
+                                    if (empty($daftarReadOnlyNotes) && !empty($catatan_dari_reviewer)) {
+                                        $daftarReadOnlyNotes = [$catatan_dari_reviewer];
+                                    }
+                                ?>
+                                <?php if (!empty($daftarReadOnlyNotes)): ?>
+                                <div>
+                                    <span class="text-[11px] font-bold text-indigo-500 uppercase tracking-wider block mb-1">Catatan dari Reviewer (<?= count($daftarReadOnlyNotes) ?>):</span>
+                                    <div class="space-y-2">
+                                        <?php foreach ($daftarReadOnlyNotes as $rNote): ?>
+                                            <?php 
+                                                $noteText = trim($rNote['catatan_approval'] ?? '');
+                                                if (empty($noteText)) continue;
+                                                $revName  = $rNote['nama_approver'] ?? 'Reviewer';
+                                                $revDate  = !empty($rNote['tanggal_approval']) ? date('d F Y', strtotime($rNote['tanggal_approval'])) : (!empty($rNote['created_at']) ? date('d F Y', strtotime($rNote['created_at'])) : '');
+                                                $revRek   = $rNote['status_approval'] ?? '';
+                                            ?>
+                                            <div class="p-3 bg-indigo-50/70 border border-indigo-200/80 rounded-xl text-xs text-slate-800 leading-relaxed font-medium space-y-1.5">
+                                                <div><?= nl2br(esc($noteText)) ?></div>
+                                                <div class="pt-1.5 border-t border-indigo-200/50 text-[10px] text-indigo-500/80 flex items-center justify-between flex-wrap gap-1">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <span>Oleh: <strong class="text-indigo-700"><?= esc($revName) ?></strong></span>
+                                                        <?php if (!empty($revRek) && !in_array($revRek, ['Ditinjau Reviewer', 'Pending', 'Menunggu Review'])): ?>
+                                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200"><?= esc($revRek) ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <?php if (!empty($revDate)): ?><span><?= $revDate ?></span><?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
                             </div>
 
                             <!-- Detail Approver / Reviewer -->
@@ -426,74 +472,39 @@
                     <?php endif; ?>
 
                     <div id="containerFormEditReviewer" class="<?= $isFinalized ? 'hidden' : '' ?> flex-1 flex flex-col justify-between">
-                    <form id="formKeputusanReviewer" class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <form id="formKeputusanReviewer" action="<?= base_url('reviewer/simpan-keputusan') ?>" method="POST" class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
                         <input type="hidden" name="kredit_id" value="<?= esc($kredit['kredit_id']) ?>">
 
-                        <!-- Pilihan Keputusan: 4 OPSI (Setuju, Bersyarat, Revisi ke AO, Tolak) -->
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                    Pilihan Keputusan <span class="text-rose-500">*</span>
-                                </label>
-                                <span class="text-[11px] text-slate-400">Pilih 1 dari 4 opsi</span>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                                <!-- 1. Option Setuju -->
-                                <label class="cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center <?= $currentDecision === 'Disetujui' ? 'border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-200' : 'border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30' ?>" id="labelPilihanSetuju">
-                                    <input type="radio" name="keputusan" value="Disetujui" class="sr-only" <?= $currentDecision === 'Disetujui' ? 'checked' : '' ?> onchange="updateKeputusanUI()">
-                                    <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center mb-1.5 shadow-2xs">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                                    </div>
-                                    <span class="text-xs font-extrabold text-emerald-800">Setuju</span>
-                                    <span class="text-[10px] text-slate-500 mt-0.5 leading-tight">Disetujui Penuh</span>
-                                </label>
+                        <?php 
+                            // Tampilkan catatan reviewer (mendukung multi-review jika ada review tambahan)
+                            $daftarReviewerNotes = $daftar_catatan_reviewer ?? [];
+                            if (empty($daftarReviewerNotes) && !empty($catatan_dari_reviewer)) {
+                                $daftarReviewerNotes = [$catatan_dari_reviewer];
+                            }
+                            // Ambil catatan terbaru milik reviewer ini saja
+                            $myLatestNote = null;
+                            $currentUser = $nama_lengkap ?? '';
+                            foreach ($daftarReviewerNotes as $rn) {
+                                $owner = $rn['nama_approver'] ?? '';
+                                if ($owner === $currentUser) {
+                                    $myLatestNote = $rn; // yang terakhir menimpa
+                                }
+                            }
+                        ?>
 
-                                <!-- 2. Option Bersyarat -->
-                                <label class="cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center <?= ($currentDecision === 'Disetujui Bersyarat' || $currentDecision === 'Bersyarat') ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-200' : 'border-slate-200 hover:border-amber-300 hover:bg-amber-50/30' ?>" id="labelPilihanBersyarat">
-                                    <input type="radio" name="keputusan" value="Disetujui Bersyarat" class="sr-only" <?= ($currentDecision === 'Disetujui Bersyarat' || $currentDecision === 'Bersyarat') ? 'checked' : '' ?> onchange="updateKeputusanUI()">
-                                    <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center mb-1.5 shadow-2xs">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                    </div>
-                                    <span class="text-xs font-extrabold text-amber-800">Bersyarat</span>
-                                    <span class="text-[10px] text-slate-500 mt-0.5 leading-tight">Syarat Khusus</span>
-                                </label>
 
-                                <!-- 3. Option Revisi ke AO -->
-                                <label class="cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center <?= $currentDecision === 'Revisi' ? 'border-purple-500 bg-purple-50/70 ring-2 ring-purple-200' : 'border-slate-200 hover:border-purple-300 hover:bg-purple-50/30' ?>" id="labelPilihanRevisi">
-                                    <input type="radio" name="keputusan" value="Revisi" class="sr-only" <?= $currentDecision === 'Revisi' ? 'checked' : '' ?> onchange="updateKeputusanUI()">
-                                    <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center mb-1.5 shadow-2xs">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 10h10a5 5 0 015 5v2m0 0l-4-4m4 4l4-4M3 10l4-4m-4 4l4 4"></path></svg>
-                                    </div>
-                                    <span class="text-xs font-extrabold text-purple-800">Revisi ke AO</span>
-                                    <span class="text-[10px] text-slate-500 mt-0.5 leading-tight">Kembalikan Berkas</span>
-                                </label>
-
-                                <!-- 4. Option Tolak -->
-                                <label class="cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center <?= $currentDecision === 'Ditolak' ? 'border-rose-500 bg-rose-50/70 ring-2 ring-rose-200' : 'border-slate-200 hover:border-rose-300 hover:bg-rose-50/30' ?>" id="labelPilihanTolak">
-                                    <input type="radio" name="keputusan" value="Ditolak" class="sr-only" <?= $currentDecision === 'Ditolak' ? 'checked' : '' ?> onchange="updateKeputusanUI()">
-                                    <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center mb-1.5 shadow-2xs">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                    </div>
-                                    <span class="text-xs font-extrabold text-rose-800">Ditolak</span>
-                                    <span class="text-[10px] text-slate-500 mt-0.5 leading-tight">Tolak Berkas</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Teks Input: Catatan & Pertimbangan -->
-                        <div>
+                        <!-- Teks Input: Catatan Hasil Review -->
+                        <div class="flex-1 flex flex-col">
                             <div class="flex justify-between items-center mb-1.5">
                                 <label for="catatanKeputusan" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                    Catatan Pertimbangan / Syarat / Alasan
-                                    <span id="wajibCatatanBadge" class="text-rose-500 font-bold hidden">(Wajib Diisi)</span>
+                                    Catatan <span class="text-rose-500 font-bold">*</span>
                                 </label>
                             </div>
-                            <textarea id="catatanKeputusan" name="catatan" rows="3" 
+                            <textarea id="catatanKeputusan" name="catatan" rows="6" 
                                       class="w-full text-xs text-slate-800 border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-600 transition placeholder:text-slate-400"
-                                      placeholder="Tuliskan catatan pertimbangan kelayakan kredit, klausul syarat pencairan, atau alasan penolakan..."><?= esc($currentCatatan) ?></textarea>
+                                      placeholder="Tuliskan catatan hasil review, pertimbangan kelayakan kredit, evaluasi risiko 5C, atau masukan untuk CEO..."><?= esc(trim($myLatestNote['catatan_approval'] ?? '')) ?></textarea>
                             <p class="text-[11px] text-slate-400 mt-1" id="catatanHelperText">
-                                Catatan ini akan dicatat resmi dalam risalah komite dan tertulis di dokumen keputusan.
+                                Catatan ini akan langsung diterima oleh CEO sebagai dasar pertimbangan pengambilan keputusan.
                             </p>
                         </div>
 
@@ -508,7 +519,7 @@
                                 <span class="font-semibold text-blue-700"><?= esc($jabatan ?? 'Reviewer') ?></span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-slate-400">Tanggal Keputusan:</span>
+                                <span class="text-slate-400">Tanggal Review:</span>
                                 <span class="font-medium text-slate-700"><?= date('d F Y') ?></span>
                             </div>
                         </div>
@@ -517,8 +528,8 @@
                         <div class="space-y-2 pt-1">
                             <button type="submit" id="btnSubmitKeputusan" 
                                     class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
-                                <span>Simpan Keputusan Reviewer</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                <span>Kirim Catatan ke CEO</span>
                             </button>
 
                             <a href="<?= base_url('dashboard') ?>" 
@@ -903,6 +914,8 @@
     </div>
 
     <script>
+        const IS_CEO_USER = false;
+
         function updateKeputusanUI() {
             const radSetuju    = document.querySelector('input[name="keputusan"][value="Disetujui"]');
             const radBersyarat = document.querySelector('input[name="keputusan"][value="Disetujui Bersyarat"]');
@@ -925,22 +938,36 @@
 
             if (radSetuju && radSetuju.checked) {
                 if (lblSetuju) lblSetuju.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-200';
-                if (wajibBadge) wajibBadge.classList.add('hidden');
-                if (helperText) helperText.innerText = 'Catatan pertimbangan kelayakan kredit yang akan dicatat resmi dalam risalah komite.';
+                if (helperText) helperText.innerText = IS_CEO_USER ? 'Catatan pertimbangan persetujuan kredit.' : 'Rekomendasi persetujuan penuh untuk dipertimbangkan oleh CEO.';
             } else if (radBersyarat && radBersyarat.checked) {
                 if (lblBersyarat) lblBersyarat.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-amber-500 bg-amber-50/70 ring-2 ring-amber-200';
-                if (wajibBadge) wajibBadge.classList.remove('hidden');
-                if (helperText) helperText.innerText = 'Harap tuliskan klausul syarat khusus pencairan (misal: penambahan agunan / penurunan plafon / kelengkapan berkas).';
+                if (helperText) helperText.innerText = IS_CEO_USER ? 'Tuliskan klausul syarat khusus sebelum realisasi akad kredit.' : 'Rekomendasi persetujuan dengan syarat khusus untuk bahan telaah CEO.';
             } else if (radRevisi && radRevisi.checked) {
                 if (lblRevisi) lblRevisi.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-purple-500 bg-purple-50/70 ring-2 ring-purple-200';
-                if (wajibBadge) wajibBadge.classList.remove('hidden');
-                if (helperText) helperText.innerText = 'Harap tuliskan instruksi perbaikan data/dokumen yang wajib direvisi oleh Staf Pengusul (AO).';
+                if (helperText) helperText.innerText = 'Tuliskan instruksi perbaikan data/dokumen yang wajib direvisi oleh Staf Pengusul (AO).';
             } else if (radTolak && radTolak.checked) {
                 if (lblTolak) lblTolak.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-rose-500 bg-rose-50/70 ring-2 ring-rose-200';
-                if (wajibBadge) wajibBadge.classList.remove('hidden');
-                if (helperText) helperText.innerText = 'Harap tuliskan alasan penolakan pengajuan kredit untuk arsip komite.';
+                if (helperText) helperText.innerText = IS_CEO_USER ? 'Tuliskan alasan penolakan pengajuan kredit untuk arsip komite.' : 'Rekomendasi penolakan pengajuan kredit beserta argumen mitigasi risiko.';
+            } else {
+                if (helperText) helperText.innerText = IS_CEO_USER 
+                    ? 'Catatan ini akan dicatat resmi dalam risalah komite dan tertulis di dokumen keputusan.' 
+                    : 'Catatan ini akan langsung diterima oleh CEO sebagai dasar pertimbangan pengambilan keputusan.';
             }
         }
+
+        // Memungkinkan uncheck / batalkan pilihan rekomendasi saat diklik ulang
+        let lastCheckedOption = null;
+        document.querySelectorAll('input[name="keputusan"]').forEach(radio => {
+            radio.addEventListener('click', function() {
+                if (lastCheckedOption === this) {
+                    this.checked = false;
+                    lastCheckedOption = null;
+                    updateKeputusanUI();
+                } else {
+                    lastCheckedOption = this;
+                }
+            });
+        });
 
         // Buka Pop-up Laporan CAM & AI
         function bukaModalLihatAI() {
@@ -1199,66 +1226,66 @@
             }
         });
 
-        // Submit Keputusan Form Reviewer
+        // Submit Form Catatan / Keputusan Reviewer
         document.getElementById('formKeputusanReviewer').addEventListener('submit', function(e) {
             e.preventDefault();
 
             const form = this;
             const radKeputusan = form.querySelector('input[name="keputusan"]:checked');
-            if (!radKeputusan) {
+            const catatan = document.getElementById('catatanKeputusan').value.trim();
+
+            // Khusus CEO: Wajib memilih keputusan
+            if (IS_CEO_USER && !radKeputusan) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Pilih Keputusan',
-                    text: 'Silakan pilih salah satu keputusan: Setuju, Bersyarat, Revisi ke AO, atau Tolak.'
+                    title: 'Pilih Keputusan Final',
+                    text: 'Sebagai CEO, silakan pilih salah satu keputusan final: Setuju, Bersyarat, Revisi ke AO, atau Tolak.'
                 });
                 return;
             }
 
-            const keputusan = radKeputusan.value;
-            const catatan = document.getElementById('catatanKeputusan').value.trim();
-
-            if ((keputusan === 'Ditolak' || keputusan === 'Disetujui Bersyarat' || keputusan === 'Revisi') && !catatan) {
-                let msg = 'Harap berikan persyaratan khusus persetujuan pada kolom catatan keputusan!';
-                if (keputusan === 'Ditolak') {
-                    msg = 'Harap berikan alasan penolakan pada kolom catatan keputusan!';
-                } else if (keputusan === 'Revisi') {
-                    msg = 'Harap tuliskan instruksi perbaikan data/dokumen yang wajib direvisi oleh AO!';
-                }
+            // Catatan WAJIB diisi
+            if (!catatan) {
                 Swal.fire({
                     icon: 'warning',
                     title: 'Catatan Wajib Diisi',
-                    text: msg
+                    text: IS_CEO_USER 
+                        ? 'Harap berikan catatan pertimbangan keputusan final!' 
+                        : 'Harap tuliskan catatan review hasil telaah berkas untuk CEO!'
                 });
                 document.getElementById('catatanKeputusan').focus();
                 return;
             }
 
-            let confirmTitle = 'Konfirmasi Persetujuan';
-            let confirmText  = 'Apakah Anda yakin menyetujui pengajuan kredit ini?';
-            let confirmColor = '#2563eb';
-            let confirmBtn   = 'Ya, Setujui Pengajuan';
+            const keputusan = radKeputusan ? radKeputusan.value : '';
 
-            if (keputusan === 'Disetujui Bersyarat') {
-                confirmTitle = 'Konfirmasi Persetujuan Bersyarat';
-                confirmText  = 'Apakah Anda yakin memberikan persetujuan bersyarat untuk permohonan kredit ini?';
-                confirmColor = '#f59e0b';
-                confirmBtn   = 'Ya, Tetapkan Bersyarat';
-            } else if (keputusan === 'Revisi') {
-                confirmTitle = 'Kembalikan Berkas untuk Revisi';
-                confirmText  = 'Apakah Anda yakin ingin mengembalikan berkas pengajuan ini ke Staf Pengusul (AO) untuk perbaikan?';
-                confirmColor = '#9333ea';
-                confirmBtn   = 'Ya, Kembalikan ke AO';
-            } else if (keputusan === 'Ditolak') {
-                confirmTitle = 'Konfirmasi Penolakan';
-                confirmText  = 'Apakah Anda yakin ingin menolak pengajuan kredit ini?';
-                confirmColor = '#e11d48';
-                confirmBtn   = 'Ya, Tolak Pengajuan';
+            let confirmTitle = 'Kirim Catatan ke CEO?';
+            let confirmText  = 'Catatan review ini akan dikirimkan kepada CEO untuk dasar pertimbangan keputusan kredit.';
+            let confirmColor = '#2563eb';
+            let confirmBtn   = 'Ya, Kirim ke CEO';
+
+            if (IS_CEO_USER) {
+                confirmTitle = 'Konfirmasi Keputusan Final';
+                confirmText  = 'Apakah Anda yakin ingin menetapkan keputusan final: ' + keputusan + '?';
+                confirmBtn   = 'Ya, Tetapkan Keputusan';
+                if (keputusan === 'Disetujui') confirmColor = '#10b981';
+                else if (keputusan === 'Disetujui Bersyarat') confirmColor = '#f59e0b';
+                else if (keputusan === 'Revisi') confirmColor = '#9333ea';
+                else if (keputusan === 'Ditolak') confirmColor = '#e11d48';
+            } else if (keputusan) {
+                confirmText = 'Catatan review beserta rekomendasi "' + keputusan + '" akan dikirimkan kepada CEO.';
+                if (keputusan === 'Revisi') {
+                    confirmTitle = 'Kembalikan Berkas ke AO?';
+                    confirmText  = 'Catatan instruksi perbaikan akan dikirimkan ke Staf Pengusul (AO) untuk revisi berkas.';
+                    confirmColor = '#9333ea';
+                    confirmBtn   = 'Ya, Kembalikan ke AO';
+                }
             }
 
             Swal.fire({
                 title: confirmTitle,
                 text: confirmText,
-                icon: keputusan === 'Ditolak' ? 'warning' : 'question',
+                icon: (keputusan === 'Ditolak') ? 'warning' : 'question',
                 showCancelButton: true,
                 confirmButtonColor: confirmColor,
                 cancelButtonColor: '#64748b',
@@ -1267,8 +1294,8 @@
             }).then((res) => {
                 if (res.isConfirmed) {
                     Swal.fire({
-                        title: 'Menyimpan Keputusan...',
-                        text: 'Memproses pembaruan status dan risalah komite...',
+                        title: IS_CEO_USER ? 'Menyimpan Keputusan...' : 'Mengirim Catatan...',
+                        text: 'Memproses ke sistem...',
                         allowOutsideClick: false,
                         didOpen: () => Swal.showLoading()
                     });

@@ -331,9 +331,20 @@ class Dashboard extends BaseController
                 }
             }
 
+            // Preload users untuk mendapatkan nama staf pengusul
+            $semuaUsers = $userModel->findAll();
+            $mapUsers   = [];
+            foreach ($semuaUsers as $u) {
+                $mapUsers[$u['id']] = $u;
+            }
+
             foreach ($semuaKredit as &$k) {
                 $totalPlafon += (float)($k['plafon_pengajuan'] ?? 0);
                 
+                // Ambil nama pengusul (AO / Staf)
+                $uPembuat = $mapUsers[$k['user_id'] ?? 0] ?? null;
+                $k['nama_pengusul'] = !empty($uPembuat['nama_lengkap']) ? $uPembuat['nama_lengkap'] : (!empty($uPembuat['username']) ? $uPembuat['username'] : '-');
+
                 // Ambil catatan komite / reviewer
                 $km = $mapKomite[$k['kredit_id']] ?? null;
                 $k['catatan_reviewer'] = !empty($km['catatan_approval']) ? $km['catatan_approval'] : '';

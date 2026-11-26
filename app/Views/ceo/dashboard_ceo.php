@@ -307,21 +307,20 @@
                 <table class="w-full min-w-[860px] text-left text-xs text-slate-600 tabular-nums" id="tabelPengajuan">
                     <thead class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                         <tr>
+                            <th class="py-3 px-4">Tanggal Permohonan</th>
                             <th class="py-3 px-4">No. Aplikasi</th>
                             <th class="py-3 px-4">Nama Debitur &amp; Usaha</th>
+                            <th class="py-3 px-4">Pengusul</th>
                             <th class="py-3 px-4">Tipe</th>
                             <th class="py-3 px-4 text-right">Plafon &amp; Tenor</th>
-                            <th class="py-3 px-4 text-center">Status SLIK</th>
                             <th class="py-3 px-4 text-center">Status Pengajuan</th>
-                            <th class="py-3 px-4">Catatan Keputusan</th>
-                            <th class="py-3 px-4">Tanggal Permohonan</th>
                             <th class="py-3 px-4 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200/80">
                         <?php if (empty($daftar_pengajuan)): ?>
                             <tr id="emptyTableRow">
-                                <td colspan="9" class="text-center py-12 text-slate-400">
+                                <td colspan="8" class="text-center py-12 text-slate-400">
                                     <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit yang masuk.</p>
                                     <p class="text-[11px] text-slate-400 mt-1">Daftar berkas nasabah yang diinput staf pengusul akan otomatis muncul di sini untuk ditinjau oleh Komite / Direksi.</p>
                                 </td>
@@ -337,6 +336,10 @@
                                     $catatanReviewer = trim($row['catatan_reviewer'] ?? '');
                                 ?>
                                 <tr class="hover:bg-blue-50/30 transition-colors" id="row-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>" data-status="<?= $stInfo['key'] ?>">
+                                    <td class="py-3 px-4 text-[11px] text-slate-600 whitespace-nowrap">
+                                        <div class="font-semibold text-slate-800"><?= date('d M Y', strtotime($row['created_at'])) ?></div>
+                                        <div class="text-[10px] text-slate-400"><?= date('H:i', strtotime($row['created_at'])) ?> WIB</div>
+                                    </td>
                                     <td class="py-3 px-4 font-semibold text-slate-950 whitespace-nowrap">
                                         <?= esc($row['nomor_aplikasi']) ?>
                                         <span class="block text-[11px] font-normal text-slate-400"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?></span>
@@ -345,6 +348,10 @@
                                         <div class="font-semibold text-slate-900"><?= esc($row['nama_debitur'] ?: '-') ?></div>
                                         <div class="text-[11px] text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?></div>
                                     </td>
+                                    <td class="py-3 px-4 whitespace-nowrap">
+                                        <div class="font-semibold text-slate-900"><?= esc($row['nama_pengusul'] ?? '-') ?></div>
+                                        <div class="text-[10px] text-slate-400">Account Officer</div>
+                                    </td>
                                     <td class="py-3 px-4 whitespace-nowrap text-slate-700 font-medium">
                                         <?= $isBadan ? 'Badan Usaha' : 'Perorangan' ?>
                                     </td>
@@ -352,30 +359,11 @@
                                         <div class="font-semibold text-blue-700">Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?></div>
                                         <div class="text-[11px] text-slate-500"><?= (int)($row['tenor_bulan'] ?? 12) ?> bln &middot; <?= esc($row['skema_pembayaran'] ?? 'Installment') ?></div>
                                     </td>
-                                    <td class="py-3 px-4 text-center whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border <?= $slInfo['class'] ?>">
-                                            <?= esc($slInfo['text']) ?>
-                                        </span>
-                                    </td>
                                     <td class="py-3 px-4 text-center whitespace-nowrap" id="status-badge-container-<?= $row['kredit_id'] ?>">
                                         <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border <?= $stInfo['badge'] ?>">
                                             <span class="w-1.5 h-1.5 rounded-full <?= $stInfo['dot'] ?>"></span>
                                             <span><?= esc($stInfo['label']) ?></span>
                                         </span>
-                                    </td>
-                                    <td class="py-3 px-4 min-w-[180px] max-w-[280px]">
-                                        <?php if (!empty($catatanReviewer)): ?>
-                                            <div class="text-[11px] text-slate-700 font-medium bg-slate-50 p-2 rounded-lg border border-slate-200/80 leading-relaxed truncate" title="<?= esc($catatanReviewer) ?>">
-                                                <?= esc($catatanReviewer) ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-[11px] text-slate-400 italic font-normal flex items-center gap-1">
-                                                <span>&mdash; Belum ada catatan</span>
-                                            </span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="py-3 px-4 text-[11px] text-slate-500 whitespace-nowrap">
-                                        <?= date('d M Y', strtotime($row['created_at'])) ?>
                                     </td>
                                     <td class="py-3 px-4 text-center whitespace-nowrap">
                                         <div class="inline-flex items-center gap-1.5">
@@ -448,17 +436,9 @@
                                     <span class="text-slate-700 text-right"><?= (int)($row['tenor_bulan'] ?? 12) ?> bln &middot; <?= esc($row['skema_pembayaran'] ?? 'Installment') ?></span>
                                 </div>
                                 <div class="flex justify-between items-baseline gap-2">
-                                    <span class="text-slate-400 text-[11px]">Status SLIK</span>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border <?= $slInfo['class'] ?>">
-                                        <?= esc($slInfo['text']) ?>
-                                    </span>
+                                    <span class="text-slate-400 text-[11px]">Pengusul</span>
+                                    <span class="font-medium text-slate-800 text-right"><?= esc($row['nama_pengusul'] ?? '-') ?></span>
                                 </div>
-                                <?php if (!empty($catatanReviewer)): ?>
-                                    <div class="pt-1 border-t border-slate-200/60">
-                                        <span class="text-slate-400 text-[11px] block mb-0.5">Catatan Keputusan:</span>
-                                        <p class="text-[11px] text-slate-700 font-medium bg-white p-1.5 rounded border border-slate-200/80 leading-relaxed"><?= esc($catatanReviewer) ?></p>
-                                    </div>
-                                <?php endif; ?>
                             </div>
 
                             <div class="flex items-center justify-end gap-2 pt-1">
@@ -486,158 +466,6 @@
                 </div>
                 <div class="flex items-center gap-1.5" id="paginationButtons">
                     <!-- Tombol paginasi akan dirender oleh JavaScript -->
-                </div>
-            </div>
-        </div>
-
-        <!-- TABEL LOG AKTIVITAS SISTEM TERKINI (AUDIT TRAIL DI BAWAHNYA) -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-            <div class="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-base shadow-2xs border border-purple-100">
-                        📜
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                            <span>Log Aktivitas Sistem Terkini</span>
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">Audit Trail</span>
-                        </h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Pemantauan riwayat audit operasional, analisis AI, dan aktivitas akun secara real-time</p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    <div class="relative w-full sm:w-64">
-                        <input type="text" id="searchLogInput" placeholder="Filter pengguna, modul, aksi..." 
-                               class="w-full pl-8 pr-3 py-1.5 text-xs font-medium border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition">
-                        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-                    <div class="text-xs text-slate-500 font-medium whitespace-nowrap hidden sm:inline">
-                        Menampilkan <span id="countLogDisplay" class="font-bold text-slate-800"><?= count($recent_logs ?? []) ?></span> aktivitas
-                    </div>
-                    <a href="<?= base_url('log') ?>" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 hidden sm:inline whitespace-nowrap">
-                        Lihat Semua &rarr;
-                    </a>
-                </div>
-            </div>
-
-            <!-- Desktop Table View (>= 768px) -->
-            <div class="hidden md:block w-full overflow-x-auto" style="-webkit-overflow-scrolling: touch;">
-                <table class="w-full min-w-[700px] text-left text-xs border-collapse" id="tabelLogAktivitas">
-                    <thead class="bg-slate-50 text-[11px] font-bold text-slate-600 uppercase tracking-wider border-b border-slate-200">
-                        <tr>
-                            <th class="py-3 px-4 w-36">Waktu Kejadian</th>
-                            <th class="py-3 px-4 w-44">Pengguna (User)</th>
-                            <th class="py-3 px-4 w-32">Modul</th>
-                            <th class="py-3 px-4">Deskripsi Aktivitas</th>
-                            <th class="py-3 px-4 text-center w-28">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        <?php if (empty($recent_logs)): ?>
-                            <tr id="emptyLogTableRow">
-                                <td colspan="5" class="py-10 text-center text-slate-400 italic">
-                                    <div class="w-10 h-10 mx-auto mb-2 text-slate-300">
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    </div>
-                                    Belum ada log aktivitas yang tercatat di sistem.
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($recent_logs as $idx => $lg): ?>
-                                <?php
-                                    $stUpper = strtoupper($lg['status'] ?? 'SUCCESS');
-                                    $stClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                                    if ($stUpper === 'WARNING') $stClass = 'bg-amber-50 text-amber-700 border-amber-200';
-                                    elseif ($stUpper === 'DANGER' || $stUpper === 'ERROR') $stClass = 'bg-rose-50 text-rose-700 border-rose-200';
-                                    elseif ($stUpper === 'INFO') $stClass = 'bg-blue-50 text-blue-700 border-blue-200';
-                                    $logId = $lg['id'] ?? ($idx + 1);
-                                ?>
-                                <tr class="hover:bg-slate-50/80 transition-colors" id="row-log-<?= $logId ?>">
-                                    <td class="py-3 px-4 font-mono-code text-[11px] text-slate-500 whitespace-nowrap">
-                                        <?= date('d M Y H:i:s', strtotime($lg['created_at'])) ?>
-                                    </td>
-                                    <td class="py-3 px-4 whitespace-nowrap">
-                                        <div class="font-bold text-slate-900 text-[12px]"><?= esc($lg['nama_user'] ?? 'System') ?></div>
-                                        <?php if (!empty($lg['ip_address'])): ?>
-                                            <span class="text-[10px] text-slate-400 font-mono-code"><?= esc($lg['ip_address']) ?></span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="py-3 px-4 whitespace-nowrap">
-                                        <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                            <?= esc($lg['modul'] ?? 'SISTEM') ?>
-                                        </span>
-                                    </td>
-                                    <td class="py-3 px-4 text-slate-700 text-[12px] leading-relaxed" title="<?= esc($lg['aktivitas']) ?>">
-                                        <?= esc($lg['aktivitas']) ?>
-                                    </td>
-                                    <td class="py-3 px-4 text-center whitespace-nowrap">
-                                        <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border <?= $stClass ?>">
-                                            <?= esc($lg['status'] ?? 'SUCCESS') ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Mobile Card View (< 768px) -->
-            <div class="md:hidden divide-y divide-slate-100" id="mobileLogCardsContainer">
-                <?php if (empty($recent_logs)): ?>
-                    <div class="text-center py-10 px-4 text-slate-400 italic text-xs">
-                        Belum ada log aktivitas yang tercatat di sistem.
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($recent_logs as $idx => $lg): ?>
-                        <?php
-                            $stUpper = strtoupper($lg['status'] ?? 'SUCCESS');
-                            $stClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                            if ($stUpper === 'WARNING') $stClass = 'bg-amber-50 text-amber-700 border-amber-200';
-                            elseif ($stUpper === 'DANGER' || $stUpper === 'ERROR') $stClass = 'bg-rose-50 text-rose-700 border-rose-200';
-                            elseif ($stUpper === 'INFO') $stClass = 'bg-blue-50 text-blue-700 border-blue-200';
-                            $logId = $lg['id'] ?? ($idx + 1);
-                        ?>
-                        <div class="p-4 space-y-2.5 hover:bg-slate-50/50 transition-colors" id="card-log-<?= $logId ?>">
-                            <div class="flex items-start justify-between gap-2">
-                                <div>
-                                    <div class="text-xs font-bold text-slate-900"><?= esc($lg['nama_user'] ?? 'System') ?></div>
-                                    <div class="text-[11px] text-slate-400 font-mono-code mt-0.5">
-                                        <?= date('d M Y H:i:s', strtotime($lg['created_at'])) ?>
-                                        <?php if (!empty($lg['ip_address'])): ?>
-                                            &bull; <?= esc($lg['ip_address']) ?>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                                <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold border <?= $stClass ?> shrink-0">
-                                    <?= esc($lg['status'] ?? 'SUCCESS') ?>
-                                </span>
-                            </div>
-
-                            <div class="bg-slate-50/80 rounded-lg p-2.5 space-y-1.5 text-xs border border-slate-100">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-slate-400 text-[10px] font-medium uppercase">Modul:</span>
-                                    <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-white text-slate-700 border border-slate-200">
-                                        <?= esc($lg['modul'] ?? 'SISTEM') ?>
-                                    </span>
-                                </div>
-                                <p class="text-slate-700 text-xs leading-relaxed">
-                                    <?= esc($lg['aktivitas']) ?>
-                                </p>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-
-            <!-- Bar Paginasi Responsif Log -->
-            <div id="paginationLogBar" class="px-4 sm:px-5 py-3 border-t border-slate-200 bg-slate-50/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                <div class="tabular-nums text-center sm:text-left">
-                    Menampilkan <span id="pageLogInfoStart" class="font-bold text-slate-900">0</span> &minus; <span id="pageLogInfoEnd" class="font-bold text-slate-900">0</span> dari <span id="pageLogInfoTotal" class="font-bold text-slate-900"><?= count($recent_logs ?? []) ?></span> aktivitas
-                </div>
-                <div class="flex items-center gap-1.5" id="paginationLogButtons">
-                    <!-- Tombol paginasi log dirender via JS -->
                 </div>
             </div>
         </div>
@@ -833,171 +661,8 @@
             searchInput.addEventListener('input', filterTabelPengajuan);
         }
 
-        // Paginasi & Pencarian Responsif Tabel Log Aktivitas
-        let currentLogPage = 1;
-        const pageSizeLog = 5;
-
-        function filterTabelLog() {
-            currentLogPage = 1;
-            renderLogPagination();
-        }
-
-        function goToLogPage(page) {
-            currentLogPage = page;
-            renderLogPagination();
-        }
-
-        function renderLogPagination() {
-            const searchLogInput = document.getElementById('searchLogInput');
-            const term = (searchLogInput?.value || '').toLowerCase().trim();
-
-            const rows = Array.from(document.querySelectorAll('#tabelLogAktivitas tbody tr[id^="row-log-"]'));
-            const cards = Array.from(document.querySelectorAll('#mobileLogCardsContainer div[id^="card-log-"]'));
-
-            const matchedRows = [];
-            const matchedCards = [];
-
-            // Filter Desktop Rows
-            rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                if (!term || text.includes(term)) {
-                    matchedRows.push(row);
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-
-            // Filter Mobile Cards
-            cards.forEach(card => {
-                const text = card.innerText.toLowerCase();
-                if (!term || text.includes(term)) {
-                    matchedCards.push(card);
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            const totalMatches = matchedRows.length;
-            const totalPages = Math.max(1, Math.ceil(totalMatches / pageSizeLog));
-
-            if (currentLogPage > totalPages) currentLogPage = totalPages;
-            if (currentLogPage < 1) currentLogPage = 1;
-
-            const startIndex = (currentLogPage - 1) * pageSizeLog;
-            const endIndex = startIndex + pageSizeLog;
-
-            // Render slice baris desktop
-            matchedRows.forEach((row, idx) => {
-                row.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
-            });
-
-            // Render slice kartu mobile
-            matchedCards.forEach((card, idx) => {
-                card.style.display = (idx >= startIndex && idx < endIndex) ? '' : 'none';
-            });
-
-            // Update info jumlah
-            const countLogDisplay = document.getElementById('countLogDisplay');
-            if (countLogDisplay) countLogDisplay.innerText = totalMatches;
-
-            const pageLogInfoStart = document.getElementById('pageLogInfoStart');
-            const pageLogInfoEnd = document.getElementById('pageLogInfoEnd');
-            const pageLogInfoTotal = document.getElementById('pageLogInfoTotal');
-
-            if (pageLogInfoStart && pageLogInfoEnd && pageLogInfoTotal) {
-                if (totalMatches === 0) {
-                    pageLogInfoStart.innerText = '0';
-                    pageLogInfoEnd.innerText = '0';
-                } else {
-                    pageLogInfoStart.innerText = (startIndex + 1);
-                    pageLogInfoEnd.innerText = Math.min(endIndex, totalMatches);
-                }
-                pageLogInfoTotal.innerText = totalMatches;
-            }
-
-            // Render Tombol Paginasi Log
-            const paginationLogButtons = document.getElementById('paginationLogButtons');
-            if (!paginationLogButtons) return;
-
-            if (totalMatches <= pageSizeLog) {
-                if (totalMatches === 0) {
-                    paginationLogButtons.innerHTML = '<span class="text-slate-400 text-xs italic">Tidak ada aktivitas yang cocok</span>';
-                } else {
-                    paginationLogButtons.innerHTML = `
-                        <button type="button" disabled class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 text-slate-300 bg-white cursor-not-allowed">
-                            Sebelumnya
-                        </button>
-                        <button type="button" class="w-7 h-7 text-xs font-bold rounded-md bg-blue-600 text-white shadow-xs">
-                            1
-                        </button>
-                        <button type="button" disabled class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 text-slate-300 bg-white cursor-not-allowed">
-                            Selanjutnya
-                        </button>
-                    `;
-                }
-                return;
-            }
-
-            let btnHtml = '';
-
-            // Tombol Prev
-            const prevDisabled = (currentLogPage === 1);
-            btnHtml += `
-                <button type="button" onclick="goToLogPage(${currentLogPage - 1})" ${prevDisabled ? 'disabled' : ''}
-                        class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 ${prevDisabled ? 'text-slate-300 bg-white cursor-not-allowed' : 'text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer shadow-xs transition'}">
-                    Sebelumnya
-                </button>
-            `;
-
-            // Tombol Angka Halaman
-            for (let p = 1; p <= totalPages; p++) {
-                if (totalPages > 7) {
-                    if (p !== 1 && p !== totalPages && Math.abs(p - currentLogPage) > 1) {
-                        if (p === 2 && currentLogPage > 3) {
-                            btnHtml += `<span class="px-1 text-slate-400">...</span>`;
-                        } else if (p === totalPages - 1 && currentLogPage < totalPages - 2) {
-                            btnHtml += `<span class="px-1 text-slate-400">...</span>`;
-                        }
-                        continue;
-                    }
-                }
-
-                if (p === currentLogPage) {
-                    btnHtml += `
-                        <button type="button" class="w-7 h-7 text-xs font-bold rounded-md bg-blue-600 text-white shadow-xs flex items-center justify-center">
-                            ${p}
-                        </button>
-                    `;
-                } else {
-                    btnHtml += `
-                        <button type="button" onclick="goToLogPage(${p})"
-                                class="w-7 h-7 text-xs font-semibold rounded-md border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 transition flex items-center justify-center cursor-pointer shadow-xs">
-                            ${p}
-                        </button>
-                    `;
-                }
-            }
-
-            // Tombol Next
-            const nextDisabled = (currentLogPage === totalPages);
-            btnHtml += `
-                <button type="button" onclick="goToLogPage(${currentLogPage + 1})" ${nextDisabled ? 'disabled' : ''}
-                        class="px-2.5 py-1 text-xs font-semibold rounded-md border border-slate-200 ${nextDisabled ? 'text-slate-300 bg-white cursor-not-allowed' : 'text-slate-600 bg-white hover:bg-slate-50 hover:text-blue-700 hover:border-blue-300 cursor-pointer shadow-xs transition'}">
-                    Selanjutnya
-                </button>
-            `;
-
-            paginationLogButtons.innerHTML = btnHtml;
-        }
-
-        const searchLogInput = document.getElementById('searchLogInput');
-        if (searchLogInput) {
-            searchLogInput.addEventListener('input', filterTabelLog);
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             renderPagination();
-            renderLogPagination();
         });
 
         // Dropdown Profil

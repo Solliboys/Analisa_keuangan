@@ -77,9 +77,43 @@ class Reviewer extends BaseController
         $dokumen  = $dokumenModel->where('kredit_id', $kreditId)->findAll();
 
         $komiteList = $this->komiteModel->where('kredit_id', $kreditId)->findAll();
-        $keputusanReviewer = $this->komiteModel->where('kredit_id', $kreditId)
-                                               ->where('role_approver', 'Reviewer / Analis Senior')
-                                               ->first();
+
+        $userRole = strtolower(session()->get('jabatan') ?? '');
+        $userId   = (int)session()->get('user_id');
+        $isCeo    = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false);
+
+        // Ambil semua catatan dari reviewer (role_approver bukan CEO)
+        $semuaCatatanReviewer = $this->komiteModel->where('kredit_id', $kreditId)
+                                                  ->where('role_approver !=', 'Direktur Utama / CEO')
+                                                  ->orderBy('komite_id', 'ASC')
+                                                  ->findAll();
+
+        // Untuk Reviewer: HANYA tampilkan catatan miliknya sendiri (catatan orang lain disembunyikan)
+        // Untuk CEO: tampilkan seluruh catatan dari semua reviewer
+        if (!$isCeo) {
+            $userNama = strtolower(trim(session()->get('nama_lengkap') ?? ''));
+            $daftarCatatanReviewer = array_values(array_filter($semuaCatatanReviewer, function($c) use ($userId, $userNama) {
+                $cUserId = (int)($c['user_id'] ?? 0);
+                $cNama   = strtolower(trim($c['nama_approver'] ?? ''));
+                if ($userId > 0 && $cUserId === $userId) {
+                    return true;
+                }
+                if ($cUserId === 0 && !empty($userNama) && $cNama === $userNama) {
+                    return true;
+                }
+                return false;
+            }));
+        } else {
+            $daftarCatatanReviewer = $semuaCatatanReviewer;
+        }
+
+        $keputusanReviewer   = !empty($daftarCatatanReviewer) ? end($daftarCatatanReviewer) : null;
+        $catatanDariReviewer = $keputusanReviewer;
+
+        // Ambil keputusan CEO (jika sudah ada)
+        $keputusanCeo = $this->komiteModel->where('kredit_id', $kreditId)
+                                          ->where('role_approver', 'Direktur Utama / CEO')
+                                          ->first();
 
         // Hitung total MV dan LV Agunan
         $totalMV = 0;
@@ -115,8 +149,11 @@ class Reviewer extends BaseController
             'webcheck'           => $webcheck,
             'analisa'            => $analisa,
             'dokumen'            => $dokumen,
-            'komite'             => $komiteList,
-            'keputusan_reviewer' => $keputusanReviewer,
+            'komite'                  => $komiteList,
+            'keputusan_reviewer'      => $keputusanReviewer,
+            'catatan_dari_reviewer'   => $catatanDariReviewer,
+            'daftar_catatan_reviewer' => $daftarCatatanReviewer,
+            'keputusan_ceo'           => $keputusanCeo,
             'total_mv'           => $totalMV,
             'total_lv'           => $totalLV,
             'coverage_mv'        => $coverageMV,
@@ -124,11 +161,18 @@ class Reviewer extends BaseController
             'pengaturan_sistem'  => $pengaturanSistem
         ];
 
+        if ($isCeo) {
+            $data['title'] = 'Lembar Keputusan CEO - ' . esc($kredit['nomor_aplikasi']);
+            return view('ceo/form_keputusan_ceo', $data);
+        }
+
         return view('reviewer/form_review', $data);
     }
 
     /**
-     * Simpan Keputusan Form Review oleh Reviewer (Setuju / Tolak)
+     * Simpan Catatan / Keputusan Form Review
+     * Reviewer bertugas mengirimkan catatan hasil review & rekomendasi (opsional) ke CEO.
+     * CEO bertugas menetapkan keputusan resmi final komite.
      */
     public function simpanKeputusan()
     {
@@ -141,30 +185,32 @@ class Reviewer extends BaseController
         }
 
         $kreditId  = $this->request->getPost('kredit_id');
-        $keputusan = $this->request->getPost('keputusan'); // 'Disetujui' atau 'Ditolak'
+        $keputusan = $this->request->getPost('keputusan'); // Opsional bagi reviewer, wajib bagi CEO
         $catatan   = trim($this->request->getPost('catatan') ?? '');
 
         if (!$kreditId) {
             return $this->response->setJSON(['status' => false, 'message' => 'ID Pengajuan tidak valid.']);
         }
 
-        $allowedKeputusan = ['Disetujui', 'Bersyarat', 'Disetujui Bersyarat', 'Ditolak', 'Revisi', 'Kembalikan untuk Revisi'];
-        if (!in_array($keputusan, $allowedKeputusan)) {
-            return $this->response->setJSON(['status' => false, 'message' => 'Silakan pilih keputusan: Setuju, Bersyarat, Revisi, atau Tolak.']);
-        }
+        $userRole = strtolower(session()->get('jabatan') ?? '');
+        $isCeo    = (strpos($userRole, 'ceo') !== false || strpos($userRole, 'direk') !== false);
 
-        if (($keputusan === 'Ditolak' || $keputusan === 'Revisi' || $keputusan === 'Kembalikan untuk Revisi') && empty($catatan)) {
-            return $this->response->setJSON(['status' => false, 'message' => ($keputusan === 'Ditolak') ? 'Alasan penolakan wajib diisi pada catatan keputusan!' : 'Instruksi perbaikan berkas wajib diisi pada catatan keputusan untuk Staf Pengusul (AO)!']);
-        }
-
-        if (($keputusan === 'Bersyarat' || $keputusan === 'Disetujui Bersyarat') && empty($catatan)) {
-            return $this->response->setJSON(['status' => false, 'message' => 'Persyaratan khusus persetujuan wajib diisi pada catatan keputusan!']);
-        }
-
+        // Catatan wajib diisi karena tugas reviewer adalah mengirimkan catatan ke CEO
         if (empty($catatan)) {
-            $catatan = ($keputusan === 'Disetujui') 
-                ? 'Pengajuan dinilai layak setelah dilakukan review mendalam terhadap prinsip 5C, kapasitas repayment (DSC), rekam jejak fasilitas kredit SLIK OJK, serta kelayakan nilai jaminan.'
-                : 'Pengajuan disetujui dengan pemenuhan syarat khusus sebelum realisasi.';
+            return $this->response->setJSON([
+                'status'  => false, 
+                'message' => $isCeo ? 'Catatan pertimbangan keputusan wajib diisi!' : 'Catatan hasil review untuk CEO wajib diisi!'
+            ]);
+        }
+
+        $allowedKeputusan = ['Disetujui', 'Bersyarat', 'Disetujui Bersyarat', 'Ditolak', 'Revisi', 'Kembalikan untuk Revisi'];
+        if (!empty($keputusan) && !in_array($keputusan, $allowedKeputusan)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Pilihan rekomendasi keputusan tidak valid.']);
+        }
+
+        // Khusus CEO: keputusan wajib dipilih
+        if ($isCeo && empty($keputusan)) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Silakan pilih keputusan final komite: Setuju, Bersyarat, Revisi, atau Tolak.']);
         }
 
         $kredit = $this->kreditModel->find($kreditId);
@@ -172,67 +218,105 @@ class Reviewer extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'Data pengajuan kredit tidak ditemukan.']);
         }
 
-        // Normalisasi nama status
-        if ($keputusan === 'Bersyarat' || $keputusan === 'Disetujui Bersyarat') {
-            $statusSave = 'Disetujui Bersyarat';
-        } elseif ($keputusan === 'Revisi' || $keputusan === 'Kembalikan untuk Revisi') {
-            $statusSave = 'Revisi';
-        } else {
-            $statusSave = $keputusan;
+        // Normalisasi status jika ada pilihan keputusan / rekomendasi
+        $statusSave = null;
+        if (!empty($keputusan)) {
+            if ($keputusan === 'Bersyarat' || $keputusan === 'Disetujui Bersyarat') {
+                $statusSave = 'Disetujui Bersyarat';
+            } elseif ($keputusan === 'Revisi' || $keputusan === 'Kembalikan untuk Revisi') {
+                $statusSave = 'Revisi';
+            } else {
+                $statusSave = $keputusan;
+            }
         }
 
-        // 1. Update status_pengajuan di tabel kredit
-        $this->kreditModel->update($kreditId, [
-            'status_pengajuan' => $statusSave,
-            'updated_at'       => date('Y-m-d H:i:s')
-        ]);
-
-        // 2. Simpan / perbarui ke tabel komite
         $userId       = session()->get('user_id');
-        $namaApprover = session()->get('nama_lengkap') ?: 'Reviewer / Analis Senior';
+        $namaApprover = session()->get('nama_lengkap') ?: ($isCeo ? 'Direktur Utama / CEO' : 'Senior Credit Reviewer');
+        $roleApprover = $isCeo ? 'Direktur Utama / CEO' : 'Reviewer / Analis Senior';
 
-        $komiteExist = $this->komiteModel->where('kredit_id', $kreditId)
-                                         ->where('role_approver', 'Reviewer / Analis Senior')
-                                         ->first();
+        // 1. Simpan / perbarui ke tabel komite
+        if ($isCeo) {
+            $komiteExist = $this->komiteModel->where('kredit_id', $kreditId)
+                                             ->where('role_approver', 'Direktur Utama / CEO')
+                                             ->first();
+            $dataKomite = [
+                'kredit_id'        => $kreditId,
+                'user_id'          => $userId,
+                'role_approver'    => 'Direktur Utama / CEO',
+                'nama_approver'    => $namaApprover,
+                'status_approval'  => $statusSave ?: 'Disetujui',
+                'tanggal_approval' => date('Y-m-d'),
+                'catatan_approval' => $catatan,
+            ];
 
-        $dataKomite = [
-            'kredit_id'        => $kreditId,
-            'user_id'          => $userId,
-            'role_approver'    => 'Reviewer / Analis Senior',
-            'nama_approver'    => $namaApprover,
-            'status_approval'  => $statusSave,
-            'tanggal_approval' => date('Y-m-d'),
-            'catatan_approval' => $catatan,
-        ];
-
-        if ($komiteExist) {
-            $this->komiteModel->update($komiteExist['komite_id'], $dataKomite);
+            if ($komiteExist) {
+                $this->komiteModel->update($komiteExist['komite_id'], $dataKomite);
+            } else {
+                $this->komiteModel->insert($dataKomite);
+            }
         } else {
+            // Reviewer: SELALU insert catatan review baru agar bisa menambah review lainnya (multi-review/history)
+            $dataKomite = [
+                'kredit_id'        => $kreditId,
+                'user_id'          => $userId,
+                'role_approver'    => 'Reviewer / Analis Senior',
+                'nama_approver'    => $namaApprover,
+                'status_approval'  => $statusSave ?: 'Ditinjau Reviewer',
+                'tanggal_approval' => date('Y-m-d'),
+                'catatan_approval' => $catatan,
+            ];
             $this->komiteModel->insert($dataKomite);
         }
 
+        // 2. Update status_pengajuan di tabel kredit
+        if ($isCeo) {
+            // CEO menetapkan keputusan final
+            $statusKreditUpdate = $statusSave ?: 'Disetujui';
+        } else {
+            // Reviewer: hanya mengirim catatan ke CEO
+            if ($statusSave === 'Revisi') {
+                $statusKreditUpdate = 'Revisi';
+            } else {
+                $statusKreditUpdate = 'Menunggu Keputusan CEO';
+            }
+        }
+
+        $this->kreditModel->update($kreditId, [
+            'status_pengajuan' => $statusKreditUpdate,
+            'updated_at'       => date('Y-m-d H:i:s')
+        ]);
+
         // Catat ke log aktivitas sistem
         try {
-            $nomorApp = $kredit['nomor_aplikasi'] ?? ('ID #' . $kreditId);
-            $namaDeb  = $kredit['nama_debitur'] ?? '-';
-            $logStatus = ($statusSave === 'Ditolak') ? 'DANGER' : (($statusSave === 'Revisi') ? 'WARNING' : 'SUCCESS');
+            $nomorApp  = $kredit['nomor_aplikasi'] ?? ('ID #' . $kreditId);
+            $namaDeb   = $kredit['nama_debitur'] ?? '-';
+            $logAction = $isCeo 
+                ? ('Menetapkan keputusan komite final: ' . strtoupper($statusKreditUpdate) . ' pada pengajuan ' . $nomorApp . ' (' . $namaDeb . ')')
+                : ('Mengirimkan catatan review ke CEO untuk pengajuan ' . $nomorApp . ' (' . $namaDeb . ')' . ($statusSave ? ' [Rekomendasi: ' . $statusSave . ']' : ''));
+
             LogAktivitasModel::catat(
-                'Menetapkan keputusan komite: ' . strtoupper($statusSave) . ' pada pengajuan ' . $nomorApp . ' (' . $namaDeb . ')',
+                $logAction,
                 'KOMITE',
-                $logStatus,
+                ($statusKreditUpdate === 'Ditolak') ? 'DANGER' : (($statusKreditUpdate === 'Revisi') ? 'WARNING' : 'SUCCESS'),
                 [
                     'kredit_id'       => $kreditId,
                     'nomor_aplikasi'  => $nomorApp,
                     'nama_debitur'    => $namaDeb,
-                    'status_approval' => $statusSave,
+                    'status_approval' => $statusKreditUpdate,
                     'catatan'         => $catatan
                 ]
             );
         } catch (\Throwable $e) {}
 
-        $messageSukses = ($statusSave === 'Revisi')
-            ? 'Pengajuan berhasil dikembalikan ke Staf Pengusul (AO) untuk dilakukan perbaikan / revisi.'
-            : 'Keputusan Reviewer berhasil disimpan: Pengajuan telah di-' . strtoupper($statusSave) . '.';
+        if ($isCeo) {
+            $messageSukses = ($statusSave === 'Revisi')
+                ? 'Pengajuan berhasil dikembalikan ke Staf Pengusul (AO) untuk dilakukan perbaikan / revisi.'
+                : 'Keputusan Final CEO berhasil disimpan: Pengajuan telah di-' . strtoupper($statusKreditUpdate) . '.';
+        } else {
+            $messageSukses = ($statusSave === 'Revisi')
+                ? 'Pengajuan berhasil dikembalikan ke Staf Pengusul (AO) untuk revisi data.'
+                : 'Catatan review berhasil dikirimkan ke CEO untuk pengambilan keputusan final.';
+        }
 
         return $this->response->setJSON([
             'status'       => true,

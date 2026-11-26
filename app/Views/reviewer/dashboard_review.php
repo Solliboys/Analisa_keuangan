@@ -308,21 +308,20 @@
                 <table class="w-full min-w-[860px] text-left text-xs text-slate-600 tabular-nums" id="tabelPengajuan">
                     <thead class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
                         <tr>
+                            <th class="py-3 px-4">Tanggal Permohonan</th>
                             <th class="py-3 px-4">No. Aplikasi</th>
                             <th class="py-3 px-4">Nama Debitur &amp; Usaha</th>
+                            <th class="py-3 px-4">Pengusul</th>
                             <th class="py-3 px-4">Tipe</th>
                             <th class="py-3 px-4 text-right">Plafon &amp; Tenor</th>
-                            <th class="py-3 px-4 text-center">Status SLIK</th>
                             <th class="py-3 px-4 text-center">Status Pengajuan</th>
-                            <th class="py-3 px-4">Catatan Keputusan</th>
-                            <th class="py-3 px-4">Tanggal Permohonan</th>
                             <th class="py-3 px-4 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200/80">
                         <?php if (empty($daftar_pengajuan)): ?>
                             <tr id="emptyTableRow">
-                                <td colspan="9" class="text-center py-12 text-slate-400">
+                                <td colspan="8" class="text-center py-12 text-slate-400">
                                     <p class="font-semibold text-slate-700 text-xs">Belum ada berkas pengajuan kredit yang masuk.</p>
                                     <p class="text-[11px] text-slate-400 mt-1">Daftar berkas nasabah yang diinput staf pengusul akan otomatis muncul di sini untuk ditinjau oleh Reviewer.</p>
                                 </td>
@@ -338,6 +337,10 @@
                                     $catatanReviewer = trim($row['catatan_reviewer'] ?? '');
                                 ?>
                                 <tr class="hover:bg-blue-50/30 transition-colors" id="row-kredit-<?= $row['kredit_id'] ?>" data-jenis-debitur="<?= $tipeKey ?>" data-status="<?= $stInfo['key'] ?>">
+                                    <td class="py-3 px-4 text-[11px] text-slate-600 whitespace-nowrap">
+                                        <div class="font-semibold text-slate-800"><?= date('d M Y', strtotime($row['created_at'])) ?></div>
+                                        <div class="text-[10px] text-slate-400"><?= date('H:i', strtotime($row['created_at'])) ?> WIB</div>
+                                    </td>
                                     <td class="py-3 px-4 font-semibold text-slate-950 whitespace-nowrap">
                                         <?= esc($row['nomor_aplikasi']) ?>
                                         <span class="block text-[11px] font-normal text-slate-400"><?= esc($row['tipe_aplikasi'] ?? 'Fasilitas Baru') ?></span>
@@ -346,6 +349,10 @@
                                         <div class="font-semibold text-slate-900"><?= esc($row['nama_debitur'] ?: '-') ?></div>
                                         <div class="text-[11px] text-slate-500"><?= esc($row['nama_usaha'] ?: ($row['jenis_debitur'] ?? 'Individu')) ?></div>
                                     </td>
+                                    <td class="py-3 px-4 whitespace-nowrap">
+                                        <div class="font-semibold text-slate-900"><?= esc($row['nama_pengusul'] ?? '-') ?></div>
+                                        <div class="text-[10px] text-slate-400">Account Officer</div>
+                                    </td>
                                     <td class="py-3 px-4 whitespace-nowrap text-slate-700 font-medium">
                                         <?= $isBadan ? 'Badan Usaha' : 'Perorangan' ?>
                                     </td>
@@ -353,30 +360,11 @@
                                         <div class="font-semibold text-blue-700">Rp <?= number_format((float)($row['plafon_pengajuan'] ?? 0), 0, ',', '.') ?></div>
                                         <div class="text-[11px] text-slate-500"><?= (int)($row['tenor_bulan'] ?? 12) ?> bln &middot; <?= esc($row['skema_pembayaran'] ?? 'Installment') ?></div>
                                     </td>
-                                    <td class="py-3 px-4 text-center whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border <?= $slInfo['class'] ?>">
-                                            <?= esc($slInfo['text']) ?>
-                                        </span>
-                                    </td>
                                     <td class="py-3 px-4 text-center whitespace-nowrap" id="status-badge-container-<?= $row['kredit_id'] ?>">
                                         <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-semibold border <?= $stInfo['badge'] ?>">
                                             <span class="w-1.5 h-1.5 rounded-full <?= $stInfo['dot'] ?>"></span>
                                             <span><?= esc($stInfo['label']) ?></span>
                                         </span>
-                                    </td>
-                                    <td class="py-3 px-4 min-w-[180px] max-w-[280px]">
-                                        <?php if (!empty($catatanReviewer)): ?>
-                                            <div class="text-[11px] text-slate-700 font-medium bg-slate-50 p-2 rounded-lg border border-slate-200/80 leading-relaxed truncate" title="<?= esc($catatanReviewer) ?>">
-                                                <?= esc($catatanReviewer) ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <span class="text-[11px] text-slate-400 italic font-normal flex items-center gap-1">
-                                                <span>&mdash; Belum ada catatan</span>
-                                            </span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="py-3 px-4 text-[11px] text-slate-500 whitespace-nowrap">
-                                        <?= date('d M Y', strtotime($row['created_at'])) ?>
                                     </td>
                                     <td class="py-3 px-4 text-center whitespace-nowrap">
                                         <div class="inline-flex items-center gap-1.5">
@@ -449,17 +437,9 @@
                                     <span class="text-slate-700 text-right"><?= (int)($row['tenor_bulan'] ?? 12) ?> bln &middot; <?= esc($row['skema_pembayaran'] ?? 'Installment') ?></span>
                                 </div>
                                 <div class="flex justify-between items-baseline gap-2">
-                                    <span class="text-slate-400 text-[11px]">Status SLIK</span>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border <?= $slInfo['class'] ?>">
-                                        <?= esc($slInfo['text']) ?>
-                                    </span>
+                                    <span class="text-slate-400 text-[11px]">Pengusul</span>
+                                    <span class="font-medium text-slate-800 text-right"><?= esc($row['nama_pengusul'] ?? '-') ?></span>
                                 </div>
-                                <?php if (!empty($catatanReviewer)): ?>
-                                    <div class="pt-1 border-t border-slate-200/60">
-                                        <span class="text-slate-400 text-[11px] block mb-0.5">Catatan Keputusan:</span>
-                                        <p class="text-[11px] text-slate-700 font-medium bg-white p-1.5 rounded border border-slate-200/80 leading-relaxed"><?= esc($catatanReviewer) ?></p>
-                                    </div>
-                                <?php endif; ?>
                             </div>
 
                             <div class="flex items-center justify-end gap-2 pt-1">
