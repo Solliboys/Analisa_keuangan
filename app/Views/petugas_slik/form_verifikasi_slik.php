@@ -9,7 +9,15 @@
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
     <style>
+        html { color-scheme: light !important; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        input, textarea, select {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8 !important;
+        }
     </style>
     <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png?v=2') ?>">
     <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">

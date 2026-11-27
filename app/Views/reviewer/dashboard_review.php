@@ -23,9 +23,18 @@
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
     <link rel="stylesheet" href="<?= base_url('fonts/plus-jakarta-sans/plus-jakarta-sans.css') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
     <style>
+        html { color-scheme: light !important; }
         body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
         .tabular-nums { font-variant-numeric: tabular-nums; }
+        input, textarea, select {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8 !important;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col">
@@ -222,7 +231,8 @@
                     <!-- Search Box -->
                     <div class="relative w-full sm:w-72">
                         <input type="text" id="searchInput" placeholder="Cari nomor aplikasi, debitur, usaha..."
-                               class="w-full h-9 pl-9 pr-3 text-xs font-medium text-slate-900 placeholder-slate-400 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700/10 focus:border-blue-700 transition">
+                               class="w-full h-9 pl-9 pr-3 text-xs font-medium bg-white text-slate-900 placeholder-slate-400 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-700/10 focus:border-blue-700 transition"
+                               style="background-color: #ffffff !important; color: #0f172a !important;">
                         <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
 
@@ -692,7 +702,7 @@
                         <div class="font-bold text-slate-800 text-sm mb-1">${noAplikasi} - ${namaDebitur}</div>
                         <p class="mb-2">Anda akan memberikan persetujuan resmi (Approve) untuk permohonan kredit ini.</p>
                         <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1">Catatan Persetujuan / Rekomendasi Reviewer:</label>
-                        <textarea id="catatanApproval" rows="3" class="w-full text-xs border border-slate-300 rounded-xl p-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none" placeholder="Tuliskan catatan kelayakan atau rekomendasi komite..."></textarea>
+                        <textarea id="catatanApproval" rows="3" class="w-full text-xs bg-white text-slate-800 border border-slate-300 rounded-xl p-2.5 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none" style="background-color: #ffffff !important; color: #0f172a !important;" placeholder="Tuliskan catatan kelayakan atau rekomendasi komite..."></textarea>
                     </div>
                 `,
                 icon: 'question',
@@ -755,7 +765,7 @@
                         <div class="font-bold text-slate-800 text-sm mb-1">${noAplikasi} - ${namaDebitur}</div>
                         <p class="mb-2 text-rose-600 font-semibold">Pengajuan ini akan ditolak (Reject) dan tidak dapat dicairkan.</p>
                         <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px] mb-1">Alasan Penolakan (Wajib Diisi):</label>
-                        <textarea id="alasanPenolakan" rows="3" class="w-full text-xs border border-rose-300 rounded-xl p-2.5 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none" placeholder="Tuliskan alasan penolakan kredit (misal: DSC tidak mencukupi, riwayat macet SLIK, dll)..."></textarea>
+                        <textarea id="alasanPenolakan" rows="3" class="w-full text-xs bg-white text-slate-800 border border-rose-300 rounded-xl p-2.5 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none" style="background-color: #ffffff !important; color: #0f172a !important;" placeholder="Tuliskan alasan penolakan kredit (misal: DSC tidak mencukupi, riwayat macet SLIK, dll)..."></textarea>
                     </div>
                 `,
                 icon: 'warning',

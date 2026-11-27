@@ -4,6 +4,48 @@
  */
 const getBaseUrl = () => (window.BASE_URL ? window.BASE_URL.replace(/\/+$/, '') : '');
 
+// =========================================================================
+// Helper Parser & Formatter Nominal Rupiah (Global & Hoisted)
+// =========================================================================
+function formatRupiah(input) {
+    if (!input) return;
+    let val = input.value.replace(/[^0-9]/g, '');
+    input.value = val ? parseInt(val, 10).toLocaleString('id-ID') : '';
+}
+window.formatRupiah = formatRupiah;
+
+function formatRupiahString(num) {
+    const n = Math.round(Number(num) || 0);
+    return (n < 0 ? '- Rp ' : 'Rp ') + Math.abs(n).toLocaleString('id-ID');
+}
+window.formatRupiahString = formatRupiahString;
+
+function parseNominal(val) {
+    if (val === null || val === undefined) return 0;
+    if (typeof val === 'number') return isNaN(val) ? 0 : Math.round(val);
+    let s = String(val).trim();
+    if (s === '' || s === '-') return 0;
+
+    const isNeg = s.startsWith('-');
+    s = s.replace(/[^0-9.,-]/g, '');
+
+    // 1. Format rupiah dengan koma sen desimal di akhir: misal "250.000.000,00" atau "500.000,50" -> buang sen
+    if (/,\d{1,2}$/.test(s)) {
+        s = s.split(',')[0];
+    }
+
+    // 2. Format float MySQL database murni: misal "250000000.00" atau "125000.5" atau "0.00"
+    if (/^-?\d+\.\d{1,2}$/.test(s)) {
+        return Math.round(parseFloat(s)) || 0;
+    }
+
+    // 3. Format Rupiah Indonesia (titik sebagai pemisah ribuan): "500.000", "250.000", "400.000.000"
+    const clean = s.replace(/[^0-9]/g, '');
+    const num = clean ? parseInt(clean, 10) : 0;
+    return isNeg ? -num : num;
+}
+window.parseNominal = parseNominal;
+
 let currentTab = 1;
 const totalTabs = 11; // Proses pengusul dibatasi sampai tahap Disbursement (Tahap 12 Repayment & 13 Komite ditiadakan di pengusul)
 
@@ -494,7 +536,7 @@ function validateTab(tabNum) {
             if (Array.isArray(window.daftarHpp)) {
                 const hppItems = window.daftarHpp.filter(item => (item.kategori || 'hpp').toLowerCase() === 'hpp');
                 if (hppItems.length > 0) {
-                    const itemKosong = hppItems.find(item => (parseInt(item.nominal, 10) || 0) <= 0);
+                    const itemKosong = hppItems.find(item => (parseNominal(item.nominal) || 0) <= 0);
                     if (itemKosong) {
                         const firstHppInp = document.querySelector('#containerHppOnlyDinamis input.rupiah-input') || document.querySelector('#tab-9 button[onclick*="tambahHppOnly"]');
                         if (firstHppInp) {
@@ -3012,7 +3054,7 @@ function renderListHpp() {
         daftarHpp.forEach((item, index) => {
             const safeNama = (item.nama || '').replace(/"/g, '&quot;');
             const kategori = (item.kategori || 'hpp').toLowerCase();
-            const nomVal = parseInt(item.nominal, 10) || 0;
+            const nomVal = parseNominal(item.nominal);
             const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
             const isAset = (kategori === 'aset');
 
@@ -3107,7 +3149,7 @@ function renderListHpp() {
             daftarHpp.forEach((item, index) => {
             const safeNama = (item.nama || '').replace(/"/g, '&quot;');
             const kategori = (item.kategori || 'hpp').toLowerCase();
-            const nomVal = parseInt(item.nominal, 10) || 0;
+            const nomVal = parseNominal(item.nominal);
             const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
             const isAset = (kategori === 'aset');
 
@@ -3348,7 +3390,7 @@ function renderListPendapatan() {
         let html = '';
         daftarPendapatan.forEach((item, index) => {
             const safeNama = (item.nama || '').replace(/"/g, '&quot;');
-            const nomVal = parseInt(item.nominal, 10) || 0;
+            const nomVal = parseNominal(item.nominal);
             const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
             const deleteBtnHtml = `
                 <button type="button" onclick="hapusPendapatan(${index})" title="Hapus pendapatan ini" 
@@ -3521,7 +3563,7 @@ function renderListBebanLain() {
         let html = '';
         daftarBebanLain.forEach((item, index) => {
             const safeNama = (item.nama || '').replace(/"/g, '&quot;');
-            const nomVal = parseInt(item.nominal, 10) || 0;
+            const nomVal = parseNominal(item.nominal);
             const nomStr = nomVal > 0 ? nomVal.toLocaleString('id-ID') : '';
             html += `
                 <div class="flex items-center gap-2 p-2 bg-white border ${isBU ? 'border-rose-200 hover:border-rose-300' : 'border-slate-200 hover:border-blue-200'} rounded-xl shadow-2xs transition">
@@ -3650,7 +3692,7 @@ function renderListUtang() {
         let html = '';
         daftarUtang.forEach((item, index) => {
             const safeNama = (item.nama || '').replace(/"/g, '&quot;');
-            const plafonVal = parseInt(item.plafon, 10) || 0;
+            const plafonVal = parseNominal(item.plafon);
             const plafonStr = plafonVal > 0 ? plafonVal.toLocaleString('id-ID') : '';
             const bungaVal = (item.bunga_persen !== undefined && item.bunga_persen !== null) ? item.bunga_persen : 10;
             
@@ -3662,7 +3704,7 @@ function renderListUtang() {
                 tenorBulan = Math.round(parseFloat(item.tenor_tahun) * 12);
             }
             const tenorTahun = Math.round((tenorBulan / 12) * 10) / 10;
-            const cicilanVal = parseInt(item.cicilan_bulanan, 10) || 0;
+            const cicilanVal = parseNominal(item.cicilan_bulanan);
 
             html += `
                 <div class="item-utang-row p-3 bg-white border border-rose-200/90 hover:border-rose-300 rounded-xl shadow-2xs space-y-2 transition" data-utang-index="${index}">
