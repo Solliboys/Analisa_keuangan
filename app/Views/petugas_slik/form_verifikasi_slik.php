@@ -95,16 +95,79 @@
     // Kalkulasi ringkasan awal jika ada fasilitas
     $totalPlafonSlik = 0;
     $totalBakiDebetSlik = 0;
+    $totalAngsuranSlik = 0;
     $kolTerburuk = 'Kol 1 (Lancar)';
     $countBankUmum = 0;
     $countBankRakyat = 0;
     $countLembagaPembiayaan = 0;
     $countLainnya = 0;
+    $kolPriority = ['macet' => 5, 'diragukan' => 4, 'kurang lancar' => 3, 'dpk' => 2, 'lancar' => 1];
+    $maxKolVal = 0;
+
     if (!empty($slik) && is_array($slik)) {
-        foreach ($slik as $sItem) {
-            $totalPlafonSlik += (float)($sItem['plafon'] ?? 0);
-            $totalBakiDebetSlik += (float)($sItem['outstanding'] ?? 0);
+        foreach ($slik as &$sItem) {
+            $pl = (float)($sItem['plafon'] ?? 0);
+            $bd = (float)($sItem['outstanding'] ?? 0);
+            $pAcuan = $pl > 0 ? $pl : $bd;
+
+            $totalPlafonSlik += $pl;
+            $totalBakiDebetSlik += $bd;
+
+            $angs = (float)($sItem['angsuran'] ?? 0);
+            if ($angs <= 0 && $pAcuan > 0) {
+                $jwBln = 12;
+                if (preg_match('/([0-9]+)/', (string)($sItem['jangka_waktu'] ?? ''), $jwm)) {
+                    $jwBln = (int)$jwm[1];
+                }
+                if ($jwBln <= 0) $jwBln = 12;
+
+                $bPct = 10;
+                if (preg_match('/([0-9]+([.,][0-9]+)?)/', (string)($sItem['suku_bunga'] ?? ''), $bm)) {
+                    $bPct = (float)str_replace(',', '.', $bm[1]);
+                }
+                if ($bPct <= 0) $bPct = 10;
+
+                $angs = round(($pAcuan + ($pAcuan * ($bPct / 100) * ($jwBln / 12))) / $jwBln);
+                $sItem['angsuran'] = $angs;
+            }
+            $totalAngsuranSlik += $angs;
+
+            $bank = strtolower($sItem['bank_lembaga'] ?? '');
+            $jenisKredit = strtolower($sItem['jenis_kredit'] ?? ($sItem['jenis_fasilitas'] ?? ''));
+            if (strpos($bank, 'bpr') !== false || strpos($bank, 'bprs') !== false) {
+                $countBankRakyat++;
+            } elseif (
+                strpos($bank, 'finance') !== false || strpos($bank, 'leasing') !== false || 
+                strpos($bank, 'adira') !== false || strpos($bank, 'fif') !== false || 
+                strpos($bank, 'oto') !== false || strpos($bank, 'baf') !== false || 
+                strpos($bank, 'wom') !== false || strpos($bank, 'kreditplus') !== false || 
+                strpos($bank, 'multifinance') !== false || strpos($bank, 'pembiayaan') !== false || 
+                strpos($jenisKredit, 'pembiayaan') !== false || strpos($bank, 'indomobil') !== false
+            ) {
+                $countLembagaPembiayaan++;
+            } elseif (
+                strpos($bank, 'bank') !== false || strpos($bank, 'mandiri') !== false || 
+                strpos($bank, 'bca') !== false || strpos($bank, 'bri') !== false || 
+                strpos($bank, 'bni') !== false || strpos($bank, 'cimb') !== false || 
+                strpos($bank, 'danamon') !== false || strpos($bank, 'permata') !== false || 
+                strpos($bank, 'btn') !== false || strpos($bank, 'panin') !== false || 
+                strpos($bank, 'mega') !== false || strpos($bank, 'ocbc') !== false || 
+                strpos($bank, 'maybank') !== false || strpos($bank, 'uob') !== false || 
+                strpos($bank, 'dbs') !== false || strpos($bank, 'bsi') !== false
+            ) {
+                $countBankUmum++;
+            } else {
+                $countLainnya++;
+            }
+
+            $k = strtolower(trim($sItem['kelancaran'] ?? 'lancar'));
+            $p = $kolPriority[$k] ?? 1;
+            if ($p > $maxKolVal) {
+                $maxKolVal = $p;
+                $kolTerburuk = $sItem['kelancaran'] ?? 'Kol 1 (Lancar)';
+            }
         }
+        unset($sItem);
     }
 ?>
 
@@ -516,10 +579,10 @@
                         </div>
                     </div>
 
-                    <!-- Bank Pembiayaan Rakyat / Syariah -->
+                    <!-- BPR / BPRS (Bank Perekonomian Rakyat) -->
                     <div class="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs">
-                        <div class="text-[11px] text-slate-500 font-medium">Bank Pembiayaan Rakyat / Syariah</div>
-                        <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricBankRakyat">
+                        <div class="text-[11px] text-slate-500 font-medium">BPR / BPRS</div>
+                        <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricBpr" data-legacy-id="ringkasanMetricBankRakyat">
                             <?= (int)$countBankRakyat ?>
                         </div>
                     </div>

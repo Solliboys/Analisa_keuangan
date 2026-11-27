@@ -1735,6 +1735,44 @@ function generateLaporanKeuangan(isSilent = false) {
         payload.append('detail_hpp_rk', elDetailHpp.value);
     }
 
+    // Ambil rincian Hutang dinamis dari Tab 9 (dalam format JSON murni)
+    const elDetailUtang = document.querySelector('[name="detail_utang_json"]') || document.getElementById('detail_utang_json');
+    if (elDetailUtang && elDetailUtang.value) {
+        payload.append('detail_utang_json', elDetailUtang.value);
+    } else if (Array.isArray(window.daftarUtang) && window.daftarUtang.length > 0) {
+        payload.append('detail_utang_json', JSON.stringify(window.daftarUtang));
+    }
+
+    // Ambil state baku SLIK dan Piutang Aset Tab 9
+    const elTotalBakiDebet = document.getElementById('total_baki_debet_slik');
+    if (elTotalBakiDebet && elTotalBakiDebet.value) {
+        payload.append('total_baki_debet_slik', elTotalBakiDebet.value);
+        payload.append('neraca_utang_bank_panjang', elTotalBakiDebet.value);
+    } else if (window.TOTAL_BAKI_DEBET_SLIK) {
+        payload.append('total_baki_debet_slik', window.TOTAL_BAKI_DEBET_SLIK);
+        payload.append('neraca_utang_bank_panjang', window.TOTAL_BAKI_DEBET_SLIK);
+    }
+
+    const elCicilanSlik = document.getElementById('cicilan_slik_per_bulan');
+    if (elCicilanSlik && elCicilanSlik.value) {
+        payload.append('cicilan_slik_per_bulan', elCicilanSlik.value);
+        payload.append('input_pembayaran_pokok', elCicilanSlik.value);
+    } else if (window.CICILAN_SLIK_PER_BULAN) {
+        payload.append('cicilan_slik_per_bulan', window.CICILAN_SLIK_PER_BULAN);
+        payload.append('input_pembayaran_pokok', window.CICILAN_SLIK_PER_BULAN);
+    }
+
+    const elPiutangAset = document.getElementById('piutang_aset') || document.getElementById('neraca_piutang_usaha');
+    if (elPiutangAset && elPiutangAset.value) {
+        payload.append('piutang_aset', elPiutangAset.value);
+        payload.append('neraca_piutang_usaha', elPiutangAset.value);
+        payload.append('input_piutang_akhir', elPiutangAset.value);
+    } else if (window.PIUTANG_ASET) {
+        payload.append('piutang_aset', window.PIUTANG_ASET);
+        payload.append('neraca_piutang_usaha', window.PIUTANG_ASET);
+        payload.append('input_piutang_akhir', window.PIUTANG_ASET);
+    }
+
     // Ambil data neraca di collapsible Tahap 9 jika ada
     ['neraca_awal_kas','input_piutang_akhir','input_persediaan_akhir','neraca_awal_piutang','neraca_awal_persediaan',
      'neraca_aset_tetap_bruto','neraca_akumulasi_penyusutan','input_capex','beban_depresiasi','neraca_awal_aset_tetap',
@@ -1891,8 +1929,22 @@ function hitungDataLaporanDariDOM() {
     const saldoAwalAsetTetap = pF(document.querySelector('[name="neraca_awal_aset_tetap"]')?.value) || 0;
     let pembelianAsetTetap = pF(document.querySelector('[name="input_capex"]')?.value) || pF(document.getElementById('total_aset_hpp_rk')?.value) || sumAsetKotak3DOM;
 
-    // Arus Kas
-    const cicilanPokok = pF(document.querySelector('[name="input_pembayaran_pokok"]')?.value) || 0;
+    // Arus Kas: Cicilan Pokok Pinjaman / Pembayaran Hutang Bank
+    let cicilanPokok = 0;
+    if (Array.isArray(window.daftarUtang) && window.daftarUtang.length > 0) {
+        window.daftarUtang.forEach(u => {
+            cicilanPokok += pF(u.cicilan_bulanan || 0);
+        });
+    }
+    if (cicilanPokok === 0) {
+        const elCicilan = document.getElementById('cicilan_slik_per_bulan');
+        if (elCicilan && elCicilan.value) cicilanPokok = pF(elCicilan.value);
+        else if (window.CICILAN_SLIK_PER_BULAN) cicilanPokok = pF(window.CICILAN_SLIK_PER_BULAN);
+    }
+    if (cicilanPokok === 0) {
+        cicilanPokok = pF(document.querySelector('[name="input_pembayaran_pokok"]')?.value) || 0;
+    }
+
     const kasOperasional = labaBersih + penyusutan;
     const kasInvestasi = -pembelianAsetTetap;
     const kasPendanaan = -cicilanPokok;
@@ -1901,7 +1953,16 @@ function hitungDataLaporanDariDOM() {
 
     // Neraca (identitas akuntansi seimbang: Kas Neraca = Kas Akhir Arus Kas)
     const kasBank = kasAkhir;
-    const piutang = pF(document.querySelector('[name="input_piutang_akhir"]')?.value) || 0;
+
+    // Piutang Usaha: Wajib bersumber murni dari data/modul Aset (tagihan/invoice), bukan agunan/SLIK
+    let piutang = 0;
+    const elPiutangAset = document.getElementById('piutang_aset') || document.getElementById('neraca_piutang_usaha') || document.querySelector('[name="input_piutang_akhir"]');
+    if (elPiutangAset && elPiutangAset.value) {
+        piutang = pF(elPiutangAset.value);
+    } else if (window.PIUTANG_ASET) {
+        piutang = pF(window.PIUTANG_ASET);
+    }
+
     const persediaan = pF(document.querySelector('[name="input_persediaan_akhir"]')?.value) || 0;
     const totalAsetLancar = kasBank + piutang + persediaan;
 
@@ -1915,18 +1976,22 @@ function hitungDataLaporanDariDOM() {
     const utangUsaha = pF(document.querySelector('[name="input_utang_usaha_akhir"]')?.value) || 0;
     let utangBankPendek = pF(document.querySelector('[name="neraca_utang_bank_lancar"]')?.value) || 0;
     let utangBankPanjang = pF(document.querySelector('[name="neraca_utang_bank_panjang"]')?.value) || 0;
-    // Jika input utang bank belum diisi manual di form neraca, ambil otomatis dari Baki Debet (Outstanding) SLIK OJK
+
+    // Hutang Bank: Wajib bersumber dari penjumlahan Baki Debet SLIK OJK (totalBakiDebetSLIK) + Utang Berjalan
     if (utangBankPendek === 0 && utangBankPanjang === 0) {
-        let sumSlikDOM = 0;
-        document.querySelectorAll('.slik-outstanding').forEach(el => {
-            sumSlikDOM += pF(el.value);
-        });
-        if (sumSlikDOM === 0) {
-            const elTotSlik = document.getElementById('totalOutstandingSlik');
-            if (elTotSlik) sumSlikDOM = pF(elTotSlik.innerText);
+        let sumBakiDebet = 0;
+        if (Array.isArray(window.daftarUtang) && window.daftarUtang.length > 0) {
+            window.daftarUtang.forEach(u => {
+                sumBakiDebet += pF(u.baki_debet !== undefined ? u.baki_debet : (u.plafon || 0));
+            });
         }
-        if (sumSlikDOM > 0) {
-            utangBankPanjang = sumSlikDOM;
+        if (sumBakiDebet === 0) {
+            const elTotSlik = document.getElementById('total_baki_debet_slik');
+            if (elTotSlik && elTotSlik.value) sumBakiDebet = pF(elTotSlik.value);
+            else if (window.TOTAL_BAKI_DEBET_SLIK) sumBakiDebet = pF(window.TOTAL_BAKI_DEBET_SLIK);
+        }
+        if (sumBakiDebet > 0) {
+            utangBankPanjang = sumBakiDebet;
         }
     }
     const totalLiabilitas = utangUsaha + utangBankPendek + utangBankPanjang;
@@ -2000,6 +2065,14 @@ function hitungDataLaporanDariDOM() {
     };
 }
 window.hitungDataLaporanDariDOM = hitungDataLaporanDariDOM;
+window.sinkronkanLaporanKeuangan = function() {
+    try {
+        const domData = hitungDataLaporanDariDOM();
+        if (domData) isiDataLaporanBU(domData);
+    } catch(e) {
+        console.warn('Gagal sinkron laporan BU:', e);
+    }
+};
 
 // ============================================================
 // OTOMATIS RENDER SAAT HALAMAN DIBUKA

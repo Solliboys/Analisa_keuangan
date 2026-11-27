@@ -228,16 +228,20 @@ if (empty($listDetailUtang)) {
 
 $subtotalUtangDinamisAwal = 0;
 $subtotalAngsuranDinamisAwal = 0;
+$hasSlikInUtangAwal = false;
 foreach ($listDetailUtang as $u) {
-    $subtotalUtangDinamisAwal    += (float)($u['plafon'] ?? ($u['nominal'] ?? 0));
+    if (!empty($u['is_slik'])) {
+        $hasSlikInUtangAwal = true;
+    }
+    $subtotalUtangDinamisAwal    += (float)($u['baki_debet'] ?? ($u['plafon'] ?? ($u['nominal'] ?? 0)));
     $subtotalAngsuranDinamisAwal += (float)($u['cicilan_bulanan'] ?? ($u['angsuran'] ?? 0));
 }
 
 $totalPengeluaranAwal = $totalBebanAwal + $totalHppAwal + $subtotalAngsuranDinamisAwal;
 $surplusBulananAwal = $totalPemasukanAwal - $totalPengeluaranAwal;
 
-$totalUtangLuarAwal        = $subtotalUtangDinamisAwal + $totalOutstandingSlik;
-$totalAngsuranBerjalanAwal  = $subtotalAngsuranDinamisAwal + $totalCicilanSlik;
+$totalUtangLuarAwal        = $hasSlikInUtangAwal ? $subtotalUtangDinamisAwal : ($subtotalUtangDinamisAwal + $totalOutstandingSlik);
+$totalAngsuranBerjalanAwal  = $hasSlikInUtangAwal ? $subtotalAngsuranDinamisAwal : ($subtotalAngsuranDinamisAwal + $totalCicilanSlik);
 $totalAngsuranGabunganAwal  = $totalAngsuranBerjalanAwal + $estimasiAngsuranBaru;
 
 // =============================================================================
@@ -1266,16 +1270,18 @@ function sinkronkanLaporanKeuangan() {
 
     let subUtangDinamis = 0;
     let subAngsDinamis = 0;
+    let hasSlikInUtang = false;
     listUtang.forEach(item => {
-        subUtangDinamis += pNomLap(item.plafon || item.nominal || 0);
+        if (item.is_slik) hasSlikInUtang = true;
+        subUtangDinamis += pNomLap(item.baki_debet !== undefined ? item.baki_debet : (item.plafon || item.nominal || 0));
         subAngsDinamis += pNomLap(item.cicilan_bulanan || item.angsuran || 0);
     });
 
     const outSlik = window.OUTSTANDING_SLIK_DEFAULT || <?= $totalOutstandingSlik ?>;
     const angsSlik = window.ANGSURAN_SLIK_DEFAULT || <?= $totalCicilanSlik ?>;
 
-    const totUtangLuar = subUtangDinamis + outSlik;
-    const totAngsBerjalan = subAngsDinamis + angsSlik;
+    const totUtangLuar = hasSlikInUtang ? subUtangDinamis : (subUtangDinamis + outSlik);
+    const totAngsBerjalan = hasSlikInUtang ? subAngsDinamis : (subAngsDinamis + angsSlik);
 
     // Total Pengeluaran = Beban Rutin + HPP + Cicilan Bulanan Hutang Berjalan (100% Sinkron Tab 9)
     const totalPengeluaran = totBeban + totHpp + subAngsDinamis;

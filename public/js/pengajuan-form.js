@@ -2889,15 +2889,46 @@ function hitungLabaRugi() {
     }
     const nomBlRK = totalBebanLain;
 
-    // Cicilan Bulanan Hutang (dari Daftar Hutang Dinamis)
+    // Cicilan Bulanan Hutang (dari Daftar Hutang Dinamis & SLIK)
     let totalCicilanUtang = 0;
+    let totalBakiDebetUtang = 0;
     if (Array.isArray(window.daftarUtang) && window.daftarUtang.length > 0) {
         window.daftarUtang.forEach(u => {
             totalCicilanUtang += parseNominal(u.cicilan_bulanan || 0);
+            totalBakiDebetUtang += parseNominal(u.baki_debet !== undefined ? u.baki_debet : (u.plafon || 0));
         });
+    } else if (window.TOTAL_BAKI_DEBET_SLIK || window.CICILAN_SLIK_PER_BULAN) {
+        totalCicilanUtang = parseNominal(window.CICILAN_SLIK_PER_BULAN || 0);
+        totalBakiDebetUtang = parseNominal(window.TOTAL_BAKI_DEBET_SLIK || 0);
     }
     const elSubtotalUtang = document.getElementById('nomTotalCicilanUtangDinamis');
     if (elSubtotalUtang) elSubtotalUtang.innerText = formatRupiahString(totalCicilanUtang);
+
+    // Update state & hidden inputs untuk Baki Debet SLIK & Cicilan Bulanan
+    const elHiddenBaki = document.getElementById('total_baki_debet_slik');
+    if (elHiddenBaki) elHiddenBaki.value = totalBakiDebetUtang;
+    const elHiddenCicilan = document.getElementById('cicilan_slik_per_bulan');
+    if (elHiddenCicilan) elHiddenCicilan.value = totalCicilanUtang;
+    window.TOTAL_BAKI_DEBET_SLIK = totalBakiDebetUtang;
+    window.CICILAN_SLIK_PER_BULAN = totalCicilanUtang;
+
+    // Piutang Aset: Wajib bersumber dari data Aset Kotak 3 (tagihan/invoice), default 0 jika kosong
+    let piutangAset = 0;
+    if (Array.isArray(window.daftarHpp) && window.daftarHpp.length > 0) {
+        window.daftarHpp.forEach(it => {
+            if ((it.kategori || '').toLowerCase() === 'aset') {
+                const nmAset = (it.nama || '').toLowerCase();
+                if (nmAset.includes('piutang') || nmAset.includes('tagihan') || nmAset.includes('invoice')) {
+                    piutangAset += parseNominal(it.nominal || 0);
+                }
+            }
+        });
+    }
+    const elHiddenPiutang = document.getElementById('piutang_aset');
+    if (elHiddenPiutang) elHiddenPiutang.value = piutangAset;
+    const elHiddenNrPiutang = document.getElementById('neraca_piutang_usaha');
+    if (elHiddenNrPiutang) elHiddenNrPiutang.value = piutangAset;
+    window.PIUTANG_ASET = piutangAset;
 
     // Pendapatan Lain-lain (usaha sampingan — khusus perorangan/karyawan)
     const isAdaLain = document.getElementById('ada_bukti_pendapatan_lain_rk')?.checked;
@@ -3694,6 +3725,9 @@ function renderListUtang() {
             const safeNama = (item.nama || '').replace(/"/g, '&quot;');
             const plafonVal = parseNominal(item.plafon);
             const plafonStr = plafonVal > 0 ? plafonVal.toLocaleString('id-ID') : '';
+            const bakiDebetVal = parseNominal(item.baki_debet !== undefined ? item.baki_debet : item.plafon);
+            const bakiDebetStr = bakiDebetVal > 0 ? bakiDebetVal.toLocaleString('id-ID') : plafonStr;
+            const isSlik = Boolean(item.is_slik);
             const bungaVal = (item.bunga_persen !== undefined && item.bunga_persen !== null) ? item.bunga_persen : 10;
             
             // Konversi Tenor Bulan dan Tahun
@@ -3709,10 +3743,13 @@ function renderListUtang() {
             html += `
                 <div class="item-utang-row p-3 bg-white border border-rose-200/90 hover:border-rose-300 rounded-xl shadow-2xs space-y-2 transition" data-utang-index="${index}">
                     <div class="flex items-center justify-between gap-2">
-                        <input type="text" value="${safeNama}" 
-                               placeholder="Nama Bank / Lembaga Kreditur (cth: Bank Mandiri, BRI, Leasing, dll)" 
-                               class="flex-1 text-xs font-bold text-slate-800 border-0 bg-transparent px-1 focus:ring-0 placeholder:text-slate-400 focus:outline-none" 
-                               oninput="updateItemUtang(${index}, 'nama', this.value)">
+                        <div class="flex items-center gap-1.5 flex-1">
+                            ${isSlik ? '<span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[9px] font-bold border border-blue-200 shrink-0">SLIK OJK</span>' : ''}
+                            <input type="text" value="${safeNama}" 
+                                   placeholder="Nama Bank / Lembaga Kreditur (cth: Bank Mandiri, BRI, Leasing, dll)" 
+                                   class="flex-1 text-xs font-bold text-slate-800 border-0 bg-transparent px-1 focus:ring-0 placeholder:text-slate-400 focus:outline-none" 
+                                   oninput="updateItemUtang(${index}, 'nama', this.value)">
+                        </div>
                         <button type="button" onclick="hapusUtang(${index})" title="Hapus hutang ini" class="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-rose-600 rounded transition cursor-pointer">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
@@ -3726,6 +3763,7 @@ function renderListUtang() {
                                        class="w-full font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg pl-6 pr-2 py-1 text-right focus:bg-white focus:outline-none rupiah-input" 
                                        oninput="formatRupiah(this); updateItemUtang(${index}, 'plafon', this.value)">
                             </div>
+                            ${bakiDebetVal > 0 ? `<div class="text-[9px] text-slate-500 mt-0.5 font-medium">Baki Debet: <strong class="text-slate-700">Rp ${bakiDebetStr}</strong></div>` : ''}
                         </div>
                         <div>
                             <label class="block text-[10px] text-slate-400 font-semibold uppercase">Bunga (% / thn)</label>
@@ -3808,6 +3846,11 @@ function updateItemUtang(index, field, val) {
         daftarUtang[index].nama = val;
     } else if (field === 'plafon') {
         daftarUtang[index].plafon = parseNominal(val);
+        if (daftarUtang[index].baki_debet === undefined || !daftarUtang[index].is_slik) {
+            daftarUtang[index].baki_debet = parseNominal(val);
+        }
+    } else if (field === 'baki_debet') {
+        daftarUtang[index].baki_debet = parseNominal(val);
     } else if (field === 'bunga') {
         daftarUtang[index].bunga_persen = parseFloat(val) || 0;
     } else if (field === 'tenor_bulan') {

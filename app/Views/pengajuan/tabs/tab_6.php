@@ -42,6 +42,24 @@ if (!empty($kredit['daftar_permohonan_slik'])) {
         }
     }
 }
+// Inisialisasi subjek utama hanya jika permohonan SLIK belum pernah diinisialisasi di database
+if (empty($daftarPermohonanSlik) && (!isset($kredit['daftar_permohonan_slik']) || $kredit['daftar_permohonan_slik'] === null || $kredit['daftar_permohonan_slik'] === '')) {
+    $isBadanUsaha = (isset($kredit['jenis_debitur']) && (stripos($kredit['jenis_debitur'], 'badan') !== false || stripos($kredit['jenis_debitur'], 'pt') !== false || stripos($kredit['jenis_debitur'], 'cv') !== false));
+    $namaUtama = $namaDebiturVal ?: ($kredit['nama_usaha'] ?? 'Debitur Utama');
+    $daftarPermohonanSlik[] = [
+        'index'        => 0,
+        'nama'         => $namaUtama,
+        'no_id'        => $noIdVal ?: '-',
+        'keterkaitan'  => $isBadanUsaha ? 'Badan Usaha' : 'Pemohon',
+        'no_reff'      => $noReffSlik ?? '-',
+        'tanggal'      => !empty($kredit['created_at']) ? date('d M Y', strtotime($kredit['created_at'])) : date('d M Y'),
+        'status'       => ($statusSlikVal === 'Terbit') ? 'Telah Terbit' : 'Menunggu Pengecekan',
+        'hasil'        => $hasilSlikVal ?: 'Menunggu',
+        'pengusul'     => $pengusulVal,
+        'file_identitas' => null,
+        'file_permohonan' => null
+    ];
+}
 
 // Perhitungan Ringkasan SLIK
 $totalPlafonSlik = 0;
@@ -84,12 +102,29 @@ if (!empty($slik) && is_array($slik)) {
         $totalAngsuranSlik += $angs;
 
         $bank = strtolower($s['bank_lembaga'] ?? '');
+        $jenisKredit = strtolower($s['jenis_kredit'] ?? ($s['jenis_fasilitas'] ?? ''));
         if (strpos($bank, 'bpr') !== false || strpos($bank, 'bprs') !== false) {
             $countBpr++;
-        } elseif (strpos($bank, 'bank') !== false || strpos($bank, 'mandiri') !== false || strpos($bank, 'bca') !== false || strpos($bank, 'bri') !== false || strpos($bank, 'bni') !== false) {
-            $countBankUmum++;
-        } elseif (strpos($bank, 'finance') !== false || strpos($bank, 'leasing') !== false || strpos($bank, 'adira') !== false || strpos($bank, 'fif') !== false || strpos($bank, 'oto') !== false) {
+        } elseif (
+            strpos($bank, 'finance') !== false || strpos($bank, 'leasing') !== false || 
+            strpos($bank, 'adira') !== false || strpos($bank, 'fif') !== false || 
+            strpos($bank, 'oto') !== false || strpos($bank, 'baf') !== false || 
+            strpos($bank, 'wom') !== false || strpos($bank, 'kreditplus') !== false || 
+            strpos($bank, 'multifinance') !== false || strpos($bank, 'pembiayaan') !== false || 
+            strpos($jenisKredit, 'pembiayaan') !== false || strpos($bank, 'indomobil') !== false
+        ) {
             $countLembagaPembiayaan++;
+        } elseif (
+            strpos($bank, 'bank') !== false || strpos($bank, 'mandiri') !== false || 
+            strpos($bank, 'bca') !== false || strpos($bank, 'bri') !== false || 
+            strpos($bank, 'bni') !== false || strpos($bank, 'cimb') !== false || 
+            strpos($bank, 'danamon') !== false || strpos($bank, 'permata') !== false || 
+            strpos($bank, 'btn') !== false || strpos($bank, 'panin') !== false || 
+            strpos($bank, 'mega') !== false || strpos($bank, 'ocbc') !== false || 
+            strpos($bank, 'maybank') !== false || strpos($bank, 'uob') !== false || 
+            strpos($bank, 'dbs') !== false || strpos($bank, 'bsi') !== false
+        ) {
+            $countBankUmum++;
         } else {
             $countLainnya++;
         }

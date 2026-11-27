@@ -1663,10 +1663,9 @@ function hitungAngsuranPinjamanResmi(plafon, bungaTahunanPct, tenorBulan) {
 
     if (plafon <= 0) return 0;
 
-    const tenorTahun = bln / 12;
-    const totalBungaPersen = (bungaTahunanPct / 100) * tenorTahun;
-    const totalPengembalian = plafon * (1 + totalBungaPersen);
-    const angsuranBulanan = Math.round(totalPengembalian / bln);
+    // Rumus resmi: (plafon + (plafon * (bunga_persen / 100) * (tenor_bulan / 12))) / tenor_bulan
+    const totalBungaNominal = plafon * (bungaTahunanPct / 100) * (bln / 12);
+    const angsuranBulanan = Math.round((plafon + totalBungaNominal) / bln);
 
     return angsuranBulanan;
 }
@@ -1800,9 +1799,25 @@ function hitungMetrikRingkasanSlik() {
 
         if (bankName.includes('bpr') || bankName.includes('bprs')) {
             countBpr++;
-        } else if (bankName.includes('leasing') || bankName.includes('finance') || bankName.includes('pembiayaan') || jenisKredit.includes('pembiayaan')) {
+        } else if (
+            bankName.includes('leasing') || bankName.includes('finance') || 
+            bankName.includes('pembiayaan') || jenisKredit.includes('pembiayaan') || 
+            bankName.includes('adira') || bankName.includes('fif') || 
+            bankName.includes('oto') || bankName.includes('baf') || 
+            bankName.includes('wom') || bankName.includes('kreditplus') || 
+            bankName.includes('multifinance') || bankName.includes('indomobil')
+        ) {
             countLembaga++;
-        } else if (bankName.includes('bank')) {
+        } else if (
+            bankName.includes('bank') || bankName.includes('mandiri') || 
+            bankName.includes('bca') || bankName.includes('bri') || 
+            bankName.includes('bni') || bankName.includes('cimb') || 
+            bankName.includes('danamon') || bankName.includes('permata') || 
+            bankName.includes('btn') || bankName.includes('panin') || 
+            bankName.includes('mega') || bankName.includes('ocbc') || 
+            bankName.includes('maybank') || bankName.includes('uob') || 
+            bankName.includes('dbs') || bankName.includes('bsi')
+        ) {
             countBankUmum++;
         } else {
             countLainnya++;
@@ -1818,7 +1833,7 @@ function hitungMetrikRingkasanSlik() {
     const elAngsuran = document.getElementById('ringkasanMetricAngsuran');
     const elKol = document.getElementById('ringkasanMetricKol');
     const elBankUmum = document.getElementById('ringkasanMetricBankUmum');
-    const elBpr = document.getElementById('ringkasanMetricBpr');
+    const elBpr = document.getElementById('ringkasanMetricBpr') || document.getElementById('ringkasanMetricBankRakyat');
     const elLembaga = document.getElementById('ringkasanMetricLembaga');
     const elLainnya = document.getElementById('ringkasanMetricLainnya');
 
@@ -1831,8 +1846,12 @@ function hitungMetrikRingkasanSlik() {
     if (elLembaga) elLembaga.textContent = countLembaga;
     if (elLainnya) elLainnya.textContent = countLainnya;
 
+    // Simpan ke state global yang konsisten
+    window.TOTAL_BAKI_DEBET_SLIK = totalBakiDebet;
+    window.OUTSTANDING_SLIK_DEFAULT = totalBakiDebet;
     window.TOTAL_ANGSURAN_SLIK = totalAngsuran;
     window.ANGSURAN_SLIK_DEFAULT = totalAngsuran;
+    window.CICILAN_SLIK_PER_BULAN = totalAngsuran;
 
     // Sinkronkan ke Tab 9 jika sedang berada di halaman pengajuan
     sinkronkanFasilitasSlikKeDaftarUtangTab9();
@@ -1846,13 +1865,16 @@ function sinkronkanFasilitasSlikKeDaftarUtangTab9() {
     const list = window.slikFasilitasArray || [];
     if (!Array.isArray(window.daftarUtang)) window.daftarUtang = [];
 
-    // Jika daftar utang masih kosong tapi SLIK memiliki fasilitas, isi otomatis
-    if (window.daftarUtang.length === 0 && list.length > 0) {
+    // Jika fasilitas SLIK ada, perbarui atau sinkronkan data SLIK di daftar utang
+    if (list.length > 0) {
+        // Hapus entri SLIK lama dari daftar utang jika ada
+        window.daftarUtang = window.daftarUtang.filter(u => !u.is_slik);
+
         list.forEach(r => {
             const p = parseFloat(r.plafon || 0);
             const b = parseFloat(r.outstanding || 0);
             const pAcuan = p > 0 ? p : b;
-            if (pAcuan <= 0) return;
+            if (pAcuan <= 0 && b <= 0) return;
 
             let jwBln = 12;
             const m = String(r.jangka_waktu || '').match(/(\d+)/);
@@ -1863,20 +1885,38 @@ function sinkronkanFasilitasSlikKeDaftarUtangTab9() {
             const bm = String(r.suku_bunga || '').replace(',', '.').match(/(\d+(\.\d+)?)/);
             if (bm) bungaPct = parseFloat(bm[1]) || 10;
 
+            // Rumus resmi: (plafon + (plafon * (bunga_persen / 100) * (tenor_bulan / 12))) / tenor_bulan
             const cicilan = r.angsuran || hitungAngsuranPinjamanResmi(pAcuan, bungaPct, jwBln);
 
             window.daftarUtang.push({
                 nama: r.bank_lembaga ? `${r.bank_lembaga} (${r.jenis_fasilitas || 'Kredit'})` : 'Pinjaman Bank',
                 plafon: pAcuan,
+                baki_debet: b,
                 bunga_persen: bungaPct,
                 tenor_tahun: jwThn,
                 tenor_bulan: jwBln,
-                cicilan_bulanan: cicilan
+                cicilan_bulanan: cicilan,
+                is_slik: 1
             });
         });
 
         if (typeof renderListUtang === 'function') {
             renderListUtang();
+        }
+    } else {
+        // Jika tidak ada fasilitas di SLIK, pastikan metrik nol dan hapus entri SLIK lama
+        window.TOTAL_BAKI_DEBET_SLIK = 0;
+        window.OUTSTANDING_SLIK_DEFAULT = 0;
+        window.TOTAL_ANGSURAN_SLIK = 0;
+        window.ANGSURAN_SLIK_DEFAULT = 0;
+        window.CICILAN_SLIK_PER_BULAN = 0;
+
+        const hadSlik = window.daftarUtang.some(u => u.is_slik);
+        if (hadSlik) {
+            window.daftarUtang = window.daftarUtang.filter(u => !u.is_slik);
+            if (typeof renderListUtang === 'function') {
+                renderListUtang();
+            }
         }
     }
 }

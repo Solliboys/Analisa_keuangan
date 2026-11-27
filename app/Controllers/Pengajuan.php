@@ -3037,15 +3037,15 @@ class Pengajuan extends BaseController
         $mergedInput = array_merge($keuangan, $input);
         $mergedInput['daftar_karyawan'] = $kredit['daftar_karyawan'] ?? '[]';
 
-        // Penarikan otomatis Bayar Pokok Pinjaman ke Bank, Utang Bank & Beban Bunga Bulanan dari SLIK (Tahap 5)
+        // Penarikan otomatis Bayar Pokok Pinjaman ke Bank, Utang Bank & Beban Bunga Bulanan dari SLIK (Tahap 5) & Daftar Utang Tab 9
         // Seluruh angka disamakan ke basis 1 bulan (sinkron dengan Pendapatan, HPP & Beban Bulanan di Tab 9)
-        $dataSlik = $this->slikModel->where('kredit_id', $kreditId)->where('deleted_at', null)->findAll();
+        $dataSlik = $this->slikModel->where('kredit_id', $kreditId)->findAll();
         $totPokokBulan  = 0;
         $totBungaBulan  = 0;
         $totOutstanding = 0;
         foreach ($dataSlik as $sl) {
             $angsuran = (float)($sl['angsuran'] ?? 0);
-            $out      = (float)($sl['outstanding'] ?? 0);
+            $out      = (float)($sl['outstanding'] ?? ($sl['baki_debet'] ?? 0));
             $pl       = (float)($sl['plafon'] ?? 0);
             $pAcuan   = $pl > 0 ? $pl : $out;
             if ($angsuran <= 0 && $pAcuan > 0) {
@@ -3060,6 +3060,40 @@ class Pengajuan extends BaseController
                 $totPokokBulan += round($out / 36);
             }
         }
+
+        // Konsolidasi dengan Daftar Utang & State Baku SLIK Tab 9
+        if (!empty($mergedInput['detail_utang_json'])) {
+            $decUtang = json_decode($mergedInput['detail_utang_json'], true);
+            if (is_array($decUtang) && !empty($decUtang)) {
+                $sumUtangDOM = 0;
+                $sumCicilanDOM = 0;
+                $sumBungaDOM = 0;
+                foreach ($decUtang as $u) {
+                    $uOut = (float)($u['baki_debet'] ?? ($u['plafon'] ?? 0));
+                    $uAngs = (float)($u['cicilan_bulanan'] ?? 0);
+                    if ($uAngs <= 0 && $uOut > 0) {
+                        $uAngs = $this->hitungAngsuranPinjamanResmi($uOut, $u['bunga_persen'] ?? '10%', $u['tenor_bulan'] ?? '12 bln');
+                    }
+                    $sumUtangDOM += $uOut;
+                    $sumCicilanDOM += $uAngs;
+                    $uBunga = ($uOut > 0) ? round(($uOut * 0.11) / 12) : 0;
+                    $sumBungaDOM += $uBunga;
+                }
+                if ($totOutstanding <= 0 && $sumUtangDOM > 0) {
+                    $totOutstanding = $sumUtangDOM;
+                    $totBungaBulan = $sumBungaDOM;
+                    $totPokokBulan = max(0, $sumCicilanDOM - $sumBungaDOM);
+                }
+            }
+        }
+        if ($totOutstanding <= 0 && !empty($mergedInput['total_baki_debet_slik'])) {
+            $totOutstanding = (float)$mergedInput['total_baki_debet_slik'];
+        }
+        if ($totPokokBulan <= 0 && !empty($mergedInput['cicilan_slik_per_bulan'])) {
+            $cPokokRaw = (float)$mergedInput['cicilan_slik_per_bulan'];
+            $totPokokBulan = max(0, $cPokokRaw - $totBungaBulan);
+        }
+
         if (empty($mergedInput['input_pembayaran_pokok']) || (float)$mergedInput['input_pembayaran_pokok'] <= 0) {
             if ($totPokokBulan > 0) {
                 $mergedInput['input_pembayaran_pokok'] = $totPokokBulan;
@@ -3076,6 +3110,31 @@ class Pengajuan extends BaseController
                 $mergedInput['input_beban_bunga'] = $totBungaBulan;
             }
         }
+
+        // Piutang Usaha: Wajib bersumber dari data Aset (Kotak 3 tagihan/invoice), bukan SLIK/agunan
+        $piutangAset = 0;
+        if (!empty($mergedInput['piutang_aset'])) {
+            $piutangAset = (float)$mergedInput['piutang_aset'];
+        } elseif (!empty($mergedInput['neraca_piutang_usaha'])) {
+            $piutangAset = (float)$mergedInput['neraca_piutang_usaha'];
+        } else {
+            $rawHppBU = $mergedInput['detail_hpp_rk'] ?? '';
+            if (!empty($rawHppBU)) {
+                $decHppBU = json_decode($rawHppBU, true);
+                if (is_array($decHppBU)) {
+                    foreach ($decHppBU as $it) {
+                        if (($it['kategori'] ?? '') === 'aset') {
+                            $nm = strtolower($it['nama'] ?? '');
+                            if (strpos($nm, 'piutang') !== false || strpos($nm, 'tagihan') !== false || strpos($nm, 'invoice') !== false) {
+                                $piutangAset += (float)($it['nominal'] ?? 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        $mergedInput['input_piutang_akhir'] = $piutangAset;
+        $mergedInput['neraca_piutang_usaha'] = $piutangAset;
 
         // Penarikan otomatis Uang Kas di Awal Tahun dari Rekening Koran (Tahap 7)
         $dataRekening = $this->rekeningModel->where('kredit_id', $kreditId)->findAll();
@@ -3272,29 +3331,64 @@ class Pengajuan extends BaseController
             }
         }
 
-        // Jika utang bank di neraca kosong, ambil dari baki debet outstanding SLIK OJK (Tahap 5)
-        if (empty($calcInput['neraca_utang_bank_panjang']) && empty($calcInput['neraca_utang_bank_lancar'])) {
-            $totSlik = 0;
-            foreach ($dataSlik as $sl) {
-                $totSlik += (float)($sl['outstanding'] ?? 0);
-            }
-            if ($totSlik > 0) {
-                $calcInput['neraca_utang_bank_panjang'] = $totSlik;
-            }
-        }
-
-        // Hitung pokok & bunga bulanan dari SLIK Tahap 5 (sinkron basis 1 bulan dengan Laba Rugi Tab 9)
+        // Hitung pokok & bunga bulanan serta utang berjalan dari SLIK OJK (Tahap 5)
+        $totSlik = 0;
         $totPokokBulanAktual = 0;
         $totBungaBulanAktual = 0;
         foreach ($dataSlik as $sl) {
             $angsuran = (float)($sl['angsuran'] ?? 0);
-            $out      = (float)($sl['outstanding'] ?? 0);
+            $out      = (float)($sl['outstanding'] ?? ($sl['baki_debet'] ?? 0));
+            $pl       = (float)($sl['plafon'] ?? 0);
+            $pAcuan   = $pl > 0 ? $pl : $out;
+            if ($angsuran <= 0 && $pAcuan > 0) {
+                $angsuran = $this->hitungAngsuranPinjamanResmi($pAcuan, $sl['suku_bunga'] ?? '10%', $sl['jangka_waktu'] ?? '12 bln');
+            }
+            $totSlik += $out;
             $bungaBln = ($out > 0) ? round(($out * 0.11) / 12) : 0;
             $totBungaBulanAktual += $bungaBln;
             if ($angsuran > 0) {
                 $totPokokBulanAktual += max(0, round($angsuran - $bungaBln));
             } elseif ($out > 0) {
                 $totPokokBulanAktual += round($out / 36);
+            }
+        }
+
+        // Konsolidasi dengan Daftar Utang & State Baku SLIK Tab 9
+        if (!empty($calcInput['detail_utang_json'])) {
+            $decUtang = json_decode($calcInput['detail_utang_json'], true);
+            if (is_array($decUtang) && !empty($decUtang)) {
+                $sumUtangDOM = 0;
+                $sumCicilanDOM = 0;
+                $sumBungaDOM = 0;
+                foreach ($decUtang as $u) {
+                    $uOut = (float)($u['baki_debet'] ?? ($u['plafon'] ?? 0));
+                    $uAngs = (float)($u['cicilan_bulanan'] ?? 0);
+                    if ($uAngs <= 0 && $uOut > 0) {
+                        $uAngs = $this->hitungAngsuranPinjamanResmi($uOut, $u['bunga_persen'] ?? '10%', $u['tenor_bulan'] ?? '12 bln');
+                    }
+                    $sumUtangDOM += $uOut;
+                    $sumCicilanDOM += $uAngs;
+                    $uBunga = ($uOut > 0) ? round(($uOut * 0.11) / 12) : 0;
+                    $sumBungaDOM += $uBunga;
+                }
+                if ($totSlik <= 0 && $sumUtangDOM > 0) {
+                    $totSlik = $sumUtangDOM;
+                    $totBungaBulanAktual = $sumBungaDOM;
+                    $totPokokBulanAktual = max(0, $sumCicilanDOM - $sumBungaDOM);
+                }
+            }
+        }
+        if ($totSlik <= 0 && !empty($calcInput['total_baki_debet_slik'])) {
+            $totSlik = (float)$calcInput['total_baki_debet_slik'];
+        }
+        if ($totPokokBulanAktual <= 0 && !empty($calcInput['cicilan_slik_per_bulan'])) {
+            $cPokokRaw = (float)$calcInput['cicilan_slik_per_bulan'];
+            $totPokokBulanAktual = max(0, $cPokokRaw - $totBungaBulanAktual);
+        }
+
+        if (empty($calcInput['neraca_utang_bank_panjang']) && empty($calcInput['neraca_utang_bank_lancar'])) {
+            if ($totSlik > 0) {
+                $calcInput['neraca_utang_bank_panjang'] = $totSlik;
             }
         }
 
@@ -3309,6 +3403,31 @@ class Pengajuan extends BaseController
                 $calcInput['input_beban_bunga'] = $totBungaBulanAktual;
             }
         }
+
+        // Piutang Usaha: Wajib bersumber dari data Aset (Kotak 3 tagihan/invoice), bukan SLIK/agunan
+        $piutangAset = 0;
+        if (!empty($calcInput['piutang_aset'])) {
+            $piutangAset = (float)$calcInput['piutang_aset'];
+        } elseif (!empty($calcInput['neraca_piutang_usaha'])) {
+            $piutangAset = (float)$calcInput['neraca_piutang_usaha'];
+        } else {
+            $rawHppBU = $calcInput['detail_hpp_rk'] ?? '';
+            if (!empty($rawHppBU)) {
+                $decHppBU = json_decode($rawHppBU, true);
+                if (is_array($decHppBU)) {
+                    foreach ($decHppBU as $it) {
+                        if (($it['kategori'] ?? '') === 'aset') {
+                            $nm = strtolower($it['nama'] ?? '');
+                            if (strpos($nm, 'piutang') !== false || strpos($nm, 'tagihan') !== false || strpos($nm, 'invoice') !== false) {
+                                $piutangAset += (float)($it['nominal'] ?? 0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        $calcInput['input_piutang_akhir'] = $piutangAset;
+        $calcInput['neraca_piutang_usaha'] = $piutangAset;
 
         // Jika uang kas di awal tahun kosong, tarik dari saldo awal rekening koran Tahap 7
         if (empty($calcInput['neraca_awal_kas']) || (float)$calcInput['neraca_awal_kas'] <= 0) {
