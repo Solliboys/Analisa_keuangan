@@ -49,7 +49,9 @@
             $daftarPermohonanSlik = $decodedPermohonan;
         }
     }
-    if (empty($daftarPermohonanSlik)) {
+    // Inisialisasi default hanya jika field belum pernah ada di database (null atau string kosong)
+    // Jika nilainya adalah '[]' (array kosong hasil penghapusan subjek), JANGAN auto-generate kembali!
+    if (empty($daftarPermohonanSlik) && (!isset($kredit['daftar_permohonan_slik']) || $kredit['daftar_permohonan_slik'] === null || $kredit['daftar_permohonan_slik'] === '')) {
         $isBadanUsaha = (isset($kredit['jenis_debitur']) && (stripos($kredit['jenis_debitur'], 'badan') !== false || stripos($kredit['jenis_debitur'], 'pt') !== false || stripos($kredit['jenis_debitur'], 'cv') !== false));
         $daftarPermohonanSlik[] = [
             'index'        => 0,
@@ -170,7 +172,7 @@
                             <?php endif; ?>
                         </div>
                         <p class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <span>Nama / Bidang Usaha: <strong class="text-slate-700"><?= esc($kredit['nama_usaha'] ?: ($kredit['bidang_usaha'] ?: '-')) ?><?= (!empty($kredit['nama_usaha']) && !empty($kredit['bidang_usaha'])) ? ' (' . esc($kredit['bidang_usaha']) . ')' : '' ?></strong></span>
+                            <span>Nama / Bidang Usaha: <strong class="text-slate-700"><?= esc(($kredit['nama_usaha'] ?? '') ?: (($kredit['bidang_usaha'] ?? '') ?: '-')) ?><?= (!empty($kredit['nama_usaha']) && !empty($kredit['bidang_usaha'])) ? ' (' . esc($kredit['bidang_usaha']) . ')' : '' ?></strong></span>
                             <span>&bull;</span>
                             <span>Plafon Pengajuan: <strong class="text-blue-700">Rp <?= number_format((float)($kredit['plafon_pengajuan'] ?? 0), 0, ',', '.') ?></strong></span>
                             <span>&bull;</span>
@@ -226,6 +228,17 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-[11px]" id="bodySlikIdeb">
+                            <?php if (empty($daftarPermohonanSlik)): ?>
+                                <tr id="emptySubjekSlikRow">
+                                    <td colspan="11" class="py-12 text-center text-xs text-slate-400 italic bg-white">
+                                        <div class="flex flex-col items-center justify-center gap-2">
+                                            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                            <span class="font-bold text-slate-600">Tidak ada subjek permohonan SLIK aktif</span>
+                                            <span class="text-[11px] text-slate-400">Seluruh subjek permohonan SLIK untuk pengajuan ini telah dihapus.</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php else: ?>
                             <?php foreach ($daftarPermohonanSlik as $idx => $row): 
                                 $rNama = $row['nama'] ?? $namaDebiturVal;
                                 $rNoId = $row['no_id'] ?? $nikVal;
@@ -398,6 +411,7 @@
                                 </td>
                             </tr>
                             <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -1086,13 +1100,13 @@
 
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Hapus Data SLIK?',
-                    html: `Apakah Anda yakin ingin menghapus data hasil SLIK untuk <strong>${escapeHtmlText(namaSubjek)}</strong>?<br><span class="text-xs text-rose-600 font-semibold block mt-1.5">Status verifikasi akan direset kembali ke "Menunggu Pengecekan", seluruh fasilitas dan berkas lampiran SLIK akan dibersihkan.</span>`,
+                    title: 'Hapus Subjek Permohonan SLIK?',
+                    html: `Apakah Anda yakin ingin menghapus subjek permohonan SLIK <strong>${escapeHtmlText(namaSubjek)}</strong>?<br><span class="text-xs text-rose-600 font-semibold block mt-1.5">Subjek ini akan dihapus permanen dari daftar permohonan SLIK beserta seluruh fasilitas kredit terkaitnya.</span>`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#e11d48',
                     cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Ya, Hapus SLIK',
+                    confirmButtonText: 'Ya, Hapus Subjek',
                     cancelButtonText: 'Batal',
                     reverseButtons: true
                 }).then((result) => {
@@ -1101,7 +1115,7 @@
                     }
                 });
             } else {
-                if (confirm('Apakah Anda yakin ingin menghapus data hasil SLIK untuk ' + namaSubjek + '? Status akan direset kembali ke Menunggu Pengecekan.')) {
+                if (confirm('Apakah Anda yakin ingin menghapus subjek permohonan SLIK untuk ' + namaSubjek + '? Subjek akan dihapus permanen.')) {
                     runDelete();
                 }
             }
