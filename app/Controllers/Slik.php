@@ -444,8 +444,26 @@ class Slik extends BaseController
 
     private function cleanNumber($val)
     {
-        if (is_numeric($val)) return (float)$val;
-        $cleaned = preg_replace('/[^0-9]/', '', (string)$val);
-        return (float)$cleaned;
+        if ($val === null || $val === '') return 0.0;
+        if (is_int($val) || is_float($val)) return (float)$val;
+
+        $s = trim((string)$val);
+        if ($s === '' || $s === '-') return 0.0;
+
+        $isNeg = strpos($s, '-') === 0;
+        $s = preg_replace('/[^0-9.,-]/', '', $s);
+
+        if (preg_match('/,\d{1,2}$/', $s)) {
+            $parts = explode(',', $s);
+            $s = $parts[0];
+        }
+
+        if (preg_match('/^-?\d+\.\d{1,2}$/', $s)) {
+            return (float)$s;
+        }
+
+        $clean = preg_replace('/[^0-9]/', '', $s);
+        $num = $clean !== '' ? (float)$clean : 0.0;
+        return $isNeg ? -$num : $num;
     }
 }

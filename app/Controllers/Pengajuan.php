@@ -2977,8 +2977,32 @@ class Pengajuan extends BaseController
 
     private function cleanNumber($val)
     {
-        if (is_numeric($val)) return (float)$val;
-        return (float)preg_replace('/[^0-9]/', '', (string)$val);
+        if ($val === null || $val === '') return 0.0;
+        if (is_int($val) || is_float($val)) return (float)$val;
+
+        $s = trim((string)$val);
+        if ($s === '' || $s === '-') return 0.0;
+
+        $isNeg = strpos($s, '-') === 0;
+        $s = preg_replace('/[^0-9.,-]/', '', $s);
+
+        // 1. Format Rupiah dengan koma sen desimal di akhir: misal "500.000,00" atau "250.000,50" -> buang koma & sen
+        if (preg_match('/,\d{1,2}$/', $s)) {
+            $parts = explode(',', $s);
+            $s = $parts[0];
+        }
+
+        // 2. Format float MySQL database murni: misal "250000000.00" atau "125000.5" atau "0.00"
+        // HANYA jika ada tepat 1 titik DAN setelah titik HANYA 1 atau 2 digit desimal (misal .00, .5, .50)
+        // PENTING: Jika setelah titik ada 3 digit (cth "500.000", "250.000", "1.000"), itu adalah format RIBUAN Indonesia, BUKAN desimal!
+        if (preg_match('/^-?\d+\.\d{1,2}$/', $s)) {
+            return (float)$s;
+        }
+
+        // 3. Format Rupiah Indonesia (titik sebagai pemisah ribuan): "500.000", "250.000", "400.000.000"
+        $clean = preg_replace('/[^0-9]/', '', $s);
+        $num = $clean !== '' ? (float)$clean : 0.0;
+        return $isNeg ? -$num : $num;
     }
 
     // ==========================================
