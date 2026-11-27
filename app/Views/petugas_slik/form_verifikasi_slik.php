@@ -382,7 +382,7 @@
                                         <button type="button" onclick="editHasilSlik(<?= $idx ?>)" 
                                                 class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg shadow-2xs transition cursor-pointer" 
                                                 title="Edit Hasil SLIK (Ubah Hasil & Upload Ulang)">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                             </svg>
                                         </button>
@@ -390,7 +390,7 @@
                                         <button type="button" onclick="hapusHasilSlik(<?= $idx ?>)" 
                                                 class="inline-flex items-center justify-center w-7 h-7 text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-300 rounded-lg shadow-2xs transition cursor-pointer" 
                                                 title="Hapus Data SLIK / Reset Status">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                             </svg>
                                         </button>
@@ -992,6 +992,17 @@
         }
         window.salinTeks = salinTeks;
 
+        function escapeHtmlText(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        window.escapeHtmlText = escapeHtmlText;
+
         // FUNGSI EDIT SLIK (ICON PENSIL)
         function editHasilSlik(idx) {
             if (typeof bukaModalUploadHasilSlik === 'function') {
@@ -1008,38 +1019,33 @@
             }
             const namaSubjek = rowItem ? (rowItem.nama || 'Subjek') : 'data ini';
 
-            Swal.fire({
-                title: 'Hapus Data SLIK?',
-                html: `Apakah Anda yakin ingin menghapus data hasil SLIK untuk <strong>${escapeHtmlText(namaSubjek)}</strong>?<br><span class="text-xs text-rose-600 font-semibold block mt-1.5">Status verifikasi akan direset kembali ke "Menunggu Pengecekan", seluruh fasilitas dan berkas lampiran SLIK akan dibersihkan.</span>`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e11d48',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Ya, Hapus SLIK',
-                cancelButtonText: 'Batal',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
+            const runDelete = function() {
+                if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         title: 'Menghapus Data SLIK...',
                         text: 'Mereset status dan membersihkan fasilitas SLIK',
                         allowOutsideClick: false,
                         didOpen: () => Swal.showLoading()
                     });
+                }
 
-                    const kid = document.getElementById('kredit_id')?.value || (window.KREDIT_ID_VAL || '');
-                    const baseUrl = (window.BASE_URL || '').replace(/\/+$/, '');
-                    const fd = new FormData();
-                    fd.append('kredit_id', kid);
-                    fd.append('subjek_index', idx);
+                const kid = document.getElementById('kredit_id')?.value || (window.KREDIT_ID_VAL || '');
+                const baseUrl = (window.BASE_URL || '').replace(/\/+$/, '');
+                const fd = new FormData();
+                fd.append('kredit_id', kid);
+                fd.append('subjek_index', idx);
 
-                    fetch(baseUrl + '/slik/hapus', {
-                        method: 'POST',
-                        body: fd
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status) {
+                const csrf = document.querySelector('input[name="csrf_token"]') || document.querySelector('input[name="csrf_test_name"]');
+                if (csrf) fd.append(csrf.name, csrf.value);
+
+                fetch(baseUrl + '/slik/hapus/' + kid, {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status) {
+                        if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Berhasil Dihapus',
@@ -1050,22 +1056,55 @@
                                 window.location.reload();
                             });
                         } else {
+                            alert(data.message || 'Data SLIK berhasil dihapus.');
+                            window.location.reload();
+                        }
+                    } else {
+                        if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Gagal',
                                 text: data.message || 'Gagal menghapus data SLIK.'
                             });
+                        } else {
+                            alert('Gagal: ' + (data.message || 'Gagal menghapus data SLIK.'));
                         }
-                    })
-                    .catch(err => {
+                    }
+                })
+                .catch(err => {
+                    if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'error',
                             title: 'Kesalahan Sistem',
                             text: 'Gagal menghubungi server: ' + err.message
                         });
-                    });
+                    } else {
+                        alert('Kesalahan sistem: ' + err.message);
+                    }
+                });
+            };
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Hapus Data SLIK?',
+                    html: `Apakah Anda yakin ingin menghapus data hasil SLIK untuk <strong>${escapeHtmlText(namaSubjek)}</strong>?<br><span class="text-xs text-rose-600 font-semibold block mt-1.5">Status verifikasi akan direset kembali ke "Menunggu Pengecekan", seluruh fasilitas dan berkas lampiran SLIK akan dibersihkan.</span>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#e11d48',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Ya, Hapus SLIK',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        runDelete();
+                    }
+                });
+            } else {
+                if (confirm('Apakah Anda yakin ingin menghapus data hasil SLIK untuk ' + namaSubjek + '? Status akan direset kembali ke Menunggu Pengecekan.')) {
+                    runDelete();
                 }
-            });
+            }
         }
         window.hapusHasilSlik = hapusHasilSlik;
 

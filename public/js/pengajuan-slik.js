@@ -49,6 +49,18 @@ async function kompresBerkasJikaGambar(file, maxWidth = 1600, quality = 0.75) {
 }
 window.kompresBerkasJikaGambar = kompresBerkasJikaGambar;
 
+if (typeof window.escapeHtmlText !== 'function') {
+    window.escapeHtmlText = function(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+}
+
 function formatRupiahInput(angka) {
     if (!angka) return '0';
     let number_string = angka.toString().replace(/[^,\d]/g, '');
