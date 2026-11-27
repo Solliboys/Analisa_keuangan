@@ -369,11 +369,32 @@
                                     </div>
                                 </td>
                                 <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
-                                    <button type="button" onclick="bukaModalUploadHasilSlik(<?= $idx ?>)" 
-                                            class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-md text-[11px] font-bold shadow-xs transition cursor-pointer">
-                                        <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                        <span>Proses</span>
-                                    </button>
+                                    <div class="inline-flex items-center gap-1.5 justify-center">
+                                        <?php if (!$isTerbit): ?>
+                                            <button type="button" onclick="bukaModalUploadHasilSlik(<?= $idx ?>)" 
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-md text-[10px] font-bold shadow-xs transition cursor-pointer"
+                                                    title="Proses / Upload Hasil SLIK">
+                                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                                <span>Proses</span>
+                                            </button>
+                                        <?php endif; ?>
+                                        <!-- Tombol Edit SLIK (Icon Pensil) -->
+                                        <button type="button" onclick="editHasilSlik(<?= $idx ?>)" 
+                                                class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg shadow-2xs transition cursor-pointer" 
+                                                title="Edit Hasil SLIK (Ubah Hasil & Upload Ulang)">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                            </svg>
+                                        </button>
+                                        <!-- Tombol Hapus SLIK (Icon Tempat Sampah) -->
+                                        <button type="button" onclick="hapusHasilSlik(<?= $idx ?>)" 
+                                                class="inline-flex items-center justify-center w-7 h-7 text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-300 rounded-lg shadow-2xs transition cursor-pointer" 
+                                                title="Hapus Data SLIK / Reset Status">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
@@ -625,8 +646,15 @@
                                                 <?= esc($row['kelancaran'] ?? 'Lancar') ?>
                                             </span>
                                         </td>
-                                        <td class="py-2 px-2 text-center">
-                                            <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="text-rose-500 hover:text-rose-700 p-1 cursor-pointer" title="Hapus">✕</button>
+                                        <td class="py-2 px-2 text-center whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-1 justify-center">
+                                                <button type="button" onclick="editFasilitasSlik(<?= $i ?>)" class="w-6 h-6 rounded flex items-center justify-center text-amber-600 hover:text-amber-800 hover:bg-amber-50 border border-amber-200 transition cursor-pointer" title="Edit Fasilitas Pinjaman">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                </button>
+                                                <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="w-6 h-6 rounded flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 transition cursor-pointer" title="Hapus Fasilitas Pinjaman">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -963,6 +991,83 @@
             });
         }
         window.salinTeks = salinTeks;
+
+        // FUNGSI EDIT SLIK (ICON PENSIL)
+        function editHasilSlik(idx) {
+            if (typeof bukaModalUploadHasilSlik === 'function') {
+                bukaModalUploadHasilSlik(idx);
+            }
+        }
+        window.editHasilSlik = editHasilSlik;
+
+        // FUNGSI HAPUS SLIK (ICON TEMPAT SAMPAH)
+        function hapusHasilSlik(idx) {
+            let rowItem = null;
+            if (window.daftarPermohonanSlikArray && window.daftarPermohonanSlikArray[idx]) {
+                rowItem = window.daftarPermohonanSlikArray[idx];
+            }
+            const namaSubjek = rowItem ? (rowItem.nama || 'Subjek') : 'data ini';
+
+            Swal.fire({
+                title: 'Hapus Data SLIK?',
+                html: `Apakah Anda yakin ingin menghapus data hasil SLIK untuk <strong>${escapeHtmlText(namaSubjek)}</strong>?<br><span class="text-xs text-rose-600 font-semibold block mt-1.5">Status verifikasi akan direset kembali ke "Menunggu Pengecekan", seluruh fasilitas dan berkas lampiran SLIK akan dibersihkan.</span>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Ya, Hapus SLIK',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Menghapus Data SLIK...',
+                        text: 'Mereset status dan membersihkan fasilitas SLIK',
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+
+                    const kid = document.getElementById('kredit_id')?.value || (window.KREDIT_ID_VAL || '');
+                    const baseUrl = (window.BASE_URL || '').replace(/\/+$/, '');
+                    const fd = new FormData();
+                    fd.append('kredit_id', kid);
+                    fd.append('subjek_index', idx);
+
+                    fetch(baseUrl + '/slik/hapus', {
+                        method: 'POST',
+                        body: fd
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil Dihapus',
+                                text: data.message || 'Data SLIK berhasil dihapus.',
+                                timer: 1400,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: data.message || 'Gagal menghapus data SLIK.'
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Kesalahan Sistem',
+                            text: 'Gagal menghubungi server: ' + err.message
+                        });
+                    });
+                }
+            });
+        }
+        window.hapusHasilSlik = hapusHasilSlik;
 
         // Tutup modal jika tombol Escape ditekan
         document.addEventListener('keydown', function(e) {

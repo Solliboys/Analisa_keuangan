@@ -576,8 +576,15 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                                             <?= esc($row['kelancaran'] ?? 'Lancar') ?>
                                         </span>
                                     </td>
-                                    <td class="py-2 px-2 text-center">
-                                        <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus">✕</button>
+                                    <td class="py-2 px-2 text-center whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-1 justify-center">
+                                            <button type="button" onclick="editFasilitasSlik(<?= $i ?>)" class="w-6 h-6 rounded flex items-center justify-center text-amber-600 hover:text-amber-800 hover:bg-amber-50 border border-amber-200 transition cursor-pointer" title="Edit Fasilitas Pinjaman">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                            </button>
+                                            <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="w-6 h-6 rounded flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 transition cursor-pointer" title="Hapus Fasilitas Pinjaman">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

@@ -1720,8 +1720,15 @@ function renderTabelFasilitasSlik(list) {
                         ${kelancaran}
                     </span>
                 </td>
-                <td class="py-2.5 px-2 text-center">
-                    <button type="button" onclick="hapusFasilitasSlik(${i})" class="text-rose-500 hover:text-rose-700 p-1 cursor-pointer" title="Hapus Fasilitas">✕</button>
+                <td class="py-2.5 px-2 text-center whitespace-nowrap">
+                    <div class="inline-flex items-center gap-1 justify-center">
+                        <button type="button" onclick="editFasilitasSlik(${i})" class="w-6 h-6 rounded flex items-center justify-center text-amber-600 hover:text-amber-800 hover:bg-amber-50 border border-amber-200 transition cursor-pointer" title="Edit Fasilitas Pinjaman">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </button>
+                        <button type="button" onclick="hapusFasilitasSlik(${i})" class="w-6 h-6 rounded flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 transition cursor-pointer" title="Hapus Fasilitas Pinjaman">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -1955,7 +1962,7 @@ function simpanFasilitasSlikBaru() {
     const debName = (rowItem && rowItem.nama) ? rowItem.nama : (window.NAMA_DEBITUR_VAL || 'Debitur');
 
     if (!window.slikFasilitasArray) window.slikFasilitasArray = [];
-    window.slikFasilitasArray.push({
+    const facilityData = {
         nama_debitur: debName,
         bank_lembaga: bank,
         jenis_penggunaan: jenis,
@@ -1972,7 +1979,14 @@ function simpanFasilitasSlikBaru() {
         tunggakan: '0',
         kelancaran: kelancaran,
         kondisi: 'Fasilitas Aktif'
-    });
+    };
+
+    if (window._editingFasilitasIndex !== undefined && window._editingFasilitasIndex !== null && window._editingFasilitasIndex >= 0) {
+        window.slikFasilitasArray[window._editingFasilitasIndex] = facilityData;
+        window._editingFasilitasIndex = null;
+    } else {
+        window.slikFasilitasArray.push(facilityData);
+    }
 
     renderTabelFasilitasSlik(window.slikFasilitasArray);
     hitungMetrikRingkasanSlik();
@@ -1985,9 +1999,46 @@ function simpanFasilitasSlikBaru() {
     document.getElementById('inputFasOutstanding').value = '';
     document.getElementById('inputFasBunga').value = '10%';
     if (document.getElementById('inputFasTenor')) document.getElementById('inputFasTenor').value = '36';
+    const btnSimpan = document.querySelector('#formTambahFasilitasSlikContainer button[onclick*="simpanFasilitasSlikBaru"]');
+    if (btnSimpan) btnSimpan.textContent = 'Simpan ke Rincian';
     tutupFormTambahFasilitasSlik();
 }
 window.simpanFasilitasSlikBaru = simpanFasilitasSlikBaru;
+
+function editFasilitasSlik(idx) {
+    if (!window.slikFasilitasArray || !window.slikFasilitasArray[idx]) return;
+    const it = window.slikFasilitasArray[idx];
+
+    bukaFormTambahFasilitasSlik();
+
+    const elBank = document.getElementById('inputFasBank');
+    const elJenis = document.getElementById('inputFasJenis');
+    const elPlafon = document.getElementById('inputFasPlafon');
+    const elOut = document.getElementById('inputFasOutstanding');
+    const elKelancaran = document.getElementById('inputFasKelancaran');
+    const elBunga = document.getElementById('inputFasBunga');
+    const elTenor = document.getElementById('inputFasTenor');
+
+    if (elBank) elBank.value = it.bank_lembaga || '';
+    if (elJenis) elJenis.value = it.jenis_kredit || it.jenis_fasilitas || it.keterangan || '';
+    if (elPlafon) elPlafon.value = formatRupiahDisplay(it.plafon || 0);
+    if (elOut) elOut.value = formatRupiahDisplay(it.outstanding || 0);
+    if (elKelancaran) elKelancaran.value = it.kelancaran || 'Lancar';
+    if (elBunga) elBunga.value = it.suku_bunga || '10%';
+    if (elTenor) {
+        const jwClean = (it.jangka_waktu || '36').replace(/[^0-9]/g, '');
+        elTenor.value = jwClean || '36';
+    }
+
+    window._editingFasilitasIndex = idx;
+    const btnSimpan = document.querySelector('#formTambahFasilitasSlikContainer button[onclick*="simpanFasilitasSlikBaru"]');
+    if (btnSimpan) btnSimpan.textContent = 'Perbarui Fasilitas';
+
+    if (typeof updateLivePreviewAngsuranModalSlik === 'function') {
+        updateLivePreviewAngsuranModalSlik();
+    }
+}
+window.editFasilitasSlik = editFasilitasSlik;
 
 function hapusFasilitasSlik(idx) {
     if (!window.slikFasilitasArray || !window.slikFasilitasArray[idx]) return;

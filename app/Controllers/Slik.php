@@ -417,6 +417,105 @@ class Slik extends BaseController
         ]);
     }
 
+    /**
+     * Hapus / Reset Hasil Verifikasi SLIK
+     */
+    public function hapusSlik($kreditId = null)
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Sesi berakhir, silakan login ulang']);
+        }
+
+        $jabatan = strtolower(session()->get('jabatan') ?? '');
+        if ($jabatan !== 'superadmin' && strpos($jabatan, 'slik') === false) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Akses khusus Petugas Verifikasi SLIK.']);
+        }
+
+        $kreditId = (int)$kreditId;
+        if ($kreditId <= 0) {
+            $kreditId = (int)$this->request->getPost('kredit_id');
+        }
+
+        if ($kreditId <= 0) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID Pengajuan tidak valid']);
+        }
+
+        $kredit = $this->kreditModel->find($kreditId);
+        if (!$kredit) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Pengajuan kredit tidak ditemukan']);
+        }
+
+        $idx = $this->request->getPost('subjek_index');
+
+        $this->db->transBegin();
+        try {
+            // Hapus berkas file fisik jika ada
+            if (!empty($kredit['berkas_slik_pdf']) && file_exists(FCPATH . $kredit['berkas_slik_pdf'])) {
+                @unlink(FCPATH . $kredit['berkas_slik_pdf']);
+            }
+            if (!empty($kredit['berkas_slik_txt']) && file_exists(FCPATH . $kredit['berkas_slik_txt'])) {
+                @unlink(FCPATH . $kredit['berkas_slik_txt']);
+            }
+
+            // Hapus rincian fasilitas SLIK di database
+            $this->slikModel->where('kredit_id', $kreditId)->delete();
+
+            // Reset status kredit
+            $updateData = [
+                'status_slik'      => 'Belum Terbit',
+                'hasil_slik'       => 'Menunggu Pengecekan',
+                'ringkasan_slik'   => '',
+                'berkas_slik_pdf'  => null,
+                'berkas_slik_txt'  => null,
+                'slik_verified_at' => null,
+                'slik_verified_by' => null,
+            ];
+
+            // Update subjek spesifik jika ada index
+            $daftarPermohonan = json_decode($kredit['daftar_permohonan_slik'] ?? '[]', true);
+            if (is_array($daftarPermohonan) && !empty($daftarPermohonan)) {
+                if ($idx !== null && $idx !== '' && isset($daftarPermohonan[(int)$idx])) {
+                    $daftarPermohonan[(int)$idx]['status'] = 'Menunggu Pengecekan';
+                    $daftarPermohonan[(int)$idx]['hasil']  = 'Menunggu';
+                    $daftarPermohonan[(int)$idx]['file_pdf'] = null;
+                    $daftarPermohonan[(int)$idx]['file_txt'] = null;
+                } else {
+                    foreach ($daftarPermohonan as &$sub) {
+                        $sub['status'] = 'Menunggu Pengecekan';
+                        $sub['hasil']  = 'Menunggu';
+                    }
+                }
+                $updateData['daftar_permohonan_slik'] = json_encode($daftarPermohonan);
+            }
+
+            $this->kreditModel->update($kreditId, $updateData);
+
+            if ($this->db->transStatus() === false) {
+                $this->db->transRollback();
+                return $this->response->setJSON(['status' => false, 'message' => 'Gagal menghapus data SLIK.']);
+            }
+
+            $this->db->transCommit();
+
+            try {
+                LogAktivitasModel::catat(
+                    'Petugas SLIK menghapus/mereset hasil verifikasi SLIK berkas ' . ($kredit['nomor_aplikasi'] ?? $kreditId),
+                    'SLIK',
+                    'WARNING',
+                    ['kredit_id' => $kreditId]
+                );
+            } catch (\Throwable $e) {}
+
+            return $this->response->setJSON([
+                'status'  => true,
+                'message' => 'Data SLIK berhasil dihapus dan direset ke status Menunggu Pengecekan.'
+            ]);
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            return $this->response->setJSON(['status' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
+    }
+
     private function hitungAngsuranPinjamanResmi($plafon, $bungaStr = '10%', $jwStr = '12 bln')
     {
         $plafon = (float)$plafon;
