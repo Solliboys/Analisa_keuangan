@@ -2734,7 +2734,7 @@ function bukaModalPdfRekening(btn) {
         }
     }
     if (!fileUrl) {
-        // Cek link dokumen di Tab 5
+        // Cek link dokumen di Tab 5 (tag <a>)
         const docLinks = document.querySelectorAll('#listDokumenTerunggah a[href*="uploads/"], #listDokumenTerunggah a[href$=".pdf"]');
         for (const link of docLinks) {
             const href = link.getAttribute('href');
@@ -2743,6 +2743,24 @@ function bukaModalPdfRekening(btn) {
             if (href && (text.includes('rekening') || text.includes('mutasi') || (bLow && text.includes(bLow)) || text.includes('koran'))) {
                 fileUrl = href.startsWith('http') ? href : (window.BASE_URL || '') + href.replace(/^\/+/, '');
                 break;
+            }
+        }
+        // Cek juga tombol previewDokumenModal di Tab 5
+        if (!fileUrl) {
+            const docButtons = document.querySelectorAll('#listDokumenTerunggah button[onclick*="previewDokumenModal"]');
+            for (const b of docButtons) {
+                const oc = b.getAttribute('onclick') || '';
+                const m = oc.match(/previewDokumenModal\('([^']+)'/);
+                if (m && m[1]) {
+                    const u = m[1];
+                    const card = b.closest('.bg-white') || b.closest('[id^="docRow_"]');
+                    const text = card ? (card.textContent || '').toLowerCase() : '';
+                    const bLow = (bank || '').toLowerCase();
+                    if (text.includes('rekening') || text.includes('mutasi') || (bLow && text.includes(bLow)) || u.toLowerCase().includes('rekening') || u.toLowerCase().includes('mutasi') || u.toLowerCase().includes('.pdf')) {
+                        fileUrl = u;
+                        break;
+                    }
+                }
             }
         }
     }
@@ -2763,17 +2781,12 @@ function bukaModalPdfRekening(btn) {
     const btnDown = document.getElementById('btnDownloadPdf');
     const textToggle = document.getElementById('textToggleDigital');
 
-    if (titleEl) titleEl.innerText = `Berkas Asli: ${bank || 'Rekening Koran'} ${norek ? '(' + norek + ')' : ''}`;
-    if (subEl)   subEl.innerText   = `Atas Nama: ${nama || '-'} | File Rekening Resmi`;
-
-    // Pastikan e-statement tertutup saat modal awal dibuka
-    if (digital) {
-        digital.classList.add('hidden');
-        digital.innerHTML = '';
-    }
-    if (textToggle) textToggle.innerText = 'e-Statement Digital';
-
     if (fileUrl) {
+        // ADA BERKAS FISIK PDF / GAMBAR: Tampilkan langsung di viewer
+        if (titleEl) titleEl.innerText = `Berkas Asli: ${bank || 'Rekening Koran'} ${norek ? '(' + norek + ')' : ''}`;
+        if (subEl)   subEl.innerText   = `Atas Nama: ${nama || '-'} | File Rekening Resmi`;
+        if (textToggle) textToggle.innerText = 'Format e-Statement';
+
         const lowerUrl = fileUrl.toLowerCase().split('?')[0];
         const isImg = lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.png') || lowerUrl.endsWith('.webp');
 
@@ -2786,6 +2799,10 @@ function bukaModalPdfRekening(btn) {
             btnDown.classList.remove('hidden');
         }
         if (empty) empty.classList.add('hidden');
+        if (digital) {
+            digital.classList.add('hidden');
+            digital.innerHTML = '';
+        }
 
         if (isImg) {
             if (iframe) { iframe.src = ''; iframe.classList.add('hidden'); }
@@ -2795,11 +2812,20 @@ function bukaModalPdfRekening(btn) {
             if (iframe) { iframe.src = fileUrl; iframe.classList.remove('hidden'); }
         }
     } else {
+        // TIDAK ADA BERKAS FISIK: LANGSUNG BUKA e-STATEMENT DIGITAL RESMI!
+        if (titleEl) titleEl.innerText = `Rekening Koran: ${bank || 'Bank Operasional'} ${norek ? '(' + norek + ')' : ''}`;
+        if (subEl)   subEl.innerText   = `Atas Nama: ${nama || '-'} | Lembar e-Statement Digital Resmi`;
+        if (textToggle) textToggle.innerText = 'e-Statement Resmi';
+
         if (btnTab)  btnTab.classList.add('hidden');
         if (btnDown) btnDown.classList.add('hidden');
         if (iframe)  { iframe.src = ''; iframe.classList.add('hidden'); }
         if (img)     { img.src = ''; img.classList.add('hidden'); }
-        if (empty)   empty.classList.remove('hidden');
+        if (empty)   empty.classList.add('hidden');
+
+        // Render e-Statement Digital langsung seketika
+        renderDigitalStatementModal();
+        if (digital) digital.classList.remove('hidden');
     }
 
     modal.classList.remove('hidden');
@@ -2990,10 +3016,13 @@ function toggleTampilanDigitalStatement() {
             } else if (iframe) {
                 iframe.classList.remove('hidden');
             }
+            if (textToggle) textToggle.innerText = 'Format e-Statement';
         } else {
-            if (empty) empty.classList.remove('hidden');
+            // Jika belum ada berkas fisik, tetap tampilkan e-Statement digital resmi
+            digitalBox.classList.remove('hidden');
+            if (empty) empty.classList.add('hidden');
+            if (textToggle) textToggle.innerText = 'e-Statement Resmi';
         }
-        if (textToggle) textToggle.innerText = 'e-Statement Digital';
     }
 }
 window.toggleTampilanDigitalStatement = toggleTampilanDigitalStatement;
