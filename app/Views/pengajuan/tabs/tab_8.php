@@ -357,12 +357,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex items-center justify-between pt-3 border-t border-slate-100 shrink-0 gap-3">
-            <a id="btnLihatBerkasAsliPdf" href="#" target="_blank" class="hidden text-xs font-bold text-blue-700 hover:text-blue-900 inline-flex items-center gap-1.5 underline cursor-pointer">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                <span>Unduh / Buka Berkas Asli di Tab Baru</span>
-            </a>
-            <div class="flex-1"></div>
+        <div class="flex items-center justify-end pt-3 border-t border-slate-100 shrink-0 gap-3">
             <button type="button" onclick="tutupModalDetailEkstraksiRekening()" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl transition cursor-pointer">
                 Tutup
             </button>
