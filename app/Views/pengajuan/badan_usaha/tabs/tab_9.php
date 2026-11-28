@@ -158,6 +158,36 @@
             $listDetailUtang = $listSlikAutoUtang;
         }
 
+        // Auto-sync HPP dari Mutasi Debit Rekening Koran bila belum ada item HPP yang terisi (> 0)
+        $totalBebanAwalBU = 0;
+        foreach ($listDetailBeban as $b) {
+            $totalBebanAwalBU += (float)($b['nominal'] ?? 0);
+        }
+        $totalCicilanUtangAwalBU = 0;
+        foreach ($listDetailUtang as $u) {
+            $totalCicilanUtangAwalBU += (float)($u['cicilan_bulanan'] ?? ($u['angsuran'] ?? 0));
+        }
+        $hasHppItemPositifBU = false;
+        foreach ($listDetailHppBU as $itH) {
+            if (strtolower((string)($itH['kategori'] ?? 'hpp')) !== 'aset' && (float)($itH['nominal'] ?? 0) > 0) {
+                $hasHppItemPositifBU = true;
+                break;
+            }
+        }
+        if (!$hasHppItemPositifBU && $nomHppAwalBU <= 0 && $totRekDebitBU > 0) {
+            $autoHppRekBU = max(0, $totRekDebitBU - $totalBebanAwalBU - $totalCicilanUtangAwalBU);
+            if ($autoHppRekBU > 0) {
+                $nomHppAwalBU = $autoHppRekBU;
+                $persenHppBU = ($nomPendapatanBU > 0) ? round(($nomHppAwalBU / $nomPendapatanBU) * 100, 1) : 0;
+                array_unshift($listDetailHppBU, [
+                    'nama'       => 'Estimasi HPP (Mutasi Debit Rekening Koran)',
+                    'kategori'   => 'hpp',
+                    'nominal'    => $nomHppAwalBU,
+                    '_syncedRek' => true,
+                ]);
+            }
+        }
+
         // Ekstraksi nilai Piutang dari data Aset
         $piutangAsetBU = 0;
         if (!empty($listDetailHppBU)) {
@@ -292,9 +322,26 @@
                             </h4>
                             <p class="text-[10px] text-slate-400">Biaya pokok barang dagang, pembelian stok bahan, atau modal produksi</p>
                         </div>
-                        <button type="button" onclick="tambahHppOnly('', 0);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
-                            <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            <span>Tambah HPP</span>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button type="button" id="btnSinkronDebitHpp" onclick="sinkronHppDariMutasiDebit();" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg shadow-2xs transition cursor-pointer <?= $totRekDebitBU > 0 ? '' : 'hidden' ?>" title="Isi otomatis HPP dari rata-rata mutasi debit Rekening Koran dikurangi beban operasional &amp; cicilan">
+                                <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                <span>Sinkron Mutasi Debit</span>
+                            </button>
+                            <button type="button" onclick="tambahHppOnly('', 0);" class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg shadow-2xs transition cursor-pointer">
+                                <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                <span>Tambah HPP</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Banner Peringatan / Bantu Sinkron Mutasi Debit ke HPP -->
+                    <div id="alertSinkronDebitHpp" class="hidden mb-2.5 p-3 bg-amber-50/90 border border-amber-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                        <div class="flex items-start gap-2 min-w-0">
+                            <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            <span id="textAlertSinkronDebitHpp" class="text-[11px] text-amber-900 font-medium leading-relaxed"></span>
+                        </div>
+                        <button type="button" onclick="sinkronHppDariMutasiDebit();" class="inline-flex items-center justify-center gap-1 px-3 py-1.5 text-[11px] font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-2xs transition cursor-pointer shrink-0">
+                            <span>Terapkan ke HPP</span>
                         </button>
                     </div>
 
@@ -453,6 +500,8 @@
     window.ANGSURAN_SLIK_DEFAULT = <?= (float)$totalCicilanSlik ?>;
     window.PIUTANG_ASET = <?= (float)$piutangAsetBU ?>;
     window.ESTIMASI_ANGSURAN_BARU = <?= (float)$estimasiAngsuranBaru ?>;
+    window.TOTAL_AVG_KREDIT_REK = <?= (float)$totRekKreditBU ?>;
+    window.TOTAL_AVG_DEBIT_REK = <?= (float)$totRekDebitBU ?>;
     window.daftarHpp = <?= !empty($listDetailHppBU) ? json_encode($listDetailHppBU) : '[]' ?>;
     window.daftarUtang = <?= !empty($listDetailUtang) ? json_encode($listDetailUtang) : '[]' ?>;
     if (typeof initDaftarUtang === 'function') {

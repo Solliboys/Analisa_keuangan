@@ -1448,6 +1448,62 @@ function tambahBarisSlik() {
     tbody.insertAdjacentHTML('beforeend', html);
 }
 
+// Helper untuk menghitung total beban operasional & cicilan utang berjalan di Tab 9 tanpa double-counting
+function getTotalBebanDanCicilanTab9() {
+    let totalBebanOp = 0;
+    const containerBebanLainEl = document.getElementById('containerBebanLain');
+    if (typeof daftarBebanLain !== 'undefined' && Array.isArray(daftarBebanLain) && daftarBebanLain.length > 0) {
+        daftarBebanLain.forEach(item => {
+            totalBebanOp += parseNominal(item.nominal || 0);
+        });
+    } else if (!containerBebanLainEl) {
+        totalBebanOp = parseNominal(
+            document.getElementById('beban_lainnya_nominal_rk')?.value ||
+            document.getElementById('biaya_hidup_nominal_rk')?.value ||
+            0
+        );
+    }
+
+    let totalCicilan = 0;
+    if (Array.isArray(window.daftarUtang) && window.daftarUtang.length > 0) {
+        window.daftarUtang.forEach(u => {
+            totalCicilan += parseNominal(u.cicilan_bulanan || 0);
+        });
+    } else if (window.CICILAN_SLIK_PER_BULAN) {
+        totalCicilan = parseNominal(window.CICILAN_SLIK_PER_BULAN || 0);
+    }
+
+    return {
+        totalBebanOp,
+        totalCicilan,
+        totalBebanDanCicilan: totalBebanOp + totalCicilan
+    };
+}
+
+// Helper untuk membaca rata-rata mutasi kredit & debit rekening koran secara live
+function getRingkasanMutasiRekeningLive() {
+    let totalAvgKredit = 0;
+    let totalAvgDebit = 0;
+    const items = document.querySelectorAll('.rekening-item');
+    items.forEach(item => {
+        const kInput = item.querySelector('.rek-kredit');
+        const dInput = item.querySelector('.rek-debit');
+        const bInput = item.querySelector('.rek-bulan');
+        const totalKredit = parseNominal(kInput?.value || 0);
+        const totalDebit = parseNominal(dInput?.value || 0);
+        const bulan = Math.max(1, parseInt(bInput?.value || 6));
+        totalAvgKredit += Math.round(totalKredit / bulan);
+        totalAvgDebit += Math.round(totalDebit / bulan);
+    });
+
+    if (items.length === 0) {
+        totalAvgKredit = parseNominal(window.TOTAL_AVG_KREDIT_REK || 0);
+        totalAvgDebit = parseNominal(window.TOTAL_AVG_DEBIT_REK || 0);
+    }
+
+    return { totalAvgKredit, totalAvgDebit };
+}
+
 // Kalkulasi Rekening Koran
 function hitungRataRataRekening() {
     let totalAvgKredit = 0;
@@ -1480,29 +1536,24 @@ function hitungRataRataRekening() {
     const elTotalDebit = document.getElementById('totalAvgDebitGabungan');
     if (elTotalDebit) elTotalDebit.innerText = formatRupiahString(totalAvgDebit);
 
-    // Hitung estimasi HPP Murni (%) dari mutasi debit dikurangi beban operasional
-    // Mutasi debit rekening koran adalah total kas keluar (kulakan/HPP + gaji/sewa/listrik/utilitas).
-    // Memisahkan beban operasional memastikan tidak ada double-counting yang menyebabkan rugi.
-    const nomBhEl = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 25000000);
-    const nomBlEl = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
-    const totalBebanOp = (nomBhEl > 0 ? nomBhEl : 25000000) + nomBlEl;
+    // Hitung estimasi HPP Murni dari mutasi debit dikurangi beban operasional & cicilan utang Tab 9
+    // Memisahkan beban operasional & cicilan memastikan tidak ada double-counting
+    const { totalBebanDanCicilan } = getTotalBebanDanCicilanTab9();
+    const debitMurni = Math.max(0, totalAvgDebit - totalBebanDanCicilan);
+    const hppRatio = (totalAvgKredit > 0 && debitMurni > 0)
+        ? Math.min(100, Math.round((debitMurni / totalAvgKredit) * 1000) / 10)
+        : 0;
 
-    let hppRatio = 78;
-    if (totalAvgKredit > 0 && totalAvgDebit > 0) {
-        let debitMurni = Math.max(0, totalAvgDebit - totalBebanOp);
-        if (debitMurni > 0 && totalAvgKredit > 0) {
-            let r = Math.round((debitMurni / totalAvgKredit) * 1000) / 10;
-            hppRatio = (r > 82 || r <= 0) ? 78 : r;
-        } else {
-            hppRatio = 78;
-        }
-    }
+    window.LAST_AVG_KREDIT_REK = totalAvgKredit;
+    window.LAST_AVG_DEBIT_REK = totalAvgDebit;
+    window.LAST_DEBIT_MURNI_HPP = debitMurni;
 
     const elHpp = document.getElementById('estimasiHppGabungan');
-    if (elHpp) elHpp.innerText = hppRatio > 0 ? (hppRatio + '%') : '78%';
+    if (elHpp) elHpp.innerText = hppRatio > 0 ? (hppRatio + '%') : '0%';
 
-    // Auto-sync ke Tab Laba Rugi Badan Usaha
-    syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, false);
+    // Auto-sync ke Tab Laba Rugi / Data Keuangan (Omzet + HPP)
+    syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, false, debitMurni);
+    updateInfoSinkronDebitHpp();
 
     // Perbarui panel Ringkasan Laba Rugi di bawah tabel Rekening Koran bila sedang terbuka
     if (typeof renderRingkasanLabaRugiRekening === 'function') {
@@ -1587,9 +1638,12 @@ window.tutupLabaRugiRekening = tutupLabaRugiRekening;
 
 function terapkanLabaRugiRekeningKeTab9() {
     hitungRataRataRekening();
-    const avgKredit = parseNominal(document.getElementById('totalAvgKreditGabungan')?.innerText || 0);
-    const hppText = document.getElementById('estimasiHppGabungan')?.innerText || '78%';
-    const hppRatio = parseFloat(hppText.replace(/[^0-9.]/g, '')) || 78;
+    const { totalAvgKredit: avgKredit, totalAvgDebit: avgDebit } = getRingkasanMutasiRekeningLive();
+    const { totalBebanDanCicilan } = getTotalBebanDanCicilanTab9();
+    const debitMurni = Math.max(0, avgDebit - totalBebanDanCicilan);
+    const hppRatio = (avgKredit > 0 && debitMurni > 0)
+        ? Math.min(100, Math.round((debitMurni / avgKredit) * 1000) / 10)
+        : 0;
 
     if (avgKredit <= 0) {
         if (typeof showToast === 'function') showToast('Nominal rata-rata kredit masih Rp 0.', 'warning');
@@ -1598,7 +1652,7 @@ function terapkanLabaRugiRekeningKeTab9() {
 
     const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
     if (isBU && typeof syncRekeningKeLabaRugiBU === 'function') {
-        syncRekeningKeLabaRugiBU(avgKredit, hppRatio, true);
+        syncRekeningKeLabaRugiBU(avgKredit, hppRatio, true, debitMurni);
     } else {
         const pEl = document.getElementById('pendapatan_rk');
         if (pEl) {
@@ -1625,8 +1679,8 @@ function terapkanLabaRugiRekeningKeTab9() {
         Swal.fire({
             icon: 'success',
             title: 'Tersinkron ke Laba Rugi!',
-            text: 'Rata-rata pendapatan ' + formatRupiahString(avgKredit) + '/bulan dari Rekening Koran berhasil diterapkan ke Tab Analisa Laba Rugi.',
-            confirmButtonText: 'Lanjut ke Tab Laba Rugi',
+            text: 'Rata-rata pendapatan ' + formatRupiahString(avgKredit) + '/bulan & HPP mutasi debit ' + formatRupiahString(debitMurni) + '/bulan berhasil diterapkan ke Tab Analisa Data Keuangan.',
+            confirmButtonText: 'Lanjut ke Tab Data Keuangan',
             showCancelButton: true,
             cancelButtonText: 'Tetap di Sini',
             confirmButtonColor: '#1D4ED8'
@@ -1641,7 +1695,7 @@ function terapkanLabaRugiRekeningKeTab9() {
 }
 window.terapkanLabaRugiRekeningKeTab9 = terapkanLabaRugiRekeningKeTab9;
 
-function syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, isForce = false) {
+function syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, isForce = false, nomHppDebitMurni = null) {
     const isBU = Boolean(window.IS_BADAN_USAHA || document.getElementById('nomHppRKInput'));
     if (!isBU) return;
 
@@ -1673,26 +1727,63 @@ function syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, isForce = false) {
         }
     }
 
-    // 2. Sync HPP (%): ikuti rasio mutasi HPP murni rekening koran (default 78%)
-    if (hppRatio > 0 && hppEl) {
-        const curHpp = parseFloat(hppEl.value) || 0;
-        if (isForce || curHpp === 0 || curHpp === 60 || curHpp >= 90 || hppEl.getAttribute('data-synced-rek') === '1') {
-            hppEl.value = hppRatio;
-            hppEl.setAttribute('data-synced-rek', '1');
-            changed = true;
+    // 2. Sync HPP ke daftarHpp dinamis dari mutasi debit murni (tanpa menimpa HPP manual kecuali isForce)
+    const nomHppTarget = (nomHppDebitMurni !== null && !isNaN(nomHppDebitMurni))
+        ? Math.max(0, Math.round(nomHppDebitMurni))
+        : Math.round(totalAvgKredit * (hppRatio / 100));
 
-            if (isForce && totalAvgKredit > 0 && typeof window.daftarHpp !== 'undefined' && Array.isArray(window.daftarHpp)) {
-                const nomHppEst = Math.round(totalAvgKredit * (hppRatio / 100));
-                const hppItems = window.daftarHpp.filter(it => (it.kategori || 'hpp') === 'hpp');
-                if (hppItems.length === 0 && nomHppEst > 0) {
-                    window.daftarHpp.push({
-                        nama: 'Estimasi HPP (Mutasi Rekening Koran)',
-                        kategori: 'hpp',
-                        nominal: nomHppEst
-                    });
-                    if (typeof renderListHpp === 'function') renderListHpp();
-                }
+    if (nomHppTarget > 0 && typeof daftarHpp !== 'undefined' && Array.isArray(daftarHpp)) {
+        const idxSyncedHpp = daftarHpp.findIndex(it =>
+            (it.kategori || 'hpp').toLowerCase() === 'hpp' &&
+            (it._syncedRek || (it.nama || '').toLowerCase().includes('rekening koran'))
+        );
+        const hppItems = daftarHpp.filter(it => (it.kategori || 'hpp').toLowerCase() === 'hpp');
+        const totalManualHpp = hppItems.reduce((acc, it) => acc + parseNominal(it.nominal || 0), 0);
+
+        let hppChanged = false;
+        if (idxSyncedHpp >= 0) {
+            if (parseNominal(daftarHpp[idxSyncedHpp].nominal) !== nomHppTarget) {
+                daftarHpp[idxSyncedHpp].nominal = nomHppTarget;
+                hppChanged = true;
             }
+        } else if (hppItems.length === 0) {
+            daftarHpp.push({
+                nama: 'Estimasi HPP (Mutasi Debit Rekening Koran)',
+                kategori: 'hpp',
+                nominal: nomHppTarget,
+                _syncedRek: true
+            });
+            hppChanged = true;
+        } else if (hppItems.length === 1 && totalManualHpp === 0) {
+            const emptyIdx = daftarHpp.findIndex(it => (it.kategori || 'hpp').toLowerCase() === 'hpp');
+            if (emptyIdx >= 0) {
+                daftarHpp[emptyIdx].nama = daftarHpp[emptyIdx].nama || 'Estimasi HPP (Mutasi Debit Rekening Koran)';
+                daftarHpp[emptyIdx].nominal = nomHppTarget;
+                daftarHpp[emptyIdx]._syncedRek = true;
+                hppChanged = true;
+            }
+        } else if (isForce) {
+            const asetItems = daftarHpp.filter(it => (it.kategori || '').toLowerCase() === 'aset');
+            daftarHpp = [
+                {
+                    nama: 'Estimasi HPP (Mutasi Debit Rekening Koran)',
+                    kategori: 'hpp',
+                    nominal: nomHppTarget,
+                    _syncedRek: true
+                },
+                ...asetItems
+            ];
+            hppChanged = true;
+        }
+
+        if (hppChanged) {
+            window.daftarHpp = daftarHpp;
+            if (hppEl) {
+                hppEl.value = hppRatio;
+                hppEl.setAttribute('data-synced-rek', '1');
+            }
+            if (typeof renderListHpp === 'function') renderListHpp();
+            changed = true;
         }
     }
 
@@ -1702,39 +1793,101 @@ function syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, isForce = false) {
 }
 window.syncRekeningKeLabaRugiBU = syncRekeningKeLabaRugiBU;
 
+// Terapkan mutasi debit Rekening Koran sebagai HPP di Tab 9 secara 1-klik (pertahankan aset Kotak 3)
+function sinkronHppDariMutasiDebit() {
+    const { totalAvgKredit, totalAvgDebit } = getRingkasanMutasiRekeningLive();
+    if (totalAvgDebit <= 0) {
+        if (typeof showToast === 'function') showToast('Data mutasi debit Rekening Koran belum tersedia.', 'warning');
+        return;
+    }
+
+    const { totalBebanDanCicilan } = getTotalBebanDanCicilanTab9();
+    const debitMurni = Math.max(0, totalAvgDebit - totalBebanDanCicilan);
+
+    if (typeof daftarHpp !== 'undefined' && Array.isArray(daftarHpp)) {
+        const asetItems = daftarHpp.filter(it => (it.kategori || '').toLowerCase() === 'aset');
+        if (debitMurni > 0) {
+            daftarHpp = [
+                {
+                    nama: 'Estimasi HPP (Mutasi Debit Rekening Koran)',
+                    kategori: 'hpp',
+                    nominal: debitMurni,
+                    _syncedRek: true
+                },
+                ...asetItems
+            ];
+        } else {
+            daftarHpp = [...asetItems];
+        }
+        window.daftarHpp = daftarHpp;
+        if (typeof renderListHpp === 'function') renderListHpp();
+    }
+
+    updateInfoSinkronDebitHpp();
+
+    if (typeof showToast === 'function') {
+        if (debitMurni > 0) {
+            showToast('HPP berhasil disinkronkan dari mutasi debit Rekening Koran: ' + formatRupiahString(debitMurni), 'success');
+        } else {
+            showToast('Seluruh mutasi debit rekening sudah tertutup oleh beban operasional & cicilan utang.', 'info');
+        }
+    }
+}
+window.sinkronHppDariMutasiDebit = sinkronHppDariMutasiDebit;
+
+// Update tampilan tombol & banner peringatan bila HPP jauh di bawah mutasi debit Rekening Koran
+function updateInfoSinkronDebitHpp() {
+    const btn = document.getElementById('btnSinkronDebitHpp');
+    const alertBox = document.getElementById('alertSinkronDebitHpp');
+    const textEl = document.getElementById('textAlertSinkronDebitHpp');
+    if (!btn && !alertBox) return;
+
+    const { totalAvgDebit } = getRingkasanMutasiRekeningLive();
+    if (btn) {
+        btn.classList.toggle('hidden', totalAvgDebit <= 0);
+    }
+
+    if (!alertBox) return;
+
+    const { totalBebanDanCicilan } = getTotalBebanDanCicilanTab9();
+    const debitMurni = Math.max(0, totalAvgDebit - totalBebanDanCicilan);
+
+    let totalHppSaatIni = 0;
+    if (typeof daftarHpp !== 'undefined' && Array.isArray(daftarHpp)) {
+        daftarHpp.forEach(it => {
+            if ((it.kategori || 'hpp').toLowerCase() !== 'aset') {
+                totalHppSaatIni += parseNominal(it.nominal || 0);
+            }
+        });
+    } else {
+        totalHppSaatIni = parseNominal(document.getElementById('nomHppRKInput')?.value || 0);
+    }
+
+    if (totalAvgDebit > 0 && debitMurni > 0 && totalHppSaatIni < (debitMurni * 0.5)) {
+        if (textEl) {
+            textEl.innerHTML = 'Mutasi debit rekening rata-rata <strong>' + formatRupiahString(totalAvgDebit) + '</strong>/bln (estimasi HPP murni <strong>' + formatRupiahString(debitMurni) + '</strong>/bln), sedangkan HPP saat ini masih <strong>' + formatRupiahString(totalHppSaatIni) + '</strong> sehingga Surplus &amp; DSCR tampak terlalu tinggi.';
+        }
+        alertBox.classList.remove('hidden');
+    } else {
+        alertBox.classList.add('hidden');
+    }
+}
+window.updateInfoSinkronDebitHpp = updateInfoSinkronDebitHpp;
+
 function salinOmzetKeLabaRugi() {
-    let totalAvgKredit = 0;
-    let totalAvgDebit = 0;
-    let totalKreditAll = 0;
-    let totalDebitAll = 0;
-    document.querySelectorAll('.rekening-item').forEach(item => {
-        const kInput = item.querySelector('.rek-kredit');
-        const dInput = item.querySelector('.rek-debit');
-        const bInput = item.querySelector('.rek-bulan');
-        const totalKredit = parseNominal(kInput?.value || 0);
-        const totalDebit = parseNominal(dInput?.value || 0);
-        const bulan = Math.max(1, parseInt(bInput?.value || 6));
-        totalAvgKredit += Math.round(totalKredit / bulan);
-        totalAvgDebit += Math.round(totalDebit / bulan);
-        totalKreditAll += totalKredit;
-        totalDebitAll += totalDebit;
-    });
+    const { totalAvgKredit, totalAvgDebit } = getRingkasanMutasiRekeningLive();
 
     if (totalAvgKredit > 0) {
-        const nomBhEl = parseNominal(document.getElementById('biaya_hidup_nominal_rk')?.value || 25000000);
-        const nomBlEl = parseNominal(document.getElementById('beban_lainnya_nominal_rk')?.value || 0);
-        const totalBebanOp = (nomBhEl > 0 ? nomBhEl : 25000000) + nomBlEl;
+        const { totalBebanDanCicilan } = getTotalBebanDanCicilanTab9();
+        const debitMurni = Math.max(0, totalAvgDebit - totalBebanDanCicilan);
+        const hppRatio = (totalAvgKredit > 0 && debitMurni > 0)
+            ? Math.min(100, Math.round((debitMurni / totalAvgKredit) * 1000) / 10)
+            : 0;
 
-        let debitMurni = Math.max(0, totalAvgDebit - totalBebanOp);
-        let hppRatio = 78;
-        if (debitMurni > 0 && totalAvgKredit > 0) {
-            let r = Math.round((debitMurni / totalAvgKredit) * 1000) / 10;
-            hppRatio = (r > 82 || r <= 0) ? 78 : r;
-        }
+        syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, true, debitMurni);
+        updateInfoSinkronDebitHpp();
 
-        syncRekeningKeLabaRugiBU(totalAvgKredit, hppRatio, true);
-
-        const msg = `Omzet (${formatRupiahString(totalAvgKredit)}) & HPP (${hppRatio}%) rekening koran berhasil disalin ke Laba Rugi`;
+        const msg = `Omzet (${formatRupiahString(totalAvgKredit)}) & HPP (${formatRupiahString(debitMurni)} / ${hppRatio}%) rekening koran berhasil disalin ke Data Keuangan`;
         showToast(msg, 'success');
         goToTab(9);
     } else {
@@ -3568,6 +3721,9 @@ function hitungLabaRugi() {
     }
     if (typeof hitungSemuaDataKeuangan === 'function') {
         hitungSemuaDataKeuangan();
+    }
+    if (typeof updateInfoSinkronDebitHpp === 'function') {
+        updateInfoSinkronDebitHpp();
     }
 }
 
