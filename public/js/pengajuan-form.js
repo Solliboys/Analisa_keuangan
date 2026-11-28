@@ -2793,15 +2793,10 @@ function bukaModalPdfRekening(btn) {
     const subEl   = document.getElementById('pdfRekSubtitle');
     const iframe  = document.getElementById('iframePdfRekening');
     const img     = document.getElementById('imgPreviewRekening');
-    const empty   = document.getElementById('pdfFallbackEmpty');
-    const digital = document.getElementById('digitalStatementContainer');
     const btnTab  = document.getElementById('btnBukaTabBaruPdf');
-    const btnDown = document.getElementById('btnDownloadPdf');
-    const textToggle = document.getElementById('textToggleDigital');
 
     if (titleEl) titleEl.innerText = `Berkas Asli: ${bank || 'Rekening Koran'} ${norek ? '(' + norek + ')' : ''}`;
     if (subEl)   subEl.innerText   = `Atas Nama: ${nama || '-'} | File Rekening Resmi`;
-    if (textToggle) textToggle.innerText = 'Cetak / PDF';
 
     const lowerUrl = fileUrl.toLowerCase().split('?')[0];
     const isImg = lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.png') || lowerUrl.endsWith('.webp');
@@ -2810,12 +2805,6 @@ function bukaModalPdfRekening(btn) {
         btnTab.href = fileUrl;
         btnTab.classList.remove('hidden');
     }
-    if (btnDown) {
-        btnDown.href = fileUrl;
-        btnDown.classList.remove('hidden');
-    }
-    if (empty) empty.classList.add('hidden');
-    if (digital) digital.classList.add('hidden');
 
     if (isImg) {
         if (iframe) { iframe.src = ''; iframe.classList.add('hidden'); }
@@ -2829,8 +2818,6 @@ function bukaModalPdfRekening(btn) {
     }
 
     modal.classList.remove('hidden');
-
-    modal.classList.remove('hidden');
 }
 window.bukaModalPdfRekening = bukaModalPdfRekening;
 
@@ -2841,11 +2828,6 @@ function tutupModalPdfRekening() {
     if (iframe) iframe.src = '';
     const img = document.getElementById('imgPreviewRekening');
     if (img) img.src = '';
-    const digital = document.getElementById('digitalStatementContainer');
-    if (digital) {
-        digital.classList.add('hidden');
-        digital.innerHTML = '';
-    }
 }
 window.tutupModalPdfRekening = tutupModalPdfRekening;
 
