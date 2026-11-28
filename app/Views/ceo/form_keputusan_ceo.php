@@ -491,7 +491,7 @@
                                 </div>
 
                                 <div>
-                                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Catatan Pertimbangan / Syarat Realisasi:</span>
+                                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Catatan Keputusan CEO / Syarat Realisasi:</span>
                                     <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 leading-relaxed font-medium">
                                         <?= nl2br(esc($currentCatatan ?: 'Tidak ada catatan khusus yang dicantumkan.')) ?>
                                     </div>
