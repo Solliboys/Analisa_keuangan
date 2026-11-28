@@ -51,7 +51,7 @@
     }
 ?>
     <!-- Top Navigation Header -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <header class="bg-white border-t-2 border-t-blue-700 border-b border-slate-200 sticky top-0 z-30">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-15 sm:h-16 items-center gap-3">
                 <a href="<?= base_url('dashboard') ?>" class="flex items-center gap-2.5 min-w-0">
@@ -115,21 +115,30 @@
         </div>
     </header>
 
-    <main class="w-full px-3 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 min-w-0">
+    <main class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 min-w-0 space-y-5">
         
-        <!-- Clean Executive Header with Corporate Blue Accent -->
-        <div class="bg-white border border-slate-200 border-l-4 border-l-blue-700 rounded-lg p-4 sm:p-5 mb-6">
-            <div class="text-[11px] font-semibold text-blue-700 uppercase tracking-[0.12em]">
-                Ruang Eksekutif <?= esc(!empty($jabatan) ? $jabatan : 'CEO & Direksi') ?>
+        <!-- Welcome Hero Banner (Biru Elegan seperti Desain Reviewer) -->
+        <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 rounded-2xl p-6 sm:p-7 text-white shadow-lg shadow-blue-500/10 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5" style="background-color: #1d4ed8; background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #4338ca 100%); color: #ffffff;">
+            <!-- Ambient Decorative Elements -->
+            <div class="pointer-events-none absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
+            <div class="pointer-events-none absolute -left-10 -top-10 w-48 h-48 bg-sky-400/15 rounded-full blur-xl"></div>
+
+            <div class="relative z-10 min-w-0">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/15 text-blue-100 uppercase tracking-wider backdrop-blur-xs border border-white/10 mb-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Ruang Eksekutif <?= esc(!empty($jabatan) ? $jabatan : 'CEO') ?></span>
+                </div>
+                <h1 class="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white tracking-tight leading-tight">
+                    Evaluasi &amp; Keputusan Kredit
+                </h1>
+                <p class="text-xs sm:text-sm text-blue-100/90 mt-1 max-w-2xl leading-relaxed">
+                    Tinjau kelengkapan analisa 5C, riwayat SLIK OJK, serta arus kas debitur untuk menetapkan persetujuan, revisi, atau penolakan.
+                </p>
             </div>
-            <h1 class="text-lg sm:text-xl font-bold text-slate-950 tracking-tight mt-0.5">Ringkasan Portofolio &amp; Keputusan Komite</h1>
-            <p class="text-xs text-slate-500 mt-0.5 max-w-3xl">
-                Pantau portofolio pembiayaan, telaah keputusan komite kredit, evaluasi risiko 5C, dan awasi jejak audit operasional sistem.
-            </p>
         </div>
 
-        <!-- Metric Performance Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
+        <!-- 5-Column Metric Cards (Wow & Clean seperti Reviewer) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5 tabular-nums">
             <!-- Card 1: Total Berkas Masuk -->
             <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 relative overflow-hidden group">
                 <div class="flex items-center justify-between gap-3">
@@ -215,7 +224,7 @@
         </div>
 
         <!-- Table Card: Daftar Berkas Pengajuan untuk CEO & Direksi (Full Width) -->
-        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden mb-8">
+        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
             <div class="px-4 sm:px-5 py-3.5 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
                     <!-- Search Box -->

@@ -240,6 +240,21 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <!-- Nama Direktur Utama / Pimpinan -->
+                        <div class="space-y-1.5 md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                Nama Direktur Utama / Pimpinan <span class="text-rose-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   name="nama_direktur" 
+                                   id="inputNamaDirektur"
+                                   value="<?= esc($pengaturan_sistem['nama_direktur'] ?? 'Dr. H. Hendra Wijaya, S.E., M.M.') ?>" 
+                                   class="w-full text-xs font-semibold border border-slate-200 rounded-xl p-2.5 focus:border-blue-500 focus:outline-none transition shadow-2xs text-slate-900 bg-white" 
+                                   placeholder="Contoh: Dr. H. Hendra Wijaya, S.E., M.M." 
+                                   required />
+                            <span class="text-[11px] text-slate-400 block">Nama pejabat penandatangan Surat Keputusan Kredit (otomatis sinkron dengan profil CEO).</span>
+                        </div>
+
                         <!-- Alamat Lembaga -->
                         <div class="space-y-1.5 md:col-span-2">
                             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">

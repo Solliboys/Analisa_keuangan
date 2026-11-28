@@ -119,27 +119,63 @@ class Pengajuan extends BaseController
             }
 
             $semuaKomite = $this->komiteModel->whereIn('kredit_id', $kreditIds)->orderBy('komite_id', 'DESC')->findAll();
+            $komiteByKredit = [];
             foreach ($semuaKomite as $km) {
-                if (!isset($mapKomite[$km['kredit_id']]) && !empty($km['catatan_approval'])) {
-                    $mapKomite[$km['kredit_id']] = $km;
-                }
-            }
-            foreach ($semuaKomite as $km) {
-                if (!isset($mapKomite[$km['kredit_id']])) {
-                    $mapKomite[$km['kredit_id']] = $km;
-                }
+                $komiteByKredit[$km['kredit_id']][] = $km;
             }
         }
 
-        foreach ($daftarKredit as &$k) {
-            $km = $mapKomite[$k['kredit_id']] ?? null;
-            $k['catatan_reviewer'] = !empty($km['catatan_approval']) ? $km['catatan_approval'] : '';
-            $k['status_komite']    = !empty($km['status_approval']) ? $km['status_approval'] : '';
-            $k['nama_reviewer']    = !empty($km['nama_approver']) ? $km['nama_approver'] : '';
-            $k['tanggal_review']   = !empty($km['tanggal_approval']) ? $km['tanggal_approval'] : (!empty($km['created_at']) ? date('Y-m-d', strtotime($km['created_at'])) : '');
+        $statusFinalList = ['Disetujui', 'Disetujui Bersyarat', 'Bersyarat', 'Ditolak', 'Revisi', 'Kembalikan untuk Revisi'];
 
-            $hasOfficialReview = !empty($k['status_komite']) && (!empty($k['nama_reviewer']) || !empty($k['catatan_reviewer']));
-            if ($hasOfficialReview && (empty($k['status_pengajuan']) || in_array(strtolower($k['status_pengajuan']), ['draft', 'diajukan']))) {
+        foreach ($daftarKredit as &$k) {
+            $listKm = $komiteByKredit[$k['kredit_id']] ?? [];
+            $ceoKm = null;
+            $revKm = null;
+
+            foreach ($listKm as $itemKm) {
+                $roleAp = strtolower($itemKm['role_approver'] ?? '');
+                if ((strpos($roleAp, 'ceo') !== false || strpos($roleAp, 'direk') !== false) && !$ceoKm) {
+                    $ceoKm = $itemKm;
+                } elseif (strpos($roleAp, 'ceo') === false && strpos($roleAp, 'direk') === false && !$revKm) {
+                    $revKm = $itemKm;
+                }
+            }
+
+            $isStatusFinal = in_array($k['status_pengajuan'] ?? '', $statusFinalList);
+
+            if ($ceoKm) {
+                $k['status_komite']    = $ceoKm['status_approval'];
+                $k['catatan_reviewer'] = !empty($ceoKm['catatan_approval']) ? $ceoKm['catatan_approval'] : ($revKm['catatan_approval'] ?? '');
+                $k['nama_reviewer']    = $ceoKm['nama_approver'] ?: 'Direktur Utama / CEO';
+                $k['role_approver']    = $ceoKm['role_approver'] ?: 'Direktur Utama / CEO';
+                $k['tanggal_review']   = !empty($ceoKm['tanggal_approval']) ? $ceoKm['tanggal_approval'] : (!empty($ceoKm['created_at']) ? date('Y-m-d', strtotime($ceoKm['created_at'])) : '');
+                $k['is_ceo_decision']  = true;
+            } elseif ($isStatusFinal) {
+                $k['status_komite']    = $k['status_pengajuan'];
+                $k['catatan_reviewer'] = !empty($revKm['catatan_approval']) ? $revKm['catatan_approval'] : '';
+                $k['nama_reviewer']    = !empty($revKm['nama_approver']) ? $revKm['nama_approver'] . ' (Pengesahan CEO)' : 'Direktur Utama / CEO';
+                $k['role_approver']    = 'Direktur Utama / CEO';
+                $k['tanggal_review']   = !empty($k['updated_at']) ? date('Y-m-d', strtotime($k['updated_at'])) : date('Y-m-d');
+                $k['is_ceo_decision']  = true;
+            } elseif ($revKm) {
+                $k['status_komite']    = $revKm['status_approval'];
+                $k['catatan_reviewer'] = $revKm['catatan_approval'] ?? '';
+                $k['nama_reviewer']    = $revKm['nama_approver'] ?: 'Reviewer / Analis Senior';
+                $k['role_approver']    = $revKm['role_approver'] ?: 'Reviewer / Analis Senior';
+                $k['tanggal_review']   = !empty($revKm['tanggal_approval']) ? $revKm['tanggal_approval'] : (!empty($revKm['created_at']) ? date('Y-m-d', strtotime($revKm['created_at'])) : '');
+                $k['is_ceo_decision']  = false;
+            } else {
+                $k['status_komite']    = $k['status_pengajuan'] ?? 'Draft';
+                $k['catatan_reviewer'] = '';
+                $k['nama_reviewer']    = '-';
+                $k['role_approver']    = '-';
+                $k['tanggal_review']   = '';
+                $k['is_ceo_decision']  = false;
+            }
+
+            $k['sudah_ada_sk'] = in_array($k['status_komite'], $statusFinalList) || $isStatusFinal;
+
+            if (!empty($k['status_komite']) && in_array($k['status_komite'], $statusFinalList)) {
                 $k['status_pengajuan'] = $k['status_komite'];
             }
 

@@ -56,6 +56,8 @@ abstract class BaseController extends Controller
                 'alamat_lembaga'         => "VARCHAR(255) NULL DEFAULT 'Financial Center, Lantai 8, Jakarta Selatan'",
                 'email_lembaga'          => "VARCHAR(100) NULL DEFAULT 'info@otwkredit.id'",
                 'telepon_lembaga'        => "VARCHAR(50) NULL DEFAULT '(021) 5088-2900'",
+                'nama_direktur'          => "VARCHAR(150) NULL DEFAULT 'Dr. H. Hendra Wijaya, S.E., M.M.'",
+                'jabatan_direktur'       => "VARCHAR(100) NULL DEFAULT 'Direktur Utama / CEO'",
                 'petugas_slik_aktif'     => "TINYINT(1) NULL DEFAULT 1",
                 'ijin_pengusul_isi_slik' => "TINYINT(1) NULL DEFAULT 0",
                 'prefix_nomor_aplikasi'  => "VARCHAR(20) NULL DEFAULT 'CAM'",

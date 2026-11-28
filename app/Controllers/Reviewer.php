@@ -60,6 +60,15 @@ class Reviewer extends BaseController
             return redirect()->to('/dashboard')->with('error', 'Data pengajuan kredit tidak ditemukan.');
         }
 
+        // Pastikan nama_pengusul terisi dari user_id jika kosong di database
+        if (empty($kredit['nama_pengusul']) && !empty($kredit['user_id'])) {
+            $userModel = new \App\Models\UserModel();
+            $uPembuat = $userModel->find($kredit['user_id']);
+            if ($uPembuat) {
+                $kredit['nama_pengusul'] = !empty($uPembuat['nama_lengkap']) ? $uPembuat['nama_lengkap'] : ($uPembuat['username'] ?? '-');
+            }
+        }
+
         $agunanModel   = new \App\Models\AgunanModel();
         $slikModel     = new \App\Models\SlikModel();
         $rekeningModel = new \App\Models\KreditRekeningModel();
@@ -84,12 +93,21 @@ class Reviewer extends BaseController
 
         // Ambil semua catatan dari reviewer (role_approver bukan CEO)
         $semuaCatatanReviewer = $this->komiteModel->where('kredit_id', $kreditId)
-                                                  ->where('role_approver !=', 'Direktur Utama / CEO')
+                                                  ->notLike('role_approver', 'CEO')
+                                                  ->notLike('role_approver', 'Direktur')
                                                   ->orderBy('komite_id', 'ASC')
                                                   ->findAll();
 
+        // Ambil hanya catatan terbaru dari masing-masing reviewer (jika 1 reviewer review > 1 kali, hanya yang terbaru yang dipakai)
+        $terbaruPerReviewer = [];
+        foreach ($semuaCatatanReviewer as $c) {
+            $rKey = !empty($c['user_id']) ? 'u_' . $c['user_id'] : 'n_' . strtolower(trim($c['nama_approver'] ?? ''));
+            $terbaruPerReviewer[$rKey] = $c;
+        }
+        $semuaCatatanReviewer = array_values($terbaruPerReviewer);
+
         // Untuk Reviewer: HANYA tampilkan catatan miliknya sendiri (catatan orang lain disembunyikan)
-        // Untuk CEO: tampilkan seluruh catatan dari semua reviewer
+        // Untuk CEO: tampilkan catatan terbaru dari semua reviewer
         if (!$isCeo) {
             $userNama = strtolower(trim(session()->get('nama_lengkap') ?? ''));
             $daftarCatatanReviewer = array_values(array_filter($semuaCatatanReviewer, function($c) use ($userId, $userNama) {
@@ -112,7 +130,12 @@ class Reviewer extends BaseController
 
         // Ambil keputusan CEO (jika sudah ada)
         $keputusanCeo = $this->komiteModel->where('kredit_id', $kreditId)
-                                          ->where('role_approver', 'Direktur Utama / CEO')
+                                          ->groupStart()
+                                              ->where('role_approver', 'Direktur Utama / CEO')
+                                              ->orLike('role_approver', 'CEO')
+                                              ->orLike('role_approver', 'Direktur')
+                                          ->groupEnd()
+                                          ->orderBy('komite_id', 'DESC')
                                           ->first();
 
         // Hitung total MV dan LV Agunan
@@ -203,7 +226,10 @@ class Reviewer extends BaseController
             ]);
         }
 
-        $allowedKeputusan = ['Disetujui', 'Bersyarat', 'Disetujui Bersyarat', 'Ditolak', 'Revisi', 'Kembalikan untuk Revisi'];
+        $allowedKeputusan = [
+            'Disetujui', 'Bersyarat', 'Disetujui Bersyarat', 'Ditolak', 'Revisi', 'Kembalikan untuk Revisi',
+            'Rekomendasi', 'Tidak Rekomendasi'
+        ];
         if (!empty($keputusan) && !in_array($keputusan, $allowedKeputusan)) {
             return $this->response->setJSON(['status' => false, 'message' => 'Pilihan rekomendasi keputusan tidak valid.']);
         }
@@ -276,6 +302,9 @@ class Reviewer extends BaseController
             // Reviewer: hanya mengirim catatan ke CEO
             if ($statusSave === 'Revisi') {
                 $statusKreditUpdate = 'Revisi';
+            } elseif (in_array($kredit['status_pengajuan'] ?? '', ['Disetujui', 'Disetujui Bersyarat', 'Ditolak'])) {
+                // Pertahankan status keputusan final jika CEO sudah menetapkan keputusan
+                $statusKreditUpdate = $kredit['status_pengajuan'];
             } else {
                 $statusKreditUpdate = 'Menunggu Keputusan CEO';
             }
@@ -597,5 +626,124 @@ class Reviewer extends BaseController
                 'catatan_approval' => $komite['catatan_approval'] ?? ''
             ]
         ]);
+    }
+
+    /**
+     * Tampilkan Surat Keputusan Kredit (SK Persetujuan / Penolakan)
+     * Hanya tersedia setelah CEO menetapkan keputusan final.
+     */
+    public function suratKeputusan($kreditId = null)
+    {
+        if (!session()->get('logged_in')) {
+            return view('ceo/surat_keputusan_error', [
+                'title' => 'Sesi Berakhir',
+                'kredit' => [],
+                'pesan'  => 'Sesi login telah berakhir. Silakan login ulang dan coba lagi.',
+            ]);
+        }
+
+        $kredit = $this->kreditModel->find($kreditId);
+        if (!$kredit) {
+            return view('ceo/surat_keputusan_error', [
+                'title' => 'Data Tidak Ditemukan',
+                'kredit' => [],
+                'pesan'  => 'Data pengajuan kredit tidak ditemukan.',
+            ]);
+        }
+
+        // Cek otorisasi: Izinkan Reviewer, CEO, Superadmin, atau Pengusul pemilik berkas
+        $jabatanUser = strtolower(session()->get('jabatan') ?? '');
+        $isStaffReviewerOrCeo = $this->isAuthorizedReviewer();
+        $isOwnerPengusul = (!empty($kredit['user_id']) && $kredit['user_id'] == session()->get('user_id'));
+
+        if (!$isStaffReviewerOrCeo && !$isOwnerPengusul) {
+            return view('ceo/surat_keputusan_error', [
+                'title' => 'Akses Ditolak',
+                'kredit' => $kredit,
+                'pesan'  => 'Akses ditolak: Anda tidak memiliki hak akses untuk melihat Surat Keputusan pengajuan ini.',
+            ]);
+        }
+
+        // Pastikan ada keputusan CEO sebelum menampilkan surat
+        $keputusanCeo = $this->komiteModel->where('kredit_id', $kreditId)
+                                          ->groupStart()
+                                              ->where('role_approver', 'Direktur Utama / CEO')
+                                              ->orLike('role_approver', 'CEO')
+                                              ->orLike('role_approver', 'Direktur')
+                                          ->groupEnd()
+                                          ->orderBy('komite_id', 'DESC')
+                                          ->first();
+
+        // Fallback: jika tidak ada record komite CEO tapi kredit sudah punya status final,
+        // bangun data keputusan dari tabel kredit + reviewer terakhir
+        $statusFinalList = ['Disetujui', 'Disetujui Bersyarat', 'Bersyarat', 'Ditolak', 'Revisi', 'Kembalikan untuk Revisi'];
+        if (!$keputusanCeo && in_array($kredit['status_pengajuan'] ?? '', $statusFinalList)) {
+            // Ambil reviewer terakhir untuk nama approver
+            $reviewerTerakhir = $this->komiteModel->where('kredit_id', $kreditId)
+                                                  ->orderBy('komite_id', 'DESC')
+                                                  ->first();
+            $namaApproverFallback = session()->get('nama_lengkap') ?: ($reviewerTerakhir['nama_approver'] ?? 'Direktur Utama / CEO');
+            $keputusanCeo = [
+                'komite_id'        => 0,
+                'kredit_id'        => $kreditId,
+                'user_id'          => session()->get('user_id') ?? 0,
+                'role_approver'    => 'Direktur Utama / CEO',
+                'nama_approver'    => $namaApproverFallback,
+                'status_approval'  => $kredit['status_pengajuan'],
+                'tanggal_approval' => $kredit['updated_at'] ?? date('Y-m-d'),
+                'catatan_approval' => $reviewerTerakhir['catatan_approval'] ?? '',
+            ];
+        }
+
+        if (!$keputusanCeo) {
+            // Jangan redirect (menyebabkan iframe load halaman lain), tampilkan halaman error inline
+            return view('ceo/surat_keputusan_error', [
+                'title'  => 'Surat Keputusan Belum Tersedia',
+                'kredit' => $kredit,
+                'pesan'  => 'Keputusan CEO belum ditetapkan. Surat Keputusan belum dapat diterbitkan.',
+            ]);
+        }
+
+        // Ambil data pendukung
+        $agunanModel   = new \App\Models\AgunanModel();
+        $keuanganModel = new \App\Models\KreditKeuanganDscModel();
+
+        $agunan   = $agunanModel->where('kredit_id', $kreditId)->findAll();
+        $keuangan = $keuanganModel->where('kredit_id', $kreditId)->first() ?? [];
+
+        $db = \Config\Database::connect();
+        $pengaturanSistem = $db->table('pengaturan_sistem')->where('id', 1)->get()->getRowArray() ?? [
+            'nama_aplikasi' => 'OTW Credit Engine & CAM',
+            'nama_lembaga'  => 'PT BPR / Lembaga Pembiayaan',
+            'logo_aplikasi' => ''
+        ];
+
+        // Ambil data user CEO untuk TTD digital
+        $userModel = new \App\Models\UserModel();
+        $ceoUser = null;
+        if (!empty($keputusanCeo['user_id'])) {
+            $ceoUser = $userModel->find($keputusanCeo['user_id']);
+        }
+        if (!$ceoUser) {
+            $ceoUser = $userModel->groupStart()
+                                     ->where('jabatan', 'CEO')
+                                     ->orLike('jabatan', 'CEO')
+                                     ->orLike('jabatan', 'Direktur')
+                                 ->groupEnd()
+                                 ->where('status', 1)
+                                 ->first();
+        }
+
+        $data = [
+            'title'             => 'Surat Keputusan Kredit – ' . esc($kredit['nomor_aplikasi']),
+            'kredit'            => $kredit,
+            'agunan'            => $agunan,
+            'keuangan'          => $keuangan,
+            'keputusan_ceo'     => $keputusanCeo,
+            'pengaturan_sistem' => $pengaturanSistem,
+            'ceo_user'          => $ceoUser,
+        ];
+
+        return view('ceo/surat_keputusan', $data);
     }
 }

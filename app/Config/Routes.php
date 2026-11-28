@@ -82,6 +82,7 @@ $routes->group('reviewer', static function ($routes) {
     $routes->post('setujui', 'Reviewer::setujui');
     $routes->post('tolak/(:num)', 'Reviewer::tolak/$1');
     $routes->post('tolak', 'Reviewer::tolak');
+    $routes->get('surat-keputusan/(:num)', 'Reviewer::suratKeputusan/$1');
 });
 
 // Modul Superadmin

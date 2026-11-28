@@ -108,15 +108,9 @@ class Dashboard extends BaseController
                 }
 
                 $daftarKomite = $komiteModel->whereIn('kredit_id', $kreditIds)->orderBy('komite_id', 'DESC')->findAll();
+                $komiteByKredit = [];
                 foreach ($daftarKomite as $km) {
-                    if (!isset($mapKomite[$km['kredit_id']]) && !empty($km['catatan_approval'])) {
-                        $mapKomite[$km['kredit_id']] = $km;
-                    }
-                }
-                foreach ($daftarKomite as $km) {
-                    if (!isset($mapKomite[$km['kredit_id']])) {
-                        $mapKomite[$km['kredit_id']] = $km;
-                    }
+                    $komiteByKredit[$km['kredit_id']][] = $km;
                 }
             }
 
@@ -126,19 +120,64 @@ class Dashboard extends BaseController
             $diajukanSaya       = 0;
             $disetujuiSaya      = 0;
 
+            $statusFinalList = ['Disetujui', 'Disetujui Bersyarat', 'Bersyarat', 'Ditolak', 'Revisi', 'Kembalikan untuk Revisi'];
+
             foreach ($kreditSaya as &$k) {
                 $totalPlafonSaya += (float)($k['plafon_pengajuan'] ?? 0);
 
-                // Ambil keputusan & catatan komite / reviewer
-                $km = $mapKomite[$k['kredit_id']] ?? null;
-                $k['catatan_reviewer'] = !empty($km['catatan_approval']) ? $km['catatan_approval'] : '';
-                $k['status_komite']    = !empty($km['status_approval']) ? $km['status_approval'] : '';
-                $k['nama_reviewer']    = !empty($km['nama_approver']) ? $km['nama_approver'] : '';
-                $k['tanggal_review']   = !empty($km['tanggal_approval']) ? $km['tanggal_approval'] : (!empty($km['created_at']) ? date('Y-m-d', strtotime($km['created_at'])) : '');
+                // Cari keputusan CEO dan Reviewer
+                $listKm = $komiteByKredit[$k['kredit_id']] ?? [];
+                $ceoKm = null;
+                $revKm = null;
 
-                // Sinkronkan status pengajuan HANYA jika reviewer resmi telah memberikan keputusan (ada nama approver atau catatan)
-                $hasOfficialReview = !empty($k['status_komite']) && (!empty($k['nama_reviewer']) || !empty($k['catatan_reviewer']));
-                if ($hasOfficialReview && (empty($k['status_pengajuan']) || in_array(strtolower($k['status_pengajuan']), ['draft', 'diajukan']))) {
+                foreach ($listKm as $itemKm) {
+                    $roleAp = strtolower($itemKm['role_approver'] ?? '');
+                    if ((strpos($roleAp, 'ceo') !== false || strpos($roleAp, 'direk') !== false) && !$ceoKm) {
+                        $ceoKm = $itemKm;
+                    } elseif (strpos($roleAp, 'ceo') === false && strpos($roleAp, 'direk') === false && !$revKm) {
+                        $revKm = $itemKm;
+                    }
+                }
+
+                // Utamakan keputusan CEO jika sudah ada
+                $isStatusFinal = in_array($k['status_pengajuan'] ?? '', $statusFinalList);
+
+                if ($ceoKm) {
+                    $k['status_komite']    = $ceoKm['status_approval'];
+                    $k['catatan_reviewer'] = !empty($ceoKm['catatan_approval']) ? $ceoKm['catatan_approval'] : ($revKm['catatan_approval'] ?? '');
+                    $k['nama_reviewer']    = $ceoKm['nama_approver'] ?: 'Direktur Utama / CEO';
+                    $k['role_approver']    = $ceoKm['role_approver'] ?: 'Direktur Utama / CEO';
+                    $k['tanggal_review']   = !empty($ceoKm['tanggal_approval']) ? $ceoKm['tanggal_approval'] : (!empty($ceoKm['created_at']) ? date('Y-m-d', strtotime($ceoKm['created_at'])) : '');
+                    $k['is_ceo_decision']  = true;
+                } elseif ($isStatusFinal) {
+                    // Status kredit sudah final ditetapkan CEO
+                    $k['status_komite']    = $k['status_pengajuan'];
+                    $k['catatan_reviewer'] = !empty($revKm['catatan_approval']) ? $revKm['catatan_approval'] : '';
+                    $k['nama_reviewer']    = !empty($revKm['nama_approver']) ? $revKm['nama_approver'] . ' (Pengesahan CEO)' : 'Direktur Utama / CEO';
+                    $k['role_approver']    = 'Direktur Utama / CEO';
+                    $k['tanggal_review']   = !empty($k['updated_at']) ? date('Y-m-d', strtotime($k['updated_at'])) : date('Y-m-d');
+                    $k['is_ceo_decision']  = true;
+                } elseif ($revKm) {
+                    // Masih proses review (belum keputusan final CEO)
+                    $k['status_komite']    = $revKm['status_approval'];
+                    $k['catatan_reviewer'] = $revKm['catatan_approval'] ?? '';
+                    $k['nama_reviewer']    = $revKm['nama_approver'] ?: 'Reviewer / Analis Senior';
+                    $k['role_approver']    = $revKm['role_approver'] ?: 'Reviewer / Analis Senior';
+                    $k['tanggal_review']   = !empty($revKm['tanggal_approval']) ? $revKm['tanggal_approval'] : (!empty($revKm['created_at']) ? date('Y-m-d', strtotime($revKm['created_at'])) : '');
+                    $k['is_ceo_decision']  = false;
+                } else {
+                    $k['status_komite']    = $k['status_pengajuan'] ?? 'Draft';
+                    $k['catatan_reviewer'] = '';
+                    $k['nama_reviewer']    = '-';
+                    $k['role_approver']    = '-';
+                    $k['tanggal_review']   = '';
+                    $k['is_ceo_decision']  = false;
+                }
+
+                $k['sudah_ada_sk'] = in_array($k['status_komite'], $statusFinalList) || $isStatusFinal;
+
+                // Sinkronkan status_pengajuan jika sudah ada keputusan resmi
+                if (!empty($k['status_komite']) && in_array($k['status_komite'], $statusFinalList)) {
                     $k['status_pengajuan'] = $k['status_komite'];
                 }
 
@@ -687,6 +726,13 @@ class Dashboard extends BaseController
             'updated_at'            => date('Y-m-d H:i:s')
         ];
 
+        $namaDirektur = trim((string)($this->request->getPost('nama_direktur') ?: ''));
+        if ($namaDirektur !== '') {
+            $updateData['nama_direktur'] = $namaDirektur;
+            // Sinkronisasi otomatis ke akun CEO agar tetap dinamis
+            $db->table('users')->groupStart()->where('id', 11)->orWhere('jabatan', 'CEO')->groupEnd()->update(['nama_lengkap' => $namaDirektur]);
+        }
+
         if ($logoPath) {
             $updateData['logo_aplikasi'] = $logoPath;
         } elseif ($this->request->getPost('hapus_logo') === '1') {
@@ -910,6 +956,39 @@ class Dashboard extends BaseController
             $updateData['password'] = password_hash($password, PASSWORD_DEFAULT);
         }
 
+        // Handle status aktif tanda tangan digital
+        $isTtdAktif = $this->request->getPost('is_ttd_aktif') ? 1 : 0;
+        $updateData['is_ttd_aktif'] = $isTtdAktif;
+
+        // Handle hapus tanda tangan digital jika dicentang
+        if ($this->request->getPost('hapus_ttd') == '1') {
+            $currUser = $userModel->find($userId);
+            if (!empty($currUser['ttd_digital']) && file_exists(FCPATH . $currUser['ttd_digital'])) {
+                @unlink(FCPATH . $currUser['ttd_digital']);
+            }
+            $updateData['ttd_digital']  = null;
+            $updateData['is_ttd_aktif'] = 0;
+        }
+
+        // Handle upload tanda tangan digital baru
+        $ttdFile = $this->request->getFile('ttd_file');
+        if ($ttdFile && $ttdFile->isValid() && !$ttdFile->hasMoved()) {
+            $extTtd = strtolower($ttdFile->getClientExtension() ?: $ttdFile->guessExtension() ?: '');
+            $mimeTtd = $ttdFile->getMimeType();
+            if (!in_array($extTtd, ['jpg', 'jpeg', 'png', 'webp'], true) || strpos((string)$mimeTtd, 'image/') !== 0 || $ttdFile->getSize() > 3 * 1024 * 1024) {
+                return redirect()->to('/profil')->with('error', 'File tanda tangan digital harus berupa gambar JPG/PNG/WEBP maksimal 3 MB.');
+            }
+            $uploadTtdFolder = FCPATH . 'uploads/ttd/';
+            if (!is_dir($uploadTtdFolder)) {
+                mkdir($uploadTtdFolder, 0755, true);
+            }
+            $ttdName = 'ttd_' . $userId . '_' . time() . '_' . bin2hex(random_bytes(3)) . '.' . $extTtd;
+            $ttdFile->move($uploadTtdFolder, $ttdName);
+
+            $updateData['ttd_digital']  = 'uploads/ttd/' . $ttdName;
+            $updateData['is_ttd_aktif'] = 1; // Otomatis aktifkan saat upload TTD baru
+        }
+
         // Handle upload foto profil (dengan validasi ketat ekstensi & MIME gambar)
         $fotoFile = $this->request->getFile('foto_file');
         if ($fotoFile && $fotoFile->isValid() && !$fotoFile->hasMoved()) {
@@ -934,6 +1013,12 @@ class Dashboard extends BaseController
         }
 
         $userModel->update($userId, $updateData);
+
+        // Jika user yang update profil adalah CEO/Direktur, sinkronisasi nama_direktur di pengaturan_sistem
+        $userJabatan = strtolower($user['jabatan'] ?? session()->get('jabatan') ?? '');
+        if (strpos($userJabatan, 'ceo') !== false || strpos($userJabatan, 'direk') !== false) {
+            \Config\Database::connect()->table('pengaturan_sistem')->where('id', 1)->update(['nama_direktur' => $namaLengkap]);
+        }
 
         session()->set([
             'nama_lengkap' => $namaLengkap,

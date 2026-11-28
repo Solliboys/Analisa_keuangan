@@ -181,6 +181,56 @@
                         <span class="text-[11px] text-slate-400 mt-1 block">Role ditetapkan dan diverifikasi oleh Super Administrator.</span>
                     </div>
 
+                    <!-- Tanda Tangan Digital (1 Kotak Bersih, Ringkas & Responsif) -->
+                    <div class="p-4 sm:p-5 bg-slate-50/90 rounded-2xl border border-slate-200">
+                        <div class="flex items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
+                            <label class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                <span>Tanda Tangan Digital</span>
+                            </label>
+                            
+                            <!-- Toggle Status Ringkas -->
+                            <div class="flex items-center gap-2">
+                                <span id="labelTtdStatus" class="text-xs font-bold <?= !empty($user['is_ttd_aktif']) ? 'text-emerald-700' : 'text-slate-500' ?>">
+                                    <?= !empty($user['is_ttd_aktif']) ? 'Aktif' : 'Nonaktif' ?>
+                                </span>
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input type="checkbox" name="is_ttd_aktif" value="1" id="toggleIsTtdAktif" <?= !empty($user['is_ttd_aktif']) ? 'checked' : '' ?> onchange="updateTtdStatusLabel(this)" class="sr-only peer">
+                                    <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Konten: Preview & Input File Ringkas -->
+                        <div class="pt-3 flex flex-col sm:flex-row items-center gap-3.5">
+                            <?php $hasTtdImg = !empty($user['ttd_digital']) && file_exists(FCPATH . $user['ttd_digital']); ?>
+                            <div class="w-full sm:w-36 h-20 bg-white rounded-xl border border-slate-200 flex flex-col items-center justify-center p-2 shrink-0 relative">
+                                <img id="previewTtdImg" 
+                                     src="<?= $hasTtdImg ? base_url($user['ttd_digital']) : '' ?>" 
+                                     alt="Preview TTD" 
+                                     class="<?= $hasTtdImg ? '' : 'hidden' ?> max-h-12 max-w-full object-contain">
+                                <div id="noTtdPlaceholder" class="<?= $hasTtdImg ? 'hidden' : '' ?> text-slate-400 text-center text-[10px]">
+                                    Belum ada TTD
+                                </div>
+                                <?php if ($hasTtdImg): ?>
+                                    <label class="mt-1 flex items-center gap-1 text-[10px] text-rose-600 hover:text-rose-800 cursor-pointer">
+                                        <input type="checkbox" name="hapus_ttd" value="1" onchange="toggleHapusTtd(this)" class="rounded text-rose-600 w-3 h-3">
+                                        <span>Hapus</span>
+                                    </label>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="w-full flex-1 min-w-0 space-y-1">
+                                <input type="file" name="ttd_file" id="inputTtdFile" accept="image/png, image/jpeg, image/jpg, image/webp"
+                                       onchange="previewTtd(this)"
+                                       class="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer transition">
+                                <p class="text-[11px] text-slate-500 leading-tight">
+                                    PNG transparan. Bila nonaktif, kolom tanda tangan di surat menyisakan ruang tanda tangan manual.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Divider Password -->
                     <div class="pt-3 border-t border-slate-100">
                         <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">Ganti Kata Sandi (Opsional)</h4>
@@ -229,6 +279,53 @@
                         }
                     }
                     reader.readAsDataURL(input.files[0]);
+                }
+            }
+
+            function previewTtd(input) {
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.getElementById('previewTtdImg');
+                        const placeholder = document.getElementById('noTtdPlaceholder');
+                        if (preview) {
+                            preview.src = e.target.result;
+                            preview.classList.remove('hidden');
+                            preview.classList.remove('opacity-30');
+                        }
+                        if (placeholder) {
+                            placeholder.classList.add('hidden');
+                        }
+                        // Otomatis aktifkan toggle status saat upload TTD baru
+                        const toggle = document.getElementById('toggleIsTtdAktif');
+                        if (toggle && !toggle.checked) {
+                            toggle.checked = true;
+                            updateTtdStatusLabel(toggle);
+                        }
+                    }
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+
+            function updateTtdStatusLabel(toggle) {
+                const label = document.getElementById('labelTtdStatus');
+                if (label) {
+                    label.innerText = toggle.checked ? 'Aktif' : 'Nonaktif';
+                    label.className = toggle.checked ? 'text-xs font-bold text-emerald-700' : 'text-xs font-bold text-slate-500';
+                }
+            }
+
+            function toggleHapusTtd(checkbox) {
+                const preview = document.getElementById('previewTtdImg');
+                const toggle = document.getElementById('toggleIsTtdAktif');
+                if (checkbox.checked) {
+                    if (preview) preview.classList.add('opacity-30');
+                    if (toggle) {
+                        toggle.checked = false;
+                        updateTtdStatusLabel(toggle);
+                    }
+                } else {
+                    if (preview) preview.classList.remove('opacity-30');
                 }
             }
 

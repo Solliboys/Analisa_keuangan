@@ -19,6 +19,8 @@ class UserModel extends Model
         'email',
         'nomor_hp',
         'foto',
+        'ttd_digital',
+        'is_ttd_aktif',
         'jabatan',
         'status',
         'terakhir_login'

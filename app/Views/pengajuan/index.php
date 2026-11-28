@@ -694,11 +694,11 @@
 
             <!-- Header Modal -->
             <div class="flex items-center gap-3.5 pb-4 border-b border-slate-100">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-purple-500/20 shrink-0">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </div>
                 <div>
-                    <h3 class="text-base font-extrabold text-slate-900 leading-tight">Hasil Review & Keputusan Reviewer</h3>
+                    <h3 class="text-base font-extrabold text-slate-900 leading-tight">Hasil Review & Keputusan Komite / CEO</h3>
                     <p class="text-xs text-slate-500 mt-0.5">Lembar Keputusan dan Notulensi Komite Kredit Terhadap Pengajuan</p>
                 </div>
             </div>
@@ -718,9 +718,9 @@
                     </div>
                 </div>
 
-                <!-- Keputusan Utama Reviewer Banner -->
+                <!-- Keputusan Utama Reviewer / CEO Banner -->
                 <div class="p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-1.5" id="revModalStatusBanner">
-                    <span class="text-[10px] font-bold uppercase tracking-wider opacity-80">Keputusan Resmi Reviewer / Komite:</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider opacity-80" id="revModalStatusLabel">Keputusan Resmi Direktur Utama / CEO:</span>
                     <div class="text-xl font-black flex items-center gap-2" id="revModalStatusText">
                         <span id="revModalStatusBadge">-</span>
                     </div>
@@ -730,7 +730,7 @@
                 <!-- Reviewer & Tanggal Info -->
                 <div class="grid grid-cols-2 gap-3">
                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Reviewer / Approver</span>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block" id="revModalApproverLabel">Pejabat Pemutus / Approver</span>
                         <div class="font-bold text-slate-800 mt-0.5" id="revModalApprover">-</div>
                     </div>
                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
@@ -739,14 +739,14 @@
                     </div>
                 </div>
 
-                <!-- Catatan & Notulensi Reviewer -->
+                <!-- Catatan & Notulensi -->
                 <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-2">
                     <div class="flex items-center justify-between">
                         <span class="text-[11px] font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
-                            Catatan Pertimbangan & Notulensi Reviewer
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+                            Catatan Pertimbangan & Notulensi Keputusan
                         </span>
-                        <span class="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-100">Evaluasi Komite</span>
+                        <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">Evaluasi Komite</span>
                     </div>
                     <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-slate-700 text-xs leading-relaxed italic whitespace-pre-line min-h-[64px]" id="revModalCatatan">
                         -
@@ -761,10 +761,60 @@
             </div>
 
             <!-- Footer Modal -->
-            <div class="pt-3 border-t border-slate-100 flex items-center justify-end">
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                <div>
+                    <button type="button" id="btnUnduhSuratKeputusanModal" onclick="bukaModalSuratKeputusanDariPengusul()" 
+                            class="hidden px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm hover:shadow flex items-center gap-2 cursor-pointer">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Unduh / Cetak Surat Keputusan</span>
+                    </button>
+                </div>
                 <button type="button" onclick="tutupModalHasilReview()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition cursor-pointer">
                     Tutup
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pop-up Surat Keputusan Kredit -->
+    <div id="modalSuratKeputusan" class="fixed inset-0 z-[200] hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 lg:p-6 transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[94vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
+            <!-- Modal Header -->
+            <div class="px-4 sm:px-6 py-3 sm:py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold shrink-0 shadow-2xs">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-xs sm:text-sm font-extrabold text-slate-900 truncate" id="skModalJudul">Surat Keputusan Kredit</h3>
+                        <p class="text-[10px] sm:text-[11px] text-slate-500 truncate hidden xs:block" id="skModalSubJudul">
+                            Surat Keputusan Resmi Direktur Utama / CEO
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="cetakIframeSuratKeputusanPengusul()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-2xs transition cursor-pointer">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Cetak / Unduh PDF</span>
+                    </button>
+                    <button type="button" onclick="tutupModalSuratKeputusanPengusul()"
+                            class="w-8 h-8 rounded-lg bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-700 flex items-center justify-center transition border border-slate-200 cursor-pointer shadow-2xs" title="Tutup Modal">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Modal Body (Iframe) -->
+            <div class="flex-1 bg-slate-100 relative overflow-hidden flex flex-col">
+                <div id="loadingIframeSuratKeputusanPengusul" class="absolute inset-0 bg-white/80 backdrop-blur-xs flex flex-col items-center justify-center z-10 transition-opacity">
+                    <svg class="animate-spin h-8 w-8 text-blue-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span class="text-xs font-semibold text-slate-600">Memuat Surat Keputusan...</span>
+                </div>
+                <iframe id="iframeSuratKeputusanPengusul" src="" class="w-full h-full border-0 flex-1 bg-white"
+                        onload="document.getElementById('loadingIframeSuratKeputusanPengusul').classList.add('hidden')"></iframe>
             </div>
         </div>
     </div>
@@ -812,16 +862,26 @@
             }
         }
 
-        // Modal Hasil Review
+        let activeKreditIdForSK = null;
+
+        // Modal Hasil Review & Keputusan CEO / Komite
         function bukaModalHasilReview(kreditId) {
             const item = (pengajuanDataStore || []).find(x => x.kredit_id == kreditId);
             if (!item) return;
+
+            activeKreditIdForSK = kreditId;
 
             document.getElementById('revModalNoAplikasiNama').innerText = (item.nomor_aplikasi || '-') + ' \u2022 ' + (item.nama_debitur || '-');
             document.getElementById('revModalUsaha').innerText = item.nama_usaha || item.jenis_debitur || 'Individu';
             document.getElementById('revModalPlafon').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(parseFloat(item.plafon_pengajuan || 0));
 
-            const rawStatus = (item.status_komite || item.status_pengajuan || 'Draft').trim();
+            // Utamakan keputusan CEO jika sudah ada keputusan final
+            let rawStatus = (item.status_komite || item.status_pengajuan || 'Draft').trim();
+            const pSt = (item.status_pengajuan || '').toLowerCase();
+            const finalStList = ['disetujui', 'bersyarat', 'ditolak', 'revisi'];
+            if (finalStList.some(x => pSt.includes(x))) {
+                rawStatus = item.status_pengajuan;
+            }
             const st = rawStatus.toLowerCase();
 
             const banner = document.getElementById('revModalStatusBanner');
@@ -830,35 +890,51 @@
             const panduanBox = document.getElementById('revModalPanduanBox');
             const panduanTitle = document.getElementById('revModalPanduanTitle');
             const panduanDesc = document.getElementById('revModalPanduanDesc');
+            const statusLabel = document.getElementById('revModalStatusLabel');
+            const approverLabel = document.getElementById('revModalApproverLabel');
+
+            if (statusLabel) {
+                statusLabel.innerText = item.is_ceo_decision ? 'Keputusan Resmi Direktur Utama / CEO:' : 'Keputusan Resmi Komite Kredit / Reviewer:';
+            }
+            if (approverLabel) {
+                approverLabel.innerText = item.is_ceo_decision ? 'Pejabat Pemutus (CEO / Direktur)' : 'Reviewer / Approver';
+            }
 
             if (st.includes('bersyarat')) {
                 banner.className = 'p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-1.5 bg-amber-50 text-amber-900 border-amber-300 ring-1 ring-amber-200/50';
                 badge.innerText = 'DISETUJUI BERSYARAT';
-                sub.innerText = 'Pengajuan disetujui dengan ketentuan / syarat tertentu dari Reviewer';
+                sub.innerText = 'Pengajuan disetujui dengan klausul / ketentuan khusus dari Direktur Utama / CEO';
                 panduanBox.className = 'p-3.5 rounded-2xl border text-xs bg-amber-50/60 border-amber-200 text-amber-900';
                 panduanTitle.innerText = 'Tindak Lanjut Pengusul:';
-                panduanDesc.innerText = 'Periksa syarat pada catatan reviewer di atas. Hubungi debitur untuk melengkapi dokumen/kondisi yang dipersyaratkan sebelum proses akad.';
+                panduanDesc.innerText = 'Periksa klausul pada catatan di atas. Hubungi debitur untuk memenuhi syarat sebelum proses penandatanganan akad kredit.';
             } else if (st.includes('setuju')) {
                 banner.className = 'p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-1.5 bg-emerald-50 text-emerald-900 border-emerald-300 ring-1 ring-emerald-200/50';
                 badge.innerText = 'DISETUJUI PENUH';
-                sub.innerText = 'Pengajuan telah disetujui resmi oleh Reviewer / Komite Kredit';
+                sub.innerText = 'Pengajuan telah disetujui resmi oleh Direktur Utama / CEO';
                 panduanBox.className = 'p-3.5 rounded-2xl border text-xs bg-emerald-50/60 border-emerald-200 text-emerald-900';
                 panduanTitle.innerText = 'Tindak Lanjut Pengusul:';
-                panduanDesc.innerText = 'Pengajuan telah lolos evaluasi. Anda dapat mencetak lembar CAM PDF resmi dan mempersiapkan proses akad serta pencairan kredit.';
+                panduanDesc.innerText = 'Pengajuan telah disetujui. Anda dapat mengunduh / mencetak Surat Keputusan Kredit dan melanjutkan proses akad serta pencairan pembiayaan.';
             } else if (st.includes('tolak')) {
                 banner.className = 'p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-1.5 bg-rose-50 text-rose-900 border-rose-300 ring-1 ring-rose-200/50';
                 badge.innerText = 'DITOLAK';
-                sub.innerText = 'Pengajuan tidak disetujui oleh Reviewer / Komite Kredit';
+                sub.innerText = 'Pengajuan tidak disetujui berdasarkan telaah dan keputusan Direktur Utama / CEO';
                 panduanBox.className = 'p-3.5 rounded-2xl border text-xs bg-rose-50/60 border-rose-200 text-rose-900';
                 panduanTitle.innerText = 'Tindak Lanjut Pengusul:';
-                panduanDesc.innerText = 'Pengajuan ditolak berdasarkan mitigasi risiko di atas. Sampaikan penjelasan resmi kepada nasabah secara profesional.';
+                panduanDesc.innerText = 'Pengajuan ditolak berdasarkan mitigasi risiko di atas. Anda dapat melihat Surat Keputusan Penolakan resmi dan menyampaikan penjelasan kepada nasabah secara profesional.';
             } else if (st.includes('revisi')) {
                 banner.className = 'p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-1.5 bg-purple-50 text-purple-900 border-purple-300 ring-1 ring-purple-200/50';
                 badge.innerText = 'PERLU REVISI (DIKEMBALIKAN KE AO)';
-                sub.innerText = 'Berkas dikembalikan oleh Reviewer untuk perbaikan data / dokumen pendukung';
+                sub.innerText = 'Berkas dikembalikan untuk perbaikan data / dokumen pendukung';
                 panduanBox.className = 'p-3.5 rounded-2xl border text-xs bg-purple-50/60 border-purple-200 text-purple-900';
                 panduanTitle.innerText = 'Instruksi Tindak Lanjut AO:';
-                panduanDesc.innerText = 'Periksa catatan perbaikan Reviewer di atas. Buka tombol "Edit Form" untuk merevisi isian atau dokumen yang diminta, kemudian ajukan ulang pada Tab 12.';
+                panduanDesc.innerText = 'Periksa catatan perbaikan di atas. Buka tombol "Edit Form" untuk merevisi isian atau dokumen yang diminta, kemudian ajukan ulang pada Tab 12.';
+            } else if (st.includes('rekomendasi') || st.includes('tinjau') || st.includes('review') || st.includes('menunggu')) {
+                banner.className = 'p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-1.5 bg-blue-50 text-blue-900 border-blue-200';
+                badge.innerText = 'MENUNGGU KEPUTUSAN FINAL CEO';
+                sub.innerText = 'Berkas telah dievaluasi Reviewer dan sedang menunggu penetapan keputusan oleh Direktur Utama / CEO';
+                panduanBox.className = 'p-3.5 rounded-2xl border text-xs bg-blue-50/60 border-blue-200 text-blue-900';
+                panduanTitle.innerText = 'Tindak Lanjut Pengusul:';
+                panduanDesc.innerText = 'Menunggu sidang komite atau penetapan keputusan oleh CEO. Pantau status pengajuan secara berkala.';
             } else if (st === 'diajukan') {
                 banner.className = 'p-4 rounded-2xl border text-center flex flex-col items-center justify-center space-y-1.5 bg-blue-50 text-blue-900 border-blue-200';
                 badge.innerText = 'SEDANG DIAJUKAN';
@@ -875,7 +951,7 @@
                 panduanDesc.innerText = 'Selesaikan pengisian 12 tahap formulir analisa kredit agar berkas dapat diajukan ke Reviewer & Komite Kredit.';
             }
 
-            document.getElementById('revModalApprover').innerText = item.nama_reviewer || 'Reviewer / Komite Kredit';
+            document.getElementById('revModalApprover').innerText = item.nama_reviewer || (item.is_ceo_decision ? 'Direktur Utama / CEO' : 'Reviewer / Komite Kredit');
             document.getElementById('revModalTanggal').innerText = item.tanggal_review ? item.tanggal_review : '-';
 
             const catatanElem = document.getElementById('revModalCatatan');
@@ -884,9 +960,20 @@
                 catatanElem.classList.remove('text-slate-400');
                 catatanElem.classList.add('text-slate-700');
             } else {
-                catatanElem.innerText = 'Belum ada catatan evaluasi dari Reviewer. Keputusan resmi akan dicatat saat sidang komite berlangsung.';
+                catatanElem.innerText = 'Belum ada catatan khusus. Keputusan resmi tercatat pada sistem komite.';
                 catatanElem.classList.remove('text-slate-700');
                 catatanElem.classList.add('text-slate-400');
+            }
+
+            // Tampilkan tombol unduh/cetak Surat Keputusan jika keputusan sudah final
+            const btnSK = document.getElementById('btnUnduhSuratKeputusanModal');
+            const isFinalStatus = ['setuju', 'bersyarat', 'tolak', 'revisi'].some(x => st.includes(x)) || !!item.sudah_ada_sk || !!item.is_ceo_decision;
+            if (btnSK) {
+                if (isFinalStatus && !st.includes('draft') && !st.includes('diajukan') && !st.includes('menunggu')) {
+                    btnSK.classList.remove('hidden');
+                } else {
+                    btnSK.classList.add('hidden');
+                }
             }
 
             document.getElementById('modalHasilReview').classList.remove('hidden');
@@ -894,6 +981,50 @@
 
         function tutupModalHasilReview() {
             document.getElementById('modalHasilReview').classList.add('hidden');
+        }
+
+        // Pop-up Surat Keputusan Kredit untuk Pengusul
+        function bukaModalSuratKeputusanDariPengusul() {
+            if (!activeKreditIdForSK) return;
+            const modal = document.getElementById('modalSuratKeputusan');
+            const iframe = document.getElementById('iframeSuratKeputusanPengusul');
+            const item = (pengajuanDataStore || []).find(x => x.kredit_id == activeKreditIdForSK);
+            if (item) {
+                const subElem = document.getElementById('skModalSubJudul');
+                if (subElem) subElem.innerText = 'Surat Keputusan Resmi Direktur Utama / CEO \u2022 ' + (item.nomor_aplikasi || '');
+            }
+            const urlSK = '<?= base_url('reviewer/surat-keputusan/') ?>/' + activeKreditIdForSK;
+            const loader = document.getElementById('loadingIframeSuratKeputusanPengusul');
+            if (loader) loader.classList.remove('hidden');
+            if (iframe) iframe.src = urlSK;
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+
+        function tutupModalSuratKeputusanPengusul() {
+            const modal = document.getElementById('modalSuratKeputusan');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+            const iframe = document.getElementById('iframeSuratKeputusanPengusul');
+            if (iframe) iframe.src = '';
+        }
+
+        function cetakIframeSuratKeputusanPengusul() {
+            const iframe = document.getElementById('iframeSuratKeputusanPengusul');
+            if (iframe && iframe.contentWindow) {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    return;
+                } catch(e) {}
+            }
+            if (activeKreditIdForSK) {
+                window.open('<?= base_url('reviewer/surat-keputusan/') ?>/' + activeKreditIdForSK + '?print=1', '_blank');
+            }
         }
 
         // Dropdown Profil
@@ -908,6 +1039,30 @@
             const dropdown = document.getElementById('userProfileDropdown');
             const menu = document.getElementById('dropdownMenuProfil');
             if (dropdown && !dropdown.contains(e.target) && menu) {
+                menu.classList.add('hidden');
+            }
+
+            const mAi = document.getElementById('modalHasilAI');
+            if (mAi && e.target === mAi) {
+                tutupModalHasilAI();
+            }
+            const mRev = document.getElementById('modalHasilReview');
+            if (mRev && e.target === mRev) {
+                tutupModalHasilReview();
+            }
+            const mSK = document.getElementById('modalSuratKeputusan');
+            if (mSK && e.target === mSK) {
+                tutupModalSuratKeputusanPengusul();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                tutupModalHasilAI();
+                tutupModalHasilReview();
+                tutupModalSuratKeputusanPengusul();
+            }
+        });
                 menu.classList.add('hidden');
             }
 

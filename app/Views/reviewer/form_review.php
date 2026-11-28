@@ -66,7 +66,7 @@
         $labaVal = max(0, $omzetVal - $hppNom - $bhNom - $blNom);
     }
 
-    $dscVal = (float)($keuangan['dsc_rasio_rk'] ?? ($keuangan['rasio_dsc_dscr'] ?? 0));
+    $dscVal = (float)($keuangan['rasio_dsc_rk'] ?? ($keuangan['rasio_dsc_iv'] ?? ($keuangan['dsc_rasio_rk'] ?? ($keuangan['rasio_dsc_dscr'] ?? 0))));
     if ($dscVal <= 0 && $angsuranVal > 0 && $labaVal > 0) {
         $dscVal = round($labaVal / $angsuranVal, 2);
     }
@@ -78,21 +78,59 @@
     $plafonAi   = ($plafonPengajuan > 0 && $rawPlafonAi > $plafonPengajuan) ? $plafonPengajuan : $rawPlafonAi;
     $risikoAi   = !empty($analisa['analisis_risiko_ai']) ? $analisa['analisis_risiko_ai'] : 'Profil usaha menunjukkan perputaran kas positif dengan rasio DSC di atas batas aman. Agunan memiliki nilai pasar dan legalitas kuat yang mampu memitigasi risiko gagal bayar.';
 
+    // Evaluasi 3 status standar 5C (Baik, Perlu Pengawasan, Berisiko)
+    $evaluasiStatus5C = function($skor) {
+        if ($skor >= 75) {
+            return [
+                'label'      => 'Baik',
+                'badge'      => 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                'badge_card' => 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+            ];
+        } elseif ($skor >= 60) {
+            return [
+                'label'      => 'Perlu Pengawasan',
+                'badge'      => 'bg-amber-100 text-amber-800 border-amber-300',
+                'badge_card' => 'bg-amber-100 text-amber-800 border border-amber-200'
+            ];
+        } else {
+            return [
+                'label'      => 'Berisiko',
+                'badge'      => 'bg-rose-100 text-rose-800 border-rose-300',
+                'badge_card' => 'bg-rose-100 text-rose-800 border border-rose-200'
+            ];
+        }
+    };
+
     // Penilaian 5C individual
-    $charStatus = (($kredit['status_slik'] ?? '') === 'Terbit' && empty($kredit['ada_tunggakan_slik'])) ? 'Sangat Baik' : 'Cukup Baik';
-    $charScore  = (($kredit['status_slik'] ?? '') === 'Terbit' && empty($kredit['ada_tunggakan_slik'])) ? 88 : 75;
+    $charScore     = (($kredit['status_slik'] ?? '') === 'Terbit' && empty($kredit['ada_tunggakan_slik'])) ? 88 : 75;
+    $charEval      = $evaluasiStatus5C($charScore);
+    $charStatus    = $charEval['label'];
+    $charBadge     = $charEval['badge'];
+    $charBadgeCard = $charEval['badge_card'];
 
-    $capStatus  = ($dscVal >= 1.30) ? 'Kuat / Aman' : 'Perlu Pengawasan';
-    $capScore   = ($dscVal >= 1.50) ? 90 : (($dscVal >= 1.30) ? 82 : 65);
+    $capScore      = ($dscVal >= 1.50) ? 90 : (($dscVal >= 1.30) ? 82 : 65);
+    $capEval       = $evaluasiStatus5C($capScore);
+    $capStatus     = $capEval['label'];
+    $capBadge      = $capEval['badge'];
+    $capBadgeCard  = $capEval['badge_card'];
 
-    $capitStatus= 'Stabil';
-    $capitScore = 80;
+    $capitScore     = 80;
+    $capitEval      = $evaluasiStatus5C($capitScore);
+    $capitStatus    = $capitEval['label'];
+    $capitBadge     = $capitEval['badge'];
+    $capitBadgeCard = $capitEval['badge_card'];
 
-    $collStatus = ($coverage_lv >= 100) ? 'Menutup Penuh' : 'Cukup';
-    $collScore  = ($coverage_lv >= 120) ? 92 : (($coverage_lv >= 100) ? 84 : 70);
+    $collScore     = ($coverage_lv >= 120) ? 92 : (($coverage_lv >= 100) ? 84 : 70);
+    $collEval      = $evaluasiStatus5C($collScore);
+    $collStatus    = $collEval['label'];
+    $collBadge     = $collEval['badge'];
+    $collBadgeCard = $collEval['badge_card'];
 
-    $condStatus = 'Kondusif';
-    $condScore  = 80;
+    $condScore     = 80;
+    $condEval      = $evaluasiStatus5C($condScore);
+    $condStatus    = $condEval['label'];
+    $condBadge     = $condEval['badge'];
+    $condBadgeCard = $condEval['badge_card'];
 ?>
 
     <!-- Top Bar Navigation -->
@@ -166,26 +204,70 @@
                         </div>
 
                         <!-- Grid 4 Kotak (Diluruskan tingginya dengan flex-1) -->
+                        <?php
+                            // Helper kalkulasi untuk 4 Kotak Ringkasan
+                            $isBadan = (isset($kredit['jenis_debitur']) && (stripos($kredit['jenis_debitur'], 'badan') !== false || stripos($kredit['jenis_debitur'], 'pt') !== false || stripos($kredit['jenis_debitur'], 'cv') !== false));
+                            $labelIdentitas = $isBadan ? 'NPWP/NIB' : 'NIK';
+                            $nomorIdentitas = $isBadan ? (($kredit['npwp_badan'] ?? '') ?: ($kredit['npwp_pribadi'] ?? '')) : ($kredit['npwp_pribadi'] ?? '');
+
+                            // SLIK status & ringkasan
+                            $statusSlik = $kredit['status_slik'] ?? 'Belum Terbit';
+                            $isSlikTerbit = (strcasecmp($statusSlik, 'Terbit') === 0);
+                            $statusColor = $isSlikTerbit ? 'text-emerald-700' : 'text-amber-700';
+
+                            if ($isSlikTerbit) {
+                                $ringkasanSlik = !empty($kredit['ringkasan_slik']) ? $kredit['ringkasan_slik'] : 'Riwayat pembayaran lancar, tidak ada catatan tunggakan fasilitas kredit aktif.';
+                                $hasilSlik = !empty($kredit['hasil_slik']) ? $kredit['hasil_slik'] : 'Kol 1 (Lancar)';
+                                $isAdaTunggakan = (stripos($hasilSlik, 'tunggakan') !== false || stripos($hasilSlik, 'kol 2') !== false || stripos($hasilSlik, 'kol 3') !== false || stripos($hasilSlik, 'kol 4') !== false || stripos($hasilSlik, 'kol 5') !== false);
+                                $hasilColor = $isAdaTunggakan ? 'text-rose-600' : 'text-emerald-700';
+                            } else {
+                                $ringkasanSlik = 'Menunggu verifikasi riwayat fasilitas kredit aktif dari Petugas SLIK.';
+                                $hasilSlik = 'Belum Terbit';
+                                $hasilColor = 'text-amber-600';
+                            }
+
+                            // DSC Rasio status & warna
+                            if ($dscVal <= 0 && ($labaVal <= 0 || $angsuranVal <= 0)) {
+                                $dscDisplay = '— (Belum Dihitung)';
+                                $dscColor   = 'text-slate-500';
+                            } elseif ($dscVal >= 1.30) {
+                                $dscDisplay = number_format($dscVal, 2) . 'x (Aman)';
+                                $dscColor   = 'text-emerald-700';
+                            } elseif ($dscVal >= 1.00) {
+                                $dscDisplay = number_format($dscVal, 2) . 'x (Waspada)';
+                                $dscColor   = 'text-amber-700';
+                            } else {
+                                $dscDisplay = number_format($dscVal, 2) . 'x (Defisit)';
+                                $dscColor   = 'text-rose-600';
+                            }
+                        ?>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 flex-1 items-stretch">
                             <!-- 1. Debitur & Usaha -->
                             <div class="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/80 flex flex-col justify-between min-h-[145px]">
-                                <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center gap-1.5">
-                                    <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">1</span>
-                                    <span>Calon Debitur & Usaha</span>
+                                <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center justify-between">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">1</span>
+                                        <span>Calon Debitur & Usaha</span>
+                                    </div>
+                                    <span class="text-[10px] font-semibold <?= $isBadan ? 'text-indigo-700 bg-indigo-50 border border-indigo-200' : 'text-slate-600 bg-slate-200/70' ?> px-1.5 py-0.5 rounded"><?= $isBadan ? 'Badan Usaha' : 'Perorangan' ?></span>
                                 </span>
                                 <div class="space-y-1 my-1.5 text-xs">
                                     <div class="truncate">
-                                        <span class="text-slate-400 text-[11px] block">Nama & NIK:</span>
+                                        <span class="text-slate-400 text-[10px] block"><?= $isBadan ? 'Nama Perusahaan / Debitur:' : 'Nama Debitur:' ?></span>
                                         <strong class="text-slate-800 text-xs block truncate"><?= esc(($kredit['nama_debitur'] ?? '') ?: '-') ?></strong>
                                     </div>
                                     <div class="truncate">
-                                        <span class="text-slate-400 text-[11px] block">Usaha & Lama:</span>
+                                        <span class="text-slate-400 text-[10px] block">Usaha & Lama:</span>
                                         <span class="text-blue-800 font-bold block truncate"><?= esc(($kredit['nama_usaha'] ?? '') ?: '-') ?> (<?= esc(($kredit['lama_usaha'] ?? '') ?: '-') ?>)</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[11px] pt-0.5">
+                                        <span class="text-slate-400 text-[11px]">Pengusul:</span>
+                                        <span class="font-semibold text-slate-700 truncate max-w-[150px]"><?= esc(($kredit['nama_pengusul'] ?? '') ?: '-') ?></span>
                                     </div>
                                 </div>
                                 <div class="text-[11px] text-slate-500 pt-1 border-t border-slate-200/50 flex justify-between">
                                     <span>HP: <?= esc(($kredit['nomor_hp'] ?? '') ?: '-') ?></span>
-                                    <span>NIK: <?= esc(($kredit['npwp_pribadi'] ?? '') ?: '-') ?></span>
+                                    <span><?= $labelIdentitas ?>: <?= esc($nomorIdentitas ?: '-') ?></span>
                                 </div>
                             </div>
 
@@ -216,7 +298,7 @@
                                 <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center justify-between">
                                     <div class="flex items-center gap-1.5">
                                         <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">3</span>
-                                        <span>SLIK OJK (Ideb)</span>
+                                        <span>SLIK OJK (iDeb)</span>
                                     </div>
                                     <?php if (!empty($kredit['berkas_slik_pdf'])): ?>
                                         <a href="<?= base_url($kredit['berkas_slik_pdf']) ?>" target="_blank" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline flex items-center gap-0.5" title="Lihat Laporan iDeb Resmi PDF">
@@ -227,18 +309,18 @@
                                 <div class="space-y-1 my-1.5 text-xs flex-1">
                                     <div class="flex items-center justify-between">
                                         <span class="text-slate-400 text-[11px]">Status SLIK:</span>
-                                        <span class="font-bold <?= ($kredit['status_slik'] ?? '') === 'Terbit' ? 'text-emerald-700' : 'text-amber-700' ?>">
-                                            <?= esc($kredit['status_slik'] ?? 'Belum Terbit') ?>
+                                        <span class="font-bold <?= $statusColor ?>">
+                                            <?= esc($statusSlik) ?>
                                         </span>
                                     </div>
                                     <p class="text-slate-700 text-[11px] line-clamp-2 leading-relaxed mt-1">
-                                        <?= esc(($kredit['ringkasan_slik'] ?? '') ?: 'Riwayat pembayaran lancar, tidak ada catatan tunggakan fasilitas kredit aktif.') ?>
+                                        <?= esc($ringkasanSlik) ?>
                                     </p>
                                 </div>
                                 <div class="text-[11px] text-slate-500 pt-1 border-t border-slate-200/50 flex justify-between items-center">
                                     <span>Hasil:</span>
-                                    <span class="font-bold <?= stripos($kredit['hasil_slik'] ?? '', 'tunggakan') !== false || stripos($kredit['hasil_slik'] ?? '', 'kol 2') !== false || stripos($kredit['hasil_slik'] ?? '', 'kol 3') !== false ? 'text-rose-600' : 'text-emerald-700' ?>">
-                                        <?= esc($kredit['hasil_slik'] ?? 'Kol 1 (Lancar)') ?>
+                                    <span class="font-bold <?= $hasilColor ?>">
+                                        <?= esc($hasilSlik) ?>
                                     </span>
                                 </div>
                             </div>
@@ -265,7 +347,7 @@
                                 </div>
                                 <div class="text-[11px] pt-1 border-t border-slate-200/50 flex justify-between items-center">
                                     <span class="text-slate-500">Rasio DSC:</span>
-                                    <strong class="text-emerald-700 font-bold"><?= number_format($dscVal, 2) ?>x (Aman)</strong>
+                                    <strong class="<?= $dscColor ?> font-bold"><?= $dscDisplay ?></strong>
                                 </div>
                             </div>
                         </div>
@@ -336,58 +418,6 @@
                                 Reviewer bertugas merekomendasikan dan memberikan catatan analisis kepada CEO. Reviewer bersifat opsional dan bisa lebih dari satu orang.
                             <?php endif; ?>
                         </p>
-                    </div>
-
-                    <!-- ============================================================== -->
-                    <!-- SECTION RIWAYAT REKOMENDASI REVIEWER (LAYER SEBELUM CEO)        -->
-                    <!-- ============================================================== -->
-                    <div class="p-4 border-b border-slate-100 bg-slate-50/70">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                                Rekomendasi Reviewer (Layer Pra-CEO)
-                            </span>
-                            <span class="text-[10px] font-semibold text-slate-400">
-                                <?= !empty($semua_reviewer) ? count($semua_reviewer) . ' Reviewer' : 'Opsional' ?>
-                            </span>
-                        </div>
-
-                        <?php if (!empty($semua_reviewer) && count($semua_reviewer) > 0): ?>
-                            <div class="space-y-2.5">
-                                <?php foreach ($semua_reviewer as $rev): 
-                                    $rStatus = $rev['status_approval'] ?? '-';
-                                    $rBadge = 'bg-slate-100 text-slate-700 border-slate-200';
-                                    if ($rStatus === 'Disetujui') $rBadge = 'bg-emerald-100 text-emerald-800 border-emerald-300';
-                                    elseif ($rStatus === 'Disetujui Bersyarat') $rBadge = 'bg-amber-100 text-amber-800 border-amber-300';
-                                    elseif ($rStatus === 'Revisi') $rBadge = 'bg-purple-100 text-purple-800 border-purple-300';
-                                    elseif ($rStatus === 'Ditolak') $rBadge = 'bg-rose-100 text-rose-800 border-rose-300';
-                                ?>
-                                    <div class="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs space-y-1.5">
-                                        <div class="flex items-center justify-between gap-2">
-                                            <div class="flex items-center gap-1.5 min-w-0">
-                                                <div class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold shrink-0">
-                                                    <?= esc(substr($rev['nama_approver'] ?? 'R', 0, 1)) ?>
-                                                </div>
-                                                <span class="text-xs font-bold text-slate-800 truncate"><?= esc($rev['nama_approver'] ?? 'Reviewer') ?></span>
-                                            </div>
-                                            <span class="px-2 py-0.5 rounded text-[10px] font-black border shrink-0 <?= $rBadge ?>">
-                                                <?= esc($rStatus) ?>
-                                            </span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-600 bg-slate-50/80 p-2 rounded-lg border border-slate-100 italic">
-                                            "<?= esc($rev['catatan_approval'] ?: 'Tidak ada catatan khusus.') ?>"
-                                        </p>
-                                        <div class="text-[10px] text-slate-400 text-right">
-                                            <?= !empty($rev['tanggal_approval']) ? date('d/m/Y', strtotime($rev['tanggal_approval'])) : '' ?>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php else: ?>
-                            <div class="p-3 bg-white border border-dashed border-slate-200 rounded-xl text-center text-slate-400 text-[11px]">
-                                Belum ada review dari reviewer. (Reviewer berstatus opsional, CEO dapat langsung memutuskan persetujuan kredit).
-                            </div>
-                        <?php endif; ?>
                     </div>
 
                     <?php if ($isFinalized): ?>
@@ -490,7 +520,15 @@
                                                     <div class="flex items-center gap-1.5">
                                                         <span>Oleh: <strong class="text-indigo-700"><?= esc($revName) ?></strong></span>
                                                         <?php if (!empty($revRek) && !in_array($revRek, ['Ditinjau Reviewer', 'Pending', 'Menunggu Review'])): ?>
-                                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200"><?= esc($revRek) ?></span>
+                                                            <?php
+                                                                $badgeClass = 'bg-indigo-100 text-indigo-800 border-indigo-200';
+                                                                if (stripos($revRek, 'tidak') !== false || stripos($revRek, 'tolak') !== false) {
+                                                                    $badgeClass = 'bg-rose-100 text-rose-800 border-rose-200';
+                                                                } elseif (stripos($revRek, 'rekomendasi') !== false || stripos($revRek, 'setuju') !== false) {
+                                                                    $badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                                                                }
+                                                            ?>
+                                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border <?= $badgeClass ?>"><?= esc($revRek) ?></span>
                                                         <?php endif; ?>
                                                     </div>
                                                     <?php if (!empty($revDate)): ?><span><?= $revDate ?></span><?php endif; ?>
@@ -568,6 +606,40 @@
                             }
                         ?>
 
+
+                        <!-- Pilihan Rekomendasi Reviewer (Rekomendasi / Tidak Rekomendasi) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                    Rekomendasi Reviewer <span class="text-slate-400 font-normal">(opsional)</span>
+                                </label>
+                                <span class="text-[11px] text-slate-400">
+                                    Klik lagi untuk batal pilih
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <!-- 1. Option Rekomendasi -->
+                                <label class="cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30" id="labelPilihanRekomendasi">
+                                    <input type="radio" name="keputusan" value="Rekomendasi" class="sr-only" onchange="updateKeputusanUI()">
+                                    <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center mb-1.5 shadow-2xs">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-emerald-800">Rekomendasi</span>
+                                    <span class="text-[10px] text-slate-500 mt-0.5 leading-tight">Direkomendasikan Layak</span>
+                                </label>
+
+                                <!-- 2. Option Tidak Rekomendasi -->
+                                <label class="cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-slate-200 hover:border-rose-300 hover:bg-rose-50/30" id="labelPilihanTidakRekomendasi">
+                                    <input type="radio" name="keputusan" value="Tidak Rekomendasi" class="sr-only" onchange="updateKeputusanUI()">
+                                    <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center mb-1.5 shadow-2xs">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </div>
+                                    <span class="text-xs font-extrabold text-rose-800">Tidak Rekomendasi</span>
+                                    <span class="text-[10px] text-slate-500 mt-0.5 leading-tight">Tidak Direkomendasikan</span>
+                                </label>
+                            </div>
+                        </div>
 
                         <!-- Teks Input: Catatan Hasil Review -->
                         <div class="flex-1 flex flex-col">
@@ -695,7 +767,7 @@
                             <div>
                                 <div class="flex items-center justify-between pb-1.5 border-b border-slate-200/60 mb-2">
                                     <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">C1</span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><?= $charStatus ?></span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $charBadgeCard ?>"><?= $charStatus ?></span>
                                 </div>
                                 <strong class="text-slate-900 block font-bold text-xs">Character</strong>
                                 <span class="text-[11px] text-slate-400 block mb-1">Watak &amp; Rekam Jejak</span>
@@ -721,7 +793,7 @@
                             <div>
                                 <div class="flex items-center justify-between pb-1.5 border-b border-slate-200/60 mb-2">
                                     <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">C2</span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $dscVal >= 1.3 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-rose-100 text-rose-800 border border-rose-200' ?>"><?= $capStatus ?></span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $capBadgeCard ?>"><?= $capStatus ?></span>
                                 </div>
                                 <strong class="text-slate-900 block font-bold text-xs">Capacity</strong>
                                 <span class="text-[11px] text-slate-400 block mb-1">Kapasitas Bayar (DSC)</span>
@@ -753,7 +825,7 @@
                             <div>
                                 <div class="flex items-center justify-between pb-1.5 border-b border-slate-200/60 mb-2">
                                     <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">C3</span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200"><?= $capitStatus ?></span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $capitBadgeCard ?>"><?= $capitStatus ?></span>
                                 </div>
                                 <strong class="text-slate-900 block font-bold text-xs">Capital</strong>
                                 <span class="text-[11px] text-slate-400 block mb-1">Permodalan Usaha</span>
@@ -793,7 +865,7 @@
                             <div>
                                 <div class="flex items-center justify-between pb-1.5 border-b border-slate-200/60 mb-2">
                                     <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">C4</span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><?= $collStatus ?></span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $collBadgeCard ?>"><?= $collStatus ?></span>
                                 </div>
                                 <strong class="text-slate-900 block font-bold text-xs">Collateral</strong>
                                 <span class="text-[11px] text-slate-400 block mb-1">Agunan &amp; Likuidasi</span>
@@ -819,7 +891,7 @@
                             <div>
                                 <div class="flex items-center justify-between pb-1.5 border-b border-slate-200/60 mb-2">
                                     <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">C5</span>
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200"><?= $condStatus ?></span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $condBadgeCard ?>"><?= $condStatus ?></span>
                                 </div>
                                 <strong class="text-slate-900 block font-bold text-xs">Condition</strong>
                                 <span class="text-[11px] text-slate-400 block mb-1">Kondisi Pasar</span>
@@ -993,41 +1065,26 @@
         const IS_CEO_USER = false;
 
         function updateKeputusanUI() {
-            const radSetuju    = document.querySelector('input[name="keputusan"][value="Disetujui"]');
-            const radBersyarat = document.querySelector('input[name="keputusan"][value="Disetujui Bersyarat"]');
-            const radRevisi    = document.querySelector('input[name="keputusan"][value="Revisi"]');
-            const radTolak     = document.querySelector('input[name="keputusan"][value="Ditolak"]');
+            const radRekomendasi      = document.querySelector('input[name="keputusan"][value="Rekomendasi"]');
+            const radTidakRekomendasi = document.querySelector('input[name="keputusan"][value="Tidak Rekomendasi"]');
 
-            const lblSetuju    = document.getElementById('labelPilihanSetuju');
-            const lblBersyarat = document.getElementById('labelPilihanBersyarat');
-            const lblRevisi    = document.getElementById('labelPilihanRevisi');
-            const lblTolak     = document.getElementById('labelPilihanTolak');
+            const lblRekomendasi      = document.getElementById('labelPilihanRekomendasi');
+            const lblTidakRekomendasi = document.getElementById('labelPilihanTidakRekomendasi');
 
-            const wajibBadge   = document.getElementById('wajibCatatanBadge');
-            const helperText   = document.getElementById('catatanHelperText');
+            const helperText          = document.getElementById('catatanHelperText');
 
             // Reset base classes
-            if (lblSetuju) lblSetuju.className    = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30';
-            if (lblBersyarat) lblBersyarat.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-slate-200 hover:border-amber-300 hover:bg-amber-50/30';
-            if (lblRevisi) lblRevisi.className    = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-slate-200 hover:border-purple-300 hover:bg-purple-50/30';
-            if (lblTolak) lblTolak.className     = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-slate-200 hover:border-rose-300 hover:bg-rose-50/30';
+            if (lblRekomendasi) lblRekomendasi.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30';
+            if (lblTidakRekomendasi) lblTidakRekomendasi.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-slate-200 hover:border-rose-300 hover:bg-rose-50/30';
 
-            if (radSetuju && radSetuju.checked) {
-                if (lblSetuju) lblSetuju.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-200';
-                if (helperText) helperText.innerText = IS_CEO_USER ? 'Catatan pertimbangan persetujuan kredit.' : 'Rekomendasi persetujuan penuh untuk dipertimbangkan oleh CEO.';
-            } else if (radBersyarat && radBersyarat.checked) {
-                if (lblBersyarat) lblBersyarat.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-amber-500 bg-amber-50/70 ring-2 ring-amber-200';
-                if (helperText) helperText.innerText = IS_CEO_USER ? 'Tuliskan klausul syarat khusus sebelum realisasi akad kredit.' : 'Rekomendasi persetujuan dengan syarat khusus untuk bahan telaah CEO.';
-            } else if (radRevisi && radRevisi.checked) {
-                if (lblRevisi) lblRevisi.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-purple-500 bg-purple-50/70 ring-2 ring-purple-200';
-                if (helperText) helperText.innerText = 'Tuliskan instruksi perbaikan data/dokumen yang wajib direvisi oleh Staf Pengusul (AO).';
-            } else if (radTolak && radTolak.checked) {
-                if (lblTolak) lblTolak.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-rose-500 bg-rose-50/70 ring-2 ring-rose-200';
-                if (helperText) helperText.innerText = IS_CEO_USER ? 'Tuliskan alasan penolakan pengajuan kredit untuk arsip komite.' : 'Rekomendasi penolakan pengajuan kredit beserta argumen mitigasi risiko.';
+            if (radRekomendasi && radRekomendasi.checked) {
+                if (lblRekomendasi) lblRekomendasi.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-emerald-500 bg-emerald-50/70 ring-2 ring-emerald-200';
+                if (helperText) helperText.innerText = 'Rekomendasi layak diberikan. Catatan ini akan diterima oleh CEO sebagai bahan pertimbangan.';
+            } else if (radTidakRekomendasi && radTidakRekomendasi.checked) {
+                if (lblTidakRekomendasi) lblTidakRekomendasi.className = 'cursor-pointer relative flex flex-col items-center justify-center p-3 rounded-xl border-2 transition select-none text-center border-rose-500 bg-rose-50/70 ring-2 ring-rose-200';
+                if (helperText) helperText.innerText = 'Rekomendasi tidak layak / perlu mitigasi risiko. Tuliskan alasan pertimbangannya untuk CEO.';
             } else {
-                if (helperText) helperText.innerText = IS_CEO_USER 
-                    ? 'Catatan ini akan dicatat resmi dalam risalah komite dan tertulis di dokumen keputusan.' 
-                    : 'Catatan ini akan langsung diterima oleh CEO sebagai dasar pertimbangan pengambilan keputusan.';
+                if (helperText) helperText.innerText = 'Catatan ini akan langsung diterima oleh CEO sebagai dasar pertimbangan pengambilan keputusan.';
             }
         }
 
@@ -1077,7 +1134,7 @@
                 sub: 'Evaluasi Rekam Jejak SLIK OJK, Riwayat Pembayaran, Integritas & Kepatuhan Hukum',
                 skor: '<?= $charScore ?> / 100',
                 status: '<?= $charStatus ?>',
-                statusClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                statusClass: '<?= $charBadge ?>',
                 iconBg: 'bg-blue-600 text-white',
                 metrics: [
                     { label: 'Nama Calon Debitur', value: '<?= esc(($kredit['nama_debitur'] ?? '') ?: '-') ?>' },
@@ -1099,7 +1156,7 @@
                 sub: 'Validasi Arus Kas Rekening Koran, Surplus Operasional & Debt Service Coverage (DSC)',
                 skor: '<?= $capScore ?> / 100',
                 status: '<?= $capStatus ?>',
-                statusClass: '<?= $dscVal >= 1.3 ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-rose-100 text-rose-800 border-rose-300" ?>',
+                statusClass: '<?= $capBadge ?>',
                 iconBg: 'bg-emerald-600 text-white',
                 metrics: [
                     { label: 'Omzet Rata-rata Bulanan', value: 'Rp <?= number_format($omzetVal, 0, ',', '.') ?> /bulan' },
@@ -1121,7 +1178,7 @@
                 sub: 'Analisis Kecukupan Modal Sendiri, Tingkat Leverage & Ketahanan Solvabilitas',
                 skor: '<?= $capitScore ?> / 100',
                 status: '<?= $capitStatus ?>',
-                statusClass: 'bg-blue-100 text-blue-800 border-blue-300',
+                statusClass: '<?= $capitBadge ?>',
                 iconBg: 'bg-indigo-600 text-white',
                 metrics: [
                     { label: 'Total Aset / Harta', value: 'Rp <?= number_format((float)($keuangan['total_aset'] ?? ($total_mv > 0 ? $total_mv * 1.2 : 500000000)), 0, ',', '.') ?>' },
@@ -1143,7 +1200,7 @@
                 sub: 'Kecukupan Nilai Pasar (MV), Nilai Likuidasi (LV) & Keabsahan Yuridis Bukti Kepemilikan',
                 skor: '<?= $collScore ?> / 100',
                 status: '<?= $collStatus ?>',
-                statusClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                statusClass: '<?= $collBadge ?>',
                 iconBg: 'bg-amber-600 text-white',
                 metrics: [
                     { label: 'Total Nilai Pasar (MV)', value: 'Rp <?= number_format($total_mv, 0, ',', '.') ?>' },
@@ -1165,7 +1222,7 @@
                 sub: 'Prospek Sektor Bisnis, Daya Tahan Terhadap Inflasi & Relevansi Penggunaan Kredit',
                 skor: '<?= $condScore ?> / 100',
                 status: '<?= $condStatus ?>',
-                statusClass: 'bg-blue-100 text-blue-800 border-blue-300',
+                statusClass: '<?= $condBadge ?>',
                 iconBg: 'bg-blue-600 text-white',
                 metrics: [
                     { label: 'Sektor / Bidang Usaha', value: '<?= esc(($kredit['bidang_usaha'] ?? ($kredit['jenis_usaha'] ?? '')) ?: "Perdagangan / Jasa") ?>' },

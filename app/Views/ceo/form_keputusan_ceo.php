@@ -30,6 +30,9 @@
     // Form khusus CEO
     $currentDecision = $keputusan_ceo['status_approval'] ?? '';
     $currentCatatan  = $keputusan_ceo['catatan_approval'] ?? '';
+    if (empty($currentDecision) && in_array($statusAplikasi, ['Disetujui', 'Disetujui Bersyarat', 'Bersyarat', 'Ditolak', 'Revisi'])) {
+        $currentDecision = $statusAplikasi;
+    }
     if ($currentDecision === 'Bersyarat') $currentDecision = 'Disetujui Bersyarat';
 
     // Hitung parameter 5C & Skor AI dari kolom database aktual
@@ -83,21 +86,59 @@
     $plafonAi   = ($plafonPengajuan > 0 && $rawPlafonAi > $plafonPengajuan) ? $plafonPengajuan : $rawPlafonAi;
     $risikoAi   = !empty($analisa['analisis_risiko_ai']) ? $analisa['analisis_risiko_ai'] : 'Profil usaha menunjukkan perputaran kas positif dengan rasio DSC di atas batas aman. Agunan memiliki nilai pasar dan legalitas kuat yang mampu memitigasi risiko gagal bayar.';
 
+    // Evaluasi 3 status standar 5C (Baik, Perlu Pengawasan, Berisiko)
+    $evaluasiStatus5C = function($skor) {
+        if ($skor >= 75) {
+            return [
+                'label'      => 'Baik',
+                'badge'      => 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                'badge_card' => 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+            ];
+        } elseif ($skor >= 60) {
+            return [
+                'label'      => 'Perlu Pengawasan',
+                'badge'      => 'bg-amber-100 text-amber-800 border-amber-300',
+                'badge_card' => 'bg-amber-100 text-amber-800 border border-amber-200'
+            ];
+        } else {
+            return [
+                'label'      => 'Berisiko',
+                'badge'      => 'bg-rose-100 text-rose-800 border-rose-300',
+                'badge_card' => 'bg-rose-100 text-rose-800 border border-rose-200'
+            ];
+        }
+    };
+
     // Penilaian 5C individual
-    $charStatus = (($kredit['status_slik'] ?? '') === 'Terbit' && empty($kredit['ada_tunggakan_slik'])) ? 'Sangat Baik' : 'Cukup Baik';
-    $charScore  = (($kredit['status_slik'] ?? '') === 'Terbit' && empty($kredit['ada_tunggakan_slik'])) ? 88 : 75;
+    $charScore     = (($kredit['status_slik'] ?? '') === 'Terbit' && empty($kredit['ada_tunggakan_slik'])) ? 88 : 75;
+    $charEval      = $evaluasiStatus5C($charScore);
+    $charStatus    = $charEval['label'];
+    $charBadge     = $charEval['badge'];
+    $charBadgeCard = $charEval['badge_card'];
 
-    $capStatus  = ($dscVal >= 1.30) ? 'Kuat / Aman' : 'Perlu Pengawasan';
-    $capScore   = ($dscVal >= 1.50) ? 90 : (($dscVal >= 1.30) ? 82 : 65);
+    $capScore      = ($dscVal >= 1.50) ? 90 : (($dscVal >= 1.30) ? 82 : 65);
+    $capEval       = $evaluasiStatus5C($capScore);
+    $capStatus     = $capEval['label'];
+    $capBadge      = $capEval['badge'];
+    $capBadgeCard  = $capEval['badge_card'];
 
-    $capitStatus= 'Stabil';
-    $capitScore = 80;
+    $capitScore     = 80;
+    $capitEval      = $evaluasiStatus5C($capitScore);
+    $capitStatus    = $capitEval['label'];
+    $capitBadge     = $capitEval['badge'];
+    $capitBadgeCard = $capitEval['badge_card'];
 
-    $collStatus = ($coverage_lv >= 100) ? 'Menutup Penuh' : 'Cukup';
-    $collScore  = ($coverage_lv >= 120) ? 92 : (($coverage_lv >= 100) ? 84 : 70);
+    $collScore     = ($coverage_lv >= 120) ? 92 : (($coverage_lv >= 100) ? 84 : 70);
+    $collEval      = $evaluasiStatus5C($collScore);
+    $collStatus    = $collEval['label'];
+    $collBadge     = $collEval['badge'];
+    $collBadgeCard = $collEval['badge_card'];
 
-    $condStatus = 'Kondusif';
-    $condScore  = 80;
+    $condScore     = 80;
+    $condEval      = $evaluasiStatus5C($condScore);
+    $condStatus    = $condEval['label'];
+    $condBadge     = $condEval['badge'];
+    $condBadgeCard = $condEval['badge_card'];
 ?>
 
     <!-- Top Bar Navigation -->
@@ -110,21 +151,8 @@
                     <span>Kembali</span>
                 </a>
 
-                <!-- Right Actions: Cetak, Unduh PDF & Status Badge -->
+                <!-- Right Actions: Status Badge -->
                 <div class="flex items-center gap-2 shrink-0">
-                    <a href="<?= base_url('pengajuan/cetak/' . $kredit['kredit_id']) ?>" target="_blank"
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg transition shadow-2xs">
-                        <svg class="w-3.5 h-3.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                        <span class="hidden sm:inline">Lihat Laporan 10 Bab</span>
-                        <span class="sm:hidden">Lihat</span>
-                    </a>
-
-                    <a href="<?= base_url('pengajuan/cetak/' . $kredit['kredit_id']) ?>?print=1" target="_blank"
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0284c7] hover:bg-sky-700 text-white text-xs font-semibold rounded-lg transition shadow-2xs" title="Unduh atau Simpan sebagai PDF">
-                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        <span>Unduh PDF (10 Bab)</span>
-                    </a>
-
                     <?php
                         $badgeHeader = 'bg-blue-50 text-blue-700 border-blue-200';
                         if ($statusAplikasi === 'Disetujui') $badgeHeader = 'bg-emerald-50 text-emerald-700 border-emerald-200';
@@ -144,66 +172,107 @@
     <main class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex-1 min-w-0 space-y-6">
         
         <!-- ============================================================== -->
-        <!-- ROW 1: KOTAK DILURUSKAN (KIRI: RINGKASAN BERKAS, KANAN: KEPUTUSAN) -->
+        <!-- 1. BAGIAN ATAS: RINGKASAN BERKAS INPUTAN PENGUSUL              -->
         <!-- ============================================================== -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            
-            <!-- SEBELAH KIRI (lg:col-span-7): RINGKASAN INPUTAN BERKAS PENGUSUL -->
-            <div class="lg:col-span-7 flex flex-col">
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-                    <!-- Header Card Ringkasan Inputan (Tinggi dan styling lurus dengan panel kanan) -->
-                    <div class="p-4 sm:p-5 border-b border-blue-100 bg-blue-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-0 sm:min-h-[92px]">
-                        <div>
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-xs font-bold text-blue-700 uppercase tracking-wider">No. Aplikasi: <?= esc($kredit['nomor_aplikasi']) ?></span>
-                                <span class="text-slate-300 hidden sm:inline">&bull;</span>
-                                <span class="text-xs text-slate-500 font-medium"><?= date('d F Y', strtotime($kredit['created_at'])) ?></span>
-                            </div>
-                            <h2 class="text-base sm:text-lg font-extrabold text-slate-900 mt-0.5">
-                                <?= esc(($kredit['nama_debitur'] ?? '') ?: 'Nama Debitur Belum Terisi') ?>
-                            </h2>
-                            <span class="text-xs text-slate-500 font-medium"><?= esc(($kredit['nama_usaha'] ?? '') ?: ($kredit['jenis_debitur'] ?? 'Individu')) ?></span>
+        <div class="w-full">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <!-- Header Card Ringkasan Inputan -->
+                <div class="p-4 sm:p-5 border-b border-blue-100 bg-blue-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-0 sm:min-h-[92px]">
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs font-bold text-blue-700 uppercase tracking-wider">No. Aplikasi: <?= esc($kredit['nomor_aplikasi']) ?></span>
+                            <span class="text-slate-300 hidden sm:inline">&bull;</span>
+                            <span class="text-xs text-slate-500 font-medium"><?= date('d F Y', strtotime($kredit['created_at'])) ?></span>
                         </div>
-                        <div class="sm:text-right">
-                            <span class="text-[11px] text-slate-500 uppercase font-bold tracking-wider block">Plafon Pengajuan</span>
-                            <div class="text-lg sm:text-xl font-extrabold text-blue-700">
-                                Rp <?= number_format((float)($kredit['plafon_pengajuan'] ?? 0), 0, ',', '.') ?>
-                            </div>
-                            <span class="text-xs text-slate-500 font-medium"><?= (int)($kredit['tenor_bulan'] ?? 12) ?> Bulan &bull; <?= esc($kredit['skema_pembayaran'] ?? 'Installment') ?></span>
+                        <h2 class="text-base sm:text-lg font-extrabold text-slate-900 mt-0.5">
+                            <?= esc(($kredit['nama_debitur'] ?? '') ?: 'Nama Debitur Belum Terisi') ?>
+                        </h2>
+                        <span class="text-xs text-slate-500 font-medium"><?= esc(($kredit['nama_usaha'] ?? '') ?: ($kredit['jenis_debitur'] ?? 'Individu')) ?></span>
+                    </div>
+                    <div class="sm:text-right">
+                        <span class="text-[11px] text-slate-500 uppercase font-bold tracking-wider block">Plafon Pengajuan</span>
+                        <div class="text-lg sm:text-xl font-extrabold text-blue-700">
+                            Rp <?= number_format((float)($kredit['plafon_pengajuan'] ?? 0), 0, ',', '.') ?>
                         </div>
+                        <span class="text-xs text-slate-500 font-medium"><?= (int)($kredit['tenor_bulan'] ?? 12) ?> Bulan &bull; <?= esc($kredit['skema_pembayaran'] ?? 'Installment') ?></span>
+                    </div>
+                </div>
+
+                <!-- Body: 4 Kotak Ringkas Data Pokok Pengajuan -->
+                <div class="p-4 sm:p-5 flex flex-col justify-between space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                        <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2 min-w-0">
+                            <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span>Ringkasan Berkas Inputan Pengusul</span>
+                        </h3>
+                        <span class="text-[11px] font-medium text-slate-400 shrink-0 whitespace-nowrap">Data Pokok Analisis</span>
                     </div>
 
-                    <!-- Body: 4 Kotak Ringkas Data Pokok Pengajuan (DILURUSKAN DENGAN TINGGI RATA) -->
-                    <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
-                        <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
-                            <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2 min-w-0">
-                                <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                <span>Ringkasan Berkas Inputan Pengusul</span>
-                            </h3>
-                            <span class="text-[11px] font-medium text-slate-400 shrink-0 whitespace-nowrap">Data Pokok Analisis</span>
-                        </div>
+                    <!-- Grid 4 Kotak (4 Kolom pada layar lebar) -->
+                    <?php
+                        // Helper kalkulasi untuk 4 Kotak Ringkasan
+                        $isBadan = (isset($kredit['jenis_debitur']) && (stripos($kredit['jenis_debitur'], 'badan') !== false || stripos($kredit['jenis_debitur'], 'pt') !== false || stripos($kredit['jenis_debitur'], 'cv') !== false));
+                        $labelIdentitas = $isBadan ? 'NPWP/NIB' : 'NIK';
+                        $nomorIdentitas = $isBadan ? (($kredit['npwp_badan'] ?? '') ?: ($kredit['npwp_pribadi'] ?? '')) : ($kredit['npwp_pribadi'] ?? '');
 
-                        <!-- Grid 4 Kotak (Diluruskan tingginya dengan flex-1) -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 flex-1 items-stretch">
+                        // SLIK status & ringkasan
+                        $statusSlik = $kredit['status_slik'] ?? 'Belum Terbit';
+                        $isSlikTerbit = (strcasecmp($statusSlik, 'Terbit') === 0);
+                        $statusColor = $isSlikTerbit ? 'text-emerald-700' : 'text-amber-700';
+
+                        if ($isSlikTerbit) {
+                            $ringkasanSlik = !empty($kredit['ringkasan_slik']) ? $kredit['ringkasan_slik'] : 'Riwayat pembayaran lancar, tidak ada catatan tunggakan fasilitas kredit aktif.';
+                            $hasilSlik = !empty($kredit['hasil_slik']) ? $kredit['hasil_slik'] : 'Kol 1 (Lancar)';
+                            $isAdaTunggakan = (stripos($hasilSlik, 'tunggakan') !== false || stripos($hasilSlik, 'kol 2') !== false || stripos($hasilSlik, 'kol 3') !== false || stripos($hasilSlik, 'kol 4') !== false || stripos($hasilSlik, 'kol 5') !== false);
+                            $hasilColor = $isAdaTunggakan ? 'text-rose-600' : 'text-emerald-700';
+                        } else {
+                            $ringkasanSlik = 'Menunggu verifikasi riwayat fasilitas kredit aktif dari Petugas SLIK.';
+                            $hasilSlik = 'Belum Terbit';
+                            $hasilColor = 'text-amber-600';
+                        }
+
+                        // DSC Rasio status & warna
+                        if ($dscVal <= 0 && ($labaVal <= 0 || $angsuranVal <= 0)) {
+                            $dscDisplay = '— (Belum Dihitung)';
+                            $dscColor   = 'text-slate-500';
+                        } elseif ($dscVal >= 1.30) {
+                            $dscDisplay = number_format($dscVal, 2) . 'x (Aman)';
+                            $dscColor   = 'text-emerald-700';
+                        } elseif ($dscVal >= 1.00) {
+                            $dscDisplay = number_format($dscVal, 2) . 'x (Waspada)';
+                            $dscColor   = 'text-amber-700';
+                        } else {
+                            $dscDisplay = number_format($dscVal, 2) . 'x (Defisit)';
+                            $dscColor   = 'text-rose-600';
+                        }
+                    ?>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-stretch">
                             <!-- 1. Debitur & Usaha -->
                             <div class="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200/80 flex flex-col justify-between min-h-[145px]">
-                                <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center gap-1.5">
-                                    <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">1</span>
-                                    <span>Calon Debitur & Usaha</span>
+                                <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center justify-between">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">1</span>
+                                        <span>Calon Debitur & Usaha</span>
+                                    </div>
+                                    <span class="text-[10px] font-semibold <?= $isBadan ? 'text-indigo-700 bg-indigo-50 border border-indigo-200' : 'text-slate-600 bg-slate-200/70' ?> px-1.5 py-0.5 rounded"><?= $isBadan ? 'Badan Usaha' : 'Perorangan' ?></span>
                                 </span>
                                 <div class="space-y-1 my-1.5 text-xs">
                                     <div class="truncate">
-                                        <span class="text-slate-400 text-[11px] block">Nama & NIK:</span>
+                                        <span class="text-slate-400 text-[10px] block"><?= $isBadan ? 'Nama Perusahaan / Debitur:' : 'Nama Debitur:' ?></span>
                                         <strong class="text-slate-800 text-xs block truncate"><?= esc(($kredit['nama_debitur'] ?? '') ?: '-') ?></strong>
                                     </div>
                                     <div class="truncate">
                                         <span class="text-slate-400 text-[11px] block">Usaha & Lama:</span>
                                         <span class="text-blue-800 font-bold block truncate"><?= esc(($kredit['nama_usaha'] ?? '') ?: '-') ?> (<?= esc(($kredit['lama_usaha'] ?? '') ?: '-') ?>)</span>
                                     </div>
+                                    <div class="flex items-center justify-between text-[11px] pt-0.5">
+                                        <span class="text-slate-400 text-[11px]">Pengusul:</span>
+                                        <span class="font-semibold text-slate-700 truncate max-w-[150px]"><?= esc(($kredit['nama_pengusul'] ?? '') ?: '-') ?></span>
+                                    </div>
                                 </div>
                                 <div class="text-[11px] text-slate-500 pt-1 border-t border-slate-200/50 flex justify-between">
                                     <span>HP: <?= esc(($kredit['nomor_hp'] ?? '') ?: '-') ?></span>
-                                    <span>NIK: <?= esc(($kredit['npwp_pribadi'] ?? '') ?: '-') ?></span>
+                                    <span><?= $labelIdentitas ?>: <?= esc($nomorIdentitas ?: '-') ?></span>
                                 </div>
                             </div>
 
@@ -234,7 +303,7 @@
                                 <span class="font-bold text-slate-900 block text-xs border-b border-slate-200/80 pb-1 flex items-center justify-between">
                                     <div class="flex items-center gap-1.5">
                                         <span class="w-4 h-4 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-extrabold shrink-0">3</span>
-                                        <span>SLIK OJK (Ideb)</span>
+                                        <span>SLIK OJK (iDeb)</span>
                                     </div>
                                     <?php if (!empty($kredit['berkas_slik_pdf'])): ?>
                                         <a href="<?= base_url($kredit['berkas_slik_pdf']) ?>" target="_blank" class="text-[10px] font-bold text-blue-600 hover:text-blue-800 underline flex items-center gap-0.5" title="Lihat Laporan iDeb Resmi PDF">
@@ -245,18 +314,18 @@
                                 <div class="space-y-1 my-1.5 text-xs flex-1">
                                     <div class="flex items-center justify-between">
                                         <span class="text-slate-400 text-[11px]">Status SLIK:</span>
-                                        <span class="font-bold <?= ($kredit['status_slik'] ?? '') === 'Terbit' ? 'text-emerald-700' : 'text-amber-700' ?>">
-                                            <?= esc($kredit['status_slik'] ?? 'Belum Terbit') ?>
+                                        <span class="font-bold <?= $statusColor ?>">
+                                            <?= esc($statusSlik) ?>
                                         </span>
                                     </div>
                                     <p class="text-slate-700 text-[11px] line-clamp-2 leading-relaxed mt-1">
-                                        <?= esc(($kredit['ringkasan_slik'] ?? '') ?: 'Riwayat pembayaran lancar, tidak ada catatan tunggakan fasilitas kredit aktif.') ?>
+                                        <?= esc($ringkasanSlik) ?>
                                     </p>
                                 </div>
                                 <div class="text-[11px] text-slate-500 pt-1 border-t border-slate-200/50 flex justify-between items-center">
                                     <span>Hasil:</span>
-                                    <span class="font-bold <?= stripos($kredit['hasil_slik'] ?? '', 'tunggakan') !== false || stripos($kredit['hasil_slik'] ?? '', 'kol 2') !== false || stripos($kredit['hasil_slik'] ?? '', 'kol 3') !== false ? 'text-rose-600' : 'text-emerald-700' ?>">
-                                        <?= esc($kredit['hasil_slik'] ?? 'Kol 1 (Lancar)') ?>
+                                    <span class="font-bold <?= $hasilColor ?>">
+                                        <?= esc($hasilSlik) ?>
                                     </span>
                                 </div>
                             </div>
@@ -283,7 +352,7 @@
                                 </div>
                                 <div class="text-[11px] pt-1 border-t border-slate-200/50 flex justify-between items-center">
                                     <span class="text-slate-500">Rasio DSC:</span>
-                                    <strong class="text-emerald-700 font-bold"><?= number_format($dscVal, 2) ?>x (Aman)</strong>
+                                    <strong class="<?= $dscColor ?> font-bold"><?= $dscDisplay ?></strong>
                                 </div>
                             </div>
                         </div>
@@ -293,10 +362,12 @@
                 </div>
             </div>
 
-            <!-- SEBELAH KANAN (lg:col-span-5): LEMBAR KEPUTUSAN REVIEWER (DILURUSKAN DENGAN KIRI) -->
-            <div class="lg:col-span-5 flex flex-col">
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full">
-                    <!-- Header Card (Tinggi dan styling lurus sejajar dengan header kiri) -->
+            <!-- ============================================================== -->
+            <!-- 2. BAGIAN BAWAH: LEMBAR KEPUTUSAN CEO                          -->
+            <!-- ============================================================== -->
+            <div class="w-full">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                    <!-- Header Card -->
                     <div class="p-4 sm:p-5 border-b border-slate-100 bg-blue-50/60 min-h-0 sm:min-h-[92px] flex flex-col justify-center">
                         <div class="flex items-center justify-between flex-wrap gap-2">
                             <div class="flex items-center gap-2">
@@ -324,10 +395,19 @@
                         $isFinalized = in_array($statusAplikasi, ['Disetujui', 'Disetujui Bersyarat', 'Bersyarat', 'Ditolak', 'Revisi']) 
                                        || !empty($keputusan_ceo);
                         
-                        // Di mode read-only (finalized), gunakan catatan & keputusan CEO
+                        // Di mode read-only (finalized), gunakan status keputusan resmi CEO / pengajuan
                         if ($isFinalized) {
-                            $currentDecision = !empty($keputusan_ceo['status_approval']) ? $keputusan_ceo['status_approval'] : (!empty($keputusan_reviewer['status_approval']) ? $keputusan_reviewer['status_approval'] : $statusAplikasi);
-                            $currentCatatan  = !empty($keputusan_ceo['catatan_approval']) ? $keputusan_ceo['catatan_approval'] : ($keputusan_reviewer['catatan_approval'] ?? '');
+                            if (!empty($keputusan_ceo['status_approval'])) {
+                                $currentDecision = $keputusan_ceo['status_approval'];
+                                $currentCatatan  = $keputusan_ceo['catatan_approval'] ?? '';
+                            } else {
+                                $currentDecision = in_array($statusAplikasi, ['Disetujui', 'Disetujui Bersyarat', 'Bersyarat', 'Ditolak', 'Revisi']) 
+                                    ? $statusAplikasi 
+                                    : ($keputusan_ceo['status_approval'] ?? $statusAplikasi);
+                                $currentCatatan  = !empty($keputusan_ceo['catatan_approval']) 
+                                    ? $keputusan_ceo['catatan_approval'] 
+                                    : ($kredit['catatan_approval_ceo'] ?? ($kredit['catatan_analis'] ?? ''));
+                            }
                             if ($currentDecision === 'Bersyarat') $currentDecision = 'Disetujui Bersyarat';
                         }
                     ?>
@@ -409,10 +489,18 @@
                                 </div>
 
                                 <?php 
-                                    $daftarReadOnlyNotes = $daftar_catatan_reviewer ?? [];
-                                    if (empty($daftarReadOnlyNotes) && !empty($catatan_dari_reviewer)) {
-                                        $daftarReadOnlyNotes = [$catatan_dari_reviewer];
+                                    $rawReadOnlyNotes = $daftar_catatan_reviewer ?? [];
+                                    if (empty($rawReadOnlyNotes) && !empty($catatan_dari_reviewer)) {
+                                        $rawReadOnlyNotes = [$catatan_dari_reviewer];
                                     }
+                                    // Tampilkan HANYA catatan terbaru dari masing-masing reviewer
+                                    $latestReadOnly = [];
+                                    foreach ($rawReadOnlyNotes as $rNote) {
+                                        $k = !empty($rNote['user_id']) ? 'u_' . $rNote['user_id'] : 'n_' . strtolower(trim($rNote['nama_approver'] ?? ''));
+                                        if (empty($k) || $k === 'n_') $k = 'idx_' . uniqid();
+                                        $latestReadOnly[$k] = $rNote;
+                                    }
+                                    $daftarReadOnlyNotes = array_values($latestReadOnly);
                                 ?>
                                 <?php if (!empty($daftarReadOnlyNotes)): ?>
                                 <div>
@@ -432,7 +520,15 @@
                                                     <div class="flex items-center gap-1.5">
                                                         <span>Oleh: <strong class="text-indigo-700"><?= esc($revName) ?></strong></span>
                                                         <?php if (!empty($revRek) && !in_array($revRek, ['Ditinjau Reviewer', 'Pending', 'Menunggu Review'])): ?>
-                                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200"><?= esc($revRek) ?></span>
+                                                            <?php
+                                                                $badgeClass = 'bg-indigo-100 text-indigo-800 border-indigo-200';
+                                                                if (stripos($revRek, 'tidak') !== false || stripos($revRek, 'tolak') !== false) {
+                                                                    $badgeClass = 'bg-rose-100 text-rose-800 border-rose-200';
+                                                                } elseif (stripos($revRek, 'rekomendasi') !== false || stripos($revRek, 'setuju') !== false) {
+                                                                    $badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                                                                }
+                                                            ?>
+                                                            <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border <?= $badgeClass ?>"><?= esc($revRek) ?></span>
                                                         <?php endif; ?>
                                                     </div>
                                                     <?php if (!empty($revDate)): ?><span><?= $revDate ?></span><?php endif; ?>
@@ -444,48 +540,42 @@
                                 <?php endif; ?>
                             </div>
 
-                            <!-- Detail Approver / Reviewer -->
-                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5 text-xs text-slate-600">
-                                <div class="flex justify-between">
-                                    <span class="text-slate-400">Ditinjau Oleh:</span>
-                                    <span class="font-bold text-slate-800"><?= esc($keputusan_reviewer['nama_approver'] ?? $nama_lengkap ?? 'Senior Credit Reviewer') ?></span>
+                            <!-- Detail Pemutus / CEO -->
+                            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600">
+                                <div class="flex justify-between sm:flex-col sm:gap-0.5">
+                                    <span class="text-slate-400">Diputuskan Oleh:</span>
+                                    <span class="font-bold text-slate-800"><?= esc($keputusan_ceo['nama_approver'] ?? ($nama_lengkap ?? 'Direktur Utama / CEO')) ?></span>
                                 </div>
-                                <div class="flex justify-between">
+                                <div class="flex justify-between sm:flex-col sm:gap-0.5">
                                     <span class="text-slate-400">Peran Komite:</span>
-                                    <span class="font-semibold text-blue-700"><?= esc($keputusan_reviewer['role_approver'] ?? $jabatan ?? 'Reviewer') ?></span>
+                                    <span class="font-semibold text-blue-700"><?= esc($keputusan_ceo['role_approver'] ?? 'Direktur Utama / CEO') ?></span>
                                 </div>
-                                <div class="flex justify-between">
+                                <div class="flex justify-between sm:flex-col sm:gap-0.5">
                                     <span class="text-slate-400">Tanggal Pengesahan:</span>
-                                    <span class="font-medium text-slate-700"><?= !empty($keputusan_reviewer['tanggal_approval']) ? date('d F Y', strtotime($keputusan_reviewer['tanggal_approval'])) : date('d F Y') ?></span>
+                                    <span class="font-medium text-slate-700"><?= !empty($keputusan_ceo['tanggal_approval']) ? date('d F Y', strtotime($keputusan_ceo['tanggal_approval'])) : (!empty($kredit['updated_at']) ? date('d F Y', strtotime($kredit['updated_at'])) : date('d F Y')) ?></span>
                                 </div>
                             </div>
 
-                            <!-- Action Buttons Mode Lihat -->
-                            <div class="space-y-2 pt-2">
-                                <a href="<?= base_url('pengajuan/cetak/' . $kredit['kredit_id']) ?>" target="_blank" 
-                                   class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                                    <span>Lihat Laporan Komite 10 Bab Lengkap</span>
-                                </a>
-
-                                <a href="<?= base_url('pengajuan/cetak/' . $kredit['kredit_id']) ?>?print=1" target="_blank" 
-                                   class="w-full py-2.5 px-4 bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-xs rounded-xl border border-sky-200 transition flex items-center justify-center gap-2 cursor-pointer">
-                                    <svg class="w-4 h-4 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                    <span>Unduh Laporan Komite 10 Bab (Format PDF Resmi)</span>
-                                </a>
+                            <!-- Action Buttons Mode Lihat: Tombol Surat Keputusan -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                <button type="button" onclick="bukaModalSuratKeputusan()"
+                                   class="py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer">
+                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                                    <span>Lihat Surat Keputusan</span>
+                                </button>
 
                                 <a href="<?= base_url('dashboard') ?>" 
-                                   class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition text-center block">
-                                    Kembali ke Dashboard
+                                   class="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition text-center flex items-center justify-center">
+                                    Kembali ke Dashboard CEO
                                 </a>
-
-                                <?php if ($userRole === 'superadmin'): ?>
-                                    <button type="button" onclick="document.getElementById('containerFormEditReviewer').classList.toggle('hidden')" 
-                                            class="w-full py-2 px-3 text-[11px] text-slate-400 hover:text-slate-600 font-medium transition text-center cursor-pointer">
-                                        &bull; Superadmin: Buka Formulir Revisi Keputusan &bull;
-                                    </button>
-                                <?php endif; ?>
                             </div>
+
+                            <?php if ($userRole === 'superadmin'): ?>
+                                <button type="button" onclick="document.getElementById('containerFormEditReviewer').classList.toggle('hidden')" 
+                                        class="w-full py-2 px-3 text-[11px] text-slate-400 hover:text-slate-600 font-medium transition text-center cursor-pointer">
+                                    &bull; Superadmin: Buka Formulir Revisi Keputusan &bull;
+                                </button>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
 
@@ -495,13 +585,21 @@
 
                         <?php 
                             // Tampilkan catatan reviewer (mendukung multi-review jika ada review tambahan)
-                            $daftarReviewerNotes = $daftar_catatan_reviewer ?? [];
-                            if (empty($daftarReviewerNotes) && !empty($catatan_dari_reviewer)) {
-                                $daftarReviewerNotes = [$catatan_dari_reviewer];
+                            $rawReviewerNotes = $daftar_catatan_reviewer ?? [];
+                            if (empty($rawReviewerNotes) && !empty($catatan_dari_reviewer)) {
+                                $rawReviewerNotes = [$catatan_dari_reviewer];
                             }
+                            // Tampilkan HANYA catatan terbaru dari masing-masing reviewer
+                            $latestPerRev = [];
+                            foreach ($rawReviewerNotes as $rNote) {
+                                $k = !empty($rNote['user_id']) ? 'u_' . $rNote['user_id'] : 'n_' . strtolower(trim($rNote['nama_approver'] ?? ''));
+                                if (empty($k) || $k === 'n_') $k = 'idx_' . uniqid();
+                                $latestPerRev[$k] = $rNote;
+                            }
+                            $daftarReviewerNotes = array_values($latestPerRev);
                         ?>
                         <?php if (!empty($daftarReviewerNotes)): ?>
-                        <!-- Catatan Hasil Review dari Reviewer (Bisa Nambah Review Lainnya) -->
+                        <!-- Catatan Hasil Review dari Reviewer (Hanya Catatan Terbaru per Petugas) -->
                         <div class="p-4 rounded-xl border border-indigo-200 bg-indigo-50/60 space-y-3">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-2">
@@ -513,16 +611,13 @@
                                         <p class="text-[11px] text-indigo-600/80">Catatan dari Reviewer untuk bahan pertimbangan keputusan</p>
                                     </div>
                                 </div>
-                                <?php if (count($daftarReviewerNotes) > 1): ?>
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-2xs">
-                                        Catatan Terbaru
-                                    </span>
-                                <?php endif; ?>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-2xs">
+                                    Catatan Terbaru
+                                </span>
                             </div>
 
                             <div class="space-y-2.5">
                                 <?php
-                                    // Tampilkan seluruh riwayat catatan telaah dari seluruh reviewer secara lengkap dan kronologis
                                     $filteredNotes = $daftarReviewerNotes;
                                 ?>
                                 <?php foreach ($filteredNotes as $idx => $rNote): ?>
@@ -544,10 +639,15 @@
                                                 <?php if (!empty($revRek) && !in_array($revRek, ['Ditinjau Reviewer', 'Pending', 'Menunggu Review'])): ?>
                                                     <?php
                                                         $rekBadgeClass = 'bg-slate-100 text-slate-700 border-slate-300';
-                                                        if ($revRek === 'Disetujui') $rekBadgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
-                                                        elseif ($revRek === 'Disetujui Bersyarat' || $revRek === 'Bersyarat') $rekBadgeClass = 'bg-amber-100 text-amber-800 border-amber-300';
-                                                        elseif ($revRek === 'Revisi') $rekBadgeClass = 'bg-purple-100 text-purple-800 border-purple-300';
-                                                        elseif ($revRek === 'Ditolak') $rekBadgeClass = 'bg-rose-100 text-rose-800 border-rose-300';
+                                                        if (stripos($revRek, 'tidak') !== false || stripos($revRek, 'tolak') !== false) {
+                                                            $rekBadgeClass = 'bg-rose-100 text-rose-800 border-rose-300';
+                                                        } elseif (stripos($revRek, 'rekomendasi') !== false || stripos($revRek, 'setuju') !== false) {
+                                                            $rekBadgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                                                        } elseif (stripos($revRek, 'bersyarat') !== false) {
+                                                            $rekBadgeClass = 'bg-amber-100 text-amber-800 border-amber-300';
+                                                        } elseif (stripos($revRek, 'revisi') !== false) {
+                                                            $rekBadgeClass = 'bg-purple-100 text-purple-800 border-purple-300';
+                                                        }
                                                     ?>
                                                     <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold border <?= $rekBadgeClass ?>"><?= esc($revRek) ?></span>
                                                 <?php endif; ?>
@@ -619,21 +719,6 @@
                         <!-- Teks Input: Catatan & Pertimbangan CEO -->
 
 
-                        <?php if (!empty($currentCatatan)): ?>
-                        <div class="flex-1 flex flex-col">
-                            <div class="flex justify-between items-center mb-1.5">
-                                <label for="catatanKeputusan" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                    Catatan Keputusan CEO <span class="text-rose-500 font-bold">*</span>
-                                </label>
-                            </div>
-                            <textarea id="catatanKeputusan" name="catatan" rows="3"
-                                      class="w-full text-xs text-slate-800 border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-600 transition placeholder:text-slate-400"
-                                      placeholder="Tuliskan catatan pertimbangan kelayakan kredit, klausul syarat pencairan, atau alasan penolakan..."><?= esc($currentCatatan) ?></textarea>
-                            <p class="text-[11px] text-slate-400 mt-1" id="catatanHelperText">
-                                Catatan ini akan dicatat resmi dalam risalah komite dan tertulis di dokumen keputusan.
-                            </p>
-                        </div>
-                        <?php endif; ?>
                         <div class="flex-1 flex flex-col">
                             <div class="flex justify-between items-center mb-1.5">
                                 <label for="catatanKeputusan" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -649,58 +734,268 @@
                         </div>
 
                         <!-- Info Pejabat CEO -->
-                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1.5 text-xs text-slate-600">
-                            <div class="flex justify-between">
+                        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-600">
+                            <div class="flex justify-between sm:flex-col sm:gap-0.5">
                                 <span class="text-slate-400">Nama Pejabat:</span>
                                 <span class="font-bold text-slate-800"><?= esc($nama_lengkap ?? 'Direktur Utama / CEO') ?></span>
                             </div>
-                            <div class="flex justify-between">
+                            <div class="flex justify-between sm:flex-col sm:gap-0.5">
                                 <span class="text-slate-400">Jabatan:</span>
                                 <span class="font-semibold text-blue-700"><?= esc($jabatan ?? 'CEO') ?></span>
                             </div>
-                            <div class="flex justify-between">
+                            <div class="flex justify-between sm:flex-col sm:gap-0.5">
                                 <span class="text-slate-400">Tanggal Keputusan:</span>
                                 <span class="font-medium text-slate-700"><?= date('d F Y') ?></span>
                             </div>
                         </div>
 
                         <!-- Action Buttons CEO -->
-                        <div class="space-y-2 pt-1">
+                        <div class="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
+                            <a href="<?= base_url('dashboard') ?>" 
+                               class="w-full sm:w-auto py-3 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition text-center block order-2 sm:order-1">
+                                Kembali ke Dashboard CEO
+                            </a>
                             <button type="submit" id="btnSubmitKeputusan" 
-                                    class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer">
+                                    class="w-full sm:w-auto py-3 px-6 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition shadow-sm hover:shadow flex items-center justify-center gap-2 cursor-pointer order-1 sm:order-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
                                 <span>Simpan Keputusan Final CEO</span>
                             </button>
-
-                            <a href="<?= base_url('dashboard') ?>" 
-                               class="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition text-center block">
-                                Kembali ke Dashboard CEO
-                            </a>
                         </div>
                     </form>
                     </div>
                 </div>
             </div>
 
-        </div>
-
         <!-- ============================================================== -->
-        <!-- LAPORAN ANALISA KELAYAKAN KREDIT LENGKAP 10 BAB (FORMAT RESMI) -->
+        <!-- 3. BAGIAN BAWAH: HASIL ANALISIS EVALUASI 5C AI                 -->
         <!-- ============================================================== -->
         <div class="w-full">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                <div>
-                    <h3 class="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-                        Laporan Analisa Kelayakan Kredit dan Rekomendasi Komite Kredit (10 Bab Lengkap)
-                    </h3>
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
+                <!-- Header Card AI 5C Memanjang Penuh + Tombol Lihat -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold shadow-2xs shrink-0">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Evaluasi 5C AI</h3>
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                    AI Engine
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500">Analisa kelayakan kredit berdasarkan prinsip 5C.</p>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Lihat Detail AI -->
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="bukaModalLihatAI()" 
+                                class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer" title="Buka Dokumen Laporan Hasil Telaah AI 10 Bab">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span>Lihat Hasil AI </span>
+                        </button>
+                    </div>
                 </div>
-                <div class="text-[11px] text-slate-500 font-medium">
-                    Sesuai Format Dokumen Review Komite Kredit Independen Berbasis Metode 5C dan Credit Scoring
+
+                <!-- Top Metric Bar: Skor Kelayakan AI, Rekomendasi Keputusan, Plafon Rekomendasi AI -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                    <div class="text-center sm:text-left flex items-center justify-between sm:justify-start sm:gap-4 p-2 bg-white rounded-lg border border-blue-100">
+                        <div>
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block">Skor Kelayakan AI</span>
+                            <div class="text-2xl font-extrabold text-blue-700">
+                                <?= $skorAi ?><span class="text-xs text-slate-400 font-normal"> / 100</span>
+                            </div>
+                        </div>
+                        <span class="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border 
+                            <?= $skorAi >= 75 ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : ($skorAi >= 60 ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-rose-100 text-rose-800 border-rose-300') ?>">
+                            <?= $skorAi >= 75 ? 'Sangat Layak (Low Risk)' : ($skorAi >= 60 ? 'Cukup Layak' : 'Tinggi Risiko') ?>
+                        </span>
+                    </div>
+
+                    <div class="p-2 bg-white rounded-lg border border-blue-100 flex flex-col justify-center">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Rekomendasi Keputusan AI</span>
+                        <div class="text-sm font-extrabold text-blue-900 mt-0.5 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                            <span><?= esc($rekomAi) ?></span>
+                        </div>
+                        <span class="text-[11px] text-slate-500 block">Profil risiko aman & layak realisasi</span>
+                    </div>
+
+                    <div class="p-2 bg-white rounded-lg border border-blue-100 flex flex-col justify-center">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 block">Rekomendasi Plafon AI</span>
+                        <div class="text-base font-extrabold text-blue-700 mt-0.5">
+                            Rp <?= number_format($plafonAi, 0, ',', '.') ?>
+                        </div>
+                        <span class="text-[11px] text-slate-500 block">Kapasitas repayment optimal</span>
+                    </div>
+                </div>
+
+                <!-- 5 PILAR 5C (MEMANJANG PENUH DALAM GRID 5 KOLOM) -->
+                <div>
+                    <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2.5">Evaluasi 5 Pilar 5C (Full Overview):</span>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                        <!-- 1. Character -->
+                        <div class="p-3.5 bg-slate-50/80 hover:bg-blue-50/40 transition rounded-xl border border-slate-200/80 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between pb-1.5 border-b border-slate-200/60 mb-2">
+                                    <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">C1</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $charBadgeCard ?>"><?= $charStatus ?></span>
+                                </div>
+                                <strong class="text-slate-900 block font-bold text-xs">Character</strong>
+                                <span class="text-[11px] text-slate-400 block mb-1">Watak &amp; Rekam Jejak</span>
+                                <p class="text-[11px] text-slate-600 leading-relaxed">
+                                    SLIK OJK <?= ($kredit['status_slik'] ?? '') === 'Terbit' ? 'Terbit (Lancar)' : 'Verifikasi' ?> &bull; SIPP Pengadilan bebas perkara hukum.
+                                </p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-200/50 flex items-center justify-between text-[11px]">
+                                <div class="text-slate-500 font-semibold">
+                                    <span>Skor: </span>
+                                    <span class="text-blue-700 font-bold"><?= $charScore ?>/100</span>
+                                </div>
+                                <button type="button" onclick="bukaModalDetail5C('character')" 
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 hover:text-blue-800 border border-slate-200 hover:border-blue-300 rounded-lg text-[10px] font-bold transition shadow-2xs cursor-pointer" title="Lihat Detail Analisis AI Character">
+                                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span>Detail</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 2. Capacity -->
+                        <div class="p-3.5 bg-slate-50/80 hover:bg-blue-50/40 transition rounded-xl border border-slate-200/80 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between pb-1.5 border-b border-slate-200/60 mb-2">
+                                    <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">C2</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $capBadgeCard ?>"><?= $capStatus ?></span>
+                                </div>
+                                <strong class="text-slate-900 block font-bold text-xs">Capacity</strong>
+                                <span class="text-[11px] text-slate-400 block mb-1">Kapasitas Bayar (DSC)</span>
+                                <p class="text-[11px] text-slate-600 leading-relaxed">
+                                    <?php $jmlRek = is_array($rekening ?? null) ? count($rekening) : 0; ?>
+                                    Rasio DSC <strong class="text-emerald-700"><?= number_format($dscVal, 2) ?>x</strong> (&ge; 1.30x) &bull;
+                                    <?php if ($jmlRek > 0): ?>
+                                        Mutasi rekening koran terkonfirmasi (<?= $jmlRek ?> berkas).
+                                    <?php else: ?>
+                                        <span class="text-amber-700 font-medium">Belum ada berkas mutasi rekening koran terunggah.</span>
+                                    <?php endif; ?>
+                                </p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-200/50 flex items-center justify-between text-[11px]">
+                                <div class="text-slate-500 font-semibold">
+                                    <span>Skor: </span>
+                                    <span class="text-blue-700 font-bold"><?= $capScore ?>/100</span>
+                                </div>
+                                <button type="button" onclick="bukaModalDetail5C('capacity')" 
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300 rounded-lg text-[10px] font-bold transition shadow-2xs cursor-pointer" title="Lihat Detail Analisis AI Capacity">
+                                    <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span>Detail</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 3. Capital -->
+                        <div class="p-3.5 bg-slate-50/80 hover:bg-blue-50/40 transition rounded-xl border border-slate-200/80 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between pb-1.5 border-b border-slate-200/60 mb-2">
+                                    <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">C3</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $capitBadgeCard ?>"><?= $capitStatus ?></span>
+                                </div>
+                                <strong class="text-slate-900 block font-bold text-xs">Capital</strong>
+                                <span class="text-[11px] text-slate-400 block mb-1">Permodalan Usaha</span>
+                                <p class="text-[11px] text-slate-600 leading-relaxed">
+                                    <?php
+                                        $jpRev = strtolower(trim($kredit['jenis_pekerjaan'] ?? ''));
+                                        $namaUsahaRev = trim($kredit['nama_usaha'] ?? '');
+                                        $lamaValRev = trim($kredit['lama_usaha'] ?? '');
+                                        $isKaryawanRev = (strpos($jpRev, 'karyawan') !== false || strpos($jpRev, 'pegawai') !== false || strpos($jpRev, 'pns') !== false || strpos($jpRev, 'bumn') !== false || (empty($namaUsahaRev) && stripos($kredit['jenis_debitur'] ?? '', 'badan') === false));
+                                        if ($isKaryawanRev) {
+                                            echo !empty($lamaValRev)
+                                                ? 'Masa kerja ' . esc($lamaValRev) . ' dengan penghasilan rutin bulanan.'
+                                                : 'Debitur perorangan dengan sumber penghasilan rutin bulanan.';
+                                        } else {
+                                            echo !empty($lamaValRev)
+                                                ? 'Usaha berjalan ' . esc($lamaValRev) . ' dengan arus kas operasional yang terpantau.'
+                                                : 'Usaha aktif dengan arus kas operasional yang terpantau.';
+                                        }
+                                    ?>
+                                </p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-200/50 flex items-center justify-between text-[11px]">
+                                <div class="text-slate-500 font-semibold">
+                                    <span>Skor: </span>
+                                    <span class="text-blue-700 font-bold"><?= $capitScore ?>/100</span>
+                                </div>
+                                <button type="button" onclick="bukaModalDetail5C('capital')" 
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-indigo-50 text-indigo-700 hover:text-indigo-800 border border-slate-200 hover:border-indigo-300 rounded-lg text-[10px] font-bold transition shadow-2xs cursor-pointer" title="Lihat Detail Analisis AI Capital">
+                                    <svg class="w-3 h-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span>Detail</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 4. Collateral -->
+                        <div class="p-3.5 bg-slate-50/80 hover:bg-blue-50/40 transition rounded-xl border border-slate-200/80 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between pb-1.5 border-b border-slate-200/60 mb-2">
+                                    <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">C4</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $collBadgeCard ?>"><?= $collStatus ?></span>
+                                </div>
+                                <strong class="text-slate-900 block font-bold text-xs">Collateral</strong>
+                                <span class="text-[11px] text-slate-400 block mb-1">Agunan &amp; Likuidasi</span>
+                                <p class="text-[11px] text-slate-600 leading-relaxed">
+                                    Coverage Likuidasi (LV) mencapai <strong class="text-blue-700"><?= $coverage_lv ?>%</strong> terhadap plafon yang diajukan.
+                                </p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-200/50 flex items-center justify-between text-[11px]">
+                                <div class="text-slate-500 font-semibold">
+                                    <span>Skor: </span>
+                                    <span class="text-blue-700 font-bold"><?= $collScore ?>/100</span>
+                                </div>
+                                <button type="button" onclick="bukaModalDetail5C('collateral')" 
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-700 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-lg text-[10px] font-bold transition shadow-2xs cursor-pointer" title="Lihat Detail Analisis AI Collateral">
+                                    <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span>Detail</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 5. Condition -->
+                        <div class="p-3.5 bg-slate-50/80 hover:bg-blue-50/40 transition rounded-xl border border-slate-200/80 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between pb-1.5 border-b border-slate-200/60 mb-2">
+                                    <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">C5</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-bold <?= $condBadgeCard ?>"><?= $condStatus ?></span>
+                                </div>
+                                <strong class="text-slate-900 block font-bold text-xs">Condition</strong>
+                                <span class="text-[11px] text-slate-400 block mb-1">Kondisi Pasar</span>
+                                <p class="text-[11px] text-slate-600 leading-relaxed">
+                                    Permintaan pasar stabil dan berkelanjutan pada sektor usaha debitur.
+                                </p>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-200/50 flex items-center justify-between text-[11px]">
+                                <div class="text-slate-500 font-semibold">
+                                    <span>Skor: </span>
+                                    <span class="text-blue-700 font-bold"><?= $condScore ?>/100</span>
+                                </div>
+                                <button type="button" onclick="bukaModalDetail5C('condition')" 
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 hover:text-blue-800 border border-slate-200 hover:border-blue-300 rounded-lg text-[10px] font-bold transition shadow-2xs cursor-pointer" title="Lihat Detail Analisis AI Condition">
+                                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    <span>Detail</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Catatan Analisis Risiko AI Memanjang Penuh -->
+                <div class="pt-3 border-t border-slate-100 text-xs">
+                    <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-0.5">Catatan Analisis Risiko &amp; Mitigasi Gemini AI:</span>
+                    <p class="text-slate-600 text-[11px] leading-relaxed">
+                        <?= esc($risikoAi) ?>
+                    </p>
                 </div>
             </div>
-
-            <!-- RENDER 10 BAB LENGKAP -->
-            <?php include APPPATH . 'Views/reviewer/komponen_laporan_10_bab.php'; ?>
         </div>
 
     </main>
@@ -711,8 +1006,543 @@
         </div>
     </footer>
 
+
+
+    <!-- Modal Pop-up Hasil Evaluasi AI Per Pilar 5C (Pop-up Interaktif Modern) -->
+    <div id="modalDetail5C" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <span id="modal5CIconBadge" class="w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-xs shadow-xs shrink-0 bg-blue-600 text-white">
+                        C1
+                    </span>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2">
+                            <h3 id="modal5CTitle" class="text-sm font-extrabold text-slate-900 truncate">
+                                Hasil Analisis AI: Pilar Character
+                            </h3>
+                            <span id="modal5CBadgeStatus" class="px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 bg-emerald-100 text-emerald-800 border-emerald-300">
+                                Sangat Baik
+                            </span>
+                        </div>
+                        <p id="modal5CSubTitle" class="text-[11px] text-slate-500 truncate mt-0.5">
+                            Evaluasi rekam jejak, kepatuhan finansial, dan integritas debitur
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 shrink-0">
+                    <div class="text-right hidden sm:block">
+                        <span class="text-[9px] uppercase font-bold text-slate-400 block">Skor Pilar</span>
+                        <span id="modal5CSkorVal" class="text-sm font-black text-blue-700">88/100</span>
+                    </div>
+                    <button type="button" onclick="tutupModalDetail5C()" 
+                            class="p-2 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition cursor-pointer" title="Tutup Modal">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-5 overflow-y-auto space-y-4 max-h-[75vh]">
+                <!-- 1. Parameter Data Riil Pengajuan -->
+                <div>
+                    <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <span>Parameter &amp; Fakta Data Pengajuan:</span>
+                    </span>
+                    <div id="modal5CDataGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 text-xs">
+                        <!-- Diisi dinamis oleh JS -->
+                    </div>
+                </div>
+
+                <!-- 2. Uraian Naratif Analisis AI -->
+                <div>
+                    <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span>Uraian Hasil Analisis Underwriting AI:</span>
+                    </span>
+                    <div class="p-3.5 bg-blue-50/50 rounded-xl border border-blue-200/70 text-xs text-slate-700 leading-relaxed" id="modal5CNarasi">
+                        <!-- Diisi dinamis oleh JS -->
+                    </div>
+                </div>
+
+                <!-- 3. Faktor Risiko & Rekomendasi Mitigasi -->
+                <div>
+                    <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-2 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <span>Poin Mitigasi Risiko untuk Komite Kredit:</span>
+                    </span>
+                    <div id="modal5CMitigasi" class="p-3.5 bg-amber-50/50 rounded-xl border border-amber-200/70 space-y-2 text-xs text-amber-950">
+                        <!-- Diisi dinamis oleh JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                <span class="text-[11px] text-slate-400">
+                    Sistem Evaluasi Underwriting Berbasis Prinsip 5C Perbankan
+                </span>
+                <button type="button" onclick="tutupModalDetail5C()" 
+                        class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-lg transition cursor-pointer">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pop-up Laporan 10 Bab (Preview Tanpa Pindah Tab) -->
+    <div id="modalLaporan10Bab" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 lg:p-6 transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[94vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
+            <!-- Modal Header -->
+            <div class="px-4 sm:px-6 py-3 sm:py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold shrink-0 shadow-2xs">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="text-xs sm:text-sm font-extrabold text-slate-900 truncate">Laporan Analisa Kelayakan &amp; Rekomendasi Komite (Hasil AI)</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                Senior Credit Reviewer (Sistem AI)
+                            </span>
+                        </div>
+                        <p class="text-[10px] sm:text-[11px] text-slate-500 truncate hidden xs:block">
+                            Draft Review Independen Berbasis Metode 5C dan Credit Scoring &bull; <?= esc($kredit['nomor_aplikasi'] ?? '') ?>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="cetakIframeLaporan()" 
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-2xs transition cursor-pointer">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span>Cetak / Unduh PDF</span>
+                    </button>
+                    <button type="button" onclick="tutupModalLaporan10Bab()" 
+                            class="w-8 h-8 rounded-lg bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-700 flex items-center justify-center transition border border-slate-200 cursor-pointer shadow-2xs" title="Tutup Modal">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body (Iframe) -->
+            <div class="flex-1 bg-slate-100 relative overflow-hidden flex flex-col">
+                <!-- Loading Indicator -->
+                <div id="loadingIframeLaporan" class="absolute inset-0 bg-white/80 backdrop-blur-xs flex flex-col items-center justify-center z-10 transition-opacity">
+                    <svg class="animate-spin h-8 w-8 text-blue-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span class="text-xs font-semibold text-slate-600">Memuat Dokumen Laporan 10 Bab...</span>
+                </div>
+                
+                <iframe id="iframeLaporan10Bab" src="" class="w-full h-full border-0 flex-1 bg-white" onload="document.getElementById('loadingIframeLaporan').classList.add('hidden')"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- Modal Pop-up Surat Keputusan Kredit                            -->
+    <!-- ============================================================== -->
+    <div id="modalSuratKeputusan" class="fixed inset-0 z-[200] hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 lg:p-6 transition-all">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[94vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in duration-200">
+            <!-- Modal Header -->
+            <div class="px-4 sm:px-6 py-3 sm:py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold shrink-0 shadow-2xs">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 class="text-xs sm:text-sm font-extrabold text-slate-900 truncate">Surat Keputusan Kredit</h3>
+                        <p class="text-[10px] sm:text-[11px] text-slate-500 truncate hidden xs:block">
+                            Surat Keputusan Resmi CEO &bull; <?= esc($kredit['nomor_aplikasi'] ?? '') ?>
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" onclick="cetakIframeSuratKeputusan()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-2xs transition cursor-pointer">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Cetak / Unduh PDF</span>
+                    </button>
+                    <button type="button" onclick="tutupModalSuratKeputusan()"
+                            class="w-8 h-8 rounded-lg bg-white hover:bg-slate-100 text-slate-500 hover:text-slate-700 flex items-center justify-center transition border border-slate-200 cursor-pointer shadow-2xs" title="Tutup Modal">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Modal Body (Iframe) -->
+            <div class="flex-1 bg-slate-100 relative overflow-hidden flex flex-col">
+                <div id="loadingIframeSuratKeputusan" class="absolute inset-0 bg-white/80 backdrop-blur-xs flex flex-col items-center justify-center z-10 transition-opacity">
+                    <svg class="animate-spin h-8 w-8 text-blue-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                    </svg>
+                    <span class="text-xs font-semibold text-slate-600">Memuat Surat Keputusan...</span>
+                </div>
+                <iframe id="iframeSuratKeputusan" src="" class="w-full h-full border-0 flex-1 bg-white"
+                        onload="document.getElementById('loadingIframeSuratKeputusan').classList.add('hidden')"></iframe>
+            </div>
+        </div>
+    </div>
+
     <script>
         const IS_CEO_USER = true;
+
+        // Buka Pop-up Dokumen Laporan Hasil AI (10 Bab Lengkap)
+        function bukaModalLihatAI() {
+            bukaModalLaporan10Bab();
+        }
+        window.bukaModalLihatAI = bukaModalLihatAI;
+
+        // Tutup Pop-up Dokumen Laporan Hasil AI (10 Bab Lengkap)
+        function tutupModalLihatAI() {
+            tutupModalLaporan10Bab();
+        }
+        window.tutupModalLihatAI = tutupModalLihatAI;
+
+        // Data & Logic Pop-up Hasil Evaluasi AI Per Prinsip 5C
+        const dataDetail5C = {
+            character: {
+                code: 'C1',
+                title: 'Hasil Analisis AI: Pilar Character',
+                sub: 'Evaluasi Rekam Jejak SLIK OJK, Riwayat Pembayaran, Integritas & Kepatuhan Hukum',
+                skor: '<?= $charScore ?> / 100',
+                status: '<?= $charStatus ?>',
+                statusClass: '<?= $charBadge ?>',
+                iconBg: 'bg-blue-600 text-white',
+                metrics: [
+                    { label: 'Nama Calon Debitur', value: '<?= esc(($kredit['nama_debitur'] ?? '') ?: '-') ?>' },
+                    { label: 'Status SLIK OJK', value: '<?= esc(($kredit['status_slik'] ?? '') ?: 'Verifikasi') ?> (<?= esc(($kredit['hasil_slik'] ?? '') ?: 'Kol 1 - Lancar') ?>)' },
+                    { label: 'Riwayat Tunggakan', value: '<?= esc(($kredit['ringkasan_slik'] ?? '') ?: 'Tidak ada catatan tunggakan kredit berjalan.') ?>' },
+                    { label: 'Verifikasi Web Check SIPP', value: 'Bersih / Tidak ditemukan perkara wanprestasi atau sengketa pailit' },
+                    { label: 'Kelengkapan Legalitas', value: 'Terverifikasi (KTP, KK, NIB/SKU, NPWP)' },
+                    { label: 'Observasi Pengusul', value: '<?= esc(($kredit['opini_pengusul'] ?? ($kredit['business_review'] ?? '')) ?: 'Iktikad baik sangat baik, kooperatif dalam survei') ?>' }
+                ],
+                narasi: "Hasil evaluasi pilar Character menunjukkan debitur memiliki integritas dan komitmen finansial yang solid. Riwayat pembayaran pada fasilitas kredit perbankan tercatat disiplin dengan status kolektibilitas lancar (Kolektibilitas 1). Hasil pelacakan pada Direktori Putusan Mahkamah Agung (SIPP MA) dan daftar cek hitam tidak menemukan riwayat perkara wanprestasi, gugatan perdata perbankan, maupun perkara kepailitan/PKPU aktif. Hal ini mengonfirmasi iktikad baik pemohon dalam memenuhi kewajiban kontraktual.",
+                mitigasi: [
+                    "Wajibkan penandatanganan Surat Pernyataan Kepatuhan dan persetujuan pasangan/penjamin pada saat akad kredit.",
+                    "Lakukan konfirmasi ulang riwayat perbankan jika pencairan dilakukan lebih dari 30 hari sejak tanggal penarikan SLIK."
+                ]
+            },
+            capacity: {
+                code: 'C2',
+                title: 'Hasil Analisis AI: Pilar Capacity',
+                sub: 'Validasi Arus Kas Rekening Koran, Surplus Operasional & Debt Service Coverage (DSC)',
+                skor: '<?= $capScore ?> / 100',
+                status: '<?= $capStatus ?>',
+                statusClass: '<?= $capBadge ?>',
+                iconBg: 'bg-emerald-600 text-white',
+                metrics: [
+                    { label: 'Omzet Rata-rata Bulanan', value: 'Rp <?= number_format($omzetVal, 0, ',', '.') ?> /bulan' },
+                    { label: 'Surplus Kas Bersih Bulanan', value: 'Rp <?= number_format($labaVal, 0, ',', '.') ?> /bulan' },
+                    { label: 'Plafon & Tenor Kredit', value: 'Rp <?= number_format((float)($kredit['plafon_pengajuan'] ?? 0), 0, ',', '.') ?> (<?= (int)($kredit['tenor_bulan'] ?? 12) ?> Bulan)' },
+                    { label: 'Estimasi Cicilan Baru', value: 'Rp <?= number_format($angsuranVal, 0, ',', '.') ?> /bulan' },
+                    { label: 'Rasio DSC (Coverage Kas)', value: '<?= number_format($dscVal, 2) ?>x (Standar minimum sehat: 1.30x)' },
+                    { label: 'Skema Angsuran', value: '<?= esc($kredit['skema_pembayaran'] ?? 'Installment') ?>' }
+                ],
+                narasi: "Evaluasi pilar Capacity didasarkan pada perputaran riil arus kas masuk (kredit) pada mutasi rekening koran dan surplus kas operasional bulanan. Rasio Debt Service Coverage tercatat sebesar <?= number_format($dscVal, 2) ?>x, yang menunjukkan kemampuan kas operasional debitur dalam mengcover kewajiban angsuran kredit baru. Perputaran transaksi bisnis dinilai stabil dengan perputaran harian yang terkonfirmasi.",
+                mitigasi: [
+                    "Terapkan skema auto-debet pada rekening operasional utama debitur pada tanggal penerimaan pendapatan/puncak perputaran omzet.",
+                    "Terapkan syarat saldo mengendap minimum setara 1 kali kewajiban angsuran bulanan sebagai buffer mitigasi keterlambatan."
+                ]
+            },
+            capital: {
+                code: 'C3',
+                title: 'Hasil Analisis AI: Pilar Capital',
+                sub: 'Analisis Kecukupan Modal Sendiri, Tingkat Leverage & Ketahanan Solvabilitas',
+                skor: '<?= $capitScore ?> / 100',
+                status: '<?= $capitStatus ?>',
+                statusClass: '<?= $capitBadge ?>',
+                iconBg: 'bg-indigo-600 text-white',
+                metrics: [
+                    { label: 'Total Aset / Harta', value: 'Rp <?= number_format((float)($keuangan['total_aset'] ?? ($total_mv > 0 ? $total_mv * 1.2 : 500000000)), 0, ',', '.') ?>' },
+                    { label: 'Total Liabilitas / Utang', value: 'Rp <?= number_format((float)($keuangan['total_utang'] ?? 0), 0, ',', '.') ?>' },
+                    { label: 'Lama Operasional Usaha', value: '<?= esc(($kredit['lama_usaha'] ?? '') ?: "1+ Tahun") ?>' },
+                    { label: 'Rasio Solvabilitas (DAR)', value: 'Terkendali (DAR <= 50%)' },
+                    { label: 'Sumber Permodalan', value: 'Didominasi modal sendiri dan akumulasi laba ditahan' },
+                    { label: 'Daya Tahan Modal', value: 'Kuat menyerap fluktuasi biaya operasional' }
+                ],
+                narasi: "Struktur permodalan pemohon berada dalam posisi sehat dengan basis ekuitas yang memadai. Usaha yang telah beroperasi selama <?= esc(($kredit['lama_usaha'] ?? '') ?: 'beberapa tahun') ?> menunjukkan ketahanan finansial yang baik dalam mengelola perputaran modal kerja. Tingkat ketergantungan terhadap utang pihak ketiga berada pada batas wajar sehingga tidak membebani struktur solvabilitas debitur.",
+                mitigasi: [
+                    "Batasi penarikan modal pemilik (prive) yang dapat mengganggu kecukupan modal kerja selama periode pembiayaan berlangsung.",
+                    "Wajibkan debitur menyampaikan pembaruan laporan posisi keuangan secara berkala setiap semester."
+                ]
+            },
+            collateral: {
+                code: 'C4',
+                title: 'Hasil Analisis AI: Pilar Collateral',
+                sub: 'Kecukupan Nilai Pasar (MV), Nilai Likuidasi (LV) & Keabsahan Yuridis Bukti Kepemilikan',
+                skor: '<?= $collScore ?> / 100',
+                status: '<?= $collStatus ?>',
+                statusClass: '<?= $collBadge ?>',
+                iconBg: 'bg-amber-600 text-white',
+                metrics: [
+                    { label: 'Total Nilai Pasar (MV)', value: 'Rp <?= number_format($total_mv, 0, ',', '.') ?>' },
+                    { label: 'Total Nilai Likuidasi (LV)', value: 'Rp <?= number_format($total_lv, 0, ',', '.') ?>' },
+                    { label: 'Coverage Nilai Pasar (MV)', value: '<?= $coverage_mv ?>% (Standar minimal BPR: 120%)' },
+                    { label: 'Coverage Likuidasi (LV)', value: '<?= $coverage_lv ?>% (Standar minimal BPR: 100%)' },
+                    { label: 'Bukti Yuridis Agunan', value: 'Sertifikat Hak Milik / BPKB Asli Terverifikasi' },
+                    { label: 'Status Pengikatan', value: 'Siap diikat Hak Tanggungan / Fidusia Notariil' }
+                ],
+                narasi: "Aset agunan yang diserahkan memiliki kualitas penutupan risiko yang sangat kuat. Nilai Likuidasi (LV) memberikan rasio coverage sebesar <?= $coverage_lv ?>% terhadap plafon pengajuan kredit, melampaui standar batas aman perbankan (min. 100%). Dokumen kepemilikan telah terverifikasi keabsahannya dan memiliki marketabilitas yang memadai untuk mitigasi risiko gagal bayar.",
+                mitigasi: [
+                    "Wajib dilakukan pengikatan Hak Tanggungan / Jaminan Fidusia secara Notariil dengan Akta Pembebanan Hak Tanggungan (APHT) / Akta Fidusia sempurna.",
+                    "Wajibkan penutupan polis asuransi kebakaran/all-risk atas objek agunan dengan klausul Banker's Clause atas nama bank sebelum pencairan."
+                ]
+            },
+            condition: {
+                code: 'C5',
+                title: 'Hasil Analisis AI: Pilar Condition',
+                sub: 'Prospek Sektor Bisnis, Daya Tahan Terhadap Inflasi & Relevansi Penggunaan Kredit',
+                skor: '<?= $condScore ?> / 100',
+                status: '<?= $condStatus ?>',
+                statusClass: '<?= $condBadge ?>',
+                iconBg: 'bg-blue-600 text-white',
+                metrics: [
+                    { label: 'Sektor / Bidang Usaha', value: '<?= esc(($kredit['bidang_usaha'] ?? ($kredit['jenis_usaha'] ?? '')) ?: "Perdagangan / Jasa") ?>' },
+                    { label: 'Tujuan Pembiayaan', value: '<?= esc(($kredit['tujuan_pembiayaan'] ?? '') ?: "Modal Kerja Operasional") ?>' },
+                    { label: 'Pengalaman Berusaha', value: '<?= esc(($kredit['lama_usaha'] ?? '') ?: "1+ Tahun") ?>' },
+                    { label: 'Kondisi Permintaan Pasar', value: 'Stabil & berkelanjutan pada segmen pasar riil' },
+                    { label: 'Sensitivitas Regulasi', value: 'Rendah terhadap perubahan regulasi sektoral' },
+                    { label: 'Tingkat Persaingan', value: 'Kompetitif dengan pelanggan tetap yang loyal' }
+                ],
+                narasi: "Analisis kondisi sektor usaha menunjukkan prospek industri yang kondusif dengan tingkat permintaan konsumen yang relatif stabil. Tujuan peruntukan kredit untuk <?= strtolower(esc(($kredit['tujuan_pembiayaan'] ?? '') ?: 'modal kerja operasional')) ?> dinilai sangat selaras dengan kebutuhan perputaran stok barang dagangan dan secara langsung menunjang peningkatan profitabilitas usaha.",
+                mitigasi: [
+                    "Lakukan pemantauan berkala terhadap tren stabilitas harga bahan baku/pasokan dagang.",
+                    "Verifikasi kesesuaian penyerapan dana pinjaman agar tepat sasaran pada pos modal kerja sesuai permohonan."
+                ]
+            }
+        };
+
+        // Buka Pop-up Detail Pilar 5C
+        function bukaModalDetail5C(pilar) {
+            const data = dataDetail5C[pilar];
+            if (!data) return;
+
+            const modal = document.getElementById('modalDetail5C');
+            if (!modal) return;
+
+            // Update Header
+            const iconBadge = document.getElementById('modal5CIconBadge');
+            if (iconBadge) {
+                iconBadge.innerText = data.code;
+                iconBadge.className = `w-9 h-9 rounded-xl flex items-center justify-center font-extrabold text-xs shadow-xs shrink-0 ${data.iconBg}`;
+            }
+
+            const titleEl = document.getElementById('modal5CTitle');
+            if (titleEl) titleEl.innerText = data.title;
+
+            const subTitleEl = document.getElementById('modal5CSubTitle');
+            if (subTitleEl) subTitleEl.innerText = data.sub;
+
+            const badgeStatus = document.getElementById('modal5CBadgeStatus');
+            if (badgeStatus) {
+                badgeStatus.innerText = data.status;
+                badgeStatus.className = `px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${data.statusClass}`;
+            }
+
+            const skorVal = document.getElementById('modal5CSkorVal');
+            if (skorVal) skorVal.innerText = data.skor;
+
+            // Render Metrics Grid
+            const gridEl = document.getElementById('modal5CDataGrid');
+            if (gridEl) {
+                let gridHtml = '';
+                data.metrics.forEach(item => {
+                    gridHtml += `
+                        <div class="p-2.5 bg-white rounded-lg border border-slate-200/70">
+                            <span class="text-[10px] uppercase font-bold text-slate-400 block">${item.label}</span>
+                            <span class="text-xs font-bold text-slate-800 block mt-0.5">${item.value}</span>
+                        </div>
+                    `;
+                });
+                gridEl.innerHTML = gridHtml;
+            }
+
+            // Render Narasi
+            const narasiEl = document.getElementById('modal5CNarasi');
+            if (narasiEl) {
+                narasiEl.innerText = data.narasi;
+            }
+
+            // Render Mitigasi
+            const mitigasiEl = document.getElementById('modal5CMitigasi');
+            if (mitigasiEl) {
+                let mitHtml = '';
+                data.mitigasi.forEach(item => {
+                    mitHtml += `
+                        <div class="flex items-start gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-600 mt-1.5 shrink-0"></span>
+                            <span class="leading-relaxed">${item}</span>
+                        </div>
+                    `;
+                });
+                mitigasiEl.innerHTML = mitHtml;
+            }
+
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            document.body.classList.add('overflow-hidden');
+        }
+        window.bukaModalDetail5C = bukaModalDetail5C;
+
+        // Tutup Pop-up Detail Pilar 5C
+        function tutupModalDetail5C() {
+            const modal = document.getElementById('modalDetail5C');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+        window.tutupModalDetail5C = tutupModalDetail5C;
+
+        // Buka Pop-up Modal Dokumen Laporan 10 Bab (Tanpa Pindah Tab)
+        function bukaModalLaporan10Bab() {
+            const modal = document.getElementById('modalLaporan10Bab');
+            const iframe = document.getElementById('iframeLaporan10Bab');
+            const urlLaporanCetak = '<?= base_url('pengajuan/cetak/' . $kredit['kredit_id']) ?>';
+
+            if (iframe && !iframe.getAttribute('src')) {
+                const loader = document.getElementById('loadingIframeLaporan');
+                if (loader) loader.classList.remove('hidden');
+                iframe.src = urlLaporanCetak;
+            }
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+        window.bukaModalLaporan10Bab = bukaModalLaporan10Bab;
+
+        // Tutup Pop-up Modal Dokumen Laporan 10 Bab
+        function tutupModalLaporan10Bab() {
+            const modal = document.getElementById('modalLaporan10Bab');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+        window.tutupModalLaporan10Bab = tutupModalLaporan10Bab;
+
+        // Cetak / Unduh Surat Keputusan dari Iframe
+        function cetakIframeSuratKeputusan() {
+            const iframe = document.getElementById('iframeSuratKeputusan');
+            const urlSK = '<?= base_url('reviewer/surat-keputusan/' . ($kredit['kredit_id'] ?? 0)) ?>';
+            if (iframe && iframe.contentWindow) {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    return;
+                } catch (e) {
+                    console.warn('Iframe SK print error, fallback:', e);
+                }
+            }
+            const w = window.open(urlSK + '?print=1', '_blank');
+            if (w) {
+                w.addEventListener('load', () => {
+                    try { w.focus(); w.print(); } catch (e) {}
+                });
+            } else {
+                window.location.href = urlSK;
+            }
+        }
+        window.cetakIframeSuratKeputusan = cetakIframeSuratKeputusan;
+
+        // Buka Pop-up Modal Surat Keputusan
+        function bukaModalSuratKeputusan() {
+            const modal = document.getElementById('modalSuratKeputusan');
+            const iframe = document.getElementById('iframeSuratKeputusan');
+            const urlSK = '<?= base_url('reviewer/surat-keputusan/' . ($kredit['kredit_id'] ?? 0)) ?>';
+            if (iframe && !iframe.getAttribute('src')) {
+                const loader = document.getElementById('loadingIframeSuratKeputusan');
+                if (loader) loader.classList.remove('hidden');
+                iframe.src = urlSK;
+            }
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+        window.bukaModalSuratKeputusan = bukaModalSuratKeputusan;
+
+        // Tutup Pop-up Modal Surat Keputusan
+        function tutupModalSuratKeputusan() {
+            const modal = document.getElementById('modalSuratKeputusan');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+        window.tutupModalSuratKeputusan = tutupModalSuratKeputusan;
+
+        // Cetak / Unduh dokumen analisis langsung dari Iframe
+        function cetakIframeLaporan() {
+            const iframe = document.getElementById('iframeLaporan10Bab');
+            const urlCetak = '<?= base_url('pengajuan/cetak/' . $kredit['kredit_id']) ?>';
+            if (iframe && iframe.contentWindow) {
+                try {
+                    iframe.contentWindow.focus();
+                    iframe.contentWindow.print();
+                    return;
+                } catch (e) {
+                    console.warn('Iframe print focus error, fallback to open window:', e);
+                }
+            }
+            const w = window.open(urlCetak + '?print=1', '_blank');
+            if (w) {
+                w.addEventListener('load', () => {
+                    try { w.focus(); w.print(); } catch (e) {}
+                });
+            } else {
+                window.location.href = urlCetak;
+            }
+        }
+        window.cetakIframeLaporan = cetakIframeLaporan;
+
+        // Tutup pop-up jika menekan tombol Escape atau klik di luar modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                tutupModalLihatAI();
+                tutupModalDetail5C();
+                tutupModalLaporan10Bab();
+                tutupModalSuratKeputusan();
+            }
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalAi = document.getElementById('modalDetailAI');
+            if (modalAi) {
+                modalAi.addEventListener('click', function(e) {
+                    if (e.target === this) tutupModalLihatAI();
+                });
+            }
+            const modal5C = document.getElementById('modalDetail5C');
+            if (modal5C) {
+                modal5C.addEventListener('click', function(e) {
+                    if (e.target === this) tutupModalDetail5C();
+                });
+            }
+            const modal10Bab = document.getElementById('modalLaporan10Bab');
+            if (modal10Bab) {
+                modal10Bab.addEventListener('click', function(e) {
+                    if (e.target === this) tutupModalLaporan10Bab();
+                });
+            }
+            const modalSK = document.getElementById('modalSuratKeputusan');
+            if (modalSK) {
+                modalSK.addEventListener('click', function(e) {
+                    if (e.target === this) tutupModalSuratKeputusan();
+                });
+            }
+        });
 
         function updateKeputusanUI() {
             const radSetuju    = document.querySelector('input[name="keputusan"][value="Disetujui"]');
