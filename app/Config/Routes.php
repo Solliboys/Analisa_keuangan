@@ -70,6 +70,8 @@ $routes->group('slik', static function ($routes) {
     $routes->post('setujui-pengusul/(:num)', 'Slik::setujuiPengusul/$1');
     $routes->post('setujui-pengajuan-slik/(:num)', 'Slik::setujuiPengajuanSlik/$1');
     $routes->post('toggle-akses-pengusul', 'Slik::toggleAksesPengusul');
+    $routes->post('hapus/(:num)', 'Slik::hapusSlik/$1');
+    $routes->post('hapus', 'Slik::hapusSlik');
 });
 
 // Modul Reviewer & Komite Kredit

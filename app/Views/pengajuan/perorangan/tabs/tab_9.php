@@ -122,22 +122,24 @@
                 }
                 if ($bPct <= 0) $bPct = 10;
 
-                if ($angs <= 0 && $pAcuan > 0) {
-                    $jwThn = $jwBln / 12;
-                    $angs = round(($pAcuan * (1 + ($bPct / 100) * $jwThn)) / $jwBln);
+                // Rumus resmi komite kredit: angsuran_per_bulan = (plafon + (plafon * (bunga_persen / 100) * (tenor_bulan / 12))) / tenor_bulan
+                if ($pAcuan > 0) {
+                    $angs = (int)round(($pAcuan + ($pAcuan * ($bPct / 100) * ($jwBln / 12))) / $jwBln);
                 }
 
                 $totalOutstandingSlik += $out;
                 $totalCicilanSlik += $angs;
 
-                if ($pAcuan > 0) {
+                if ($pAcuan > 0 || $out > 0) {
                     $listSlikAutoUtangPR[] = [
                         'nama'            => !empty($s['bank_lembaga']) ? "{$s['bank_lembaga']} ({$s['jenis_fasilitas']})" : 'Pinjaman Bank',
                         'plafon'          => $pAcuan,
+                        'baki_debet'      => $out,
                         'bunga_persen'    => $bPct,
                         'tenor_tahun'     => round($jwBln / 12, 1),
                         'tenor_bulan'     => $jwBln,
-                        'cicilan_bulanan' => $angs
+                        'cicilan_bulanan' => $angs,
+                        'is_slik'         => 1
                     ];
                 }
             }
@@ -187,14 +189,20 @@
 
         // Prioritas Aset: Ekstrak aset dari Kotak 3 ($listDetailHppPR kategori 'aset')
         $listAsetKotak3PR = [];
+        $piutangAsetPR = 0;
         if (!empty($listDetailHppPR)) {
             foreach ($listDetailHppPR as $it) {
                 if (($it['kategori'] ?? '') === 'aset') {
+                    $nmAset = strtolower($it['nama'] ?? '');
+                    $nomAset = (float)($it['nominal'] ?? 0);
                     $listAsetKotak3PR[] = [
                         'nama'    => $it['nama'] ?? 'Aset / Inventaris',
-                        'nominal' => (float)($it['nominal'] ?? 0),
+                        'nominal' => $nomAset,
                         'status'  => 'bebas'
                     ];
+                    if (strpos($nmAset, 'piutang') !== false || strpos($nmAset, 'tagihan') !== false || strpos($nmAset, 'invoice') !== false) {
+                        $piutangAsetPR += $nomAset;
+                    }
                 }
             }
         }
@@ -204,6 +212,15 @@
             $listDetailHarta = array_values(array_filter($listDetailHarta, function($item) {
                 return (float)($item['nominal'] ?? 0) > 0;
             }));
+            foreach ($listDetailHarta as $it) {
+                $nmAset = strtolower($it['nama'] ?? '');
+                if (strpos($nmAset, 'piutang') !== false || strpos($nmAset, 'tagihan') !== false || strpos($nmAset, 'invoice') !== false) {
+                    $piutangAsetPR += (float)($it['nominal'] ?? 0);
+                }
+            }
+        }
+        if ($piutangAsetPR <= 0 && !empty($keuangan['neraca_piutang_usaha'])) {
+            $piutangAsetPR = (float)$keuangan['neraca_piutang_usaha'];
         }
     ?>
 
@@ -469,6 +486,10 @@
         <input type="hidden" name="detail_utang_json" id="detail_utang_json" value="<?= esc(!empty($listDetailUtang) ? json_encode($listDetailUtang) : '[]') ?>">
         <input type="hidden" name="dsc_rasio_rk" id="dsc_rasio_rk" value="0">
         <input type="hidden" name="rasio_dsc_dscr" id="rasio_dsc_dscr" value="0">
+        <input type="hidden" name="piutang_aset" id="piutang_aset" value="<?= esc($piutangAsetPR) ?>">
+        <input type="hidden" name="neraca_piutang_usaha" id="neraca_piutang_usaha" value="<?= esc($piutangAsetPR) ?>">
+        <input type="hidden" name="total_baki_debet_slik" id="total_baki_debet_slik" value="<?= esc($totalOutstandingSlik) ?>">
+        <input type="hidden" name="cicilan_slik_per_bulan" id="cicilan_slik_per_bulan" value="<?= esc($totalCicilanSlik) ?>">
 
         <span id="nomHppRK" class="hidden">Rp 0</span>
         <span id="nomBiayaHidupRK" class="hidden">Rp 0</span>
@@ -484,8 +505,11 @@
     </div>
 
     <script>
-    window.ANGSURAN_SLIK_DEFAULT = <?= (float)$totalCicilanSlik ?>;
+    window.TOTAL_BAKI_DEBET_SLIK = <?= (float)$totalOutstandingSlik ?>;
     window.OUTSTANDING_SLIK_DEFAULT = <?= (float)$totalOutstandingSlik ?>;
+    window.CICILAN_SLIK_PER_BULAN = <?= (float)$totalCicilanSlik ?>;
+    window.ANGSURAN_SLIK_DEFAULT = <?= (float)$totalCicilanSlik ?>;
+    window.PIUTANG_ASET = <?= (float)$piutangAsetPR ?>;
     window.ESTIMASI_ANGSURAN_BARU = <?= (float)$estimasiAngsuranBaru ?>;
     window.daftarHpp = <?= !empty($listDetailHppPR) ? json_encode($listDetailHppPR) : '[]' ?>;
     window.daftarHarta = <?= !empty($listDetailHarta) ? json_encode($listDetailHarta) : '[]' ?>;

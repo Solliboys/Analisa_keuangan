@@ -9,9 +9,18 @@
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
     <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png?v=2') ?>">
+    <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
     <style>
+        html { color-scheme: light !important; }
         body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
         .tabular-nums { font-variant-numeric: tabular-nums; }
+        input, textarea, select {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8 !important;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col">
@@ -649,7 +658,8 @@
                                 </label>
                             </div>
                             <textarea id="catatanKeputusan" name="catatan" rows="6" 
-                                      class="w-full text-xs text-slate-800 border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-600 transition placeholder:text-slate-400"
+                                      class="w-full text-xs text-slate-800 bg-white border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-600 transition placeholder:text-slate-400 shadow-2xs"
+                                      style="background-color: #ffffff !important; color: #0f172a !important;"
                                       placeholder="Tuliskan catatan hasil review, pertimbangan kelayakan kredit, evaluasi risiko 5C, atau masukan untuk CEO..."><?= esc(trim($myLatestNote['catatan_approval'] ?? '')) ?></textarea>
                             <p class="text-[11px] text-slate-400 mt-1" id="catatanHelperText">
                                 Catatan ini akan langsung diterima oleh CEO sebagai dasar pertimbangan pengambilan keputusan.

@@ -417,6 +417,148 @@ class Slik extends BaseController
         ]);
     }
 
+    /**
+     * Hapus / Reset Hasil Verifikasi SLIK
+     */
+    public function hapusSlik($kreditId = null)
+    {
+        if (!session()->get('logged_in')) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Sesi berakhir, silakan login ulang']);
+        }
+
+        $jabatan = strtolower(session()->get('jabatan') ?? '');
+        if ($jabatan !== 'superadmin' && strpos($jabatan, 'slik') === false) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Akses khusus Petugas Verifikasi SLIK.']);
+        }
+
+        $kreditId = (int)$kreditId;
+        if ($kreditId <= 0) {
+            $kreditId = (int)$this->request->getPost('kredit_id');
+        }
+
+        if ($kreditId <= 0) {
+            return $this->response->setJSON(['status' => false, 'message' => 'ID Pengajuan tidak valid']);
+        }
+
+        $kredit = $this->kreditModel->find($kreditId);
+        if (!$kredit) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Pengajuan kredit tidak ditemukan']);
+        }
+
+        $idx = $this->request->getPost('subjek_index');
+
+        $this->db->transBegin();
+        try {
+            $daftarPermohonan = json_decode($kredit['daftar_permohonan_slik'] ?? '[]', true);
+            if (!is_array($daftarPermohonan)) {
+                $daftarPermohonan = [];
+            }
+
+            $namaSubjekDihapus = '';
+
+            if ($idx !== null && $idx !== '' && isset($daftarPermohonan[(int)$idx])) {
+                $subjekDihapus = $daftarPermohonan[(int)$idx];
+                $namaSubjekDihapus = $subjekDihapus['nama'] ?? '';
+
+                // Hapus berkas fisik khusus subjek ini jika ada
+                if (!empty($subjekDihapus['file_pdf']) && file_exists(FCPATH . $subjekDihapus['file_pdf'])) {
+                    @unlink(FCPATH . $subjekDihapus['file_pdf']);
+                }
+                if (!empty($subjekDihapus['file_txt']) && file_exists(FCPATH . $subjekDihapus['file_txt'])) {
+                    @unlink(FCPATH . $subjekDihapus['file_txt']);
+                }
+
+                // Hapus subjek ini dari daftar permohonan SLIK
+                array_splice($daftarPermohonan, (int)$idx, 1);
+
+                // Re-index array
+                foreach ($daftarPermohonan as $newI => &$item) {
+                    $item['index'] = $newI;
+                }
+                unset($item);
+
+                // Hapus fasilitas yang terhubung dengan nama subjek ini
+                if (!empty($namaSubjekDihapus)) {
+                    $this->slikModel->where('kredit_id', $kreditId)
+                                   ->where('nama_debitur', $namaSubjekDihapus)
+                                   ->delete();
+                }
+            } else {
+                // Hapus seluruh fasilitas dan kosongkan seluruh subjek SLIK
+                $this->slikModel->where('kredit_id', $kreditId)->delete();
+                $daftarPermohonan = [];
+
+                if (!empty($kredit['berkas_slik_pdf']) && file_exists(FCPATH . $kredit['berkas_slik_pdf'])) {
+                    @unlink(FCPATH . $kredit['berkas_slik_pdf']);
+                }
+                if (!empty($kredit['berkas_slik_txt']) && file_exists(FCPATH . $kredit['berkas_slik_txt'])) {
+                    @unlink(FCPATH . $kredit['berkas_slik_txt']);
+                }
+            }
+
+            // Update data ke tabel kredit
+            $updateData = [
+                'daftar_permohonan_slik' => json_encode(array_values($daftarPermohonan)),
+            ];
+
+            if (empty($daftarPermohonan)) {
+                $updateData['status_slik']      = 'Belum Terbit';
+                $updateData['hasil_slik']       = 'Menunggu Pengecekan';
+                $updateData['ringkasan_slik']   = '';
+                $updateData['berkas_slik_pdf']  = null;
+                $updateData['berkas_slik_txt']  = null;
+                $updateData['slik_verified_at'] = null;
+                $updateData['slik_verified_by'] = null;
+                $this->slikModel->where('kredit_id', $kreditId)->delete();
+            } else {
+                $semuaTerbit = true;
+                $adaTunggakan = false;
+                foreach ($daftarPermohonan as $s) {
+                    $st = strtolower($s['status'] ?? '');
+                    if ($st !== 'telah terbit' && $st !== 'terbit') {
+                        $semuaTerbit = false;
+                    }
+                    if (in_array(strtolower($s['hasil'] ?? ''), ['dpk', 'kurang lancar', 'diragukan', 'macet'])) {
+                        $adaTunggakan = true;
+                    }
+                }
+                if ($semuaTerbit) {
+                    $updateData['status_slik'] = 'Terbit';
+                    $updateData['hasil_slik']  = $adaTunggakan ? 'Kolektibilitas 2-5 (Ada Tunggakan)' : 'Kol 1 (Lancar / Clear)';
+                } else {
+                    $updateData['status_slik'] = 'Belum Terbit';
+                    $updateData['hasil_slik']  = 'Menunggu Pengecekan';
+                }
+            }
+
+            $this->kreditModel->update($kreditId, $updateData);
+
+            if ($this->db->transStatus() === false) {
+                $this->db->transRollback();
+                return $this->response->setJSON(['status' => false, 'message' => 'Gagal menghapus subjek permohonan SLIK.']);
+            }
+
+            $this->db->transCommit();
+
+            try {
+                LogAktivitasModel::catat(
+                    'Petugas SLIK menghapus subjek permohonan SLIK (' . ($namaSubjekDihapus ?: 'Semua Subjek') . ') berkas ' . ($kredit['nomor_aplikasi'] ?? $kreditId),
+                    'SLIK',
+                    'WARNING',
+                    ['kredit_id' => $kreditId, 'subjek' => $namaSubjekDihapus]
+                );
+            } catch (\Throwable $e) {}
+
+            return $this->response->setJSON([
+                'status'  => true,
+                'message' => 'Subjek permohonan SLIK ' . ($namaSubjekDihapus ? "($namaSubjekDihapus) " : '') . 'berhasil dihapus dari daftar!'
+            ]);
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            return $this->response->setJSON(['status' => false, 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
+    }
+
     private function hitungAngsuranPinjamanResmi($plafon, $bungaStr = '10%', $jwStr = '12 bln')
     {
         $plafon = (float)$plafon;
@@ -444,8 +586,26 @@ class Slik extends BaseController
 
     private function cleanNumber($val)
     {
-        if (is_numeric($val)) return (float)$val;
-        $cleaned = preg_replace('/[^0-9]/', '', (string)$val);
-        return (float)$cleaned;
+        if ($val === null || $val === '') return 0.0;
+        if (is_int($val) || is_float($val)) return (float)$val;
+
+        $s = trim((string)$val);
+        if ($s === '' || $s === '-') return 0.0;
+
+        $isNeg = strpos($s, '-') === 0;
+        $s = preg_replace('/[^0-9.,-]/', '', $s);
+
+        if (preg_match('/,\d{1,2}$/', $s)) {
+            $parts = explode(',', $s);
+            $s = $parts[0];
+        }
+
+        if (preg_match('/^-?\d+\.\d{1,2}$/', $s)) {
+            return (float)$s;
+        }
+
+        $clean = preg_replace('/[^0-9]/', '', $s);
+        $num = $clean !== '' ? (float)$clean : 0.0;
+        return $isNeg ? -$num : $num;
     }
 }

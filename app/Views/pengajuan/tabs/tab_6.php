@@ -42,6 +42,24 @@ if (!empty($kredit['daftar_permohonan_slik'])) {
         }
     }
 }
+// Inisialisasi subjek utama hanya jika permohonan SLIK belum pernah diinisialisasi di database
+if (empty($daftarPermohonanSlik) && (!isset($kredit['daftar_permohonan_slik']) || $kredit['daftar_permohonan_slik'] === null || $kredit['daftar_permohonan_slik'] === '')) {
+    $isBadanUsaha = (isset($kredit['jenis_debitur']) && (stripos($kredit['jenis_debitur'], 'badan') !== false || stripos($kredit['jenis_debitur'], 'pt') !== false || stripos($kredit['jenis_debitur'], 'cv') !== false));
+    $namaUtama = $namaDebiturVal ?: ($kredit['nama_usaha'] ?? 'Debitur Utama');
+    $daftarPermohonanSlik[] = [
+        'index'        => 0,
+        'nama'         => $namaUtama,
+        'no_id'        => $noIdVal ?: '-',
+        'keterkaitan'  => $isBadanUsaha ? 'Badan Usaha' : 'Pemohon',
+        'no_reff'      => $noReffSlik ?? '-',
+        'tanggal'      => !empty($kredit['created_at']) ? date('d M Y', strtotime($kredit['created_at'])) : date('d M Y'),
+        'status'       => ($statusSlikVal === 'Terbit') ? 'Telah Terbit' : 'Menunggu Pengecekan',
+        'hasil'        => $hasilSlikVal ?: 'Menunggu',
+        'pengusul'     => $pengusulVal,
+        'file_identitas' => null,
+        'file_permohonan' => null
+    ];
+}
 
 // Perhitungan Ringkasan SLIK
 $totalPlafonSlik = 0;
@@ -84,12 +102,29 @@ if (!empty($slik) && is_array($slik)) {
         $totalAngsuranSlik += $angs;
 
         $bank = strtolower($s['bank_lembaga'] ?? '');
+        $jenisKredit = strtolower($s['jenis_kredit'] ?? ($s['jenis_fasilitas'] ?? ''));
         if (strpos($bank, 'bpr') !== false || strpos($bank, 'bprs') !== false) {
             $countBpr++;
-        } elseif (strpos($bank, 'bank') !== false || strpos($bank, 'mandiri') !== false || strpos($bank, 'bca') !== false || strpos($bank, 'bri') !== false || strpos($bank, 'bni') !== false) {
-            $countBankUmum++;
-        } elseif (strpos($bank, 'finance') !== false || strpos($bank, 'leasing') !== false || strpos($bank, 'adira') !== false || strpos($bank, 'fif') !== false || strpos($bank, 'oto') !== false) {
+        } elseif (
+            strpos($bank, 'finance') !== false || strpos($bank, 'leasing') !== false || 
+            strpos($bank, 'adira') !== false || strpos($bank, 'fif') !== false || 
+            strpos($bank, 'oto') !== false || strpos($bank, 'baf') !== false || 
+            strpos($bank, 'wom') !== false || strpos($bank, 'kreditplus') !== false || 
+            strpos($bank, 'multifinance') !== false || strpos($bank, 'pembiayaan') !== false || 
+            strpos($jenisKredit, 'pembiayaan') !== false || strpos($bank, 'indomobil') !== false
+        ) {
             $countLembagaPembiayaan++;
+        } elseif (
+            strpos($bank, 'bank') !== false || strpos($bank, 'mandiri') !== false || 
+            strpos($bank, 'bca') !== false || strpos($bank, 'bri') !== false || 
+            strpos($bank, 'bni') !== false || strpos($bank, 'cimb') !== false || 
+            strpos($bank, 'danamon') !== false || strpos($bank, 'permata') !== false || 
+            strpos($bank, 'btn') !== false || strpos($bank, 'panin') !== false || 
+            strpos($bank, 'mega') !== false || strpos($bank, 'ocbc') !== false || 
+            strpos($bank, 'maybank') !== false || strpos($bank, 'uob') !== false || 
+            strpos($bank, 'dbs') !== false || strpos($bank, 'bsi') !== false
+        ) {
+            $countBankUmum++;
         } else {
             $countLainnya++;
         }
@@ -136,6 +171,10 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"></path></svg>
                 <span>Tambah SLIK</span>
             </button>
+            <button type="button" onclick="konfirmasiKirimPengajuanKePetugasSlik()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap shadow-xs" title="Ajukan / Kirim permohonan SLIK ke antrean kerja Petugas SLIK OJK">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                <span id="textBtnKirimSlikHeader"><?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'Antrean Petugas SLIK' : 'Ajukan ke Petugas SLIK' ?></span>
+            </button>
             <?php if ($canEditSlik): ?>
                 <button type="button" onclick="exportTxtPermohonanSlik()" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-md text-xs font-semibold transition cursor-pointer whitespace-nowrap" title="Export Berkas TXT Permohonan SLIK OJK (Otomatis dari data terpilih)">
                     <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
@@ -168,25 +207,38 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                 </div>
             </div>
             <div class="shrink-0 flex items-center gap-2">
-                <button type="button" onclick="konfirmasiKirimPengajuanKePetugasSlik()" class="w-full sm:w-auto px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-md text-xs font-semibold transition cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
+                <button type="button" onclick="konfirmasiKirimPengajuanKePetugasSlik()" class="w-full sm:w-auto px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-md text-xs font-semibold transition cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap shadow-xs">
                     <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                     <span id="btnAksiBannerSlik"><?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'Kirim Ulang ke Petugas' : 'Kirim ke Petugas SLIK' ?></span>
                 </button>
             </div>
         </div>
     <?php else: ?>
-        <div class="mb-5 p-3.5 sm:p-4 rounded-lg bg-emerald-50/70 border border-emerald-200 text-emerald-950 flex items-start gap-3">
-            <div class="w-8 h-8 rounded-md bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            </div>
-            <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <h4 class="font-bold text-xs uppercase tracking-wide text-emerald-900">Mode Fleksibel Pengusul (Single AO)</h4>
-                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap shrink-0">Petugas SLIK Nonaktif</span>
+        <div class="mb-5 p-3.5 sm:p-4 rounded-lg bg-emerald-50/70 border border-emerald-200 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3" id="bannerAlurPetugasSlik">
+            <div class="flex items-start gap-3 min-w-0">
+                <div class="w-8 h-8 rounded-md bg-emerald-100 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 </div>
-                <p class="text-[11px] text-emerald-800 mt-1.5 leading-relaxed">
-                    Fitur Petugas SLIK saat ini dinonaktifkan. Pengusul dapat <strong>langsung menginput hasil kolektibilitas, mengunggah berkas PDF/TXT hasil penarikan SLIK</strong>, dan mengelola rincian fasilitas pinjaman secara mandiri melalui tombol <strong>Proses</strong> pada tabel di bawah.
-                </p>
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <h4 class="font-bold text-xs uppercase tracking-wide text-emerald-900">Mode Fleksibel Pengusul (Single AO)</h4>
+                        <span id="badgeAlertSlik" class="text-[10px] font-semibold px-2 py-0.5 rounded <?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200' ?> whitespace-nowrap shrink-0">
+                            <?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'Antrean Petugas SLIK' : 'Petugas SLIK Nonaktif' ?>
+                        </span>
+                    </div>
+                    <p id="deskripsiAlertSlik" class="text-[11px] text-emerald-800 mt-1.5 leading-relaxed">
+                        <?= ($statusSlikVal === 'Menunggu Pengecekan')
+                            ? 'Permohonan SLIK debitur telah diteruskan ke antrean <strong>Petugas Verifikator SLIK OJK</strong>. Anda juga tetap dapat memproses atau mengunggah hasil SLIK secara mandiri.'
+                            : 'Pengusul dapat <strong>langsung menginput hasil kolektibilitas, mengunggah berkas PDF/TXT hasil penarikan SLIK</strong>, dan mengelola rincian pinjaman secara mandiri, atau dapat mengajukan ke <strong>Petugas SLIK</strong> melalui tombol di samping.'
+                        ?>
+                    </p>
+                </div>
+            </div>
+            <div class="shrink-0 flex items-center gap-2">
+                <button type="button" onclick="konfirmasiKirimPengajuanKePetugasSlik()" class="w-full sm:w-auto px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold transition cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap shadow-xs">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    <span id="btnAksiBannerSlik"><?= ($statusSlikVal === 'Menunggu Pengecekan') ? 'Kirim Ulang ke Petugas' : 'Ajukan ke Petugas SLIK' ?></span>
+                </button>
             </div>
         </div>
     <?php endif; ?>
@@ -576,8 +628,15 @@ $canEditSlik = ($isSuperadmin || $isPetugasSlikRole || ($petugasSlikAktif === 0)
                                             <?= esc($row['kelancaran'] ?? 'Lancar') ?>
                                         </span>
                                     </td>
-                                    <td class="py-2 px-2 text-center">
-                                        <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="text-rose-500 hover:text-rose-700 p-1" title="Hapus">✕</button>
+                                    <td class="py-2 px-2 text-center whitespace-nowrap">
+                                        <div class="inline-flex items-center gap-1 justify-center">
+                                            <button type="button" onclick="editFasilitasSlik(<?= $i ?>)" class="w-6 h-6 rounded flex items-center justify-center text-amber-600 hover:text-amber-800 hover:bg-amber-50 border border-amber-200 transition cursor-pointer" title="Edit Fasilitas Pinjaman">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                            </button>
+                                            <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="w-6 h-6 rounded flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 transition cursor-pointer" title="Hapus Fasilitas Pinjaman">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

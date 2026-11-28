@@ -117,22 +117,24 @@
                 }
                 if ($bPct <= 0) $bPct = 10;
 
-                if ($angs <= 0 && $pAcuan > 0) {
-                    $jwThn = $jwBln / 12;
-                    $angs = round(($pAcuan * (1 + ($bPct / 100) * $jwThn)) / $jwBln);
+                // Rumus resmi komite kredit: angsuran_per_bulan = (plafon + (plafon * (bunga_persen / 100) * (tenor_bulan / 12))) / tenor_bulan
+                if ($pAcuan > 0) {
+                    $angs = (int)round(($pAcuan + ($pAcuan * ($bPct / 100) * ($jwBln / 12))) / $jwBln);
                 }
 
                 $totalOutstandingSlik += $out;
                 $totalCicilanSlik += $angs;
 
-                if ($pAcuan > 0) {
+                if ($pAcuan > 0 || $out > 0) {
                     $listSlikAutoUtang[] = [
                         'nama'            => !empty($s['bank_lembaga']) ? "{$s['bank_lembaga']} ({$s['jenis_fasilitas']})" : 'Pinjaman Bank',
                         'plafon'          => $pAcuan,
+                        'baki_debet'      => $out,
                         'bunga_persen'    => $bPct,
                         'tenor_tahun'     => round($jwBln / 12, 1),
                         'tenor_bulan'     => $jwBln,
-                        'cicilan_bulanan' => $angs
+                        'cicilan_bulanan' => $angs,
+                        'is_slik'         => 1
                     ];
                 }
             }
@@ -149,6 +151,22 @@
         }
         if (empty($listDetailUtang) && !empty($listSlikAutoUtang)) {
             $listDetailUtang = $listSlikAutoUtang;
+        }
+
+        // Ekstraksi nilai Piutang dari data Aset
+        $piutangAsetBU = 0;
+        if (!empty($listDetailHppBU)) {
+            foreach ($listDetailHppBU as $it) {
+                if (($it['kategori'] ?? '') === 'aset') {
+                    $nmAset = strtolower($it['nama'] ?? '');
+                    if (strpos($nmAset, 'piutang') !== false || strpos($nmAset, 'tagihan') !== false || strpos($nmAset, 'invoice') !== false) {
+                        $piutangAsetBU += (float)($it['nominal'] ?? 0);
+                    }
+                }
+            }
+        }
+        if ($piutangAsetBU <= 0 && !empty($keuangan['neraca_piutang_usaha'])) {
+            $piutangAsetBU = (float)$keuangan['neraca_piutang_usaha'];
         }
 
         // Estimasi Angsuran Kredit Baru yang Diajukan
@@ -434,6 +452,10 @@
         <input type="hidden" name="detail_utang_json" id="detail_utang_json" value="<?= esc(!empty($listDetailUtang) ? json_encode($listDetailUtang) : '[]') ?>">
         <input type="hidden" name="dsc_rasio_rk" id="dsc_rasio_rk" value="0">
         <input type="hidden" name="rasio_dsc_dscr" id="rasio_dsc_dscr" value="0">
+        <input type="hidden" name="piutang_aset" id="piutang_aset" value="<?= esc($piutangAsetBU) ?>">
+        <input type="hidden" name="neraca_piutang_usaha" id="neraca_piutang_usaha" value="<?= esc($piutangAsetBU) ?>">
+        <input type="hidden" name="total_baki_debet_slik" id="total_baki_debet_slik" value="<?= esc($totalOutstandingSlik) ?>">
+        <input type="hidden" name="cicilan_slik_per_bulan" id="cicilan_slik_per_bulan" value="<?= esc($totalCicilanSlik) ?>">
 
         <span id="nomHppRK" class="hidden">Rp 0</span>
         <span id="nomBiayaHidupRK" class="hidden">Rp 0</span>
@@ -446,8 +468,11 @@
     </div>
 
     <script>
-    window.ANGSURAN_SLIK_DEFAULT = <?= (float)$totalCicilanSlik ?>;
+    window.TOTAL_BAKI_DEBET_SLIK = <?= (float)$totalOutstandingSlik ?>;
     window.OUTSTANDING_SLIK_DEFAULT = <?= (float)$totalOutstandingSlik ?>;
+    window.CICILAN_SLIK_PER_BULAN = <?= (float)$totalCicilanSlik ?>;
+    window.ANGSURAN_SLIK_DEFAULT = <?= (float)$totalCicilanSlik ?>;
+    window.PIUTANG_ASET = <?= (float)$piutangAsetBU ?>;
     window.ESTIMASI_ANGSURAN_BARU = <?= (float)$estimasiAngsuranBaru ?>;
     window.daftarHpp = <?= !empty($listDetailHppBU) ? json_encode($listDetailHppBU) : '[]' ?>;
     window.daftarUtang = <?= !empty($listDetailUtang) ? json_encode($listDetailUtang) : '[]' ?>;

@@ -9,7 +9,15 @@
     <link rel="stylesheet" href="<?= base_url('libs/sweetalert2/sweetalert2.min.css') ?>">
     <script src="<?= base_url('libs/sweetalert2/sweetalert2.all.min.js') ?>"></script>
     <style>
+        html { color-scheme: light !important; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        input, textarea, select {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8 !important;
+        }
     </style>
     <link rel="shortcut icon" type="image/png" href="<?= base_url('img/logo-oap.png?v=2') ?>">
     <link rel="stylesheet" href="<?= base_url('css/otw-portal.css?v=' . (@filemtime(FCPATH . 'css/otw-portal.css') ?: 1)) ?>">
@@ -41,7 +49,9 @@
             $daftarPermohonanSlik = $decodedPermohonan;
         }
     }
-    if (empty($daftarPermohonanSlik)) {
+    // Inisialisasi default hanya jika field belum pernah ada di database (null atau string kosong)
+    // Jika nilainya adalah '[]' (array kosong hasil penghapusan subjek), JANGAN auto-generate kembali!
+    if (empty($daftarPermohonanSlik) && (!isset($kredit['daftar_permohonan_slik']) || $kredit['daftar_permohonan_slik'] === null || $kredit['daftar_permohonan_slik'] === '')) {
         $isBadanUsaha = (isset($kredit['jenis_debitur']) && (stripos($kredit['jenis_debitur'], 'badan') !== false || stripos($kredit['jenis_debitur'], 'pt') !== false || stripos($kredit['jenis_debitur'], 'cv') !== false));
         $daftarPermohonanSlik[] = [
             'index'        => 0,
@@ -85,16 +95,79 @@
     // Kalkulasi ringkasan awal jika ada fasilitas
     $totalPlafonSlik = 0;
     $totalBakiDebetSlik = 0;
+    $totalAngsuranSlik = 0;
     $kolTerburuk = 'Kol 1 (Lancar)';
     $countBankUmum = 0;
     $countBankRakyat = 0;
     $countLembagaPembiayaan = 0;
     $countLainnya = 0;
+    $kolPriority = ['macet' => 5, 'diragukan' => 4, 'kurang lancar' => 3, 'dpk' => 2, 'lancar' => 1];
+    $maxKolVal = 0;
+
     if (!empty($slik) && is_array($slik)) {
-        foreach ($slik as $sItem) {
-            $totalPlafonSlik += (float)($sItem['plafon'] ?? 0);
-            $totalBakiDebetSlik += (float)($sItem['outstanding'] ?? 0);
+        foreach ($slik as &$sItem) {
+            $pl = (float)($sItem['plafon'] ?? 0);
+            $bd = (float)($sItem['outstanding'] ?? 0);
+            $pAcuan = $pl > 0 ? $pl : $bd;
+
+            $totalPlafonSlik += $pl;
+            $totalBakiDebetSlik += $bd;
+
+            $angs = (float)($sItem['angsuran'] ?? 0);
+            if ($angs <= 0 && $pAcuan > 0) {
+                $jwBln = 12;
+                if (preg_match('/([0-9]+)/', (string)($sItem['jangka_waktu'] ?? ''), $jwm)) {
+                    $jwBln = (int)$jwm[1];
+                }
+                if ($jwBln <= 0) $jwBln = 12;
+
+                $bPct = 10;
+                if (preg_match('/([0-9]+([.,][0-9]+)?)/', (string)($sItem['suku_bunga'] ?? ''), $bm)) {
+                    $bPct = (float)str_replace(',', '.', $bm[1]);
+                }
+                if ($bPct <= 0) $bPct = 10;
+
+                $angs = round(($pAcuan + ($pAcuan * ($bPct / 100) * ($jwBln / 12))) / $jwBln);
+                $sItem['angsuran'] = $angs;
+            }
+            $totalAngsuranSlik += $angs;
+
+            $bank = strtolower($sItem['bank_lembaga'] ?? '');
+            $jenisKredit = strtolower($sItem['jenis_kredit'] ?? ($sItem['jenis_fasilitas'] ?? ''));
+            if (strpos($bank, 'bpr') !== false || strpos($bank, 'bprs') !== false) {
+                $countBankRakyat++;
+            } elseif (
+                strpos($bank, 'finance') !== false || strpos($bank, 'leasing') !== false || 
+                strpos($bank, 'adira') !== false || strpos($bank, 'fif') !== false || 
+                strpos($bank, 'oto') !== false || strpos($bank, 'baf') !== false || 
+                strpos($bank, 'wom') !== false || strpos($bank, 'kreditplus') !== false || 
+                strpos($bank, 'multifinance') !== false || strpos($bank, 'pembiayaan') !== false || 
+                strpos($jenisKredit, 'pembiayaan') !== false || strpos($bank, 'indomobil') !== false
+            ) {
+                $countLembagaPembiayaan++;
+            } elseif (
+                strpos($bank, 'bank') !== false || strpos($bank, 'mandiri') !== false || 
+                strpos($bank, 'bca') !== false || strpos($bank, 'bri') !== false || 
+                strpos($bank, 'bni') !== false || strpos($bank, 'cimb') !== false || 
+                strpos($bank, 'danamon') !== false || strpos($bank, 'permata') !== false || 
+                strpos($bank, 'btn') !== false || strpos($bank, 'panin') !== false || 
+                strpos($bank, 'mega') !== false || strpos($bank, 'ocbc') !== false || 
+                strpos($bank, 'maybank') !== false || strpos($bank, 'uob') !== false || 
+                strpos($bank, 'dbs') !== false || strpos($bank, 'bsi') !== false
+            ) {
+                $countBankUmum++;
+            } else {
+                $countLainnya++;
+            }
+
+            $k = strtolower(trim($sItem['kelancaran'] ?? 'lancar'));
+            $p = $kolPriority[$k] ?? 1;
+            if ($p > $maxKolVal) {
+                $maxKolVal = $p;
+                $kolTerburuk = $sItem['kelancaran'] ?? 'Kol 1 (Lancar)';
+            }
         }
+        unset($sItem);
     }
 ?>
 
@@ -162,7 +235,7 @@
                             <?php endif; ?>
                         </div>
                         <p class="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <span>Nama / Bidang Usaha: <strong class="text-slate-700"><?= esc($kredit['nama_usaha'] ?: ($kredit['bidang_usaha'] ?: '-')) ?><?= (!empty($kredit['nama_usaha']) && !empty($kredit['bidang_usaha'])) ? ' (' . esc($kredit['bidang_usaha']) . ')' : '' ?></strong></span>
+                            <span>Nama / Bidang Usaha: <strong class="text-slate-700"><?= esc(($kredit['nama_usaha'] ?? '') ?: (($kredit['bidang_usaha'] ?? '') ?: '-')) ?><?= (!empty($kredit['nama_usaha']) && !empty($kredit['bidang_usaha'])) ? ' (' . esc($kredit['bidang_usaha']) . ')' : '' ?></strong></span>
                             <span>&bull;</span>
                             <span>Plafon Pengajuan: <strong class="text-blue-700">Rp <?= number_format((float)($kredit['plafon_pengajuan'] ?? 0), 0, ',', '.') ?></strong></span>
                             <span>&bull;</span>
@@ -218,6 +291,17 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100 text-[11px]" id="bodySlikIdeb">
+                            <?php if (empty($daftarPermohonanSlik)): ?>
+                                <tr id="emptySubjekSlikRow">
+                                    <td colspan="11" class="py-12 text-center text-xs text-slate-400 italic bg-white">
+                                        <div class="flex flex-col items-center justify-center gap-2">
+                                            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                            <span class="font-bold text-slate-600">Tidak ada subjek permohonan SLIK aktif</span>
+                                            <span class="text-[11px] text-slate-400">Seluruh subjek permohonan SLIK untuk pengajuan ini telah dihapus.</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php else: ?>
                             <?php foreach ($daftarPermohonanSlik as $idx => $row): 
                                 $rNama = $row['nama'] ?? $namaDebiturVal;
                                 $rNoId = $row['no_id'] ?? $nikVal;
@@ -361,14 +445,36 @@
                                     </div>
                                 </td>
                                 <td class="py-2.5 px-2.5 text-center whitespace-nowrap">
-                                    <button type="button" onclick="bukaModalUploadHasilSlik(<?= $idx ?>)" 
-                                            class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-md text-[11px] font-bold shadow-xs transition cursor-pointer">
-                                        <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                        <span>Proses</span>
-                                    </button>
+                                    <div class="inline-flex items-center gap-1.5 justify-center">
+                                        <?php if (!$isTerbit): ?>
+                                            <button type="button" onclick="bukaModalUploadHasilSlik(<?= $idx ?>)" 
+                                                    class="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white rounded-md text-[10px] font-bold shadow-xs transition cursor-pointer"
+                                                    title="Proses / Upload Hasil SLIK">
+                                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                                <span>Proses</span>
+                                            </button>
+                                        <?php endif; ?>
+                                        <!-- Tombol Edit SLIK (Icon Pensil) -->
+                                        <button type="button" onclick="editHasilSlik(<?= $idx ?>)" 
+                                                class="inline-flex items-center justify-center w-7 h-7 text-amber-600 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-lg shadow-2xs transition cursor-pointer" 
+                                                title="Edit Hasil SLIK (Ubah Hasil & Upload Ulang)">
+                                            <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                            </svg>
+                                        </button>
+                                        <!-- Tombol Hapus SLIK (Icon Tempat Sampah) -->
+                                        <button type="button" onclick="hapusHasilSlik(<?= $idx ?>)" 
+                                                class="inline-flex items-center justify-center w-7 h-7 text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-300 rounded-lg shadow-2xs transition cursor-pointer" 
+                                                title="Hapus Data SLIK / Reset Status">
+                                            <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -473,10 +579,10 @@
                         </div>
                     </div>
 
-                    <!-- Bank Pembiayaan Rakyat / Syariah -->
+                    <!-- BPR / BPRS (Bank Perekonomian Rakyat) -->
                     <div class="p-4 rounded-xl border border-slate-200/90 bg-white shadow-2xs">
-                        <div class="text-[11px] text-slate-500 font-medium">Bank Pembiayaan Rakyat / Syariah</div>
-                        <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricBankRakyat">
+                        <div class="text-[11px] text-slate-500 font-medium">BPR / BPRS</div>
+                        <div class="text-base font-bold text-slate-900 mt-1" id="ringkasanMetricBpr" data-legacy-id="ringkasanMetricBankRakyat">
                             <?= (int)$countBankRakyat ?>
                         </div>
                     </div>
@@ -617,8 +723,15 @@
                                                 <?= esc($row['kelancaran'] ?? 'Lancar') ?>
                                             </span>
                                         </td>
-                                        <td class="py-2 px-2 text-center">
-                                            <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="text-rose-500 hover:text-rose-700 p-1 cursor-pointer" title="Hapus">✕</button>
+                                        <td class="py-2 px-2 text-center whitespace-nowrap">
+                                            <div class="inline-flex items-center gap-1 justify-center">
+                                                <button type="button" onclick="editFasilitasSlik(<?= $i ?>)" class="w-6 h-6 rounded flex items-center justify-center text-amber-600 hover:text-amber-800 hover:bg-amber-50 border border-amber-200 transition cursor-pointer" title="Edit Fasilitas Pinjaman">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                </button>
+                                                <button type="button" onclick="hapusFasilitasSlik(<?= $i ?>)" class="w-6 h-6 rounded flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 transition cursor-pointer" title="Hapus Fasilitas Pinjaman">
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -955,6 +1068,122 @@
             });
         }
         window.salinTeks = salinTeks;
+
+        function escapeHtmlText(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+        window.escapeHtmlText = escapeHtmlText;
+
+        // FUNGSI EDIT SLIK (ICON PENSIL)
+        function editHasilSlik(idx) {
+            if (typeof bukaModalUploadHasilSlik === 'function') {
+                bukaModalUploadHasilSlik(idx);
+            }
+        }
+        window.editHasilSlik = editHasilSlik;
+
+        // FUNGSI HAPUS SLIK (ICON TEMPAT SAMPAH)
+        function hapusHasilSlik(idx) {
+            let rowItem = null;
+            if (window.daftarPermohonanSlikArray && window.daftarPermohonanSlikArray[idx]) {
+                rowItem = window.daftarPermohonanSlikArray[idx];
+            }
+            const namaSubjek = rowItem ? (rowItem.nama || 'Subjek') : 'data ini';
+
+            const runDelete = function() {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Menghapus Data SLIK...',
+                        text: 'Mereset status dan membersihkan fasilitas SLIK',
+                        allowOutsideClick: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+                }
+
+                const kid = document.getElementById('kredit_id')?.value || (window.KREDIT_ID_VAL || '');
+                const baseUrl = (window.BASE_URL || '').replace(/\/+$/, '');
+                const fd = new FormData();
+                fd.append('kredit_id', kid);
+                fd.append('subjek_index', idx);
+
+                const csrf = document.querySelector('input[name="csrf_token"]') || document.querySelector('input[name="csrf_test_name"]');
+                if (csrf) fd.append(csrf.name, csrf.value);
+
+                fetch(baseUrl + '/slik/hapus/' + kid, {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil Dihapus',
+                                text: data.message || 'Data SLIK berhasil dihapus.',
+                                timer: 1400,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            alert(data.message || 'Data SLIK berhasil dihapus.');
+                            window.location.reload();
+                        }
+                    } else {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: data.message || 'Gagal menghapus data SLIK.'
+                            });
+                        } else {
+                            alert('Gagal: ' + (data.message || 'Gagal menghapus data SLIK.'));
+                        }
+                    }
+                })
+                .catch(err => {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Kesalahan Sistem',
+                            text: 'Gagal menghubungi server: ' + err.message
+                        });
+                    } else {
+                        alert('Kesalahan sistem: ' + err.message);
+                    }
+                });
+            };
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Hapus Subjek Permohonan SLIK?',
+                    html: `Apakah Anda yakin ingin menghapus subjek permohonan SLIK <strong>${escapeHtmlText(namaSubjek)}</strong>?<br><span class="text-xs text-rose-600 font-semibold block mt-1.5">Subjek ini akan dihapus permanen dari daftar permohonan SLIK beserta seluruh fasilitas kredit terkaitnya.</span>`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#e11d48',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Ya, Hapus Subjek',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        runDelete();
+                    }
+                });
+            } else {
+                if (confirm('Apakah Anda yakin ingin menghapus subjek permohonan SLIK untuk ' + namaSubjek + '? Subjek akan dihapus permanen.')) {
+                    runDelete();
+                }
+            }
+        }
+        window.hapusHasilSlik = hapusHasilSlik;
 
         // Tutup modal jika tombol Escape ditekan
         document.addEventListener('keydown', function(e) {

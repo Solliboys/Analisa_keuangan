@@ -49,6 +49,18 @@ async function kompresBerkasJikaGambar(file, maxWidth = 1600, quality = 0.75) {
 }
 window.kompresBerkasJikaGambar = kompresBerkasJikaGambar;
 
+if (typeof window.escapeHtmlText !== 'function') {
+    window.escapeHtmlText = function(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+}
+
 function formatRupiahInput(angka) {
     if (!angka) return '0';
     let number_string = angka.toString().replace(/[^,\d]/g, '');
@@ -1651,10 +1663,9 @@ function hitungAngsuranPinjamanResmi(plafon, bungaTahunanPct, tenorBulan) {
 
     if (plafon <= 0) return 0;
 
-    const tenorTahun = bln / 12;
-    const totalBungaPersen = (bungaTahunanPct / 100) * tenorTahun;
-    const totalPengembalian = plafon * (1 + totalBungaPersen);
-    const angsuranBulanan = Math.round(totalPengembalian / bln);
+    // Rumus resmi: (plafon + (plafon * (bunga_persen / 100) * (tenor_bulan / 12))) / tenor_bulan
+    const totalBungaNominal = plafon * (bungaTahunanPct / 100) * (bln / 12);
+    const angsuranBulanan = Math.round((plafon + totalBungaNominal) / bln);
 
     return angsuranBulanan;
 }
@@ -1720,8 +1731,15 @@ function renderTabelFasilitasSlik(list) {
                         ${kelancaran}
                     </span>
                 </td>
-                <td class="py-2.5 px-2 text-center">
-                    <button type="button" onclick="hapusFasilitasSlik(${i})" class="text-rose-500 hover:text-rose-700 p-1 cursor-pointer" title="Hapus Fasilitas">✕</button>
+                <td class="py-2.5 px-2 text-center whitespace-nowrap">
+                    <div class="inline-flex items-center gap-1 justify-center">
+                        <button type="button" onclick="editFasilitasSlik(${i})" class="w-6 h-6 rounded flex items-center justify-center text-amber-600 hover:text-amber-800 hover:bg-amber-50 border border-amber-200 transition cursor-pointer" title="Edit Fasilitas Pinjaman">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </button>
+                        <button type="button" onclick="hapusFasilitasSlik(${i})" class="w-6 h-6 rounded flex items-center justify-center text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 transition cursor-pointer" title="Hapus Fasilitas Pinjaman">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -1781,9 +1799,25 @@ function hitungMetrikRingkasanSlik() {
 
         if (bankName.includes('bpr') || bankName.includes('bprs')) {
             countBpr++;
-        } else if (bankName.includes('leasing') || bankName.includes('finance') || bankName.includes('pembiayaan') || jenisKredit.includes('pembiayaan')) {
+        } else if (
+            bankName.includes('leasing') || bankName.includes('finance') || 
+            bankName.includes('pembiayaan') || jenisKredit.includes('pembiayaan') || 
+            bankName.includes('adira') || bankName.includes('fif') || 
+            bankName.includes('oto') || bankName.includes('baf') || 
+            bankName.includes('wom') || bankName.includes('kreditplus') || 
+            bankName.includes('multifinance') || bankName.includes('indomobil')
+        ) {
             countLembaga++;
-        } else if (bankName.includes('bank')) {
+        } else if (
+            bankName.includes('bank') || bankName.includes('mandiri') || 
+            bankName.includes('bca') || bankName.includes('bri') || 
+            bankName.includes('bni') || bankName.includes('cimb') || 
+            bankName.includes('danamon') || bankName.includes('permata') || 
+            bankName.includes('btn') || bankName.includes('panin') || 
+            bankName.includes('mega') || bankName.includes('ocbc') || 
+            bankName.includes('maybank') || bankName.includes('uob') || 
+            bankName.includes('dbs') || bankName.includes('bsi')
+        ) {
             countBankUmum++;
         } else {
             countLainnya++;
@@ -1799,7 +1833,7 @@ function hitungMetrikRingkasanSlik() {
     const elAngsuran = document.getElementById('ringkasanMetricAngsuran');
     const elKol = document.getElementById('ringkasanMetricKol');
     const elBankUmum = document.getElementById('ringkasanMetricBankUmum');
-    const elBpr = document.getElementById('ringkasanMetricBpr');
+    const elBpr = document.getElementById('ringkasanMetricBpr') || document.getElementById('ringkasanMetricBankRakyat');
     const elLembaga = document.getElementById('ringkasanMetricLembaga');
     const elLainnya = document.getElementById('ringkasanMetricLainnya');
 
@@ -1812,8 +1846,12 @@ function hitungMetrikRingkasanSlik() {
     if (elLembaga) elLembaga.textContent = countLembaga;
     if (elLainnya) elLainnya.textContent = countLainnya;
 
+    // Simpan ke state global yang konsisten
+    window.TOTAL_BAKI_DEBET_SLIK = totalBakiDebet;
+    window.OUTSTANDING_SLIK_DEFAULT = totalBakiDebet;
     window.TOTAL_ANGSURAN_SLIK = totalAngsuran;
     window.ANGSURAN_SLIK_DEFAULT = totalAngsuran;
+    window.CICILAN_SLIK_PER_BULAN = totalAngsuran;
 
     // Sinkronkan ke Tab 9 jika sedang berada di halaman pengajuan
     sinkronkanFasilitasSlikKeDaftarUtangTab9();
@@ -1827,13 +1865,16 @@ function sinkronkanFasilitasSlikKeDaftarUtangTab9() {
     const list = window.slikFasilitasArray || [];
     if (!Array.isArray(window.daftarUtang)) window.daftarUtang = [];
 
-    // Jika daftar utang masih kosong tapi SLIK memiliki fasilitas, isi otomatis
-    if (window.daftarUtang.length === 0 && list.length > 0) {
+    // Jika fasilitas SLIK ada, perbarui atau sinkronkan data SLIK di daftar utang
+    if (list.length > 0) {
+        // Hapus entri SLIK lama dari daftar utang jika ada
+        window.daftarUtang = window.daftarUtang.filter(u => !u.is_slik);
+
         list.forEach(r => {
             const p = parseFloat(r.plafon || 0);
             const b = parseFloat(r.outstanding || 0);
             const pAcuan = p > 0 ? p : b;
-            if (pAcuan <= 0) return;
+            if (pAcuan <= 0 && b <= 0) return;
 
             let jwBln = 12;
             const m = String(r.jangka_waktu || '').match(/(\d+)/);
@@ -1844,20 +1885,38 @@ function sinkronkanFasilitasSlikKeDaftarUtangTab9() {
             const bm = String(r.suku_bunga || '').replace(',', '.').match(/(\d+(\.\d+)?)/);
             if (bm) bungaPct = parseFloat(bm[1]) || 10;
 
+            // Rumus resmi: (plafon + (plafon * (bunga_persen / 100) * (tenor_bulan / 12))) / tenor_bulan
             const cicilan = r.angsuran || hitungAngsuranPinjamanResmi(pAcuan, bungaPct, jwBln);
 
             window.daftarUtang.push({
                 nama: r.bank_lembaga ? `${r.bank_lembaga} (${r.jenis_fasilitas || 'Kredit'})` : 'Pinjaman Bank',
                 plafon: pAcuan,
+                baki_debet: b,
                 bunga_persen: bungaPct,
                 tenor_tahun: jwThn,
                 tenor_bulan: jwBln,
-                cicilan_bulanan: cicilan
+                cicilan_bulanan: cicilan,
+                is_slik: 1
             });
         });
 
         if (typeof renderListUtang === 'function') {
             renderListUtang();
+        }
+    } else {
+        // Jika tidak ada fasilitas di SLIK, pastikan metrik nol dan hapus entri SLIK lama
+        window.TOTAL_BAKI_DEBET_SLIK = 0;
+        window.OUTSTANDING_SLIK_DEFAULT = 0;
+        window.TOTAL_ANGSURAN_SLIK = 0;
+        window.ANGSURAN_SLIK_DEFAULT = 0;
+        window.CICILAN_SLIK_PER_BULAN = 0;
+
+        const hadSlik = window.daftarUtang.some(u => u.is_slik);
+        if (hadSlik) {
+            window.daftarUtang = window.daftarUtang.filter(u => !u.is_slik);
+            if (typeof renderListUtang === 'function') {
+                renderListUtang();
+            }
         }
     }
 }
@@ -1955,7 +2014,7 @@ function simpanFasilitasSlikBaru() {
     const debName = (rowItem && rowItem.nama) ? rowItem.nama : (window.NAMA_DEBITUR_VAL || 'Debitur');
 
     if (!window.slikFasilitasArray) window.slikFasilitasArray = [];
-    window.slikFasilitasArray.push({
+    const facilityData = {
         nama_debitur: debName,
         bank_lembaga: bank,
         jenis_penggunaan: jenis,
@@ -1972,7 +2031,14 @@ function simpanFasilitasSlikBaru() {
         tunggakan: '0',
         kelancaran: kelancaran,
         kondisi: 'Fasilitas Aktif'
-    });
+    };
+
+    if (window._editingFasilitasIndex !== undefined && window._editingFasilitasIndex !== null && window._editingFasilitasIndex >= 0) {
+        window.slikFasilitasArray[window._editingFasilitasIndex] = facilityData;
+        window._editingFasilitasIndex = null;
+    } else {
+        window.slikFasilitasArray.push(facilityData);
+    }
 
     renderTabelFasilitasSlik(window.slikFasilitasArray);
     hitungMetrikRingkasanSlik();
@@ -1985,9 +2051,46 @@ function simpanFasilitasSlikBaru() {
     document.getElementById('inputFasOutstanding').value = '';
     document.getElementById('inputFasBunga').value = '10%';
     if (document.getElementById('inputFasTenor')) document.getElementById('inputFasTenor').value = '36';
+    const btnSimpan = document.querySelector('#formTambahFasilitasSlikContainer button[onclick*="simpanFasilitasSlikBaru"]');
+    if (btnSimpan) btnSimpan.textContent = 'Simpan ke Rincian';
     tutupFormTambahFasilitasSlik();
 }
 window.simpanFasilitasSlikBaru = simpanFasilitasSlikBaru;
+
+function editFasilitasSlik(idx) {
+    if (!window.slikFasilitasArray || !window.slikFasilitasArray[idx]) return;
+    const it = window.slikFasilitasArray[idx];
+
+    bukaFormTambahFasilitasSlik();
+
+    const elBank = document.getElementById('inputFasBank');
+    const elJenis = document.getElementById('inputFasJenis');
+    const elPlafon = document.getElementById('inputFasPlafon');
+    const elOut = document.getElementById('inputFasOutstanding');
+    const elKelancaran = document.getElementById('inputFasKelancaran');
+    const elBunga = document.getElementById('inputFasBunga');
+    const elTenor = document.getElementById('inputFasTenor');
+
+    if (elBank) elBank.value = it.bank_lembaga || '';
+    if (elJenis) elJenis.value = it.jenis_kredit || it.jenis_fasilitas || it.keterangan || '';
+    if (elPlafon) elPlafon.value = formatRupiahDisplay(it.plafon || 0);
+    if (elOut) elOut.value = formatRupiahDisplay(it.outstanding || 0);
+    if (elKelancaran) elKelancaran.value = it.kelancaran || 'Lancar';
+    if (elBunga) elBunga.value = it.suku_bunga || '10%';
+    if (elTenor) {
+        const jwClean = (it.jangka_waktu || '36').replace(/[^0-9]/g, '');
+        elTenor.value = jwClean || '36';
+    }
+
+    window._editingFasilitasIndex = idx;
+    const btnSimpan = document.querySelector('#formTambahFasilitasSlikContainer button[onclick*="simpanFasilitasSlikBaru"]');
+    if (btnSimpan) btnSimpan.textContent = 'Perbarui Fasilitas';
+
+    if (typeof updateLivePreviewAngsuranModalSlik === 'function') {
+        updateLivePreviewAngsuranModalSlik();
+    }
+}
+window.editFasilitasSlik = editFasilitasSlik;
 
 function hapusFasilitasSlik(idx) {
     if (!window.slikFasilitasArray || !window.slikFasilitasArray[idx]) return;
