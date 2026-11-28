@@ -2459,13 +2459,19 @@ async function handleOcrDirectUpload(input) {
 
         const pdfExtracted = await ekstrakKontenPdfDiBrowser(file);
         const hasPreExtracted = (pdfExtracted.text && pdfExtracted.text.length >= 40) || (Array.isArray(pdfExtracted.images) && pdfExtracted.images.length > 0);
-        const isLargeFile = file.size > (1.8 * 1024 * 1024);
+
+        // Buat blob URL instan agar bisa langsung dilihat seketika di viewer modal
+        try {
+            window.lastUploadedPdfBlobUrl = window.URL.createObjectURL(rawFile);
+            window.lastUploadedPdfFileName = rawFile.name || 'rekening_koran.pdf';
+        } catch (blobErr) {
+            console.warn('Could not create Blob URL:', blobErr);
+        }
 
         const formData = new FormData();
-        formData.append('file_name_hint', file.name || 'rekening_koran.pdf');
-        if (!isLargeFile || !hasPreExtracted) {
-            formData.append('file_rekening', file);
-        }
+        formData.append('file_name_hint', rawFile.name || 'rekening_koran.pdf');
+        formData.append('file_rekening', rawFile); // SELALU kirim berkas fisik asli ke server
+
         if (pdfExtracted.text && pdfExtracted.text.length >= 40) {
             formData.append('extracted_pdf_text', pdfExtracted.text);
         }
@@ -2499,7 +2505,8 @@ async function handleOcrDirectUpload(input) {
 
         if (resJson.status && resJson.data) {
             updateProgress(100, 'Ekstraksi Selesai!', 'Data mutasi bank berhasil diekstrak dan masuk ke tabel.');
-            tambahDataRekeningKeTabelLangsung(resJson.data, resJson.file_path, resJson.file_name, resJson.file_url);
+            const fileUrlToUse = resJson.file_url || (resJson.file_path ? (baseUrl + '/pengajuan/stream-berkas?file=' + encodeURIComponent(resJson.file_path)) : (window.lastUploadedPdfBlobUrl || ''));
+            tambahDataRekeningKeTabelLangsung(resJson.data, resJson.file_path, resJson.file_name, fileUrlToUse);
 
             setTimeout(() => {
                 if (progressContainer) progressContainer.classList.add('hidden');
@@ -2730,7 +2737,7 @@ function bukaModalPdfRekening(btn) {
         if (globalFile) {
             fileUrl = (globalFile.startsWith('http://') || globalFile.startsWith('https://'))
                 ? globalFile
-                : (window.BASE_URL || '') + globalFile.replace(/^\/+/, '');
+                : (window.BASE_URL || '') + '/pengajuan/stream-berkas?file=' + encodeURIComponent(globalFile);
         }
     }
     if (!fileUrl) {
@@ -2741,7 +2748,7 @@ function bukaModalPdfRekening(btn) {
             const text = (link.textContent || '').toLowerCase();
             const bLow = (bank || '').toLowerCase();
             if (href && (text.includes('rekening') || text.includes('mutasi') || (bLow && text.includes(bLow)) || text.includes('koran'))) {
-                fileUrl = href.startsWith('http') ? href : (window.BASE_URL || '') + href.replace(/^\/+/, '');
+                fileUrl = href.startsWith('http') ? href : (window.BASE_URL || '') + '/pengajuan/stream-berkas?file=' + encodeURIComponent(href.replace(/^\/+/, ''));
                 break;
             }
         }
@@ -2757,11 +2764,22 @@ function bukaModalPdfRekening(btn) {
                     const text = card ? (card.textContent || '').toLowerCase() : '';
                     const bLow = (bank || '').toLowerCase();
                     if (text.includes('rekening') || text.includes('mutasi') || (bLow && text.includes(bLow)) || u.toLowerCase().includes('rekening') || u.toLowerCase().includes('mutasi') || u.toLowerCase().includes('.pdf')) {
-                        fileUrl = u;
+                        fileUrl = u.startsWith('http') ? u : (window.BASE_URL || '') + '/pengajuan/stream-berkas?file=' + encodeURIComponent(u.replace(/^\/+/, ''));
                         break;
                     }
                 }
             }
+        }
+    }
+
+    // Jika masih belum ada URL fisik, gunakan blob upload sesi ini atau route generator e-statement resmi
+    const kid = document.getElementById('kredit_id')?.value || (window.KREDIT_ID_VAL || '');
+    if (!fileUrl) {
+        if (window.lastUploadedPdfBlobUrl) {
+            fileUrl = window.lastUploadedPdfBlobUrl;
+        } else {
+            const baseUrl = (typeof getBaseUrl === 'function') ? getBaseUrl() : (window.BASE_URL || '');
+            fileUrl = baseUrl + '/pengajuan/stream-berkas?kredit_id=' + encodeURIComponent(kid) + '&rekening_id=' + encodeURIComponent(rekId);
         }
     }
 
@@ -2781,52 +2799,36 @@ function bukaModalPdfRekening(btn) {
     const btnDown = document.getElementById('btnDownloadPdf');
     const textToggle = document.getElementById('textToggleDigital');
 
-    if (fileUrl) {
-        // ADA BERKAS FISIK PDF / GAMBAR: Tampilkan langsung di viewer
-        if (titleEl) titleEl.innerText = `Berkas Asli: ${bank || 'Rekening Koran'} ${norek ? '(' + norek + ')' : ''}`;
-        if (subEl)   subEl.innerText   = `Atas Nama: ${nama || '-'} | File Rekening Resmi`;
-        if (textToggle) textToggle.innerText = 'Format e-Statement';
+    if (titleEl) titleEl.innerText = `Berkas Asli: ${bank || 'Rekening Koran'} ${norek ? '(' + norek + ')' : ''}`;
+    if (subEl)   subEl.innerText   = `Atas Nama: ${nama || '-'} | File Rekening Resmi`;
+    if (textToggle) textToggle.innerText = 'Cetak / PDF';
 
-        const lowerUrl = fileUrl.toLowerCase().split('?')[0];
-        const isImg = lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.png') || lowerUrl.endsWith('.webp');
+    const lowerUrl = fileUrl.toLowerCase().split('?')[0];
+    const isImg = lowerUrl.endsWith('.jpg') || lowerUrl.endsWith('.jpeg') || lowerUrl.endsWith('.png') || lowerUrl.endsWith('.webp');
 
-        if (btnTab) {
-            btnTab.href = fileUrl;
-            btnTab.classList.remove('hidden');
-        }
-        if (btnDown) {
-            btnDown.href = fileUrl;
-            btnDown.classList.remove('hidden');
-        }
-        if (empty) empty.classList.add('hidden');
-        if (digital) {
-            digital.classList.add('hidden');
-            digital.innerHTML = '';
-        }
-
-        if (isImg) {
-            if (iframe) { iframe.src = ''; iframe.classList.add('hidden'); }
-            if (img)    { img.src = fileUrl; img.classList.remove('hidden'); }
-        } else {
-            if (img)    { img.src = ''; img.classList.add('hidden'); }
-            if (iframe) { iframe.src = fileUrl; iframe.classList.remove('hidden'); }
-        }
-    } else {
-        // TIDAK ADA BERKAS FISIK: LANGSUNG BUKA e-STATEMENT DIGITAL RESMI!
-        if (titleEl) titleEl.innerText = `Rekening Koran: ${bank || 'Bank Operasional'} ${norek ? '(' + norek + ')' : ''}`;
-        if (subEl)   subEl.innerText   = `Atas Nama: ${nama || '-'} | Lembar e-Statement Digital Resmi`;
-        if (textToggle) textToggle.innerText = 'e-Statement Resmi';
-
-        if (btnTab)  btnTab.classList.add('hidden');
-        if (btnDown) btnDown.classList.add('hidden');
-        if (iframe)  { iframe.src = ''; iframe.classList.add('hidden'); }
-        if (img)     { img.src = ''; img.classList.add('hidden'); }
-        if (empty)   empty.classList.add('hidden');
-
-        // Render e-Statement Digital langsung seketika
-        renderDigitalStatementModal();
-        if (digital) digital.classList.remove('hidden');
+    if (btnTab) {
+        btnTab.href = fileUrl;
+        btnTab.classList.remove('hidden');
     }
+    if (btnDown) {
+        btnDown.href = fileUrl;
+        btnDown.classList.remove('hidden');
+    }
+    if (empty) empty.classList.add('hidden');
+    if (digital) digital.classList.add('hidden');
+
+    if (isImg) {
+        if (iframe) { iframe.src = ''; iframe.classList.add('hidden'); }
+        if (img)    { img.src = fileUrl; img.classList.remove('hidden'); }
+    } else {
+        if (img)    { img.src = ''; img.classList.add('hidden'); }
+        if (iframe) {
+            iframe.src = fileUrl;
+            iframe.classList.remove('hidden');
+        }
+    }
+
+    modal.classList.remove('hidden');
 
     modal.classList.remove('hidden');
 }
@@ -2903,7 +2905,8 @@ async function uploadPdfLangsungModal(input) {
     }
 
     try {
-        const res = await fetch((window.BASE_URL || '') + 'pengajuan/upload-file-rekening-saja', {
+        const baseUrl = (typeof getBaseUrl === 'function') ? getBaseUrl() : (window.BASE_URL || '');
+        const res = await fetch(baseUrl + '/pengajuan/upload-file-rekening-saja', {
             method: 'POST',
             body: fd,
             headers: { 'X-Requested-With': 'XMLHttpRequest' }

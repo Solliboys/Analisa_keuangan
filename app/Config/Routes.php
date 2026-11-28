@@ -51,6 +51,7 @@ $routes->group('pengajuan', static function ($routes) {
     $routes->post('upload-hasil-slik', 'Pengajuan::uploadHasilSlik');
     $routes->post('upload-ocr-rekening', 'Pengajuan::uploadOcrRekening');
     $routes->post('upload-file-rekening-saja', 'Pengajuan::uploadFileRekeningSaja');
+    $routes->get('stream-berkas', 'Pengajuan::streamBerkas');
     $routes->post('kirim-ke-petugas-slik', 'Pengajuan::kirimKePetugasSlik');
     $routes->post('ambil-ringkasan-slik', 'Pengajuan::ambilRingkasanSlik');
     $routes->post('upload-dokumen-slik', 'Pengajuan::uploadDokumenSlik');

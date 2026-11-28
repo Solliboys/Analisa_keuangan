@@ -111,7 +111,13 @@
                                 }
                             }
 
-                            $rowFileUrl = !empty($rowFileRekening) ? (strpos($rowFileRekening, 'http') === 0 ? $rowFileRekening : base_url($rowFileRekening)) : '';
+                            if (!empty($rowFileRekening)) {
+                                $rowFileUrl = (strpos($rowFileRekening, 'http') === 0)
+                                    ? $rowFileRekening
+                                    : base_url('pengajuan/stream-berkas?file=' . urlencode($rowFileRekening));
+                            } else {
+                                $rowFileUrl = base_url('pengajuan/stream-berkas?kredit_id=' . ($kredit['kredit_id'] ?? '') . '&rekening_id=' . $rekIdVal);
+                            }
                         ?>
                         <tr class="rekening-item hover:bg-slate-50/80 transition" data-rek-index="<?= $idx ?>" data-rek-id="<?= esc($rekIdVal) ?>">
                             <td class="py-3 px-3 text-center font-bold text-slate-400 rek-no"><?= $idx + 1 ?></td>
@@ -231,7 +237,10 @@
 
         <!-- Body Viewer -->
         <div class="flex-1 overflow-hidden py-2 relative bg-slate-100/70 rounded-2xl mt-3 flex items-center justify-center">
-            <iframe id="iframePdfRekening" src="" class="w-full h-full rounded-xl border border-slate-200 bg-white shadow-inner hidden"></iframe>
+            <!-- Hidden input file untuk tombol Unggah PDF di header modal -->
+            <input type="file" id="inputUploadPdfModal" accept=".pdf,image/jpeg,image/png,image/webp" onchange="uploadPdfLangsungModal(this)" class="hidden">
+
+            <iframe id="iframePdfRekening" src="" class="w-full h-full rounded-xl border border-slate-200 bg-white shadow-inner"></iframe>
             <img id="imgPreviewRekening" src="" alt="Pratinjau Rekening Koran" class="max-w-full max-h-full object-contain rounded-xl border border-slate-200 bg-white hidden shadow-md">
             
             <!-- Tampilan e-Statement Digital -->
@@ -239,33 +248,13 @@
                 <!-- Konten e-Statement Digital di-render dinamis -->
             </div>
 
-            <!-- Fallback Belum Ada Berkas: Dilengkapi Opsi Upload Langsung & e-Statement -->
-            <div id="pdfFallbackEmpty" class="flex flex-col items-center justify-center p-6 sm:p-8 text-center max-w-lg w-full">
+            <!-- Fallback Belum Ada Berkas: Terselubung / Hidden -->
+            <div id="pdfFallbackEmpty" class="hidden flex flex-col items-center justify-center p-6 sm:p-8 text-center max-w-lg w-full">
                 <div class="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 border border-rose-200 flex items-center justify-center mb-3 shadow-xs">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 </div>
-                <h4 class="text-sm font-bold text-slate-800">Berkas Dokumen Asli Belum Terhubung</h4>
-                <p class="text-xs text-slate-500 mt-1 max-w-sm">Dokumen fisik PDF/Foto untuk rekening ini belum tersimpan atau diunggah. Anda dapat melampirkannya sekarang atau membuka format e-Statement digital resmi.</p>
-
-                <!-- Box Upload Cepat -->
-                <div class="mt-4 w-full p-4 border-2 border-dashed border-rose-300 hover:border-rose-500 bg-rose-50/40 hover:bg-rose-50/80 rounded-2xl cursor-pointer transition text-center group" onclick="document.getElementById('inputUploadPdfModal').click()">
-                    <input type="file" id="inputUploadPdfModal" accept=".pdf,image/jpeg,image/png,image/webp" onchange="uploadPdfLangsungModal(this)" class="hidden">
-                    <div class="text-xs font-bold text-slate-700">Unggah Berkas PDF / Gambar Rekening Ini</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5">Format PDF, JPG, PNG (Maks. 10MB)</div>
-                    <button type="button" class="mt-3 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition shadow-xs inline-flex items-center gap-1.5 cursor-pointer">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        <span>Pilih File PDF Sekarang</span>
-                    </button>
-                </div>
-
-                <!-- Pilihan Tampilkan e-Statement Digital -->
-                <div class="mt-4 pt-3 border-t border-slate-200/80 w-full flex flex-col items-center gap-1.5">
-                    <span class="text-[11px] font-semibold text-slate-400">— atau tanpa berkas fisik —</span>
-                    <button type="button" onclick="renderDigitalStatementModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shadow-xs inline-flex items-center gap-2 cursor-pointer">
-                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        <span>Buka e-Statement Digital Rekening Ini</span>
-                    </button>
-                </div>
+                <h4 class="text-sm font-bold text-slate-800">Pratinjau Dokumen Rekening</h4>
+                <p class="text-xs text-slate-500 mt-1 max-w-sm">Dokumen sedang dimuat ke dalam penampil berkas resmi.</p>
             </div>
         </div>
         
