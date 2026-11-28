@@ -326,6 +326,13 @@ class Pengajuan extends BaseController
         $rawJd = $kredit['jenis_debitur'] ?? 'Perorangan';
         $viewFolder = (stripos($rawJd, 'badan') !== false || stripos($rawJd, 'pt') !== false || stripos($rawJd, 'cv') !== false) ? 'badan_usaha' : 'perorangan';
 
+        // Pastikan kolom file_rekening tersedia di tabel kredit_rekening
+        try {
+            if (!$this->rekeningModel->db->fieldExists('file_rekening', 'kredit_rekening')) {
+                $this->rekeningModel->db->query("ALTER TABLE `kredit_rekening` ADD COLUMN `file_rekening` VARCHAR(255) NULL AFTER `rata_rata_debit`");
+            }
+        } catch (\Throwable $e) {}
+
         $keuangan = $this->keuanganModel->where('kredit_id', $id)->first() ?? [];
         $laporanKeuangan = (new KreditLaporanKeuanganModel())->where('kredit_id', $id)->first() ?? [];
 
@@ -915,6 +922,13 @@ class Pengajuan extends BaseController
 
     private function simpanRekening($kreditId, $input)
     {
+        // Pastikan kolom file_rekening tersedia di tabel kredit_rekening
+        try {
+            if (!$this->rekeningModel->db->fieldExists('file_rekening', 'kredit_rekening')) {
+                $this->rekeningModel->db->query("ALTER TABLE `kredit_rekening` ADD COLUMN `file_rekening` VARCHAR(255) NULL AFTER `rata_rata_debit`");
+            }
+        } catch (\Throwable $e) {}
+
         $this->rekeningModel->where('kredit_id', $kreditId)->delete();
         $rekCols = $this->rekeningModel->db->getFieldNames('kredit_rekening');
         if (isset($input['rekening']) && is_array($input['rekening'])) {
@@ -2499,13 +2513,32 @@ class Pengajuan extends BaseController
                 $file->move($targetDir, $newName);
                 $filePath = 'writable/uploads/rekening_koran/' . $newName;
             }
-            $kreditId = $this->request->getPost('kredit_id');
+            $kreditId   = $this->request->getPost('kredit_id');
+            $rekeningId = $this->request->getPost('rekening_id');
             if ($kreditId) {
                 try {
                     $cols = $this->kreditModel->db->getFieldNames('kredit');
                     if (is_array($cols) && in_array('berkas_rekening_koran', $cols)) {
                         $this->kreditModel->update($kreditId, ['berkas_rekening_koran' => $filePath]);
                     }
+                } catch (\Throwable $e) {}
+
+                // Simpan juga ke kredit_dokumen agar langsung tampil di Tab 5 Dokumen
+                try {
+                    $this->dokumenModel->insert([
+                        'kredit_id'         => $kreditId,
+                        'kategori_dokumen'  => 'Rekening Koran',
+                        'nama_file_asli'    => $file->getClientName(),
+                        'path_file'         => $filePath,
+                        'ukuran_file_bytes' => $file->getSize(),
+                        'tipe_file'         => $file->getClientMimeType(),
+                        'catatan_dokumen'   => 'Rekening Koran (Diunggah Langsung dari Modal)'
+                    ]);
+                } catch (\Throwable $e) {}
+            }
+            if ($rekeningId) {
+                try {
+                    $this->rekeningModel->update($rekeningId, ['file_rekening' => $filePath]);
                 } catch (\Throwable $e) {}
             }
             return $this->response->setJSON([
