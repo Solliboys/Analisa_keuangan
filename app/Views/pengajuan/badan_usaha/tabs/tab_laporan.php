@@ -26,7 +26,7 @@ if (!function_exists('badgeSumberData')) {
     <div class="px-6 sm:px-8 pt-6 sm:pt-8 pb-4 border-b border-slate-100">
         <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
             <div>
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Laporan Keuangan Lengkap</h2>
+                <h2 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">Laporan Keuangan Lengkap</h2>
                 <p class="text-[12px] text-slate-500 mt-1 max-w-xl">
                     Ringkasan lengkap hasil analisa pengajuan: profil usaha, pinjaman bank (SLIK), mutasi rekening, jaminan (agunan), serta Data Keuangan, Neraca, dan Arus Kas.
                 </p>
@@ -221,9 +221,9 @@ if (!function_exists('badgeSumberData')) {
             </div>
 
             <!-- Highlight: LABA BERSIH (Rumus: Pendapatan - Beban = Laba Bersih) -->
-            <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
+            <div class="bg-blue-50/90 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900 text-xs sm:text-sm">
                 <span class="tracking-wide">KEUNTUNGAN BERSIH AKHIR (LABA BERSIH)</span>
-                <span id="bu_lr_laba_bersih" class="text-blue-700 font-black">—</span>
+                <span id="bu_lr_laba_bersih" class="text-blue-700 font-bold">—</span>
             </div>
         </div>
     </div>
@@ -262,7 +262,7 @@ if (!function_exists('badgeSumberData')) {
                     <!-- Highlight: Total Aset Lancar -->
                     <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
                         <span>Total Harta Lancar</span>
-                        <span id="bu_nr_total_aset_lancar" class="text-blue-700 font-black">—</span>
+                        <span id="bu_nr_total_aset_lancar" class="text-blue-700 font-bold">—</span>
                     </div>
 
                     <div id="row_bu_nr_aset_tetap" style="display: <?= $showAsetTetap ? 'block' : 'none' ?>;" class="py-1">
@@ -277,9 +277,9 @@ if (!function_exists('badgeSumberData')) {
                     </div>
 
                     <!-- Highlight: TOTAL ASET (Rumus: Aset = Liabilitas + Ekuitas) -->
-                    <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
+                    <div class="bg-blue-50/90 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900 text-xs sm:text-sm">
                         <span class="tracking-wide">TOTAL KESELURUHAN HARTA (ASET)</span>
-                        <span id="bu_nr_total_aset" class="text-blue-700 font-black">—</span>
+                        <span id="bu_nr_total_aset" class="text-blue-700 font-bold">—</span>
                     </div>
                 </div>
             </div>
@@ -303,7 +303,7 @@ if (!function_exists('badgeSumberData')) {
                     <!-- Highlight: Total Liabilitas -->
                     <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
                         <span id="lbl_bu_nr_total_liab">Total Seluruh Utang (Liabilitas)</span>
-                        <span id="bu_nr_total_liab" class="text-blue-700 font-black">—</span>
+                        <span id="bu_nr_total_liab" class="text-blue-700 font-bold">—</span>
                     </div>
 
                     <div class="flex justify-between items-center py-1" id="row_bu_nr_modal" style="display: <?= $showModalDisetor ? 'flex' : 'none' ?>;">
@@ -318,13 +318,13 @@ if (!function_exists('badgeSumberData')) {
                     <!-- Highlight: Total Ekuitas (Rumus: Ekuitas = Aset - Liabilitas) -->
                     <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
                         <span>Total Modal Bersih Sendiri (Ekuitas)</span>
-                        <span id="bu_nr_total_ekuitas" class="text-blue-700 font-black">—</span>
+                        <span id="bu_nr_total_ekuitas" class="text-blue-700 font-bold">—</span>
                     </div>
 
                     <!-- Highlight: TOTAL LIABILITAS & EKUITAS (Rumus: Aset = Liabilitas + Ekuitas) -->
-                    <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
+                    <div class="bg-blue-50/90 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900 text-xs sm:text-sm">
                         <span class="tracking-wide">TOTAL UTANG + MODAL (ASET)</span>
-                        <span id="bu_nr_total_liab_ekuitas" class="text-blue-700 font-black">—</span>
+                        <span id="bu_nr_total_liab_ekuitas" class="text-blue-700 font-bold">—</span>
                     </div>
                 </div>
             </div>
@@ -351,7 +351,7 @@ if (!function_exists('badgeSumberData')) {
             </div>
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
                 <span>Total Kas dari Usaha Pokok (Kas Operasi)</span>
-                <span id="bu_ak_kas_operasi" class="text-blue-700 font-black">—</span>
+                <span id="bu_ak_kas_operasi" class="text-blue-700 font-bold">—</span>
             </div>
 
             <!-- II. Aktivitas Pendanaan -->
@@ -362,21 +362,21 @@ if (!function_exists('badgeSumberData')) {
             </div>
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
                 <span>Total Kas Pendanaan &amp; Pembiayaan</span>
-                <span id="bu_ak_kas_pendanaan" class="text-blue-700 font-black">—</span>
+                <span id="bu_ak_kas_pendanaan" class="text-blue-700 font-bold">—</span>
             </div>
 
             <!-- Kenaikan Bersih & Kas Akhir (Rumus Kenaikan Kas & Kas Akhir) -->
             <div class="bg-blue-50/80 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900">
                 <span>Kenaikan (Penurunan) Kas Bersih Tahun Ini</span>
-                <span id="bu_ak_kenaikan_bersih" class="text-blue-700 font-black">—</span>
+                <span id="bu_ak_kenaikan_bersih" class="text-blue-700 font-bold">—</span>
             </div>
             <div class="flex justify-between items-center py-1">
                 <span class="text-slate-600 font-medium">Uang Kas di Awal Tahun (Kas Awal)</span>
                 <span class="font-bold text-slate-900" id="bu_ak_saldo_awal">—</span>
             </div>
-            <div class="bg-blue-50/90 rounded-xl p-3.5 flex justify-between items-center font-extrabold text-blue-900 text-sm sm:text-base">
+            <div class="bg-blue-50/90 rounded-xl p-3 flex justify-between items-center font-bold text-blue-900 text-xs sm:text-sm">
                 <span class="tracking-wide">SISA UANG KAS DI AKHIR TAHUN (Kas Akhir)</span>
-                <span id="bu_ak_kas_akhir" class="text-blue-700 font-black">—</span>
+                <span id="bu_ak_kas_akhir" class="text-blue-700 font-bold">—</span>
             </div>
         </div>
     </div>
@@ -451,7 +451,7 @@ if (!function_exists('badgeSumberData')) {
                     <div class="p-3.5 bg-white border border-slate-200/90 rounded-xl space-y-1 shadow-2xs">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">DSCR (Coverage Ratio)</span>
                         <div class="flex items-baseline justify-between">
-                            <span id="bu_rasio_dscr" class="text-xl font-black text-emerald-600">0.00x</span>
+                            <span id="bu_rasio_dscr" class="text-base font-bold text-emerald-600">0.00x</span>
                             <span class="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">Min 1.30x</span>
                         </div>
                         <span class="text-[10px] text-slate-400 block leading-tight">Surplus Bersih &divide; Angsuran Baru</span>
@@ -461,7 +461,7 @@ if (!function_exists('badgeSumberData')) {
                     <div class="p-3.5 bg-white border border-slate-200/90 rounded-xl space-y-1 shadow-2xs">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">DSR / DBR (Debt Service)</span>
                         <div class="flex items-baseline justify-between">
-                            <span id="bu_rasio_dsr" class="text-xl font-black text-blue-700">0.00%</span>
+                            <span id="bu_rasio_dsr" class="text-base font-bold text-blue-700">0.00%</span>
                             <span class="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">Maks 35-40%</span>
                         </div>
                         <span class="text-[10px] text-slate-400 block leading-tight">Total Cicilan &divide; Pendapatan</span>
@@ -471,7 +471,7 @@ if (!function_exists('badgeSumberData')) {
                     <div class="p-3.5 bg-white border border-slate-200/90 rounded-xl space-y-1 shadow-2xs">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">Current Ratio (CR)</span>
                         <div class="flex items-baseline justify-between">
-                            <span id="bu_rasio_cr" class="text-xl font-black text-slate-800">0.00%</span>
+                            <span id="bu_rasio_cr" class="text-base font-bold text-slate-800">0.00%</span>
                             <span class="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">Min 120%</span>
                         </div>
                         <span class="text-[10px] text-slate-400 block leading-tight">Aset Lancar &divide; Utang Lancar</span>
@@ -481,7 +481,7 @@ if (!function_exists('badgeSumberData')) {
                     <div class="p-3.5 bg-white border border-slate-200/90 rounded-xl space-y-1 shadow-2xs">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">DER (Debt to Equity)</span>
                         <div class="flex items-baseline justify-between">
-                            <span id="bu_rasio_der" class="text-xl font-black text-amber-600">0.00x</span>
+                            <span id="bu_rasio_der" class="text-base font-bold text-amber-600">0.00x</span>
                             <span class="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">Maks 3.00x</span>
                         </div>
                         <span class="text-[10px] text-slate-400 block leading-tight">Total Utang &divide; Modal Bersih</span>

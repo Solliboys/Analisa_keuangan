@@ -316,7 +316,7 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
             <span class="text-[10px] font-extrabold text-blue-900 uppercase tracking-wider" id="label_kpi_pemasukan">
                 <?= $kategoriDebiturAwal === 'usaha' ? 'TOTAL OMZET & PEMASUKAN' : 'TOTAL GAJI & PENGHASILAN' ?>
             </span>
-            <span id="metric_lap_pemasukan" class="text-xl sm:text-2xl font-black text-blue-700 tracking-tight block mt-1">
+            <span id="metric_lap_pemasukan" class="text-base sm:text-lg font-bold text-blue-700 tracking-tight block mt-1">
                 Rp <?= number_format($totalPemasukanAwal, 0, ',', '.') ?>
             </span>
             <span class="text-[11px] text-blue-800/80 font-medium mt-1 block" id="sub_kpi_pemasukan">
@@ -329,7 +329,7 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
             <span class="text-[10px] font-extrabold text-rose-900 uppercase tracking-wider" id="label_kpi_beban">
                 <?= $kategoriDebiturAwal === 'usaha' ? 'TOTAL PENGELUARAN & BEBAN' : 'TOTAL PENGELUARAN & BIAYA HIDUP' ?>
             </span>
-            <span id="metric_lap_beban" class="text-xl sm:text-2xl font-black text-rose-700 tracking-tight block mt-1">
+            <span id="metric_lap_beban" class="text-base sm:text-lg font-bold text-rose-700 tracking-tight block mt-1">
                 Rp <?= number_format($totalPengeluaranAwal, 0, ',', '.') ?>
             </span>
             <span class="text-[11px] text-rose-800/80 font-medium mt-1 block">Akumulasi pengeluaran rutin &amp; HPP</span>
@@ -338,7 +338,7 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
         <!-- 3. Sisa Penghasilan / Surplus Bulanan (Hijau) -->
         <div class="p-4 bg-emerald-50/70 rounded-2xl border border-emerald-200 flex flex-col justify-between shadow-2xs">
             <span class="text-[10px] font-extrabold text-emerald-900 uppercase tracking-wider">SURPLUS BULANAN (SISA)</span>
-            <span id="metric_lap_surplus" class="text-xl sm:text-2xl font-black text-emerald-700 tracking-tight block mt-1">
+            <span id="metric_lap_surplus" class="text-base sm:text-lg font-bold text-emerald-700 tracking-tight block mt-1">
                 Rp <?= number_format($surplusBulananAwal, 0, ',', '.') ?>
             </span>
             <span class="text-[11px] text-emerald-800/80 font-medium mt-1 block">Kapasitas bayar angsuran bulanan</span>
@@ -347,7 +347,7 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
         <!-- 4. Kekayaan Bersih / Harta Bersih (Ungu/Indigo) -->
         <div class="p-4 bg-indigo-50/70 rounded-2xl border border-indigo-200 flex flex-col justify-between shadow-2xs">
             <span class="text-[10px] font-extrabold text-indigo-900 uppercase tracking-wider">KEKAYAAN BERSIH (NET WORTH)</span>
-            <span id="metric_lap_net_worth" class="text-xl sm:text-2xl font-black text-indigo-700 tracking-tight block mt-1">
+            <span id="metric_lap_net_worth" class="text-base sm:text-lg font-bold text-indigo-700 tracking-tight block mt-1">
                 Rp <?= number_format($kekayaanBersihAwal, 0, ',', '.') ?>
             </span>
             <span class="text-[11px] text-indigo-800/80 font-medium mt-1 block">Harta eligible dikurangi seluruh utang</span>
@@ -473,7 +473,7 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                 <div class="text-xs font-semibold text-white">Total Pemasukan dikurangi Total Seluruh Beban (Kapasitas Pembayaran)</div>
             </div>
             <div class="text-right">
-                <span id="lap_surplus_nominal" class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                <span id="lap_surplus_nominal" class="text-lg sm:text-xl font-bold text-white tracking-tight">
                     Rp <?= number_format($surplusBulananAwal, 0, ',', '.') ?>
                 </span>
                 <span class="text-[11px] text-emerald-100 block">per bulan</span>
@@ -553,15 +553,15 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200 text-xs">
             <div>
                 <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Harta Bruto:</span>
-                <span id="lap_tot_harta_bruto" class="text-base font-extrabold text-slate-800">Rp <?= number_format($totalHartaBrutoAwal, 0, ',', '.') ?></span>
+                <span id="lap_tot_harta_bruto" class="text-xs sm:text-sm font-bold text-slate-800">Rp <?= number_format($totalHartaBrutoAwal, 0, ',', '.') ?></span>
             </div>
             <div>
                 <span class="text-[10px] font-bold text-amber-700 uppercase tracking-wider block">(-) Aset Terikat Jaminan:</span>
-                <span id="lap_tot_aset_terikat" class="text-base font-extrabold text-amber-700">(Rp <?= number_format($asetTerikatAwal, 0, ',', '.') ?>)</span>
+                <span id="lap_tot_aset_terikat" class="text-xs sm:text-sm font-bold text-amber-700">(Rp <?= number_format($asetTerikatAwal, 0, ',', '.') ?>)</span>
             </div>
             <div class="sm:text-right">
                 <span class="text-[10px] font-black text-emerald-900 uppercase tracking-wider block">= TOTAL HARTA BERSIH ELIGIBLE:</span>
-                <span id="lap_tot_harta_eligible" class="text-lg font-black text-emerald-700">Rp <?= number_format($totalHartaEligibleAwal, 0, ',', '.') ?></span>
+                <span id="lap_tot_harta_eligible" class="text-sm sm:text-base font-bold text-emerald-700">Rp <?= number_format($totalHartaEligibleAwal, 0, ',', '.') ?></span>
             </div>
         </div>
     </div>
@@ -643,7 +643,7 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                 <div class="p-5 bg-gradient-to-br from-blue-50/90 to-indigo-50/70 rounded-2xl border border-blue-200/90 space-y-4 shadow-2xs">
                     <div class="flex items-center justify-between border-b border-blue-200/60 pb-3">
                         <span class="text-xs font-bold text-slate-700">Plafon Pinjaman Baru:</span>
-                        <span id="lap_baru_plafon" class="text-base font-black text-blue-700">Rp <?= number_format($plafonBaru, 0, ',', '.') ?></span>
+                        <span id="lap_baru_plafon" class="text-sm font-bold text-blue-700">Rp <?= number_format($plafonBaru, 0, ',', '.') ?></span>
                     </div>
                     <div class="grid grid-cols-2 gap-3 text-xs">
                         <div class="p-2.5 bg-white/80 rounded-xl border border-blue-100">
@@ -660,7 +660,7 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                             <span class="text-[10px] font-bold uppercase tracking-wider text-blue-200 block">Estimasi Angsuran Baru:</span>
                             <span class="text-[11px] text-blue-100">Pokok + Bunga per bulan</span>
                         </div>
-                        <span id="lap_baru_angs_nom" class="text-lg font-black text-white">Rp <?= number_format($estimasiAngsuranBaru, 0, ',', '.') ?></span>
+                        <span id="lap_baru_angs_nom" class="text-sm sm:text-base font-bold text-white">Rp <?= number_format($estimasiAngsuranBaru, 0, ',', '.') ?></span>
                     </div>
                 </div>
 
@@ -671,7 +671,7 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
                         <div class="text-xs font-semibold text-slate-200">Angsuran Berjalan + Angsuran Baru</div>
                     </div>
                     <div class="text-right">
-                        <span id="lap_tot_angs_gabungan" class="text-xl sm:text-2xl font-black text-amber-400 tracking-tight">
+                        <span id="lap_tot_angs_gabungan" class="text-base sm:text-lg font-bold text-amber-400 tracking-tight">
                             Rp <?= number_format($totalAngsuranGabunganAwal, 0, ',', '.') ?>
                         </span>
                         <span class="text-[10px] text-slate-300 block">per bulan</span>
@@ -711,11 +711,11 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
             </div>
 
             <!-- Banner Highlight Kekayaan Bersih -->
-            <div class="mt-6 p-5 bg-gradient-to-r from-indigo-700 to-blue-700 text-white rounded-2xl shadow-xs">
+            <div class="mt-6 p-4 sm:p-5 bg-gradient-to-r from-indigo-700 to-blue-700 text-white rounded-2xl shadow-xs">
                 <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-200">TOTAL POSISI KEKAYAAN BERSIH (NET WORTH)</div>
                 <div class="mt-1 flex justify-between items-baseline">
                     <span class="text-xs text-indigo-100 font-semibold">Kekayaan Bersih:</span>
-                    <span id="rekap_lap_net_worth_bold" class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    <span id="rekap_lap_net_worth_bold" class="text-lg sm:text-xl font-bold text-white tracking-tight">
                         Rp <?= number_format($kekayaanBersihAwal, 0, ',', '.') ?>
                     </span>
                 </div>
@@ -740,40 +740,40 @@ $danaBersihNettAwal    = max(0, $plafonBaru - $totalPotonganMukaAwal);
 
                 <div class="grid grid-cols-2 gap-3 text-xs">
                     <!-- DSCR -->
-                    <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
+                    <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1 shadow-2xs">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">DSCR (Coverage Ratio)</span>
                         <div class="flex items-baseline justify-between">
-                            <span id="rasio_lap_dscr" class="text-lg font-black text-emerald-700"><?= $dscrAwal ?>x</span>
+                            <span id="rasio_lap_dscr" class="text-base font-bold text-emerald-700"><?= $dscrAwal ?>x</span>
                             <span class="text-[10px] text-slate-500 font-semibold">Min 1.30x</span>
                         </div>
                         <span class="text-[9px] text-slate-400 block">Surplus Bersih &divide; Angsuran Baru</span>
                     </div>
 
                     <!-- DSR / DBR -->
-                    <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
+                    <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1 shadow-2xs">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">DSR / DBR (Debt Service)</span>
                         <div class="flex items-baseline justify-between">
-                            <span id="rasio_lap_dsr" class="text-lg font-black text-blue-700"><?= $dsrAwal ?>%</span>
+                            <span id="rasio_lap_dsr" class="text-base font-bold text-blue-700"><?= $dsrAwal ?>%</span>
                             <span class="text-[10px] text-slate-500 font-semibold">Maks 35-40%</span>
                         </div>
                         <span class="text-[9px] text-slate-400 block">Angsuran / Pemasukan</span>
                     </div>
 
                     <!-- DAR -->
-                    <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
+                    <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1 shadow-2xs">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">DAR (Debt to Asset)</span>
                         <div class="flex items-baseline justify-between">
-                            <span id="rasio_lap_dar" class="text-lg font-black text-slate-800"><?= $darAwal ?>%</span>
+                            <span id="rasio_lap_dar" class="text-base font-bold text-slate-800"><?= $darAwal ?>%</span>
                             <span class="text-[10px] text-slate-500 font-semibold">Maks 50%</span>
                         </div>
                         <span class="text-[9px] text-slate-400 block">Total Utang / Harta</span>
                     </div>
 
                     <!-- DER -->
-                    <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1">
+                    <div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1 shadow-2xs">
                         <span class="text-[10px] font-bold text-slate-400 uppercase block">DER (Debt to Equity)</span>
                         <div class="flex items-baseline justify-between">
-                            <span id="rasio_lap_der" class="text-lg font-black text-slate-800"><?= $derAwal ?>x</span>
+                            <span id="rasio_lap_der" class="text-base font-bold text-slate-800"><?= $derAwal ?>x</span>
                             <span class="text-[10px] text-slate-500 font-semibold">Wajar</span>
                         </div>
                         <span class="text-[9px] text-slate-400 block">Utang / Kekayaan Bersih</span>
@@ -1556,7 +1556,7 @@ function sinkronkanLaporanKeuangan() {
     if (document.getElementById('rasio_lap_dscr')) {
         const elDscr = document.getElementById('rasio_lap_dscr');
         elDscr.innerText = `${dscr}x`;
-        elDscr.className = (parseFloat(dscr) >= 1.30) ? 'text-lg font-black text-emerald-700' : 'text-lg font-black text-rose-600';
+        elDscr.className = (parseFloat(dscr) >= 1.30) ? 'text-base font-bold text-emerald-700' : 'text-base font-bold text-rose-600';
     }
     if (document.getElementById('rasio_lap_dsr')) document.getElementById('rasio_lap_dsr').innerText = `${dsr}%`;
     if (document.getElementById('rasio_lap_dar')) document.getElementById('rasio_lap_dar').innerText = `${dar}%`;
