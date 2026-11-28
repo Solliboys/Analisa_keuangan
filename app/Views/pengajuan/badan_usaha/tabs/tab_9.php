@@ -3,12 +3,17 @@
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100 mb-6">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
-                8
+                9
             </div>
             <div>
                 <h3 class="text-xs sm:text-sm font-bold text-slate-800 tracking-wider uppercase">ANALISA DATA KEUANGAN & BEBAN USAHA (BADAN USAHA / PERUSAHAAN)</h3>
                 <p class="text-[11px] text-slate-500">Perhitungan data keuangan operasional dari mutasi rekening koran perusahaan, beban usaha operasional, dan belanja aset</p>
             </div>
+        </div>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+            <span class="px-2.5 py-1 rounded-md text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 shadow-2xs">
+                Badan Usaha / PT / CV / UD
+            </span>
         </div>
     </div>
 
@@ -313,7 +318,7 @@
                             <span class="font-bold text-blue-900 text-[11px] uppercase tracking-wider block">Laba Kotor Usaha (Gross Profit):</span>
                             <span class="text-[10px] text-blue-600 font-medium">* Total Pendapatan / Omset dikurangi Subtotal HPP</span>
                         </div>
-                        <span id="grossRK" class="text-sm sm:text-base font-black text-blue-700">Rp 0</span>
+                        <span id="grossRK" class="text-sm font-bold text-blue-700">Rp 0</span>
                     </div>
                 </div>
 
@@ -348,10 +353,10 @@
                 <!-- Ringkasan Terpisah: Total Seluruh Pengeluaran -->
                 <div class="p-3.5 bg-white border border-rose-200/90 rounded-xl flex justify-between items-center text-xs shadow-2xs">
                     <div>
-                        <span class="font-bold text-rose-900 text-xs uppercase tracking-wider block">Total Seluruh Pengeluaran:</span>
+                        <span class="font-bold text-slate-700 text-[11px] uppercase tracking-wider block">Total Seluruh Pengeluaran:</span>
                         <span class="text-[10px] text-slate-400 font-medium">* Akumulasi Subtotal Beban Pengeluaran + Subtotal HPP + Subtotal Cicilan Bulanan Hutang</span>
                     </div>
-                    <span id="nomTotalPengeluaranBU" class="text-sm sm:text-base font-black text-rose-700">Rp 0</span>
+                    <span id="nomTotalPengeluaranBU" class="text-sm font-bold text-rose-700">Rp 0</span>
                 </div>
             </div>
         </div>
@@ -389,7 +394,7 @@
                     <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Total Pembelian Aset:</span>
                     <p class="text-[10px] text-slate-400">* Pembelian aset dicatat sebagai belanja modal (Capex) dan tidak memotong Laba Kotor</p>
                 </div>
-                <span id="nomTotalAsetDinamis" class="text-sm font-black text-emerald-700">Rp 0</span>
+                <span id="nomTotalAsetDinamis" class="text-sm font-bold text-emerald-700">Rp 0</span>
             </div>
         </div>
 
@@ -403,37 +408,11 @@
                 </div>
                 <div class="min-w-0">
                     <div class="text-[10px] font-bold uppercase tracking-wider text-blue-100 truncate">Laba Operasional Usaha (EBITDA)</div>
-                    <div class="text-xs sm:text-sm font-extrabold text-white truncate">Pendapatan dikurangi HPP, Beban &amp; Cicilan Utang Berjalan</div>
+                    <div class="text-xs sm:text-sm font-bold text-white truncate">Pendapatan dikurangi HPP, Beban &amp; Cicilan Utang Berjalan</div>
                 </div>
             </div>
             <div class="text-right shrink-0">
-                <span id="nettRK" class="text-xl sm:text-2xl font-black text-white tracking-tight whitespace-nowrap block" style="color: #ffffff !important;">Rp 0</span>
-            </div>
-        </div>
-
-        <!-- ======================================================== -->
-        <!-- BANNER METRIK UTAMA: RASIO DSCR (DEBT SERVICE COVERAGE)  -->
-        <!-- ======================================================== -->
-        <div id="metric_lap_dscr_tab9" class="p-4 sm:p-5 bg-slate-900 text-white rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-slate-800">
-            <div class="flex items-center gap-3.5 min-w-0">
-                <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-400/30">
-                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                </div>
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-blue-300">Kapasitas Bayar: Rasio DSCR</span>
-                        <span id="badgeStatusDSCRK" class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                            Sangat Aman (≥ 1.30x)
-                        </span>
-                    </div>
-                    <div class="text-xs text-slate-300 mt-1">
-                        Surplus Bersih (<span id="dscrNumeratorLabel" class="font-semibold text-white">Rp 0</span>) &divide; Angsuran Baru yang Diajukan (<span id="dscrDenominatorLabel" class="font-semibold text-white">Rp 0</span>)
-                    </div>
-                </div>
-            </div>
-            <div class="text-left sm:text-right shrink-0">
-                <span id="labelRasioDSCRK" class="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight whitespace-nowrap block">0.00x</span>
-                <span class="text-[10px] text-slate-400 block">* Standar perbankan &amp; lembaga pembiayaan: DSCR ≥ 1.30x</span>
+                <span id="nettRK" class="text-lg sm:text-xl font-black text-white tracking-tight whitespace-nowrap block" style="color: #ffffff !important;">Rp 0</span>
             </div>
         </div>
 

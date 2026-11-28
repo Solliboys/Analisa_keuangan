@@ -137,16 +137,18 @@ if (!function_exists('badgeSumberData')) {
     </div>
 
     <!-- ============================================================
-         TAB NAVIGATION (URUTAN: DATA KEUANGAN -> NERACA -> ARUS KAS)
+         TAB NAVIGATION (URUTAN: DATA KEUANGAN -> NERACA -> ARUS KAS -> RASIO KEUANGAN)
          ============================================================ -->
     <div class="px-6 sm:px-8 pt-4">
-        <div class="flex gap-6 border-b border-slate-200">
+        <div class="flex gap-6 border-b border-slate-200 overflow-x-auto">
             <button type="button" onclick="switchTabLaporan('lr')" id="navBU_lr"
-                    class="tabNavBU pb-3 text-xs font-bold border-b-2 text-blue-600 border-blue-600 transition">Data Keuangan</button>
+                    class="tabNavBU pb-3 text-xs font-bold border-b-2 text-blue-600 border-blue-600 transition whitespace-nowrap">Data Keuangan</button>
             <button type="button" onclick="switchTabLaporan('nr')" id="navBU_nr"
-                    class="tabNavBU pb-3 text-xs font-bold border-b-2 text-slate-500 border-transparent hover:text-slate-800 transition">Neraca</button>
+                    class="tabNavBU pb-3 text-xs font-bold border-b-2 text-slate-500 border-transparent hover:text-slate-800 transition whitespace-nowrap">Neraca</button>
             <button type="button" onclick="switchTabLaporan('ak')" id="navBU_ak"
-                    class="tabNavBU pb-3 text-xs font-bold border-b-2 text-slate-500 border-transparent hover:text-slate-800 transition">Arus Kas</button>
+                    class="tabNavBU pb-3 text-xs font-bold border-b-2 text-slate-500 border-transparent hover:text-slate-800 transition whitespace-nowrap">Arus Kas</button>
+            <button type="button" onclick="switchTabLaporan('rk')" id="navBU_rk"
+                    class="tabNavBU pb-3 text-xs font-bold border-b-2 text-slate-500 border-transparent hover:text-slate-800 transition whitespace-nowrap">Rasio &amp; Kapasitas Bayar</button>
         </div>
     </div>
 
@@ -379,6 +381,122 @@ if (!function_exists('badgeSumberData')) {
         </div>
     </div>
 
+    <!-- ============================================================
+         TAB 4: RASIO KEUANGAN & KAPASITAS BAYAR (DSCR)
+         ============================================================ -->
+    <div id="panelBU_rk" class="tabPanelBU hidden px-6 sm:px-8 py-5">
+        <!-- Subheader box -->
+        <div class="bg-blue-50/70 p-3 rounded-xl flex justify-between items-center text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-4">
+            <span>ANALISA KEMAMPUAN ANGSURAN &amp; RASIO KEUANGAN USAHA (INTEGRASI DATA KEUANGAN &amp; SLIK)</span>
+            <span class="text-blue-700 font-semibold normal-case text-[11px]">Standar OJK &amp; Perbankan</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            <!-- Kolom Kiri: Aliran Kas & Kapasitas Bayar Bulanan -->
+            <div class="space-y-3 text-xs sm:text-sm">
+                <div class="bg-blue-100/70 p-2.5 rounded-lg text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-2">
+                    KAPASITAS ANGSURAN BULANAN
+                </div>
+
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-slate-600 font-medium">Pendapatan / Omset Usaha Bulanan</span>
+                    <span class="font-bold text-slate-900" id="bu_rk_pendapatan">—</span>
+                </div>
+
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-slate-600 font-medium">Beban Pokok &amp; Operasional Usaha (HPP + Biaya)</span>
+                    <span class="font-bold text-rose-600" id="bu_rk_beban">—</span>
+                </div>
+
+                <div class="p-2.5 bg-blue-50/80 rounded-xl flex justify-between items-center font-bold text-blue-900 text-xs">
+                    <span>Laba Bersih Operasional Usaha</span>
+                    <span id="bu_rk_laba_bersih" class="text-blue-700 font-black">—</span>
+                </div>
+
+                <div class="flex justify-between items-center py-1">
+                    <div>
+                        <span class="text-slate-600 font-medium block">Cicilan Pinjaman Berjalan (SLIK OJK &amp; Bank Lain)</span>
+                        <span class="text-[10px] text-slate-400 block">* Terkoneksi otomatis dari fasilitas SLIK dan pinjaman aktif</span>
+                    </div>
+                    <span class="font-bold text-rose-600 shrink-0 ml-4" id="bu_rk_cicilan_slik">—</span>
+                </div>
+
+                <div class="p-3 bg-emerald-50/90 border border-emerald-200 rounded-xl flex justify-between items-center font-extrabold text-emerald-900 text-xs sm:text-sm">
+                    <div>
+                        <span class="tracking-wide block">SURPLUS BERSIH TERSEDIA (KAS BEBAS)</span>
+                        <span class="text-[10px] text-emerald-700 font-medium font-sans">* Laba Operasional dikurangi Total Cicilan Pinjaman SLIK</span>
+                    </div>
+                    <span id="bu_rk_surplus_tersedia" class="text-emerald-700 font-black">—</span>
+                </div>
+
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-slate-600 font-medium">Estimasi Angsuran Baru yang Diajukan</span>
+                    <span class="font-bold text-blue-700" id="bu_rk_angsuran_baru">—</span>
+                </div>
+
+                <div class="p-3 bg-blue-50/90 rounded-xl flex justify-between items-center font-extrabold text-blue-900 text-xs sm:text-sm border border-blue-200">
+                    <span class="tracking-wide">SISA KAS AKHIR SETELAH ANGSURAN BARU</span>
+                    <span id="bu_rk_sisa_kas" class="text-blue-700 font-black">—</span>
+                </div>
+            </div>
+
+            <!-- Kolom Kanan: Matriks Rasio Keuangan Utama & Kelayakan -->
+            <div class="space-y-4">
+                <div class="bg-blue-100/70 p-2.5 rounded-lg text-xs font-extrabold text-blue-900 uppercase tracking-wider mb-2">
+                    MATRIKS RASIO KEUANGAN &amp; STATUS KELAYAKAN
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <!-- DSCR -->
+                    <div class="p-3.5 bg-white border border-slate-200/90 rounded-xl space-y-1 shadow-2xs">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">DSCR (Coverage Ratio)</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="bu_rasio_dscr" class="text-xl font-black text-emerald-600">0.00x</span>
+                            <span class="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">Min 1.30x</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 block leading-tight">Surplus Bersih &divide; Angsuran Baru</span>
+                    </div>
+
+                    <!-- DSR / DBR -->
+                    <div class="p-3.5 bg-white border border-slate-200/90 rounded-xl space-y-1 shadow-2xs">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">DSR / DBR (Debt Service)</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="bu_rasio_dsr" class="text-xl font-black text-blue-700">0.00%</span>
+                            <span class="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">Maks 35-40%</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 block leading-tight">Total Cicilan &divide; Pendapatan</span>
+                    </div>
+
+                    <!-- CR -->
+                    <div class="p-3.5 bg-white border border-slate-200/90 rounded-xl space-y-1 shadow-2xs">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">Current Ratio (CR)</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="bu_rasio_cr" class="text-xl font-black text-slate-800">0.00%</span>
+                            <span class="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">Min 120%</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 block leading-tight">Aset Lancar &divide; Utang Lancar</span>
+                    </div>
+
+                    <!-- DER -->
+                    <div class="p-3.5 bg-white border border-slate-200/90 rounded-xl space-y-1 shadow-2xs">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block">DER (Debt to Equity)</span>
+                        <div class="flex items-baseline justify-between">
+                            <span id="bu_rasio_der" class="text-xl font-black text-amber-600">0.00x</span>
+                            <span class="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">Maks 3.00x</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 block leading-tight">Total Utang &divide; Modal Bersih</span>
+                    </div>
+                </div>
+
+                <!-- Box Status Kelayakan -->
+                <div id="boxStatusKelayakanRasioBU" class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-xs text-emerald-800 font-medium">
+                    <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="labelStatusKelayakanRasioBU">Rasio keuangan debitur sangat sehat (DSCR ≥ 1.30x) dan memiliki kapasitas pembayaran yang memadai.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <style>
@@ -449,8 +567,8 @@ function switchTabLaporan(tab) {
         b.classList.add('text-slate-500', 'border-transparent');
     });
 
-    const panelMap = { lr: 'panelBU_lr', ak: 'panelBU_ak', nr: 'panelBU_nr' };
-    const navMap   = { lr: 'navBU_lr',   ak: 'navBU_ak',   nr: 'navBU_nr' };
+    const panelMap = { lr: 'panelBU_lr', ak: 'panelBU_ak', nr: 'panelBU_nr', rk: 'panelBU_rk' };
+    const navMap   = { lr: 'navBU_lr',   ak: 'navBU_ak',   nr: 'navBU_nr',   rk: 'navBU_rk' };
 
     if (panelMap[tab]) {
         document.getElementById(panelMap[tab])?.classList.remove('hidden');
@@ -1592,6 +1710,72 @@ function isiDataLaporanBU(data) {
     setT('bu_nr_laba_ditahan', rpFmt(nr.laba_ditahan_akhir));
     setT('bu_nr_total_ekuitas', rpFmt(nr.total_ekuitas));
     setT('bu_nr_total_liab_ekuitas', rpFmt(nr.total_liabilitas_ekuitas));
+
+    // --- TAB 4: RASIO KEUANGAN & KAPASITAS BAYAR (DSCR) ---
+    const pendapatanBU = parseFloat(lr.pendapatan || 0);
+    const bebanBU = parseFloat(lr.hpp || 0) + parseFloat(nominalBebanOpTampil || 0);
+    const labaBersihBU = parseFloat(lr.laba_bersih || (pendapatanBU - bebanBU));
+
+    let cicilanSlikBU = 0;
+    if (Array.isArray(window.daftarUtang)) {
+        window.daftarUtang.forEach(u => {
+            cicilanSlikBU += parseNominal(u.cicilan_bulanan || 0);
+        });
+    }
+    if (cicilanSlikBU === 0 && window.CICILAN_SLIK_PER_BULAN > 0) {
+        cicilanSlikBU = window.CICILAN_SLIK_PER_BULAN;
+    }
+
+    const surplusTersediaBU = Math.max(0, labaBersihBU - cicilanSlikBU);
+    const angsuranBaruBU = parseFloat(window.ESTIMASI_ANGSURAN_BARU || (window.kredit?.angsuran_dipilih || 0)) || parseNominal(document.getElementById('angsuran_dipilih')?.value || 0) || 1;
+    const sisaKasAkhirBU = surplusTersediaBU - angsuranBaruBU;
+
+    const dscrBU = angsuranBaruBU > 0 ? (surplusTersediaBU / angsuranBaruBU).toFixed(2) : '0.00';
+    const dsrBU = pendapatanBU > 0 ? (((cicilanSlikBU + angsuranBaruBU) / pendapatanBU) * 100).toFixed(1) : '0.0';
+
+    const asetLancarBU = parseFloat(nr.total_aset_lancar || 0);
+    const utangLancarBU = parseFloat(nr.utang_usaha || 0) + parseFloat(nr.utang_bank_pendek || 0);
+    const crBU = utangLancarBU > 0 ? ((asetLancarBU / utangLancarBU) * 100).toFixed(1) : '150.0';
+
+    const totalLiabBU = parseFloat(nr.total_liabilitas || 0);
+    const totalEkuitasBU = parseFloat(nr.total_ekuitas || 1);
+    const derBU = totalEkuitasBU > 0 ? (totalLiabBU / totalEkuitasBU).toFixed(2) : '0.50';
+
+    setT('bu_rk_pendapatan', rpFmt(pendapatanBU));
+    setT('bu_rk_beban', rpFmtParen(bebanBU));
+    setT('bu_rk_laba_bersih', rpFmt(labaBersihBU));
+    setT('bu_rk_cicilan_slik', rpFmtParen(cicilanSlikBU));
+    setT('bu_rk_surplus_tersedia', rpFmt(surplusTersediaBU));
+    setT('bu_rk_angsuran_baru', rpFmt(angsuranBaruBU));
+    setT('bu_rk_sisa_kas', rpFmt(sisaKasAkhirBU));
+
+    const elDscr = document.getElementById('bu_rasio_dscr');
+    if (elDscr) {
+        elDscr.textContent = dscrBU + 'x';
+        elDscr.className = parseFloat(dscrBU) >= 1.30 ? 'text-xl font-black text-emerald-600' : (parseFloat(dscrBU) >= 1.0 ? 'text-xl font-black text-amber-600' : 'text-xl font-black text-rose-600');
+    }
+    const elDsr = document.getElementById('bu_rasio_dsr');
+    if (elDsr) elDsr.textContent = dsrBU + '%';
+    const elCr = document.getElementById('bu_rasio_cr');
+    if (elCr) elCr.textContent = crBU + '%';
+    const elDer = document.getElementById('bu_rasio_der');
+    if (elDer) elDer.textContent = derBU + 'x';
+
+    const boxStatusBU = document.getElementById('boxStatusKelayakanRasioBU');
+    const labelStatusBU = document.getElementById('labelStatusKelayakanRasioBU');
+    if (boxStatusBU && labelStatusBU) {
+        const dVal = parseFloat(dscrBU);
+        if (dVal >= 1.30) {
+            boxStatusBU.className = 'p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2.5 text-xs text-emerald-800 font-medium';
+            labelStatusBU.textContent = 'Rasio keuangan debitur sangat sehat (DSCR ≥ 1.30x) dan memiliki kapasitas pembayaran yang memadai.';
+        } else if (dVal >= 1.0) {
+            boxStatusBU.className = 'p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2.5 text-xs text-amber-800 font-medium';
+            labelStatusBU.textContent = 'Kapasitas angsuran cukup ketat (DSCR 1.00x - 1.29x). Disarankan evaluasi mitigasi risiko tambahan.';
+        } else {
+            boxStatusBU.className = 'p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-xs text-rose-800 font-medium';
+            labelStatusBU.textContent = 'Peringatan Risiko: Total kewajiban melebihi surplus operasional (DSCR < 1.00x).';
+        }
+    }
 
     // Update stepper status
     if (typeof tabValidationStatus !== 'undefined') {
