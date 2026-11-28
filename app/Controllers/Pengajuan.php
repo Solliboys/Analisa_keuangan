@@ -2640,37 +2640,48 @@ class Pengajuan extends BaseController
 
     /**
      * Endpoint streaming berkas PDF/Gambar secara inline, mendukung berkas di FCPATH maupun WRITEPATH,
-     * serta auto-fallback merender lembar e-Statement digital resmi bila berkas fisik belum diunggah.
+     * Hanya menampilkan berkas PDF/gambar asli yang diunggah (tanpa e-Statement buatan).
      */
     public function streamBerkas()
     {
+        if (!session()->get('logged_in')) {
+            return $this->response->setStatusCode(401)->setBody('Unauthorized');
+        }
+
         $file       = trim((string)($this->request->getGet('file') ?? ''));
         $kreditId   = $this->request->getGet('kredit_id');
         $rekeningId = $this->request->getGet('rekening_id');
 
+        // Kumpulkan kandidat path berkas: parameter file, file_rekening baris, berkas kredit, dokumen Tab 5
+        $paths = [];
         if ($file !== '') {
-            $fileClean = str_replace(['../', '..\\', '..'], '', $file);
-            $candidates = [
-                FCPATH . $fileClean,
-                WRITEPATH . $fileClean,
-                FCPATH . 'uploads/' . ltrim($fileClean, '/'),
-                WRITEPATH . 'uploads/' . ltrim($fileClean, '/'),
-                FCPATH . 'uploads/rekening_koran/' . basename($fileClean),
-                WRITEPATH . 'uploads/rekening_koran/' . basename($fileClean),
-                FCPATH . 'uploads/dokumen/' . basename($fileClean),
-                WRITEPATH . 'uploads/dokumen/' . basename($fileClean),
-                FCPATH . 'uploads/slik/' . basename($fileClean),
-                WRITEPATH . 'uploads/slik/' . basename($fileClean),
-            ];
-
-            $foundPath = null;
-            foreach ($candidates as $cand) {
-                if (is_file($cand) && file_exists($cand)) {
-                    $foundPath = $cand;
-                    break;
+            $paths[] = $file;
+        }
+        if (!empty($rekeningId)) {
+            $rek = $this->rekeningModel->find($rekeningId);
+            if (!empty($rek['file_rekening'])) {
+                $paths[] = $rek['file_rekening'];
+            }
+            if (empty($kreditId) && !empty($rek['kredit_id'])) {
+                $kreditId = $rek['kredit_id'];
+            }
+        }
+        if (!empty($kreditId)) {
+            $kr = $this->kreditModel->find($kreditId);
+            if (!empty($kr['berkas_rekening_koran'])) {
+                $paths[] = $kr['berkas_rekening_koran'];
+            }
+            foreach ($this->dokumenModel->where('kredit_id', $kreditId)->findAll() as $doc) {
+                $kat   = strtolower($doc['kategori_dokumen'] ?? '');
+                $namaF = strtolower($doc['nama_file_asli'] ?? '');
+                if (!empty($doc['path_file']) && (strpos($kat, 'rekening') !== false || strpos($namaF, 'rekening') !== false || strpos($namaF, 'mutasi') !== false || strpos($namaF, 'koran') !== false)) {
+                    $paths[] = $doc['path_file'];
                 }
             }
+        }
 
+        foreach ($paths as $p) {
+            $foundPath = $this->resolveBerkasPath($p);
             if ($foundPath) {
                 $ext = strtolower(pathinfo($foundPath, PATHINFO_EXTENSION));
                 $mimeMap = [
@@ -2679,275 +2690,58 @@ class Pengajuan extends BaseController
                     'jpeg' => 'image/jpeg',
                     'png'  => 'image/png',
                     'webp' => 'image/webp',
-                    'txt'  => 'text/plain',
                 ];
-                $mime = $mimeMap[$ext] ?? (@mime_content_type($foundPath) ?: 'application/octet-stream');
+                $mime = $mimeMap[$ext] ?? 'application/octet-stream';
 
                 while (ob_get_level()) {
                     ob_end_clean();
                 }
-
                 header('Content-Type: ' . $mime);
                 header('Content-Disposition: inline; filename="' . basename($foundPath) . '"');
                 header('Content-Length: ' . filesize($foundPath));
                 header('Cache-Control: private, max-age=86400');
-                header('Pragma: public');
                 readfile($foundPath);
                 exit;
             }
         }
 
-        // Jika berkas fisik tidak ditemukan atau parameter kredit_id/rekening_id diberikan,
-        // render e-Statement digital resmi langsung di dalam iframe
-        return $this->renderOfficialBankStatement($kreditId, $rekeningId);
+        // Berkas PDF tidak ditemukan di server
+        $html = '<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><style>body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;background:#f8fafc;color:#475569;text-align:center}h4{margin:0 0 6px;color:#0f172a;font-size:14px}p{margin:0;font-size:12px}</style></head><body><div><h4>File PDF rekening koran tidak ditemukan</h4><p>Silakan unggah ulang PDF rekening koran melalui tombol "Upload Rekening Koran".</p></div></body></html>';
+        return $this->response->setStatusCode(404)->setHeader('Content-Type', 'text/html; charset=UTF-8')->setBody($html);
     }
 
     /**
-     * Render dokumen e-Statement Bank resmi berstandar perbankan langsung di viewer iframe
+     * Cari lokasi fisik berkas di FCPATH / WRITEPATH secara aman
      */
-    private function renderOfficialBankStatement($kreditId, $rekeningId)
+    private function resolveBerkasPath(string $file): ?string
     {
-        $kredit = null;
-        if (!empty($kreditId)) {
-            $kredit = $this->kreditModel->find($kreditId);
+        $file = trim($file);
+        if ($file === '') return null;
+        // Bila berupa URL penuh, ambil path-nya saja
+        if (preg_match('#^https?://#i', $file)) {
+            $file = (string)(parse_url($file, PHP_URL_PATH) ?? '');
         }
+        $file = ltrim(str_replace(['\\', '..'], ['/', ''], urldecode($file)), '/');
+        $file = preg_replace('#^(public/)#', '', $file);
+        $writableRel = preg_replace('#^writable/#', '', $file);
+        $base = basename($file);
 
-        $rek = null;
-        if (!empty($rekeningId)) {
-            $rek = $this->rekeningModel->find($rekeningId);
-        }
-        if (!$rek && !empty($kreditId)) {
-            $rek = $this->rekeningModel->where('kredit_id', $kreditId)->first();
-        }
-
-        $namaBank   = $rek['nama_bank'] ?? 'Bank Mandiri';
-        $noRek      = $rek['nomor_rekening'] ?? '1300003366880';
-        $atasNama   = $rek['atas_nama'] ?? ($kredit['nama_usaha'] ?? ($kredit['nama_debitur'] ?? 'RASA AKSATA NUSANTAR'));
-        $periode    = $rek['periode'] ?? '01 Okt 2024 s/d 31 Des 2024';
-        $saldoAwal  = (float)($rek['saldo_awal'] ?? 12020000);
-        $totalKredit = (float)($rek['total_mutasi_kredit'] ?? 28500000);
-        $totalDebit  = (float)($rek['total_mutasi_debit'] ?? 25100000);
-        $jumlahBulan = max(1, (int)($rek['jumlah_bulan'] ?? 3));
-        $saldoAkhir  = (float)($rek['saldo_akhir'] ?? ($saldoAwal + $totalKredit - $totalDebit));
-        $avgKredit   = (float)($rek['rata_rata_kredit'] ?? round($totalKredit / $jumlahBulan));
-
-        $rawTx = $rek['transaksi_json'] ?? ($rek['raw_json'] ?? '[]');
-        $transaksi = [];
-        if (!empty($rawTx)) {
-            $dec = is_array($rawTx) ? $rawTx : json_decode($rawTx, true);
-            if (is_array($dec)) {
-                $transaksi = $dec;
-            }
-        }
-
-        // Bila transaksi rincian belum ada, buatkan riwayat mutasi bulanan yang konsisten
-        if (empty($transaksi)) {
-            $stepKredit = round($totalKredit / $jumlahBulan);
-            $stepDebit  = round($totalDebit / $jumlahBulan);
-            $runSaldo   = $saldoAwal;
-
-            for ($m = 1; $m <= $jumlahBulan; $m++) {
-                $tglM = date('d/m/Y', strtotime("-$m month"));
-                $runSaldo += $stepKredit;
-                $transaksi[] = [
-                    'tanggal'    => $tglM,
-                    'keterangan' => 'PENERIMAAN TRANSFER OMZET BULANAN (CR) - PELANGGAN',
-                    'tipe'       => 'CR',
-                    'nominal'    => $stepKredit,
-                    'saldo'      => $runSaldo
-                ];
-                $runSaldo -= $stepDebit;
-                $transaksi[] = [
-                    'tanggal'    => $tglM,
-                    'keterangan' => 'PEMBAYARAN OPERASIONAL & SUPPLIER (DB)',
-                    'tipe'       => 'DB',
-                    'nominal'    => $stepDebit,
-                    'saldo'      => $runSaldo
-                ];
-            }
-        }
-
-        $bankTheme = [
-            'bg'      => '#003366',
-            'accent'  => '#f59e0b',
-            'sub'     => 'PT BANK MANDIRI (PERSERO) TBK',
-            'badge'   => 'MANDIRI'
+        $candidates = [
+            FCPATH . $file,
+            WRITEPATH . $writableRel,
+            FCPATH . 'uploads/rekening_koran/' . $base,
+            WRITEPATH . 'uploads/rekening_koran/' . $base,
+            FCPATH . 'uploads/dokumen/' . $base,
+            WRITEPATH . 'uploads/dokumen/' . $base,
         ];
-        $bankLower = strtolower($namaBank);
-        if (strpos($bankLower, 'bca') !== false) {
-            $bankTheme = ['bg' => '#005baa', 'accent' => '#00a3e0', 'sub' => 'PT BANK CENTRAL ASIA TBK', 'badge' => 'BCA'];
-        } elseif (strpos($bankLower, 'bri') !== false) {
-            $bankTheme = ['bg' => '#00529b', 'accent' => '#f37021', 'sub' => 'PT BANK RAKYAT INDONESIA (PERSERO) TBK', 'badge' => 'BRI'];
-        } elseif (strpos($bankLower, 'bni') !== false) {
-            $bankTheme = ['bg' => '#006677', 'accent' => '#f15a24', 'sub' => 'PT BANK NEGARA INDONESIA (PERSERO) TBK', 'badge' => 'BNI'];
+        foreach ($candidates as $cand) {
+            if (is_file($cand)) {
+                return $cand;
+            }
         }
-
-        $html = '<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-Statement Rekening Koran - ' . htmlspecialchars($namaBank) . ' - ' . htmlspecialchars($noRek) . '</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @media print {
-            .no-print { display: none !important; }
-            body { background: #ffffff !important; padding: 0 !important; }
-            .print-page { box-shadow: none !important; border: none !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
-        }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #0f172a; }
-        .tabular-nums { font-variant-numeric: tabular-nums; }
-    </style>
-</head>
-<body class="p-2 sm:p-6">
-    <!-- Action Toolbar (Hidden saat Print) -->
-    <div class="no-print max-w-5xl mx-auto mb-4 flex items-center justify-between bg-white px-4 py-2.5 rounded-2xl border border-slate-200 shadow-xs">
-        <div class="flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-xs font-bold text-slate-800">e-Statement Resmi Perbankan</span>
-            <span class="text-[11px] text-slate-400">(' . htmlspecialchars($namaBank) . ')</span>
-        </div>
-        <div class="flex items-center gap-2">
-            <button onclick="window.print()" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                <span>Cetak / Simpan PDF</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- Halaman Dokumen A4 e-Statement -->
-    <div class="print-page max-w-5xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-lg p-6 sm:p-10 text-xs text-slate-800 space-y-6">
-        <!-- Header Bank -->
-        <div class="flex items-start justify-between pb-6 border-b-2 border-slate-900">
-            <div>
-                <div class="flex items-center gap-3">
-                    <div class="px-3 py-1.5 rounded-lg text-white font-black text-sm tracking-widest shadow-xs" style="background-color: ' . $bankTheme['bg'] . ';">
-                        ' . htmlspecialchars($bankTheme['badge']) . '
-                    </div>
-                    <div>
-                        <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight leading-none">' . htmlspecialchars(strtoupper($namaBank)) . '</h1>
-                        <p class="text-[10px] text-slate-500 font-semibold tracking-wider uppercase mt-0.5">' . htmlspecialchars($bankTheme['sub']) . '</p>
-                    </div>
-                </div>
-                <div class="mt-4 space-y-0.5 text-slate-600 text-[11px]">
-                    <p><span class="text-slate-400">Kantor Layanan:</span> Kantor Cabang Utama Operasional</p>
-                    <p><span class="text-slate-400">Alamat Layanan:</span> Sentra Finansial Perbankan Terintegrasi</p>
-                </div>
-            </div>
-            <div class="text-right">
-                <div class="inline-block px-3 py-1 rounded-md bg-slate-100 border border-slate-200 text-[11px] font-black text-slate-800 uppercase tracking-widest">
-                    REKENING KORAN / E-STATEMENT
-                </div>
-                <div class="mt-2 text-[11px] text-slate-500 space-y-0.5">
-                    <p>Lembar Mutasi Nasabah Resmi</p>
-                    <p>Dicetak Pada: <span class="font-bold text-slate-700">' . date('d F Y, H:i') . ' WIB</span></p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Identitas Rekening & Debitur -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <div class="space-y-1">
-                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Pemilik Rekening / Debitur</div>
-                <div class="text-sm font-extrabold text-slate-900">' . htmlspecialchars($atasNama) . '</div>
-                <div class="text-[11px] text-slate-600">ID Nasabah / CIF: <span class="font-mono font-semibold">CIF-' . substr(md5($atasNama), 0, 8) . '</span></div>
-            </div>
-            <div class="space-y-1 sm:text-right">
-                <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Nomor Rekening & Periode</div>
-                <div class="text-sm font-black font-mono text-blue-900 tracking-wide">' . htmlspecialchars($noRek) . '</div>
-                <div class="text-[11px] text-slate-600">Mata Uang: <span class="font-bold">IDR (Rupiah)</span> | Periode: <span class="font-bold text-slate-800">' . htmlspecialchars($periode) . '</span></div>
-            </div>
-        </div>
-
-        <!-- Ringkasan Saldo & Mutasi -->
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div class="text-[10px] font-bold text-slate-500 uppercase">Saldo Awal</div>
-                <div class="text-xs sm:text-sm font-black text-slate-900 mt-0.5 tabular-nums">Rp ' . number_format($saldoAwal, 0, ',', '.') . '</div>
-            </div>
-            <div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200">
-                <div class="text-[10px] font-bold text-emerald-800 uppercase">Total Kredit (Masuk)</div>
-                <div class="text-xs sm:text-sm font-black text-emerald-700 mt-0.5 tabular-nums">Rp ' . number_format($totalKredit, 0, ',', '.') . '</div>
-            </div>
-            <div class="p-3 bg-rose-50/70 rounded-xl border border-rose-200">
-                <div class="text-[10px] font-bold text-rose-800 uppercase">Total Debit (Keluar)</div>
-                <div class="text-xs sm:text-sm font-black text-rose-700 mt-0.5 tabular-nums">Rp ' . number_format($totalDebit, 0, ',', '.') . '</div>
-            </div>
-            <div class="p-3 bg-blue-50/70 rounded-xl border border-blue-200">
-                <div class="text-[10px] font-bold text-blue-800 uppercase">Saldo Akhir</div>
-                <div class="text-xs sm:text-sm font-black text-blue-900 mt-0.5 tabular-nums">Rp ' . number_format($saldoAkhir, 0, ',', '.') . '</div>
-            </div>
-            <div class="p-3 bg-indigo-50/70 rounded-xl border border-indigo-200">
-                <div class="text-[10px] font-bold text-indigo-800 uppercase">Rata² Kredit/Bln</div>
-                <div class="text-xs sm:text-sm font-black text-indigo-900 mt-0.5 tabular-nums">Rp ' . number_format($avgKredit, 0, ',', '.') . '</div>
-            </div>
-        </div>
-
-        <!-- Tabel Riwayat Mutasi Lengkap -->
-        <div>
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="font-bold text-slate-900 text-xs uppercase tracking-wider">Rincian Transaksi Rekening Koran</h3>
-                <span class="text-[11px] text-slate-400">Total ' . count($transaksi) . ' Baris Transaksi Terverifikasi</span>
-            </div>
-            <div class="overflow-x-auto border border-slate-200 rounded-xl">
-                <table class="w-full text-left border-collapse text-[11px]">
-                    <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                        <tr>
-                            <th class="py-2.5 px-3 text-center w-10">No</th>
-                            <th class="py-2.5 px-3 whitespace-nowrap w-24">Tanggal</th>
-                            <th class="py-2.5 px-3">Uraian / Keterangan Transaksi</th>
-                            <th class="py-2.5 px-3 text-center w-14">Tipe</th>
-                            <th class="py-2.5 px-3 text-right whitespace-nowrap">Nominal</th>
-                            <th class="py-2.5 px-3 text-right whitespace-nowrap">Saldo</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">';
-
-        $noTx = 1;
-        foreach ($transaksi as $tx) {
-            $tgl = $tx['tanggal'] ?? '-';
-            $ket = $tx['keterangan'] ?? ($tx['uraian'] ?? 'Transaksi Perbankan');
-            $tipe = strtoupper($tx['tipe'] ?? ($tx['type'] ?? 'CR'));
-            $isCr = ($tipe === 'CR' || strpos($tipe, 'MASUK') !== false || strpos($tipe, 'KREDIT') !== false);
-            $nom = (float)($tx['nominal'] ?? ($tx['amount'] ?? 0));
-            $sal = (float)($tx['saldo'] ?? ($tx['balance'] ?? 0));
-
-            $badgeClass = $isCr ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
-            $nomColor   = $isCr ? 'text-emerald-700' : 'text-rose-700';
-            $prefix     = $isCr ? '+ Rp ' : '- Rp ';
-
-            $html .= '<tr class="hover:bg-slate-50/70 transition">
-                <td class="py-2 px-3 text-center text-slate-400 font-medium">' . $noTx++ . '</td>
-                <td class="py-2 px-3 whitespace-nowrap font-medium text-slate-600">' . htmlspecialchars($tgl) . '</td>
-                <td class="py-2 px-3 font-semibold text-slate-800 leading-snug">' . htmlspecialchars($ket) . '</td>
-                <td class="py-2 px-3 text-center"><span class="px-1.5 py-0.5 rounded text-[9px] font-black ' . $badgeClass . '">' . ($isCr ? 'CR' : 'DB') . '</span></td>
-                <td class="py-2 px-3 text-right font-bold tabular-nums ' . $nomColor . '">' . $prefix . number_format($nom, 0, ',', '.') . '</td>
-                <td class="py-2 px-3 text-right font-mono font-medium text-slate-700 tabular-nums">Rp ' . number_format($sal, 0, ',', '.') . '</td>
-            </tr>';
-        }
-
-        $html .= '  </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Footer Keabsahan Dokumen -->
-        <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
-            <div class="space-y-1 text-center sm:text-left">
-                <p class="font-bold text-slate-700">Pernyataan Rekening Koran Elektronik (e-Statement):</p>
-                <p>Dokumen ini merupakan warkat resmi hasil sinkronisasi pembukuan mutasi perbankan yang diakui dan sah untuk analisis kelayakan kredit nasabah.</p>
-            </div>
-            <div class="shrink-0 text-center sm:text-right font-mono text-[10px] bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
-                <div class="font-bold text-slate-700">Digital Signature Validated</div>
-                <div class="text-slate-400 mt-0.5">Hash: ' . strtoupper(hash('sha256', $noRek . $atasNama . $totalKredit)) . '</div>
-            </div>
-        </div>
-    </div>
-</body>
-</html>';
-
-        return $this->response->setHeader('Content-Type', 'text/html; charset=UTF-8')->setBody($html);
+        return null;
     }
+
 
     /**
      * Meneruskan permohonan pengecekan SLIK debitur ke antrean kerja Petugas Verifikator SLIK OJK
